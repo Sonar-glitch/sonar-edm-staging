@@ -1,0 +1,48 @@
+{
+  "name": "app",
+  "description": "Sonar EDM Platform - Heroku Configuration",
+  "keywords": [
+    "node",
+    "express",
+    "next",
+    "edm",
+    "music",
+    "analytics"
+  ],
+  "website": "https://github.com/YOUR_USERNAME/sonar-edm-platform",
+  "repository": "https://github.com/YOUR_USERNAME/sonar-edm-platform",
+  "success_url": "/",
+  "env": {
+    "SPOTIFY_CLIENT_ID": {
+      "description": "Your Spotify API Client ID",
+      "required": true
+    },
+    "SPOTIFY_CLIENT_SECRET": {
+      "description": "Your Spotify API Client Secret",
+      "required": true
+    },
+    "MONGODB_URI": {
+      "description": "Your MongoDB connection string",
+      "required": true
+    },
+    "NEXTAUTH_SECRET": {
+      "description": "Secret for NextAuth authentication",
+      "generator": "secret"
+    },
+    "NODE_ENV": {
+      "description": "Environment mode",
+      "value": "production"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  }
+}
