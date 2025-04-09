@@ -20,7 +20,7 @@
     "next-auth": "^4.0.0",
     "axios": "^0.24.0"
   }
-}
+},
 "next": {
   "staticOptimization": false
 }
