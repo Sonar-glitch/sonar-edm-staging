@@ -3,19 +3,20 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   
-  // Disable static optimization for pages that use authentication
-  experimental: {
-    // other experimental options...
+  // Disable static exports completely
+  output: 'standalone',
+  
+  // Customize the build process
+  webpack: (config, { isServer }) => {
+    // Add any webpack customizations here
+    return config;
   },
   
-  // Configure static generation
-  exportPathMap: function() {
-    return {
-      // Only include pages that don't require authentication
-      '/api/prediction': { page: '/api/prediction' },
-      // Add other non-authenticated pages here
-    };
-  }
+  // Disable automatic static optimization for authenticated pages
+  unstable_runtimeJS: true,
+  
+  // Specify which pages should not be statically optimized
+  unstable_excludeDefaultMomentLocales: true
 };
 
 module.exports = nextConfig;
