@@ -1,21 +1,21 @@
-// Create this file at the root level (next.config.js)
-module.exports = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
-  env: {
-    MONGODB_URI: process.env.MONGODB_URI,
-    SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
-    SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+  swcMinify: true,
+  
+  // Disable static optimization for pages that use authentication
+  experimental: {
+    // other experimental options...
   },
-}
-// Configure static generation
-  exportPathMap: async function (defaultPathMap, { dev, dir, outDir, distDir, buildId }) {
-    // Remove pages that require authentication from static export
-    delete defaultPathMap['/'];
-    delete defaultPathMap['/promoters/dashboard'];
-    delete defaultPathMap['/users/dashboard'];
-    
-    return defaultPathMap;
+  
+  // Configure static generation
+  exportPathMap: function() {
+    return {
+      // Only include pages that don't require authentication
+      '/api/prediction': { page: '/api/prediction' },
+      // Add other non-authenticated pages here
+    };
   }
 };
+
+module.exports = nextConfig;
