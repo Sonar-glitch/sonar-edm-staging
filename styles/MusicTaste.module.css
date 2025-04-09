@@ -1,0 +1,191 @@
+.container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: #fff;
+  text-align: center;
+  background: linear-gradient(to right, #4a00e0, #8e2de2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #8e2de2;
+  margin: 2rem 0;
+}
+
+.error {
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  color: #ff3860;
+  text-align: center;
+}
+
+.retryButton {
+  background-color: #8e2de2;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.retryButton:hover {
+  background-color: #7928ca;
+}
+
+.results {
+  margin-top: 2rem;
+}
+
+.section {
+  margin-bottom: 3rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.section h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #8e2de2;
+  border-bottom: 1px solid rgba(142, 45, 226, 0.3);
+  padding-bottom: 0.5rem;
+}
+
+.genreList {
+  list-style: none;
+  padding: 0;
+}
+
+.genreItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.genreName {
+  width: 120px;
+  font-weight: bold;
+}
+
+.genreBar {
+  flex: 1;
+  height: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  margin: 0 1rem;
+  overflow: hidden;
+}
+
+.genreBarFill {
+  height: 100%;
+  background: linear-gradient(to right, #4a00e0, #8e2de2);
+  border-radius: 6px;
+}
+
+.genreScore {
+  width: 50px;
+  text-align: right;
+  font-weight: bold;
+}
+
+.attributesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.attribute {
+  display: flex;
+  flex-direction: column;
+}
+
+.attributeName {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.attributeBar {
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.attributeBarFill {
+  height: 100%;
+  background: linear-gradient(to right, #4a00e0, #8e2de2);
+  border-radius: 4px;
+}
+
+.attributeValue {
+  font-size: 0.9rem;
+  color: #8e2de2;
+  font-weight: bold;
+}
+
+.artistsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.5rem;
+}
+
+.artistCard {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.artistCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.artistImage {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.artistImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.artistCard:hover .artistImage img {
+  transform: scale(1.05);
+}
+
+.artistName {
+  padding: 0.75rem;
+  font-weight: bold;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.artistGenre {
+  padding: 0 0.75rem 0.75rem;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
