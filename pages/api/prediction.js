@@ -10,7 +10,7 @@ import {
   EventDemandForecaster, 
   TicketPriceOptimizer, 
   MusicTasteAnalyzer 
-} from '../../../lib/prediction';
+} from '../../lib/prediction';
 
 // Initialize prediction models
 const artistPredictor = new ArtistPopularityPredictor();
