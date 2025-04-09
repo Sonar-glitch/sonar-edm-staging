@@ -34,7 +34,7 @@ Sonar EDM Platform offers a simple one-click deployment process that handles all
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/sonar-edm-platform.git
+git clone https://github.com/Sonar-glitch/sonar-edm-platform.git
 cd sonar-edm-platform
 ```
 
