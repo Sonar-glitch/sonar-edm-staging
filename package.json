@@ -21,3 +21,6 @@
     "axios": "^0.24.0"
   }
 }
+"next": {
+  "staticOptimization": false
+}
