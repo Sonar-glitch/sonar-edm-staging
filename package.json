@@ -1,7 +1,7 @@
 {
   "name": "sonar-edm-platform",
   "engines": {
-    "node": ">=16.0.0"
+    "node": "16.x"
   },
   "scripts": {
     "postinstall": "npm run build",
