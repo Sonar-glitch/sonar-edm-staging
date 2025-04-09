@@ -1,16 +1,9 @@
 {
-  "name": "app",
-  "description": "Sonar EDM Platform - Heroku Configuration",
-  "keywords": [
-    "node",
-    "express",
-    "next",
-    "edm",
-    "music",
-    "analytics"
-  ],
-  "website": "https://github.com/YOUR_USERNAME/sonar-edm-platform",
-  "repository": "https://github.com/YOUR_USERNAME/sonar-edm-platform",
+  "name": "Sonar EDM Platform",
+  "description": "EDM discovery app for promoters and end users for music taste analysis",
+  "repository": "https://github.com/Sonar-glitch/sonar-edm-platform",
+  "logo": "https://raw.githubusercontent.com/Sonar-glitch/sonar-edm-platform/main/public/logo.png",
+  "keywords": ["edm", "music", "discovery", "nextjs", "spotify"],
   "success_url": "/",
   "env": {
     "SPOTIFY_CLIENT_ID": {
@@ -22,27 +15,45 @@
       "required": true
     },
     "MONGODB_URI": {
-      "description": "Your MongoDB connection string",
+      "description": "MongoDB connection string",
       "required": true
+    },
+    "MONGODB_DB_NAME": {
+      "description": "MongoDB database name",
+      "required": false,
+      "value": "sonar-edm"
     },
     "NEXTAUTH_SECRET": {
       "description": "Secret for NextAuth authentication",
+      "required": true,
       "generator": "secret"
     },
+    "NEXTAUTH_URL": {
+      "description": "URL for NextAuth (will be set automatically)",
+      "required": false
+    },
     "NODE_ENV": {
-      "description": "Environment mode",
+      "description": "Node environment",
       "value": "production"
     }
   },
-  "buildpacks": [
-    {
-      "url": "heroku/nodejs"
-    }
-  ],
   "formation": {
     "web": {
       "quantity": 1,
       "size": "eco"
     }
+  },
+  "addons": [
+    {
+      "plan": "mongolab:sandbox"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "npm run seed"
   }
 }
