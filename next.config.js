@@ -9,3 +9,13 @@ module.exports = {
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   },
 }
+// Configure static generation
+  exportPathMap: async function (defaultPathMap, { dev, dir, outDir, distDir, buildId }) {
+    // Remove pages that require authentication from static export
+    delete defaultPathMap['/'];
+    delete defaultPathMap['/promoters/dashboard'];
+    delete defaultPathMap['/users/dashboard'];
+    
+    return defaultPathMap;
+  }
+};
