@@ -1,4 +1,4 @@
-{
+
   "name": "sonar-edm-platform",
   "engines": {
     "node": "16.x"
@@ -19,8 +19,8 @@
     "mongodb": "^4.1.0",
     "next-auth": "^4.0.0",
     "axios": "^0.24.0"
+  },
+  "next": {
+    "staticOptimization": false
   }
-},
-"next": {
-  "staticOptimization": false
 }
