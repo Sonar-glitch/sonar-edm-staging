@@ -5,7 +5,7 @@
  * using the centralized configuration system.
  */
 
-import { createSpotifyClient } from '../../../lib/spotify';
+import { createSpotifyClient } from '../../lib/spotify';
 import { getSession } from 'next-auth/react';
 
 /**
