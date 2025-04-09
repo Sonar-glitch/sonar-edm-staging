@@ -4,18 +4,20 @@ import Link from 'next/link';
 import { useSession, signIn } from 'next-auth/react';
 import config from '../config';
 
-export default function Home() {
+export default function Home({ serverConfigStatus }) {
   const { data: session, status } = useSession();
   const [appStatus, setAppStatus] = useState({
-    isConfigured: false,
-    missingConfigs: []
+    isValid: serverConfigStatus.isValid,
+    missingConfigs: serverConfigStatus.missingConfigs || []
   });
 
-  // Check if the app is properly configured
+  // Check if the app is properly configured (client-side fallback)
   useEffect(() => {
-    const configStatus = config.validateConfig();
-    setAppStatus(configStatus);
-  }, []);
+    if (!serverConfigStatus.isValid) {
+      const configStatus = config.validateConfig();
+      setAppStatus(configStatus);
+    }
+  }, [serverConfigStatus]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
@@ -152,3 +154,29 @@ export default function Home() {
     </div>
   );
 }
+
+// Server-side environment variable check
+export async function getServerSideProps() {
+  // Check if the application is configured by verifying environment variables
+  const isConfigured = 
+    process.env.SPOTIFY_CLIENT_ID && 
+    process.env.SPOTIFY_CLIENT_SECRET && 
+    process.env.MONGODB_URI && 
+    process.env.NEXTAUTH_SECRET;
+  
+  // Create a list of missing configurations
+  const missingConfigs = [];
+  if (!process.env.SPOTIFY_CLIENT_ID) missingConfigs.push('Spotify API credentials');
+  if (!process.env.MONGODB_URI) missingConfigs.push('MongoDB connection string');
+  if (!process.env.NEXTAUTH_SECRET) missingConfigs.push('NextAuth secret');
+  
+  return {
+    props: {
+      serverConfigStatus: {
+        isValid: !!isConfigured,
+        missingConfigs
+      }
+    }
+  };
+}
+
