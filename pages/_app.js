@@ -1,12 +1,18 @@
-// Create this file at pages/_app.js
-import { SessionProvider } from "next-auth/react"
+export default MyApp
 
-function MyApp({ Component, pageProps }) {
+import '../styles/globals.css';
+import Layout from '../components/Layout';
+import { SessionProvider } from 'next-auth/react';
+
+function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   return (
-    <SessionProvider session={pageProps.session}>
-      <Component {...pageProps} />
+    <SessionProvider session={session}>
+      <Layout>
+        <Component {...pageProps} />
+      </Layout>
     </SessionProvider>
-  )
+  );
 }
 
-export default MyApp
+export default MyApp;
+
