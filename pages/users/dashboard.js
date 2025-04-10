@@ -1,7 +1,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import styles from '../styles/UserDashboard.module.css';
-import MusicTasteAnalyzer from '../components/music/MusicTasteAnalyzer';
+import styles from '../../styles/UserDashboard.module.css';
+import MusicTasteAnalyzer from '../../components/music/MusicTasteAnalyzer';
 
 export default function UserDashboard() {
   const { data: session, status } = useSession();
