@@ -1,12 +1,11 @@
-import { useState } from 'react';
-import { useSession, signIn } from 'next-auth/react';
-import MusicTasteAnalyzer from '../../components/music/MusicTasteAnalyzer';
-import styles from '../../styles/Dashboard.module.css';
+import { useSession, signOut } from 'next-auth/react';
+import Link from 'next/link';
+import styles from '../styles/UserDashboard.module.css';
+import MusicTasteAnalyzer from '../components/music/MusicTasteAnalyzer';
 
 export default function UserDashboard() {
   const { data: session, status } = useSession();
-  const [activeTab, setActiveTab] = useState('musicTaste');
-
+  
   // Server-side check for authentication
   if (status === 'loading') {
     return (
@@ -51,50 +50,65 @@ export default function UserDashboard() {
             />
           )}
           <span className={styles.userName}>
-            {session.user.name || session.user.email || 'EDM Fan'}
+            {session.user.name || session.user.email || 'Music Fan'}
           </span>
+          <button 
+            onClick={() => signOut({ callbackUrl: '/' })}
+            className={styles.signOutButton}
+          >
+            Sign Out
+          </button>
         </div>
       </header>
 
-      <nav className={styles.tabNav}>
-        <button 
-          className={`${styles.tabButton} ${activeTab === 'musicTaste' ? styles.activeTab : ''}`}
-          onClick={() => setActiveTab('musicTaste')}
-        >
-          Music Taste Analysis
-        </button>
-        <button 
-          className={`${styles.tabButton} ${activeTab === 'events' ? styles.activeTab : ''}`}
-          onClick={() => setActiveTab('events')}
-        >
-          Upcoming Events
-        </button>
-        <button 
-          className={`${styles.tabButton} ${activeTab === 'artists' ? styles.activeTab : ''}`}
-          onClick={() => setActiveTab('artists')}
-        >
-          Favorite Artists
-        </button>
-      </nav>
-
       <main className={styles.content}>
-        {activeTab === 'musicTaste' && (
+        <section className={styles.welcomeSection}>
+          <h2>Welcome, {session.user.name?.split(' ')[0] || 'Music Fan'}!</h2>
+          <p>Discover new EDM artists, analyze your music taste, and find events that match your preferences.</p>
+        </section>
+        
+        <section className={styles.musicTasteSection}>
+          <h2>Your Music Taste Analysis</h2>
           <MusicTasteAnalyzer />
-        )}
+        </section>
         
-        {activeTab === 'events' && (
-          <div className={styles.comingSoon}>
-            <h2>Upcoming Events</h2>
-            <p>This feature is coming soon! We're working on bringing you personalized event recommendations based on your music taste.</p>
+        <section className={styles.recommendedSection}>
+          <h2>Recommended Events</h2>
+          <div className={styles.eventGrid}>
+            <div className={styles.eventCard}>
+              <div className={styles.eventImage}></div>
+              <div className={styles.eventInfo}>
+                <h3>Summer Bass Festival</h3>
+                <p>July 15, 2025 • Miami Beach</p>
+                <span className={styles.matchBadge}>98% Match</span>
+              </div>
+            </div>
+            
+            <div className={styles.eventCard}>
+              <div className={styles.eventImage}></div>
+              <div className={styles.eventInfo}>
+                <h3>Neon Nights Club Event</h3>
+                <p>August 22, 2025 • New York City</p>
+                <span className={styles.matchBadge}>85% Match</span>
+              </div>
+            </div>
+            
+            <div className={styles.eventCard}>
+              <div className={styles.eventImage}></div>
+              <div className={styles.eventInfo}>
+                <h3>Techno Underground</h3>
+                <p>September 5, 2025 • Berlin</p>
+                <span className={styles.matchBadge}>78% Match</span>
+              </div>
+            </div>
           </div>
-        )}
-        
-        {activeTab === 'artists' && (
-          <div className={styles.comingSoon}>
-            <h2>Favorite Artists</h2>
-            <p>This feature is coming soon! You'll be able to track your favorite EDM artists and get notified about their new releases and events.</p>
+          
+          <div className={styles.viewMoreContainer}>
+            <Link href="/users/events">
+              <a className={styles.viewMoreButton}>View All Events</a>
+            </Link>
           </div>
-        )}
+        </section>
       </main>
     </div>
   );

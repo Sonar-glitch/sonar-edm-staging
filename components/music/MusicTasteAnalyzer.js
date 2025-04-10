@@ -1,10 +1,36 @@
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import styles from '../../styles/MusicTaste.module.css';
 
+// Mock data for development and testing
+const mockAnalysisData = {
+  topGenres: [
+    { id: 1, name: 'House', affinity: 95 },
+    { id: 2, name: 'Techno', affinity: 88 },
+    { id: 3, name: 'Trance', affinity: 82 },
+    { id: 4, name: 'Dubstep', affinity: 75 },
+    { id: 5, name: 'Drum & Bass', affinity: 70 },
+    { id: 6, name: 'Future Bass', affinity: 65 }
+  ],
+  topArtists: [
+    { id: 1, name: 'Daft Punk', image: 'https://i.scdn.co/image/ab6761610000e5eb10c53f4f54c604d776d9af76' },
+    { id: 2, name: 'Deadmau5', image: 'https://i.scdn.co/image/ab6761610000e5eb7eb7f6371aad8e67e01f0a03' },
+    { id: 3, name: 'Avicii', image: 'https://i.scdn.co/image/ab6761610000e5eb6d5c33afc9f8873835b2d2a6' },
+    { id: 4, name: 'Calvin Harris', image: 'https://i.scdn.co/image/ab6761610000e5eb66b24d02d3a2f9b3f1331f0e' },
+    { id: 5, name: 'Martin Garrix', image: 'https://i.scdn.co/image/ab6761610000e5eb33c009a583e8289c5c9f1c29' },
+    { id: 6, name: 'Skrillex', image: 'https://i.scdn.co/image/ab6761610000e5eb8ee9a6f54f6bf22037b3f0e1' }
+  ],
+  recommendedEvents: [
+    { id: 1, name: 'Electric Daisy Carnival' },
+    { id: 2, name: 'Tomorrowland' },
+    { id: 3, name: 'Ultra Music Festival' },
+    { id: 4, name: 'Creamfields' },
+    { id: 5, name: 'Electric Zoo' },
+    { id: 6, name: 'HARD Summer' }
+  ]
+};
+
 export default function MusicTasteAnalyzer() {
-  const { data: session, status } = useSession();
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,25 +40,30 @@ export default function MusicTasteAnalyzer() {
 
   // Function to analyze music taste
   const analyzeMusicTaste = async () => {
-    if (!session?.accessToken) return;
-
     setLoading(true);
     setError(null);
 
     try {
-      // Call our API endpoint that uses the prediction module
+      // In a production environment, this would call the actual API
+      // For now, we'll use mock data with a simulated delay
+      setTimeout(() => {
+        setAnalysis(mockAnalysisData);
+        setLoading(false);
+      }, 2000);
+      
+      // Actual API call would look like this:
+      /*
       const response = await axios.post('/api/prediction?type=music-taste', {
         userData: {
           accessToken: session.accessToken,
           userId: session.user.id
         }
       });
-
       setAnalysis(response.data);
+      */
     } catch (err) {
       console.error('Error analyzing music taste:', err);
       setError('Failed to analyze your music taste. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
@@ -40,48 +71,60 @@ export default function MusicTasteAnalyzer() {
   // Handle genre selection
   const handleGenreSelect = (genre) => {
     setSelectedGenre(genre);
-    setResults({
-      type: 'genre',
-      name: genre,
-      description: `Based on your listening history, you have a strong affinity for ${genre} music. Here are some recommendations and events that match your taste.`,
-      recommendations: [
-        { name: `Top ${genre} Artist 1`, image: '/images/artist1.jpg' },
-        { name: `Top ${genre} Artist 2`, image: '/images/artist2.jpg' },
-        { name: `Top ${genre} Artist 3`, image: '/images/artist3.jpg' }
-      ],
-      events: [
-        { name: `${genre} Festival 2025`, location: 'Miami, FL', date: 'June 15, 2025' },
-        { name: `${genre} Club Night`, location: 'New York, NY', date: 'May 22, 2025' }
-      ]
-    });
+    setSelectedArtist(null);
+    
+    // Simulate API call for genre-specific recommendations
+    setLoading(true);
+    setTimeout(() => {
+      setResults({
+        type: 'genre',
+        name: genre,
+        recommendations: [
+          { id: 1, name: 'Electric Dreams Festival', location: 'Miami', date: 'July 15, 2025', match: '95%' },
+          { id: 2, name: 'Bass Canyon', location: 'Washington', date: 'August 20, 2025', match: '92%' },
+          { id: 3, name: 'Tomorrowland', location: 'Belgium', date: 'July 22, 2025', match: '88%' }
+        ]
+      });
+      setLoading(false);
+    }, 1500);
   };
 
   // Handle artist selection
   const handleArtistSelect = (artist) => {
     setSelectedArtist(artist);
-    setResults({
-      type: 'artist',
-      name: artist,
-      description: `You've been listening to a lot of ${artist} lately. Here are similar artists and upcoming events you might enjoy.`,
-      recommendations: [
-        { name: `Similar to ${artist} 1`, image: '/images/similar1.jpg' },
-        { name: `Similar to ${artist} 2`, image: '/images/similar2.jpg' },
-        { name: `Similar to ${artist} 3`, image: '/images/similar3.jpg' }
-      ],
-      events: [
-        { name: `${artist} World Tour`, location: 'Los Angeles, CA', date: 'July 10, 2025' },
-        { name: `${artist} Album Release Party`, location: 'Chicago, IL', date: 'August 5, 2025' }
-      ]
-    });
+    setSelectedGenre(null);
+    
+    // Simulate API call for artist-specific recommendations
+    setLoading(true);
+    setTimeout(() => {
+      setResults({
+        type: 'artist',
+        name: artist,
+        recommendations: [
+          { id: 1, name: `${artist} World Tour`, location: 'New York', date: 'June 10, 2025', match: '98%' },
+          { id: 2, name: 'EDM Summer Festival', location: 'Los Angeles', date: 'August 5, 2025', match: '90%' },
+          { id: 3, name: 'Club Night with ' + artist, location: 'Chicago', date: 'September 15, 2025', match: '85%' }
+        ]
+      });
+      setLoading(false);
+    }, 1500);
+  };
+
+  // Reset selections and go back to main analysis
+  const handleBack = () => {
+    setSelectedGenre(null);
+    setSelectedArtist(null);
+    setResults(null);
   };
 
   // Run analysis when component mounts
   useEffect(() => {
-    if (session) {
+    if (!analysis && !loading) {
       analyzeMusicTaste();
     }
-  }, [session]);
+  }, []);
 
+  // Loading state
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
@@ -91,13 +134,14 @@ export default function MusicTasteAnalyzer() {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className={styles.errorContainer}>
         <p className={styles.errorMessage}>{error}</p>
         <button 
-          className={styles.retryButton}
           onClick={analyzeMusicTaste}
+          className={styles.retryButton}
         >
           Try Again
         </button>
@@ -105,39 +149,29 @@ export default function MusicTasteAnalyzer() {
     );
   }
 
-  if (results) {
+  // If we have selected a genre or artist and have results
+  if ((selectedGenre || selectedArtist) && results) {
     return (
       <div className={styles.resultsContainer}>
-        <h2>{results.name}</h2>
-        <p className={styles.resultDescription}>{results.description}</p>
+        <h3 className={styles.resultsTitle}>
+          {results.type === 'genre' 
+            ? `${results.name} Events For You` 
+            : `Events featuring ${results.name}`}
+        </h3>
         
-        <div className={styles.section}>
-          <h3>Recommended Artists</h3>
-          <div className={styles.recommendationGrid}>
-            {results.recommendations.map((rec, index) => (
-              <div key={index} className={styles.recommendationCard}>
-                <div className={styles.cardImage}></div>
-                <p>{rec.name}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        <div className={styles.section}>
-          <h3>Upcoming Events</h3>
-          <div className={styles.eventsList}>
-            {results.events.map((event, index) => (
-              <div key={index} className={styles.eventCard}>
-                <h4>{event.name}</h4>
-                <p>{event.location} • {event.date}</p>
-              </div>
-            ))}
-          </div>
+        <div className={styles.eventsList}>
+          {results.recommendations.map(event => (
+            <div key={event.id} className={styles.eventCard}>
+              <h4>{event.name}</h4>
+              <p>{event.location} • {event.date}</p>
+              <span className={styles.matchBadge}>{event.match} Match</span>
+            </div>
+          ))}
         </div>
         
         <button 
+          onClick={handleBack}
           className={styles.backButton}
-          onClick={() => setResults(null)}
         >
           Back to Analysis
         </button>
@@ -145,47 +179,76 @@ export default function MusicTasteAnalyzer() {
     );
   }
 
+  // If we have analysis data but no selection yet
+  if (analysis) {
+    return (
+      <div className={styles.analysisContainer}>
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Your Top Genres</h3>
+          <div className={styles.optionsGrid}>
+            {analysis.topGenres.map(genre => (
+              <div 
+                key={genre.id} 
+                className={styles.optionCard}
+                onClick={() => handleGenreSelect(genre.name)}
+              >
+                <div className={styles.optionIcon}>🎵</div>
+                <h4>{genre.name}</h4>
+                <span className={styles.matchBadge}>{genre.affinity}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Your Top Artists</h3>
+          <div className={styles.optionsGrid}>
+            {analysis.topArtists.map(artist => (
+              <div 
+                key={artist.id} 
+                className={styles.optionCard}
+                onClick={() => handleArtistSelect(artist.name)}
+              >
+                {artist.image ? (
+                  <img 
+                    src={artist.image} 
+                    alt={artist.name} 
+                    className={styles.artistImage}
+                  />
+                ) : (
+                  <div className={styles.optionIcon}>👤</div>
+                )}
+                <h4>{artist.name}</h4>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Recommended Events</h3>
+          <div className={styles.recommendationGrid}>
+            {analysis.recommendedEvents.map(event => (
+              <div key={event.id} className={styles.recommendationCard}>
+                <div className={styles.cardImage}></div>
+                <p>{event.name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default state - no analysis yet
   return (
-    <div className={styles.container}>
-      <h2 className={styles.title}>Your Music Taste Analysis</h2>
-      
-      {analysis ? (
-        <>
-          <div className={styles.section}>
-            <h3>Top Genres</h3>
-            <div className={styles.optionsGrid}>
-              {analysis.topGenres.map((genre, index) => (
-                <div 
-                  key={index} 
-                  className={styles.optionCard}
-                  onClick={() => handleGenreSelect(genre.name)}
-                >
-                  <h4>{genre.name}</h4>
-                  <p>{genre.percentage}% affinity</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className={styles.section}>
-            <h3>Top Artists</h3>
-            <div className={styles.optionsGrid}>
-              {analysis.topArtists.map((artist, index) => (
-                <div 
-                  key={index} 
-                  className={styles.optionCard}
-                  onClick={() => handleArtistSelect(artist.name)}
-                >
-                  <h4>{artist.name}</h4>
-                  <p>{artist.playCount} plays</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      ) : (
-        <p className={styles.noData}>No analysis data available. Please check back later.</p>
-      )}
+    <div className={styles.initialContainer}>
+      <p>We'll analyze your Spotify listening history to provide personalized EDM event recommendations.</p>
+      <button 
+        onClick={analyzeMusicTaste}
+        className={styles.analyzeButton}
+      >
+        Analyze My Music Taste
+      </button>
     </div>
   );
 }
