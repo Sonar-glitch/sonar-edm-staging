@@ -1,5 +1,6 @@
 import { useSession, signIn } from 'next-auth/react';
 import styles from '../../styles/Auth.module.css';
+import Head from 'next/head';
 
 export default function SignIn() {
   const { data: session, status } = useSession();
@@ -7,32 +8,46 @@ export default function SignIn() {
   if (status === 'loading') {
     return (
       <div className={styles.container}>
+        <Head>
+          <title>Sign In | Sonar EDM Platform</title>
+          <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Montserrat:wght@400;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+        </Head>
         <div className={styles.loadingSpinner}></div>
         <p>Loading session...</p>
       </div>
-    );
+    ) ;
   }
 
   if (session) {
     return (
       <div className={styles.container}>
-        <h1>Already Signed In</h1>
-        <p>You are already signed in as {session.user.name || session.user.email}.</p>
-        <a href="/" className={styles.button}>Go to Home</a>
+        <Head>
+          <title>Already Signed In | Sonar EDM Platform</title>
+          <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Montserrat:wght@400;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+        </Head>
+        <div className={styles.card}>
+          <h1 className={styles.title}>Already Signed In</h1>
+          <p className={styles.description}>You are already signed in as {session.user.name || session.user.email}.</p>
+          <a href="/" className={styles.button}>Go to Dashboard</a>
+        </div>
       </div>
-    );
+    ) ;
   }
 
   return (
     <div className={styles.container}>
+      <Head>
+        <title>Sign In | Sonar EDM Platform</title>
+        <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Montserrat:wght@400;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+      </Head>
       <div className={styles.card}>
-        <h1 className={styles.title}>Sign in to Sonar EDM Platform</h1>
+        <h1 className={styles.title}>Sonar EDM Platform</h1>
         <p className={styles.description}>
-          Connect with your Spotify account to analyze your music taste and discover new EDM artists.
+          Connect with your Spotify account to analyze your music taste and discover new EDM artists. For promoters, gain insights into revenue opportunities and audience preferences.
         </p>
         
         <button 
-          onClick={() => signIn('spotify', { callbackUrl: '/' })}
+          onClick={()  => signIn('spotify', { callbackUrl: '/' })}
           className={styles.spotifyButton}
         >
           <svg viewBox="0 0 24 24" width="24" height="24" className={styles.spotifyIcon}>
