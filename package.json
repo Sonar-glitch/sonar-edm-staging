@@ -1,26 +1,29 @@
 {
   "name": "sonar-edm-platform",
-  "engines": {
-    "node": "16.x"
-  },
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "postinstall": "npm run build",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -p $PORT",
-    "lint": "next lint",
-    "setup": "node scripts/setup.js",
-    "deploy": "node scripts/deploy.js"
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "next": "^12.0.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "mongodb": "^4.1.0",
-    "next-auth": "^4.0.0",
-    "axios": "^0.24.0"
+    "axios": "^0.27.2",
+    "chart.js": "^3.9.1",
+    "dotenv": "^16.0.1",
+    "mongodb": "^4.8.1",
+    "next": "12.2.5",
+    "next-auth": "^4.10.3",
+    "react": "18.2.0",
+    "react-chartjs-2": "^4.3.1",
+    "react-dom": "18.2.0"
   },
-  "next": {
-    "staticOptimization": false
+  "devDependencies": {
+    "eslint": "8.22.0",
+    "eslint-config-next": "12.2.5"
+  },
+  "engines": {
+    "node": "16.x"
   }
 }
