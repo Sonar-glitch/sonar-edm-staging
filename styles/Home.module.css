@@ -1,0 +1,120 @@
+.container {
+  min-height: 100vh;
+  padding: 0 1rem;
+}
+
+.main {
+  padding: 4rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.title {
+  margin: 0;
+  line-height: 1.15;
+  font-size: 4rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.description {
+  text-align: center;
+  line-height: 1.5;
+  font-size: 1.5rem;
+  margin-bottom: 3rem;
+  color: var(--text-secondary);
+}
+
+.grid {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  gap: 2rem;
+}
+
+.card {
+  background-color: var(--bg-secondary);
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: left;
+  color: var(--text-primary);
+  text-decoration: none;
+  border: 1px solid rgba(255, 42, 112, 0.1);
+  transition: all 0.3s ease;
+  width: 100%;
+  max-width: 500px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+  z-index: 1;
+}
+
+.card h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+.card p {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.featureList {
+  margin: 0 0 1.5rem 1.5rem;
+  padding: 0;
+}
+
+.featureList li {
+  margin-bottom: 0.5rem;
+}
+
+.button {
+  display: inline-block;
+  background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  text-decoration: none;
+  padding: 0.8rem 2rem;
+  border-radius: 2rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 14px rgba(255, 42, 112, 0.4);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .title {
+    font-size: 3rem;
+  }
+  
+  .description {
+    font-size: 1.2rem;
+  }
+}
