@@ -2,55 +2,84 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #121212;
-  color: #ffffff;
-}
-
-.main {
-  flex: 1;
-  display: flex;
   justify-content: center;
   align-items: center;
+  background-color: #1E1A2B; /* Dark purple background from our design plan */
+  color: #FFFFFF;
   padding: 2rem;
 }
 
+.loadingSpinner {
+  border: 4px solid rgba(0, 240, 255, 0.1); /* Neon blue accent */
+  border-radius: 50%;
+  border-top: 4px solid #00F0FF; /* Neon blue accent */
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .card {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 0.5rem;
-  padding: 2.5rem;
-  max-width: 600px;
+  background-color: #15121E; /* Darker purple for card background */
+  border-radius: 1rem;
+  padding: 3rem;
+  max-width: 500px;
   width: 100%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 20px rgba(255, 42, 112, 0.2); /* Neon pink glow */
+  border: 1px solid rgba(255, 42, 112, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to right, #FF2A70, #00F0FF, #39FF14); /* Neon gradient */
+  z-index: 1;
 }
 
 .title {
+  font-family: 'Audiowide', 'Montserrat', sans-serif;
   font-size: 2.5rem;
   margin-bottom: 1.5rem;
   text-align: center;
-  background: linear-gradient(to right, #4a00e0, #8e2de2);
+  background: linear-gradient(to right, #FF2A70, #00F0FF); /* Neon gradient */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 10px rgba(255, 42, 112, 0.5);
 }
 
 .description {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: #B3B3B3; /* Light gray */
+  line-height: 1.6;
 }
 
 .error {
-  background-color: rgba(255, 0, 0, 0.1);
-  border: 1px solid rgba(255, 0, 0, 0.3);
+  background-color: rgba(255, 42, 112, 0.1);
+  border: 1px solid rgba(255, 42, 112, 0.3);
   border-radius: 0.5rem;
   padding: 1rem;
   margin-bottom: 1.5rem;
-  color: #ff3860;
+  color: #FF2A70; /* Neon pink */
   text-align: center;
 }
 
 .spotifyButton {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   background-color: #1DB954; /* Spotify green */
   color: white;
@@ -60,13 +89,38 @@
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: all 0.3s ease;
   margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.spotifyButton::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+  transform: rotate(30deg);
+  transition: transform 0.7s;
+  opacity: 0;
 }
 
 .spotifyButton:hover {
   background-color: #1ed760;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 7px 14px rgba(29, 185, 84, 0.4);
+}
+
+.spotifyButton:hover::after {
+  transform: rotate(30deg) translate(100%, 100%);
+  opacity: 1;
+}
+
+.spotifyButton:active {
+  transform: translateY(-1px);
 }
 
 .spotifyButton:disabled {
@@ -75,36 +129,41 @@
   transform: none;
 }
 
-.info {
-  background-color: rgba(255, 255, 255, 0.03);
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+.spotifyIcon {
+  margin-right: 10px;
+  fill: white;
 }
 
-.info ul {
-  margin: 1rem 0;
-  padding-left: 1.5rem;
-}
-
-.info li {
-  margin-bottom: 0.5rem;
-}
-
-.footer {
+.terms {
   text-align: center;
-  padding: 2rem;
+  font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.5);
 }
 
-.footerLink {
-  color: #8e2de2;
+.button {
+  display: inline-block;
+  background: linear-gradient(to right, #FF2A70, #00F0FF);
+  color: white;
   text-decoration: none;
-  transition: color 0.2s;
+  padding: 0.8rem 2rem;
+  border-radius: 2rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
 }
 
-.footerLink:hover {
-  color: #4a00e0;
-  text-decoration: underline;
+.button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 14px rgba(255, 42, 112, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .card {
+    padding: 2rem;
+  }
+  
+  .title {
+    font-size: 2rem;
+  }
 }
