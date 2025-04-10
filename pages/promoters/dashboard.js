@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import styles from '../styles/PromoterDashboard.module.css';
+import styles from '../../styles/PromoterDashboard.module.css';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import { 
   Chart as ChartJS, 
