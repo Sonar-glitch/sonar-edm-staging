@@ -1,191 +1,230 @@
 .container {
   padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  background-color: var(--bg-primary);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
 }
 
 .title {
   font-size: 2rem;
-  font-weight: bold;
   margin-bottom: 2rem;
-  color: #fff;
-  text-align: center;
-  background: linear-gradient(to right, #4a00e0, #8e2de2);
+  font-family: 'Audiowide', sans-serif;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-.loading {
   text-align: center;
-  font-size: 1.2rem;
-  color: #8e2de2;
-  margin: 2rem 0;
-}
-
-.error {
-  background-color: rgba(255, 0, 0, 0.1);
-  border: 1px solid rgba(255, 0, 0, 0.3);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin: 1rem 0;
-  color: #ff3860;
-  text-align: center;
-}
-
-.retryButton {
-  background-color: #8e2de2;
-  color: white;
-  border: none;
-  border-radius: 0.25rem;
-  padding: 0.5rem 1rem;
-  margin-top: 1rem;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
-}
-
-.retryButton:hover {
-  background-color: #7928ca;
-}
-
-.results {
-  margin-top: 2rem;
 }
 
 .section {
-  margin-bottom: 3rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2.5rem;
 }
 
 .section h3 {
   font-size: 1.5rem;
-  margin-bottom: 1.5rem;
-  color: #8e2de2;
-  border-bottom: 1px solid rgba(142, 45, 226, 0.3);
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 0.5rem;
 }
 
-.genreList {
-  list-style: none;
-  padding: 0;
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
 }
 
-.genreItem {
+.optionCard {
+  background: linear-gradient(135deg, rgba(255, 42, 112, 0.1), rgba(0, 240, 255, 0.1));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.optionCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.optionCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.optionCard:hover::before {
+  opacity: 0.1;
+}
+
+.optionCard h4 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.optionCard p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  position: relative;
+  z-index: 1;
+}
+
+.loadingContainer {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--accent-secondary);
+  animation: spin 1s ease-in-out infinite;
   margin-bottom: 1rem;
 }
 
-.genreName {
-  width: 120px;
-  font-weight: bold;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.genreBar {
-  flex: 1;
-  height: 12px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  margin: 0 1rem;
-  overflow: hidden;
+.errorContainer {
+  text-align: center;
+  padding: 2rem;
 }
 
-.genreBarFill {
-  height: 100%;
-  background: linear-gradient(to right, #4a00e0, #8e2de2);
-  border-radius: 6px;
+.errorMessage {
+  color: #ff4d4d;
+  margin-bottom: 1rem;
 }
 
-.genreScore {
-  width: 50px;
-  text-align: right;
-  font-weight: bold;
+.retryButton {
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.attributesGrid {
+.retryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.noData {
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 2rem;
+}
+
+.resultsContainer {
+  padding: 2rem;
+}
+
+.resultDescription {
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.recommendationGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.attribute {
+.recommendationCard {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.recommendationCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.cardImage {
+  height: 150px;
+  background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+  opacity: 0.7;
+}
+
+.recommendationCard p {
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.eventsList {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 }
 
-.attributeName {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.attributeBar {
-  height: 8px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
-  overflow: hidden;
-}
-
-.attributeBarFill {
-  height: 100%;
-  background: linear-gradient(to right, #4a00e0, #8e2de2);
-  border-radius: 4px;
-}
-
-.attributeValue {
-  font-size: 0.9rem;
-  color: #8e2de2;
-  font-weight: bold;
-}
-
-.artistsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1.5rem;
-}
-
-.artistCard {
+.eventCard {
   background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 0.5rem;
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.3s ease;
 }
 
-.artistCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+.eventCard:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.artistImage {
-  width: 100%;
-  aspect-ratio: 1;
-  overflow: hidden;
+.eventCard h4 {
+  margin-bottom: 0.5rem;
 }
 
-.artistImage img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s;
+.backButton {
+  display: block;
+  margin: 2rem auto 0;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.artistCard:hover .artistImage img {
-  transform: scale(1.05);
+.backButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
-.artistName {
-  padding: 0.75rem;
-  font-weight: bold;
-  font-size: 1rem;
-  margin: 0;
-}
-
-.artistGenre {
-  padding: 0 0.75rem 0.75rem;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .optionsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  
+  .recommendationGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
 }
