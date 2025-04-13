@@ -1,0 +1,53 @@
+import React from 'react';
+import Link from 'next/link';
+import styles from '../styles/Home.module.css';
+
+export default function Home() {
+  return (
+    <div className={styles.container}>
+      <main className={styles.main}>
+        <h1 className={styles.title}>
+          Discover Your <span className={styles.highlight}>EDM</span> Experience
+        </h1>
+        
+        <p className={styles.description}>
+          Connect your music taste with the perfect events and discover new artists
+        </p>
+        
+        <div className={styles.grid}>
+          <Link href="/users/dashboard">
+            <div className={styles.card}>
+              <h2>Music Fan Dashboard &rarr;</h2>
+              <p>Access your personalized music recommendations and event matches.</p>
+            </div>
+          </Link>
+          
+          <Link href="https://sonar-edm-promoter.herokuapp.com">
+            <div className={styles.card}>
+              <h2>Promoter Dashboard &rarr;</h2>
+              <p>Analyze audience data and optimize your event promotions.</p>
+            </div>
+          </Link>
+          
+          <Link href="/auth/signin">
+            <div className={styles.card}>
+              <h2>Sign In &rarr;</h2>
+              <p>Connect with Spotify to get personalized recommendations.</p>
+            </div>
+          </Link>
+          
+          <a href="https://github.com/Sonar-glitch/sonar-edm-platform" className={styles.card} target="_blank" rel="noopener noreferrer">
+            <h2>Documentation &rarr;</h2>
+            <p>Learn more about the Sonar EDM Platform and its features.</p>
+          </a>
+        </div>
+      </main>
+      
+      <footer className={styles.footer}>
+        <a href="https://github.com/Sonar-glitch/sonar-edm-platform" target="_blank" rel="noopener noreferrer">
+          Powered by Sonar EDM Platform
+        </a>
+      </footer>
+    </div>
+  ) ;
+}

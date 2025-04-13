@@ -1,16 +1,16 @@
-import { SessionProvider } from 'next-auth/react';
 import '../styles/globals.css';
-import Header from '../components/Header';
+import { SessionProvider } from 'next-auth/react';
+import Head from 'next/head';
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
-  // Determine if we're in the user or promoter section based on the URL path
-  const isPromoter = 
-    typeof window !== 'undefined' && 
-    window.location.pathname.startsWith('/promoters');
-  
   return (
     <SessionProvider session={session}>
-      <Header type={isPromoter ? 'promoter' : 'user'} />
+      <Head>
+        <title>Sonar EDM Platform</title>
+        <meta name="description" content="Connect your music taste with the perfect events" />
+        <link rel="icon" href="/favicon.ico" />
+        <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet" />
+      </Head>
       <Component {...pageProps} />
     </SessionProvider>
   );

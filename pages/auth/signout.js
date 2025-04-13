@@ -1,35 +1,38 @@
-import { useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { signOut } from 'next-auth/react';
+import { signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
 import styles from '../../styles/SignOut.module.css';
+import Head from 'next/head';
 
 export default function SignOut() {
-  const router = useRouter();
+  const [timeLeft, setTimeLeft] = useState(5);
   
   useEffect(() => {
-    // Automatically sign out when this page loads
-    const signOutUser = async () => {
-      await signOut({ redirect: false });
-      // Redirect to home page after a brief delay
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
-    };
+    const timer = setTimeout(() => {
+      signOut({ callbackUrl: '/' });
+    }, 5000);
     
-    signOutUser();
-  }, [router]);
+    const interval = setInterval(() => {
+      setTimeLeft((prevTime) => prevTime - 1);
+    }, 1000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, []);
   
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.loadingSpinner}></div>
-        <h1 className={styles.title}>Signing Out...</h1>
-        <p className={styles.message}>Thank you for using Sonar EDM Platform</p>
-      </div>
+      <Head>
+        <title>Sign Out - Sonar EDM Platform</title>
+      </Head>
       
-      <div className={styles.background}>
-        <div className={styles.circle1}></div>
-        <div className={styles.circle2}></div>
+      <div className={styles.content}>
+        <h1 className={styles.title}>Signing you out...</h1>
+        <p className={styles.message}>
+          Thanks for using Sonar EDM Platform. You'll be redirected to the home page in {timeLeft} seconds.
+        </p>
+        <div className={styles.loader}></div>
       </div>
     </div>
   );
