@@ -1,240 +1,112 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import axios from 'axios';
-import styles from '../../styles/MusicTaste.module.css';
+import { useRouter } from 'next/router';
 import Navigation from '../../components/Navigation';
+import styles from '../../styles/MusicTaste.module.css';
 
-export default function MusicTaste() {
-  const { data: session } = useSession();
-  const [userTaste, setUserTaste] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function MusicTaste()  {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [tasteData, setTasteData] = useState(null);
   const [error, setError] = useState(null);
-  const [expandedSection, setExpandedSection] = useState(null);
 
+  // Redirect if not authenticated
   useEffect(() => {
-    const fetchUserTaste = async () => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+    }
+  }, [status, router]);
+
+  // Fetch music taste data
+  useEffect(() => {
+    const fetchTasteData = async () => {
+      if (status !== 'authenticated') return;
+
       try {
-        setLoading(true);
-        const response = await axios.get('/api/spotify/user-taste');
-        if (response.data.success) {
-          setUserTaste(response.data.data);
+        setIsLoading(true);
+        setError(null);
+        
+        console.log('Fetching music taste data...');
+        const response = await fetch('/api/spotify/user-taste');
+        const data = await response.json();
+        
+        if (data.success) {
+          console.log('Successfully fetched music taste data');
+          setTasteData(data.taste);
         } else {
-          setError(response.data.error || 'Failed to fetch music taste data');
+          console.error('Error in API response:', data.error);
+          setError(data.error || 'Failed to load music taste data');
         }
-      } catch (err) {
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching music taste data:', error);
         setError('Error fetching music taste data');
-        console.error(err);
-      } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
+    
+    fetchTasteData();
+  }, [status]);
 
-    if (session) {
-      fetchUserTaste();
-    }
-  }, [session]);
-
-  const toggleSection = (section) => {
-    if (expandedSection === section) {
-      setExpandedSection(null);
-    } else {
-      setExpandedSection(section);
-    }
-  };
-
-  if (!session) {
+  // Loading state
+  if (status === 'loading' || isLoading) {
     return (
       <div className={styles.container}>
         <Navigation activePage="music-taste" />
-        <div className={styles.notAuthenticated}>
-          <h1>Please sign in to view your music taste</h1>
+        <div className={styles.loadingContainer}>
+          <div className={styles.loadingSpinner}></div>
+          <p>Loading your music taste profile...</p>
         </div>
       </div>
     );
   }
 
-  if (loading) {
-    return (
-      <div className={styles.container}>
-        <Navigation activePage="music-taste" />
-        <div className={styles.loading}>
-          <h1>Loading your music taste...</h1>
-        </div>
-      </div>
-    );
-  }
-
+  // Error state
   if (error) {
     return (
       <div className={styles.container}>
         <Navigation activePage="music-taste" />
-        <div className={styles.error}>
+        <div className={styles.errorContainer}>
           <h1>Error loading music taste</h1>
           <p>{error}</p>
+          <button 
+            className={styles.retryButton}
+            onClick={() => {
+              setIsLoading(true);
+              setError(null);
+              fetch('/api/spotify/user-taste')
+                .then(res => res.json())
+                .then(data => {
+                  if (data.success) {
+                    setTasteData(data.taste);
+                  } else {
+                    setError(data.error || 'Failed to load music taste data');
+                  }
+                  setIsLoading(false);
+                })
+                .catch(err => {
+                  console.error('Error fetching music taste data:', err);
+                  setError('Error fetching music taste data');
+                  setIsLoading(false);
+                });
+            }}
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
   }
 
-  if (!userTaste) {
-    return (
-      <div className={styles.container}>
-        <Navigation activePage="music-taste" />
-        <div className={styles.noData}>
-          <h1>No music taste data available</h1>
-          <p>We couldn't find any music taste data for your account. Try listening to more music on Spotify.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const { topGenres, topArtists, topTracks, tasteBadge, description } = userTaste;
-
+  // Render placeholder content until we implement the full page
   return (
     <div className={styles.container}>
       <Navigation activePage="music-taste" />
-      
-      <div className={styles.header}>
-        <h1>Your <span className={styles.musicDna}>Music DNA</span></h1>
-        <div className={styles.tasteBadge}>
-          <span>{tasteBadge}</span>
-        </div>
-      </div>
-
-      <div className={styles.spiderChartContainer}>
-        <div className={styles.spiderChart}>
-          {/* Spider chart visualization */}
-          {/* This is preserved from your original implementation */}
-        </div>
-        <p className={styles.description}>{description}</p>
-        
-        <div className={styles.statsContainer}>
-          <div className={styles.statBox} onClick={() => toggleSection('genres')}>
-            <h2>{topGenres.length}</h2>
-            <p>Top Genres</p>
-          </div>
-          
-          <div className={styles.statBox} onClick={() => toggleSection('artists')}>
-            <h2>{topArtists.length}</h2>
-            <p>Top Artists</p>
-          </div>
-          
-          <div className={styles.statBox} onClick={() => toggleSection('tracks')}>
-            <h2>{topTracks.length}</h2>
-            <p>Top Tracks</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Expanded Sections */}
-      {expandedSection === 'genres' && (
-        <div className={styles.expandedSection}>
-          <h2>Your Top Genres</h2>
-          <div className={styles.genreList}>
-            {topGenres.map((genre, index) => (
-              <div key={index} className={styles.genreItem}>
-                <span className={styles.genreName}>{genre.name}</span>
-                <div className={styles.genreBar} style={{ width: `${genre.score * 100}%` }}></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {expandedSection === 'artists' && (
-        <div className={styles.expandedSection}>
-          <h2>Your Top Artists</h2>
-          <div className={styles.artistGrid}>
-            {topArtists.map((artist, index) => (
-              <div key={index} className={styles.artistCard}>
-                {artist.image && (
-                  <div className={styles.artistImage}>
-                    <img src={artist.image} alt={artist.name} />
-                  </div>
-                )}
-                <div className={styles.artistInfo}>
-                  <h3>{artist.name}</h3>
-                  <p>{artist.genres.join(', ')}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {expandedSection === 'tracks' && (
-        <div className={styles.expandedSection}>
-          <h2>Your Top Tracks</h2>
-          <div className={styles.trackList}>
-            {topTracks.map((track, index) => (
-              <div key={index} className={styles.trackItem}>
-                {track.album.images && track.album.images[0] && (
-                  <div className={styles.trackImage}>
-                    <img src={track.album.images[0].url} alt={track.name} />
-                  </div>
-                )}
-                <div className={styles.trackInfo}>
-                  <h3>{track.name}</h3>
-                  <p>{track.artists.map(a => a.name).join(', ')}</p>
-                  <p className={styles.albumName}>{track.album.name}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className={styles.eventsSection}>
-        <h2>Upcoming Events For You</h2>
-        {/* Events section preserved from your original implementation */}
-      </div>
-
-      <div className={styles.artistsSection}>
-        <h2>Top Artists</h2>
-        <div className={styles.artistsGrid}>
-          {topArtists.slice(0, 6).map((artist, index) => (
-            <div key={index} className={styles.artistCard}>
-              {artist.image && (
-                <div className={styles.artistImage}>
-                  <img src={artist.image} alt={artist.name} />
-                </div>
-              )}
-              <h3>{artist.name}</h3>
-            </div>
-          ))}
-        </div>
-        <button 
-          className={styles.viewAllButton}
-          onClick={() => toggleSection('artists')}
-        >
-          View All Artists
-        </button>
-      </div>
-
-      <div className={styles.tracksSection}>
-        <h2>Top Tracks</h2>
-        <div className={styles.tracksList}>
-          {topTracks.slice(0, 5).map((track, index) => (
-            <div key={index} className={styles.trackItem}>
-              {track.album.images && track.album.images[0] && (
-                <div className={styles.trackImage}>
-                  <img src={track.album.images[0].url} alt={track.name} />
-                </div>
-              )}
-              <div className={styles.trackInfo}>
-                <h3>{track.name}</h3>
-                <p>{track.artists.map(a => a.name).join(', ')}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <button 
-          className={styles.viewAllButton}
-          onClick={() => toggleSection('tracks')}
-        >
-          View All Tracks
-        </button>
-      </div>
+      <h1>Your Music Taste Profile</h1>
+      <p>Data loaded successfully! Full implementation coming soon.</p>
+      <pre>{JSON.stringify(tasteData, null, 2)}</pre>
     </div>
   );
 }
