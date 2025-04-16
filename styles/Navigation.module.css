@@ -275,7 +275,7 @@
   }
   
   /* Add padding to body to account for fixed navigation */
-  :global(body) {
+  .navigation + :global(*) {
     padding-bottom: 70px;
   }
 }
