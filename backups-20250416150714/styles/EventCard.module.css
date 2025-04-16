@@ -1,0 +1,180 @@
+.eventCard {
+  background-color: rgba(30, 30, 40, 0.7);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transform: skewX(-2deg);
+  transform-origin: top left;
+}
+
+.eventCard:hover {
+  transform: skewX(-2deg) translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.eventImageContainer {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+}
+
+.eventImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.eventCard:hover .eventImage {
+  transform: scale(1.05);
+}
+
+.placeholderImage {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #8a2be2, #ff6b6b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.eventDate {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(90deg, rgba(138, 43, 226, 0.9), rgba(255, 107, 107, 0.7));
+  padding: 6px 12px;
+  color: white;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transform: skewX(4deg);
+  transform-origin: bottom left;
+}
+
+.eventContent {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  transform: skewX(2deg);
+}
+
+.eventName {
+  margin: 0 0 12px 0;
+  font-size: 1.2rem;
+  color: white;
+  line-height: 1.3;
+  position: relative;
+  display: inline-block;
+}
+
+.eventName::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #ff6b6b, transparent);
+}
+
+.eventDetails {
+  margin-bottom: 12px;
+}
+
+.eventDetail {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.detailIcon {
+  margin-right: 8px;
+  font-size: 1rem;
+}
+
+.eventGenres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.genreTag {
+  background: rgba(138, 43, 226, 0.2);
+  border: 1px solid rgba(138, 43, 226, 0.4);
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.eventActions {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.ticketButton, .detailsButton {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.ticketButton {
+  background: linear-gradient(90deg, #8a2be2, #ff6b6b);
+  color: white;
+  flex: 1.5;
+}
+
+.detailsButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex: 1;
+}
+
+.ticketButton:hover, .detailsButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .eventImageContainer {
+    height: 140px;
+  }
+  
+  .eventName {
+    font-size: 1.1rem;
+  }
+  
+  .eventDetail {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .eventActions {
+    flex-direction: column;
+  }
+  
+  .ticketButton, .detailsButton {
+    width: 100%;
+  }
+}

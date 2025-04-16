@@ -1,0 +1,141 @@
+.correlationIndicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.correlationBadge {
+  background: linear-gradient(135deg, rgba(30, 30, 40, 0.9), rgba(20, 20, 30, 0.9));
+  border-radius: 12px;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  position: relative;
+  transform: skewX(-5deg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.correlationScore {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.correlationLabel {
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.correlationBars {
+  display: flex;
+  gap: 3px;
+  height: 4px;
+  width: 100%;
+  max-width: 60px;
+}
+
+.correlationBar {
+  height: 100%;
+  flex: 1;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.bar1 {
+  animation: pulse 2s infinite alternate;
+}
+
+.bar2 {
+  animation: pulse 2s infinite alternate 0.5s;
+}
+
+.bar3 {
+  animation: pulse 2s infinite alternate 1s;
+}
+
+.inactive {
+  opacity: 0.3;
+  animation: none;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* High correlation styling */
+.high .correlationBadge {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.9), rgba(255, 107, 107, 0.9));
+}
+
+.high .correlationScore {
+  color: white;
+}
+
+.high .correlationLabel {
+  color: #ff6b6b;
+}
+
+.high .correlationBar {
+  background-color: #ff6b6b;
+}
+
+/* Medium correlation styling */
+.medium .correlationBadge {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.9), rgba(255, 107, 107, 0.7));
+}
+
+.medium .correlationScore {
+  color: white;
+}
+
+.medium .correlationLabel {
+  color: #ffc107;
+}
+
+.medium .correlationBar {
+  background-color: #ffc107;
+}
+
+/* Low correlation styling */
+.low .correlationBadge {
+  background: linear-gradient(135deg, rgba(100, 100, 150, 0.9), rgba(70, 70, 100, 0.7));
+}
+
+.low .correlationScore {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.low .correlationLabel {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.low .correlationBar {
+  background-color: rgba(100, 100, 150, 0.7);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .correlationBadge {
+    padding: 3px 8px;
+  }
+  
+  .correlationScore {
+    font-size: 0.8rem;
+  }
+  
+  .correlationLabel {
+    font-size: 0.7rem;
+  }
+}

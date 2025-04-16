@@ -8,6 +8,8 @@ import ArtistCard from '../../components/ArtistCard';
 import TrackCard from '../../components/TrackCard';
 import SeasonalMoodCard from '../../components/SeasonalMoodCard';
 import EventCard from '../../components/EventCard';
+import VibeQuizCard from '../../components/VibeQuizCard';
+import EventsNavigationCard from '../../components/EventsNavigationCard';
 
 export default function MusicTaste() {
   const { data: session } = useSession();
@@ -16,6 +18,8 @@ export default function MusicTaste() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [activeSection, setActiveSection] = useState(null);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
 
   // Fetch music taste data
   useEffect(() => {
@@ -86,6 +90,70 @@ export default function MusicTaste() {
     }
   }, [tasteData]);
 
+  // Handle scroll events for section highlighting and scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show/hide scroll to top button
+      if (window.scrollY > 300) {
+        setShowScrollToTop(true);
+      } else {
+        setShowScrollToTop(false);
+      }
+      
+      // Determine active section based on scroll position
+      const sections = document.querySelectorAll('section[id]');
+      let currentSection = null;
+      
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop - 100;
+        const sectionHeight = section.offsetHeight;
+        
+        if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
+          currentSection = section.id;
+        }
+      });
+      
+      setActiveSection(currentSection);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Handle taste update from Vibe Quiz
+  const handleTasteUpdate = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/spotify/user-taste');
+      if (response.data.success) {
+        setTasteData(response.data.taste);
+      }
+    } catch (err) {
+      console.error('Error updating taste data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Scroll to section
+  const scrollToSection = (sectionId) => {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      window.scrollTo({
+        top: section.offsetTop - 80,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Scroll to top
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -137,8 +205,42 @@ export default function MusicTaste() {
         </div>
       </div>
       
+      {/* Quick Navigation for Mobile */}
+      <div className={styles.quickNav}>
+        <button 
+          className={`${styles.quickNavButton} ${activeSection === 'genre-affinity' ? styles.active : ''}`}
+          onClick={() => scrollToSection('genre-affinity')}
+        >
+          Genres
+        </button>
+        <button 
+          className={`${styles.quickNavButton} ${activeSection === 'top-artists' ? styles.active : ''}`}
+          onClick={() => scrollToSection('top-artists')}
+        >
+          Artists
+        </button>
+        <button 
+          className={`${styles.quickNavButton} ${activeSection === 'top-tracks' ? styles.active : ''}`}
+          onClick={() => scrollToSection('top-tracks')}
+        >
+          Tracks
+        </button>
+        <button 
+          className={`${styles.quickNavButton} ${activeSection === 'seasonal-mood' ? styles.active : ''}`}
+          onClick={() => scrollToSection('seasonal-mood')}
+        >
+          Seasons
+        </button>
+        <button 
+          className={`${styles.quickNavButton} ${activeSection === 'discover-events' ? styles.active : ''}`}
+          onClick={() => scrollToSection('discover-events')}
+        >
+          Events
+        </button>
+      </div>
+      
       {/* Spider Chart Section */}
-      <section className={styles.section}>
+      <section id="genre-affinity" className={styles.section}>
         <h2 className={styles.sectionTitle}>Your Genre Affinity</h2>
         <div className={styles.spiderChartContainer}>
           {tasteData.topGenres && tasteData.topGenres.length > 0 ? (
@@ -155,8 +257,11 @@ export default function MusicTaste() {
         <p className={styles.personalityText}>{tasteData.tasteProfile}</p>
       </section>
       
+      {/* Vibe Quiz Card */}
+      <VibeQuizCard onTasteUpdate={handleTasteUpdate} />
+      
       {/* Top Artists Section */}
-      <section className={styles.section}>
+      <section id="top-artists" className={styles.section}>
         <h2 className={styles.sectionTitle}>Top Artists</h2>
         <div className={styles.artistsGrid}>
           {tasteData.topArtists && tasteData.topArtists.length > 0 ? (
@@ -170,7 +275,7 @@ export default function MusicTaste() {
       </section>
       
       {/* Top Tracks Section */}
-      <section className={styles.section}>
+      <section id="top-tracks" className={styles.section}>
         <h2 className={styles.sectionTitle}>Top Tracks</h2>
         <div className={styles.tracksGrid}>
           {tasteData.topTracks && tasteData.topTracks.length > 0 ? (
@@ -184,7 +289,7 @@ export default function MusicTaste() {
       </section>
       
       {/* Seasonal Mood Section */}
-      <section className={styles.section}>
+      <section id="seasonal-mood" className={styles.section}>
         <h2 className={styles.sectionTitle}>Seasonal Music Mood</h2>
         <div className={styles.seasonalMoodGrid}>
           {tasteData.seasonalMood && Object.keys(tasteData.seasonalMood).length > 0 ? (
@@ -197,8 +302,11 @@ export default function MusicTaste() {
         </div>
       </section>
       
+      {/* Events Navigation Card */}
+      <EventsNavigationCard correlatedEvents={correlatedEvents} userTaste={tasteData} />
+      
       {/* Discover Events Section */}
-      <section className={styles.section}>
+      <section id="discover-events" className={styles.section}>
         <h2 className={styles.sectionTitle}>Discover Events Based on Your Taste</h2>
         {userLocation && (
           <p className={styles.locationText}>
@@ -207,7 +315,7 @@ export default function MusicTaste() {
         )}
         <div className={styles.eventsGrid}>
           {correlatedEvents && correlatedEvents.length > 0 ? (
-            correlatedEvents.map((event, index) => (
+            correlatedEvents.slice(0, 3).map((event, index) => (
               <EventCard key={index} event={event} />
             ))
           ) : (
@@ -215,6 +323,13 @@ export default function MusicTaste() {
           )}
         </div>
       </section>
+      
+      {/* Scroll to top button */}
+      {showScrollToTop && (
+        <button className={styles.scrollToTopButton} onClick={scrollToTop}>
+          ↑
+        </button>
+      )}
       
       <footer className={styles.footer}>
         <p>© {new Date().getFullYear()} Sonar EDM Platform. All rights reserved.</p>

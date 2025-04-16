@@ -1,199 +1,186 @@
-// This file contains the implementation for integrating Ticketmaster API with correlation indicators
-// Path: pages/api/events/correlated-events.js
-
 import { getSession } from 'next-auth/react';
 import axios from 'axios';
 
 export default async function handler(req, res) {
-  const session = await getSession({ req });
-  
-  if (!session) {
-    return res.status(401).json({ success: false, error: 'Not authenticated' });
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
-  
+
   try {
-    // Get user's location from query or use default
-    const { lat, lon } = req.query;
+    const session = await getSession({ req });
     
-    // Get user's music taste data to correlate with events
-    const tasteResponse = await axios.get(
-      `${process.env.NEXTAUTH_URL}/api/spotify/user-taste`,
+    if (!session) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    
+    // Get user location from query params or use IP geolocation
+    let userLocation = null;
+    if (req.query.lat && req.query.lon) {
+      userLocation = {
+        latitude: parseFloat(req.query.lat),
+        longitude: parseFloat(req.query.lon)
+      };
+    } else {
+      // Fallback to IP geolocation
+      try {
+        const geoResponse = await axios.get('https://ipapi.co/json/');
+        userLocation = {
+          latitude: geoResponse.data.latitude,
+          longitude: geoResponse.data.longitude,
+          city: geoResponse.data.city,
+          region: geoResponse.data.region
+        };
+      } catch (geoError) {
+        console.warn('Could not determine user location:', geoError);
+      }
+    }
+    
+    // Fetch user's music taste data
+    // In a production environment, you would fetch this from your database
+    // For this example, we'll use mock data
+    const userTaste = {
+      topGenres: [
+        { name: 'Melodic House', weight: 0.9 },
+        { name: 'Techno', weight: 0.8 },
+        { name: 'Progressive House', weight: 0.7 },
+        { name: 'Trance', weight: 0.6 },
+        { name: 'Deep House', weight: 0.5 }
+      ],
+      topArtists: [
+        { name: 'Max Styler', weight: 0.9 },
+        { name: 'ARTBAT', weight: 0.85 },
+        { name: 'Lane 8', weight: 0.8 },
+        { name: 'Boris Brejcha', weight: 0.75 },
+        { name: 'Nora En Pure', weight: 0.7 }
+      ]
+    };
+    
+    // Fetch events from your event sources
+    // In a production environment, you would fetch this from your database or APIs
+    // For this example, we'll use mock data
+    const mockEvents = [
       {
-        headers: {
-          cookie: req.headers.cookie
+        id: 'evt1',
+        name: 'Melodic Nights',
+        date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        venue: 'Echostage',
+        genres: ['Melodic House', 'Progressive House'],
+        artists: ['Lane 8', 'Yotto'],
+        image: 'https://example.com/event1.jpg',
+        ticketUrl: 'https://example.com/tickets/1',
+        location: {
+          latitude: userLocation ? userLocation.latitude + 0.02 : 0,
+          longitude: userLocation ? userLocation.longitude - 0.01 : 0
+        }
+      },
+      {
+        id: 'evt2',
+        name: 'Techno Revolution',
+        date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        venue: 'Club Space',
+        genres: ['Techno', 'Dark Techno'],
+        artists: ['Boris Brejcha', 'ANNA'],
+        image: 'https://example.com/event2.jpg',
+        ticketUrl: 'https://example.com/tickets/2',
+        location: {
+          latitude: userLocation ? userLocation.latitude - 0.03 : 0,
+          longitude: userLocation ? userLocation.longitude + 0.02 : 0
+        }
+      },
+      {
+        id: 'evt3',
+        name: 'Deep Vibes',
+        date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        venue: 'Sound Bar',
+        genres: ['Deep House', 'Organic House'],
+        artists: ['Nora En Pure', 'Ben Böhmer'],
+        image: 'https://example.com/event3.jpg',
+        ticketUrl: 'https://example.com/tickets/3',
+        location: {
+          latitude: userLocation ? userLocation.latitude + 0.01 : 0,
+          longitude: userLocation ? userLocation.longitude + 0.01 : 0
+        }
+      },
+      {
+        id: 'evt4',
+        name: 'Trance Journey',
+        date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+        venue: 'Avalon',
+        genres: ['Trance', 'Progressive Trance'],
+        artists: ['Above & Beyond', 'Armin van Buuren'],
+        image: 'https://example.com/event4.jpg',
+        ticketUrl: 'https://example.com/tickets/4',
+        location: {
+          latitude: userLocation ? userLocation.latitude - 0.02 : 0,
+          longitude: userLocation ? userLocation.longitude - 0.02 : 0
+        }
+      },
+      {
+        id: 'evt5',
+        name: 'House Classics',
+        date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+        venue: 'Ministry of Sound',
+        genres: ['House', 'Tech House'],
+        artists: ['CamelPhat', 'Solardo'],
+        image: 'https://example.com/event5.jpg',
+        ticketUrl: 'https://example.com/tickets/5',
+        location: {
+          latitude: userLocation ? userLocation.latitude + 0.04 : 0,
+          longitude: userLocation ? userLocation.longitude - 0.03 : 0
         }
       }
-    );
+    ];
     
-    const tasteData = tasteResponse.data.taste;
-    
-    if (!tasteData) {
-      return res.status(400).json({ success: false, error: 'Unable to fetch user taste data for correlation' });
-    }
-    
-    // Extract genres and artists for correlation
-    const userGenres = tasteData.topGenres.map(genre => genre.label.toLowerCase());
-    const userArtists = tasteData.topArtists.map(artist => artist.name.toLowerCase());
-    
-    // Get user location using ipapi if not provided
-    let userLocation;
-    if (!lat || !lon) {
-      try {
-        const locationResponse = await axios.get('https://ipapi.co/json/');
-        userLocation = {
-          latitude: locationResponse.data.latitude,
-          longitude: locationResponse.data.longitude,
-          city: locationResponse.data.city,
-          region: locationResponse.data.region,
-          country: locationResponse.data.country_name
-        };
-      } catch (error) {
-        console.error('Error fetching user location:', error);
-        userLocation = {
-          latitude: 40.7128, // Default to NYC
-          longitude: -74.0060,
-          city: 'New York',
-          region: 'NY',
-          country: 'United States'
-        };
-      }
-    } else {
-      userLocation = {
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lon)
-      };
-    }
-    
-    // Fetch events from Ticketmaster API
-    const ticketmasterApiKey = process.env.TICKETMASTER_API_KEY;
-    const radius = 100; // miles
-    const size = 50; // number of events to fetch
-    
-    const ticketmasterUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${ticketmasterApiKey}&latlong=${userLocation.latitude},${userLocation.longitude}&radius=${radius}&size=${size}&classificationName=music&sort=date,asc`;
-    
-    let ticketmasterEvents = [];
-    try {
-      const ticketmasterResponse = await axios.get(ticketmasterUrl);
+    // Calculate correlation scores for each event
+    const correlatedEvents = mockEvents.map(event => {
+      // Calculate genre match
+      const genreMatch = event.genres.reduce((score, genre) => {
+        const matchingGenre = userTaste.topGenres.find(g => g.name.toLowerCase() === genre.toLowerCase());
+        return score + (matchingGenre ? matchingGenre.weight * 50 : 0);
+      }, 0) / event.genres.length;
       
-      if (ticketmasterResponse.data._embedded && ticketmasterResponse.data._embedded.events) {
-        ticketmasterEvents = ticketmasterResponse.data._embedded.events.map(event => {
-          // Extract event details
-          const eventName = event.name;
-          const venue = event._embedded?.venues?.[0]?.name || 'Unknown Venue';
-          const city = event._embedded?.venues?.[0]?.city?.name || 'Unknown City';
-          const state = event._embedded?.venues?.[0]?.state?.stateCode || '';
-          const date = event.dates?.start?.localDate || '';
-          const time = event.dates?.start?.localTime || '';
-          const image = event.images?.find(img => img.ratio === '16_9' && img.width > 500)?.url || 
-                       (event.images && event.images.length > 0 ? event.images[0].url : null);
-          const url = event.url;
-          const genres = event.classifications?.map(c => 
-            [c.segment?.name, c.genre?.name, c.subGenre?.name].filter(Boolean).map(g => g.toLowerCase())
-          ).flat().filter(Boolean) || [];
-          
-          // Calculate venue coordinates for distance calculation
-          const venueLocation = {
-            latitude: parseFloat(event._embedded?.venues?.[0]?.location?.latitude || 0),
-            longitude: parseFloat(event._embedded?.venues?.[0]?.location?.longitude || 0)
-          };
-          
-          // Calculate distance using Haversine formula
-          const distance = calculateDistance(
-            userLocation.latitude, 
-            userLocation.longitude,
-            venueLocation.latitude,
-            venueLocation.longitude
-          );
-          
-          // Calculate correlation with user's music taste
-          const correlation = calculateCorrelation(eventName, genres, userGenres, userArtists);
-          
-          return {
-            source: 'ticketmaster',
-            id: event.id,
-            name: eventName,
-            venue,
-            location: `${city}, ${state}`,
-            date,
-            time,
-            image,
-            url,
-            distance: Math.round(distance),
-            genres,
-            correlation
-          };
-        });
+      // Calculate artist match
+      const artistMatch = event.artists.reduce((score, artist) => {
+        const matchingArtist = userTaste.topArtists.find(a => a.name.toLowerCase() === artist.toLowerCase());
+        return score + (matchingArtist ? matchingArtist.weight * 50 : 0);
+      }, 0) / event.artists.length;
+      
+      // Calculate distance if location is available
+      let distance = null;
+      if (userLocation && event.location) {
+        // Haversine formula to calculate distance
+        const R = 3958.8; // Earth radius in miles
+        const dLat = (event.location.latitude - userLocation.latitude) * Math.PI / 180;
+        const dLon = (event.location.longitude - userLocation.longitude) * Math.PI / 180;
+        const a = 
+          Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(userLocation.latitude * Math.PI / 180) * Math.cos(event.location.latitude * Math.PI / 180) * 
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        distance = R * c;
       }
-    } catch (error) {
-      console.error('Ticketmaster API error:', error.response?.data || error.message);
-      // Continue with empty ticketmaster events
-    }
+      
+      // Calculate overall correlation score (0-100)
+      const correlationScore = Math.min(100, Math.round(genreMatch + artistMatch));
+      
+      return {
+        ...event,
+        correlationScore,
+        distance
+      };
+    });
     
-    // Combine and sort events by correlation
-    const allEvents = [...ticketmasterEvents]
-      .filter(event => event.correlation > 0) // Only include events with some correlation
-      .sort((a, b) => b.correlation - a.correlation); // Sort by correlation (highest first)
+    // Sort by correlation score (highest first)
+    correlatedEvents.sort((a, b) => b.correlationScore - a.correlationScore);
     
     return res.status(200).json({ 
       success: true, 
-      events: allEvents,
+      events: correlatedEvents,
       userLocation
     });
     
   } catch (error) {
-    console.error('Error fetching correlated events:', error.response?.data || error.message);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch correlated events',
-      details: error.response?.data || error.message
-    });
+    console.error('Error fetching correlated events:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
-}
-
-// Calculate distance between two points using Haversine formula
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return 999; // Return large distance if coordinates missing
-  
-  const R = 3958.8; // Earth's radius in miles
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const distance = R * c;
-  
-  return distance;
-}
-
-function toRadians(degrees) {
-  return degrees * (Math.PI/180);
-}
-
-// Calculate correlation between event and user's music taste
-function calculateCorrelation(eventName, eventGenres, userGenres, userArtists) {
-  let score = 0;
-  const eventNameLower = eventName.toLowerCase();
-  
-  // Check if any user artists appear in the event name
-  userArtists.forEach((artist, index) => {
-    if (eventNameLower.includes(artist)) {
-      // Higher ranked artists get higher scores
-      score += 100 - (index * 5);
-    }
-  });
-  
-  // Check for genre matches
-  eventGenres.forEach(eventGenre => {
-    userGenres.forEach((userGenre, index) => {
-      if (eventGenre.includes(userGenre) || userGenre.includes(eventGenre)) {
-        // Higher ranked genres get higher scores
-        score += 50 - (index * 5);
-      }
-    });
-  });
-  
-  // Normalize score to 0-100 range
-  return Math.min(100, score);
 }

@@ -1,0 +1,219 @@
+.navigationCard {
+  background-color: rgba(30, 30, 40, 0.7);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  margin-top: 20px;
+  margin-bottom: 40px;
+  position: relative;
+  transform: skewX(-2deg);
+  transform-origin: top left;
+  border-left: 4px solid #8a2be2;
+}
+
+.navigationCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), transparent 70%);
+  z-index: 0;
+}
+
+.cardContent {
+  padding: 24px;
+  position: relative;
+  z-index: 1;
+  transform: skewX(2deg);
+}
+
+.cardTitle {
+  font-size: 1.4rem;
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #ff6b6b;
+  position: relative;
+  display: inline-block;
+}
+
+.cardTitle::after {
+  content: '★';
+  position: absolute;
+  right: -24px;
+  top: 0;
+  color: #8a2be2;
+}
+
+.matchSummary {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: rgba(20, 20, 30, 0.5);
+  border-radius: 8px;
+}
+
+.matchCount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.countNumber {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+  background: linear-gradient(90deg, #ff6b6b, #8a2be2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.countLabel {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.noEventsMessage {
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  font-style: italic;
+  margin: 0;
+  padding: 10px 0;
+}
+
+.genreTags {
+  margin-bottom: 24px;
+}
+
+.tagsLabel {
+  display: block;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.genreTag {
+  background: rgba(138, 43, 226, 0.2);
+  border: 1px solid rgba(138, 43, 226, 0.4);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.actionButtons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.primaryButton, .secondaryButton {
+  padding: 12px 20px;
+  border-radius: 24px;
+  font-size: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.primaryButton {
+  background: linear-gradient(90deg, #8a2be2, #ff6b6b);
+  color: white;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.primaryButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.6s ease;
+}
+
+.primaryButton:hover::before {
+  left: 100%;
+}
+
+.secondaryButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.primaryButton:hover, .secondaryButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.buttonIcon {
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+.decorativeLine {
+  height: 3px;
+  background: linear-gradient(90deg, #8a2be2, transparent);
+  width: 100px;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .cardTitle {
+    font-size: 1.3rem;
+  }
+  
+  .countNumber {
+    font-size: 1.6rem;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .primaryButton, .secondaryButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .cardContent {
+    padding: 16px;
+  }
+  
+  .matchSummary {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .cardTitle {
+    font-size: 1.2rem;
+  }
+  
+  .cardTitle::after {
+    right: -20px;
+  }
+}

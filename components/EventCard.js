@@ -1,73 +1,92 @@
+import React from 'react';
+import Link from 'next/link';
 import styles from '../styles/EventCard.module.css';
+import EventCorrelationIndicator from './EventCorrelationIndicator';
 
-const EventCard = ({ event }) => {
-  // Function to determine correlation strength class
-  const getCorrelationClass = (correlation) => {
-    if (correlation >= 80) return styles.highCorrelation;
-    if (correlation >= 50) return styles.mediumCorrelation;
-    return styles.lowCorrelation;
+export default function EventCard({ event }) {
+  // Format date
+  const formatDate = (dateString) => {
+    const options = { weekday: 'short', month: 'short', day: 'numeric' };
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', options);
   };
-  
-  // Function to get correlation text
-  const getCorrelationText = (correlation) => {
-    if (correlation >= 80) return 'Strong Match';
-    if (correlation >= 50) return 'Good Match';
-    return 'Moderate Match';
+
+  // Format time
+  const formatTime = (dateString) => {
+    const options = { hour: 'numeric', minute: '2-digit' };
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', options);
   };
 
   return (
     <div className={styles.eventCard}>
-      {/* Correlation indicator */}
-      <div className={`${styles.correlationBadge} ${getCorrelationClass(event.correlation)}`}>
-        {event.correlation}%
+      <div className={styles.eventImageContainer}>
+        {event.image ? (
+          <img 
+            src={event.image} 
+            alt={event.name} 
+            className={styles.eventImage} 
+          />
+        ) : (
+          <div className={styles.placeholderImage}>
+            <span>EDM</span>
+          </div>
+        )}
+        <div className={styles.eventDate}>
+          <span className={styles.dateText}>{formatDate(event.date)}</span>
+        </div>
       </div>
       
-      {event.image && (
-        <div className={styles.eventImageContainer}>
-          <img src={event.image} alt={event.name} className={styles.eventImage} />
-          <div className={styles.eventOverlay}>
-            <span className={`${styles.correlationLabel} ${getCorrelationClass(event.correlation)}`}>
-              {getCorrelationText(event.correlation)}
-            </span>
-          </div>
-        </div>
-      )}
-      
-      <div className={styles.eventInfo}>
+      <div className={styles.eventContent}>
+        {/* Correlation indicator */}
+        {event.correlationScore && (
+          <EventCorrelationIndicator correlationScore={event.correlationScore} />
+        )}
+        
         <h3 className={styles.eventName}>{event.name}</h3>
+        
         <div className={styles.eventDetails}>
-          <p className={styles.eventVenue}>{event.venue}</p>
-          <p className={styles.eventLocation}>{event.location}</p>
-          <p className={styles.eventDateTime}>
-            {event.date} {event.time && `• ${formatTime(event.time)}`}
-          </p>
-          <p className={styles.eventDistance}>
-            <span className={styles.distanceIcon}>📍</span> {event.distance} miles away
-          </p>
+          <div className={styles.eventDetail}>
+            <span className={styles.detailIcon}>🕒</span>
+            <span className={styles.detailText}>{formatTime(event.date)}</span>
+          </div>
+          
+          <div className={styles.eventDetail}>
+            <span className={styles.detailIcon}>📍</span>
+            <span className={styles.detailText}>{event.venue}</span>
+          </div>
+          
+          {event.distance && (
+            <div className={styles.eventDetail}>
+              <span className={styles.detailIcon}>📏</span>
+              <span className={styles.detailText}>{Math.round(event.distance)} miles away</span>
+            </div>
+          )}
         </div>
-        <a 
-          href={event.url} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className={styles.eventButton}
-        >
-          Get Tickets
-        </a>
+        
+        <div className={styles.eventGenres}>
+          {event.genres && event.genres.map((genre, index) => (
+            <span key={index} className={styles.genreTag}>{genre}</span>
+          ))}
+        </div>
+        
+        <div className={styles.eventActions}>
+          {event.ticketUrl && (
+            <a 
+              href={event.ticketUrl} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className={styles.ticketButton}
+            >
+              Get Tickets
+            </a>
+          )}
+          
+          <Link href={`/events/${event.id}`}>
+            <a className={styles.detailsButton}>More Info</a>
+          </Link>
+        </div>
       </div>
     </div>
   );
-};
-
-// Helper function to format time from 24h to 12h format
-const formatTime = (time) => {
-  if (!time) return '';
-  
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours, 10);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  
-  return `${hour12}:${minutes} ${ampm}`;
-};
-
-export default EventCard;
+}

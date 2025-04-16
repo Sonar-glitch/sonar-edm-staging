@@ -1,228 +1,180 @@
-.artistCard {
-    background-color: rgba(20, 20, 30, 0.7);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 20px;
-    transform: skewX(-2deg);
+.eventCard {
+  background-color: rgba(30, 30, 40, 0.7);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transform: skewX(-2deg);
+  transform-origin: top left;
+}
+
+.eventCard:hover {
+  transform: skewX(-2deg) translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.eventImageContainer {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+}
+
+.eventImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.eventCard:hover .eventImage {
+  transform: scale(1.05);
+}
+
+.placeholderImage {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #8a2be2, #ff6b6b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.eventDate {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(90deg, rgba(138, 43, 226, 0.9), rgba(255, 107, 107, 0.7));
+  padding: 6px 12px;
+  color: white;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transform: skewX(4deg);
+  transform-origin: bottom left;
+}
+
+.eventContent {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  transform: skewX(2deg);
+}
+
+.eventName {
+  margin: 0 0 12px 0;
+  font-size: 1.2rem;
+  color: white;
+  line-height: 1.3;
+  position: relative;
+  display: inline-block;
+}
+
+.eventName::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #ff6b6b, transparent);
+}
+
+.eventDetails {
+  margin-bottom: 12px;
+}
+
+.eventDetail {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.detailIcon {
+  margin-right: 8px;
+  font-size: 1rem;
+}
+
+.eventGenres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.genreTag {
+  background: rgba(138, 43, 226, 0.2);
+  border: 1px solid rgba(138, 43, 226, 0.4);
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.eventActions {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.ticketButton, .detailsButton {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.ticketButton {
+  background: linear-gradient(90deg, #8a2be2, #ff6b6b);
+  color: white;
+  flex: 1.5;
+}
+
+.detailsButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex: 1;
+}
+
+.ticketButton:hover, .detailsButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .eventImageContainer {
+    height: 140px;
   }
   
-  .artistCard:hover {
-    transform: skewX(-2deg) translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    border-color: rgba(138, 43, 226, 0.4);
+  .eventName {
+    font-size: 1.1rem;
   }
   
-  .rankBadge {
-    position: absolute;
-    top: -10px;
-    left: -10px;
-    background: linear-gradient(135deg, #ff6b6b, #8a2be2);
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1.2rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    z-index: 2;
+  .eventDetail {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .eventActions {
+    flex-direction: column;
   }
   
-  .artistHeader {
-    display: flex;
-    align-items: center;
-    padding: 16px;
-    position: relative;
-    z-index: 1;
-  }
-  
-  .artistImageContainer {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-    margin-right: 16px;
-    border: 2px solid rgba(138, 43, 226, 0.6);
-    position: relative;
-  }
-  
-  .artistImage {
+  .ticketButton, .detailsButton {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
   }
-  
-  .artistInfo {
-    flex-grow: 1;
-  }
-  
-  .artistName {
-    margin: 0 0 4px 0;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #fff;
-  }
-  
-  .matchContainer {
-    margin-top: 8px;
-  }
-  
-  .matchLabel {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 4px;
-  }
-  
-  .matchBar {
-    height: 6px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  
-  .matchFill {
-    height: 100%;
-    background: linear-gradient(90deg, #ff6b6b, #8a2be2);
-    border-radius: 3px;
-  }
-  
-  .expandButton {
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.7);
-    cursor: pointer;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-  }
-  
-  .expandButton:hover {
-    color: rgba(255, 255, 255, 1);
-  }
-  
-  .expandIcon {
-    transition: transform 0.3s ease;
-  }
-  
-  .expandIcon.rotated {
-    transform: rotate(180deg);
-  }
-  
-  .similarArtistsContainer {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease, padding 0.3s ease;
-    background-color: rgba(10, 10, 15, 0.7);
-    padding: 0 16px;
-  }
-  
-  .similarArtistsContainer.visible {
-    max-height: 200px;
-    padding: 16px;
-  }
-  
-  .similarArtistsTitle {
-    margin: 0 0 8px 0;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
-    font-weight: 500;
-    position: relative;
-    padding-left: 15px;
-  }
-  
-  .similarArtistsTitle::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 8px;
-    height: 8px;
-    background: linear-gradient(135deg, #ff6b6b, #8a2be2);
-    border-radius: 50%;
-  }
-  
-  .similarArtistsList {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .similarArtistItem {
-    padding: 6px 0;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    align-items: center;
-  }
-  
-  .similarArtistItem:last-child {
-    border-bottom: none;
-  }
-  
-  .similarArtistItem::before {
-    content: "★";
-    color: rgba(138, 43, 226, 0.8);
-    margin-right: 8px;
-    font-size: 0.8rem;
-  }
-  
-  .noSimilarArtists {
-    color: rgba(255, 255, 255, 0.6);
-    font-style: italic;
-    font-size: 0.9rem;
-  }
-  
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .artistImageContainer {
-      width: 60px;
-      height: 60px;
-    }
-    
-    .artistName {
-      font-size: 1.1rem;
-    }
-    
-    .rankBadge {
-      width: 35px;
-      height: 35px;
-      font-size: 1rem;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .artistImageContainer {
-      width: 50px;
-      height: 50px;
-    }
-    
-    .artistName {
-      font-size: 1rem;
-    }
-    
-    .rankBadge {
-      width: 30px;
-      height: 30px;
-      font-size: 0.9rem;
-    }
-    
-    .artistHeader {
-      padding: 12px;
-    }
-  }
-  
+}

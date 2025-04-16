@@ -307,3 +307,211 @@
     margin-bottom: 40px;
   }
 }
+
+/* Mobile optimizations */
+.quickNav {
+  display: none;
+  background-color: rgba(20, 20, 30, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 30px;
+  padding: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 70px;
+  z-index: 90;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+.quickNav::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.quickNavButton {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 8px 16px;
+  margin: 0 4px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.quickNavButton:first-child {
+  margin-left: 0;
+}
+
+.quickNavButton:last-child {
+  margin-right: 0;
+}
+
+.quickNavButton:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.quickNavButton.active {
+  color: white;
+  background: linear-gradient(90deg, rgba(138, 43, 226, 0.3), rgba(255, 107, 107, 0.3));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.scrollToTopButton {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8a2be2, #ff6b6b);
+  color: white;
+  border: none;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  z-index: 99;
+  opacity: 0.8;
+}
+
+.scrollToTopButton:hover {
+  transform: translateY(-3px);
+  opacity: 1;
+}
+
+/* Show quick nav on mobile */
+@media (max-width: 768px) {
+  .quickNav {
+    display: flex;
+  }
+  
+  .section {
+    scroll-margin-top: 140px; /* Account for sticky header and quick nav */
+  }
+}
+
+@media (max-width: 480px) {
+  .quickNavButton {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .scrollToTopButton {
+    width: 36px;
+    height: 36px;
+    bottom: 15px;
+    right: 15px;
+  }
+}
+
+/* Mobile optimizations */
+.quickNav {
+  display: none;
+  background-color: rgba(20, 20, 30, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 30px;
+  padding: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 70px;
+  z-index: 90;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+.quickNav::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.quickNavButton {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 8px 16px;
+  margin: 0 4px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.quickNavButton:first-child {
+  margin-left: 0;
+}
+
+.quickNavButton:last-child {
+  margin-right: 0;
+}
+
+.quickNavButton:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.quickNavButton.active {
+  color: white;
+  background: linear-gradient(90deg, rgba(138, 43, 226, 0.3), rgba(255, 107, 107, 0.3));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.scrollToTopButton {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8a2be2, #ff6b6b);
+  color: white;
+  border: none;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  z-index: 99;
+  opacity: 0.8;
+}
+
+.scrollToTopButton:hover {
+  transform: translateY(-3px);
+  opacity: 1;
+}
+
+/* Show quick nav on mobile */
+@media (max-width: 768px) {
+  .quickNav {
+    display: flex;
+  }
+  
+  .section {
+    scroll-margin-top: 140px; /* Account for sticky header and quick nav */
+  }
+}
+
+@media (max-width: 480px) {
+  .quickNavButton {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .scrollToTopButton {
+    width: 36px;
+    height: 36px;
+    bottom: 15px;
+    right: 15px;
+  }
+}

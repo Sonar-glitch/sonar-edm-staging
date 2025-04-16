@@ -1,0 +1,212 @@
+.quizCard {
+  background-color: rgba(30, 30, 40, 0.7);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-left: 4px solid #ff6b6b;
+  transform: skewX(-2deg);
+  transform-origin: top left;
+}
+
+.expanded {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.quizHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(255, 107, 107, 0.2));
+  position: relative;
+  z-index: 1;
+}
+
+.quizHeader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(138, 43, 226, 0.1), transparent 70%);
+  z-index: -1;
+}
+
+.quizTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  color: white;
+  font-weight: 600;
+  transform: skewX(2deg);
+}
+
+.toggleIcon {
+  font-size: 1.5rem;
+  color: #ff6b6b;
+  transform: skewX(2deg);
+}
+
+.quizContent {
+  padding: 20px;
+  transform: skewX(2deg);
+}
+
+.quizDescription {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+}
+
+.questionContainer {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.questionText {
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+  color: white;
+  position: relative;
+  display: inline-block;
+}
+
+.questionText::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #ff6b6b, transparent);
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.optionButton {
+  background-color: rgba(30, 30, 40, 0.9);
+  border: 1px solid rgba(138, 43, 226, 0.4);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.optionButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), transparent 80%);
+  z-index: 0;
+}
+
+.optionButton:hover {
+  background-color: rgba(138, 43, 226, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.optionButton:active {
+  transform: translateY(0);
+}
+
+.optionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.progressIndicator {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.progressDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+}
+
+.progressDot.active {
+  background-color: #ff6b6b;
+  transform: scale(1.2);
+}
+
+.progressDot.completed {
+  background-color: #8a2be2;
+}
+
+.successMessage {
+  text-align: center;
+  padding: 20px 0;
+  animation: fadeIn 0.5s ease;
+}
+
+.successIcon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8a2be2, #ff6b6b);
+  color: white;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.resetButton {
+  background: linear-gradient(90deg, #8a2be2, #ff6b6b);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 16px;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .optionsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .quizTitle {
+    font-size: 1.1rem;
+  }
+  
+  .questionText {
+    font-size: 1rem;
+  }
+}
