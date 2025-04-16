@@ -1,18 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { signOut, useSession } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import styles from '../styles/Navigation.module.css';
 
 export default function Navigation({ activePage }) {
   const router = useRouter();
-  const { data: session } = useSession();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  
-  // Toggle profile menu
-  const toggleProfileMenu = () => {
-    setShowProfileMenu(!showProfileMenu);
-  };
   
   // Handle sign out
   const handleSignOut = async (e) => {
@@ -47,37 +40,17 @@ export default function Navigation({ activePage }) {
               <span className={styles.navText}>Events</span>
             </a>
           </Link>
+          
+          <a href="#" onClick={handleSignOut} className={styles.navLink}>
+            <span className={styles.navIcon}>🚪</span>
+            <span className={styles.navText}>Sign Out</span>
+          </a>
         </div>
         
         <div className={styles.userMenu}>
-          <div className={styles.userAvatar} onClick={toggleProfileMenu}>
-            <span>{session?.user?.name?.charAt(0) || 'S'}</span>
+          <div className={styles.userAvatar}>
+            <span>S</span>
           </div>
-          
-          {showProfileMenu && (
-            <div className={styles.profileMenu}>
-              <div className={styles.profileMenuHeader}>
-                <span className={styles.profileName}>{session?.user?.name || 'User'}</span>
-                <span className={styles.profileEmail}>{session?.user?.email || ''}</span>
-              </div>
-              <ul className={styles.profileMenuItems}>
-                <li className={styles.profileMenuItem}>
-                  <Link href="/users/profile">
-                    <a>Profile</a>
-                  </Link>
-                </li>
-                <li className={styles.profileMenuItem}>
-                  <Link href="/users/settings">
-                    <a>Settings</a>
-                  </Link>
-                </li>
-                <li className={styles.profileMenuDivider}></li>
-                <li className={styles.profileMenuItem}>
-                  <a href="#" onClick={handleSignOut}>Sign Out</a>
-                </li>
-              </ul>
-            </div>
-          )}
         </div>
       </div>
     </nav>

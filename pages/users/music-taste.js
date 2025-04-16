@@ -1,39 +1,48 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
-import styles from '../../styles/MusicTaste.module.css';
+import Head from 'next/head';
+import Link from 'next/link';
 import Navigation from '../../components/Navigation';
-import SpiderChart from '../../components/SpiderChart';
-import ArtistCard from '../../components/ArtistCard';
-import TrackCard from '../../components/TrackCard';
-import SeasonalMoodCard from '../../components/SeasonalMoodCard';
-import EventCard from '../../components/EventCard';
-import VibeQuizCard from '../../components/VibeQuizCard';
-import EventsNavigationCard from '../../components/EventsNavigationCard';
+import styles from '../../styles/MusicTaste.module.css';
+import { Radar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+// Register Chart.js components
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
+);
 
 export default function MusicTaste() {
-  const { data: session } = useSession();
-  const [tasteData, setTasteData] = useState(null);
-  const [correlatedEvents, setCorrelatedEvents] = useState([]);
+  const { data: session, status } = useSession();
+  const [musicTaste, setMusicTaste] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
-  const [activeSection, setActiveSection] = useState(null);
-  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [activeSection, setActiveSection] = useState('genres');
+  const [showVibeQuiz, setShowVibeQuiz] = useState(false);
 
-  // Fetch music taste data
   useEffect(() => {
-    const fetchTasteData = async () => {
+    const fetchMusicTaste = async () => {
       try {
         setLoading(true);
         const response = await axios.get('/api/spotify/user-taste');
-        if (response.data.success) {
-          setTasteData(response.data.taste);
-        } else {
-          setError('Failed to load music taste data');
-        }
+        setMusicTaste(response.data);
+        setError(null);
       } catch (err) {
-        console.error('Error fetching music taste data:', err);
+        console.error('Error fetching music taste:', err);
         setError('Error fetching music taste data');
       } finally {
         setLoading(false);
@@ -41,299 +50,451 @@ export default function MusicTaste() {
     };
 
     if (session) {
-      fetchTasteData();
+      fetchMusicTaste();
     }
   }, [session]);
 
-  // Fetch correlated events
-  useEffect(() => {
-    const fetchCorrelatedEvents = async () => {
-      try {
-        // Get user's location if available
-        let locationParams = '';
-        if (navigator.geolocation) {
-          try {
-            const position = await new Promise((resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(resolve, reject, {
-                timeout: 10000,
-                maximumAge: 600000
-              });
-            });
-            
-            setUserLocation({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            });
-            
-            locationParams = `?lat=${position.coords.latitude}&lon=${position.coords.longitude}`;
-          } catch (locErr) {
-            console.warn('Could not get user location:', locErr);
-            // Continue without location params
-          }
+  // Prepare chart data
+  const prepareChartData = () => {
+    if (!musicTaste || !musicTaste.topGenres) return null;
+
+    return {
+      labels: musicTaste.topGenres.map(genre => genre.name),
+      datasets: [
+        {
+          label: 'Genre Affinity',
+          data: musicTaste.topGenres.map(genre => genre.value),
+          backgroundColor: 'rgba(138, 43, 226, 0.2)',
+          borderColor: 'rgba(138, 43, 226, 1)',
+          borderWidth: 2,
+          pointBackgroundColor: 'rgba(255, 107, 107, 1)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgba(255, 107, 107, 1)',
+          pointRadius: 5,
+          pointHoverRadius: 7
         }
-        
-        const response = await axios.get(`/api/events/correlated-events${locationParams}`);
-        if (response.data.success) {
-          setCorrelatedEvents(response.data.events);
-          if (!userLocation && response.data.userLocation) {
-            setUserLocation(response.data.userLocation);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching correlated events:', err);
-        // Don't set error state here to avoid blocking the whole page if just events fail
-      }
+      ]
     };
+  };
 
-    if (tasteData) {
-      fetchCorrelatedEvents();
-    }
-  }, [tasteData]);
-
-  // Handle scroll events for section highlighting and scroll-to-top button
-  useEffect(() => {
-    const handleScroll = () => {
-      // Show/hide scroll to top button
-      if (window.scrollY > 300) {
-        setShowScrollToTop(true);
-      } else {
-        setShowScrollToTop(false);
-      }
-      
-      // Determine active section based on scroll position
-      const sections = document.querySelectorAll('section[id]');
-      let currentSection = null;
-      
-      sections.forEach(section => {
-        const sectionTop = section.offsetTop - 100;
-        const sectionHeight = section.offsetHeight;
-        
-        if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
-          currentSection = section.id;
+  const chartOptions = {
+    scales: {
+      r: {
+        angleLines: {
+          color: 'rgba(255, 255, 255, 0.2)'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.2)'
+        },
+        pointLabels: {
+          color: 'rgba(255, 255, 255, 0.7)',
+          font: {
+            size: 12
+          }
+        },
+        ticks: {
+          backdropColor: 'transparent',
+          color: 'rgba(255, 255, 255, 0.7)'
         }
-      });
-      
-      setActiveSection(currentSection);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        backgroundColor: 'rgba(30, 30, 40, 0.9)',
+        titleColor: 'rgba(255, 255, 255, 1)',
+        bodyColor: 'rgba(255, 255, 255, 0.8)',
+        borderColor: 'rgba(138, 43, 226, 0.5)',
+        borderWidth: 1
+      }
+    },
+    maintainAspectRatio: false
+  };
 
-  // Handle taste update from Vibe Quiz
-  const handleTasteUpdate = async () => {
+  // Handle section navigation
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+  };
+
+  // Toggle Vibe Quiz
+  const toggleVibeQuiz = () => {
+    setShowVibeQuiz(!showVibeQuiz);
+  };
+
+  // Handle Vibe Quiz submission
+  const handleVibeQuizSubmit = async (preferences) => {
     try {
-      setLoading(true);
+      await axios.post('/api/user/update-taste-preferences', { preferences });
+      // Refresh music taste data
       const response = await axios.get('/api/spotify/user-taste');
-      if (response.data.success) {
-        setTasteData(response.data.taste);
-      }
+      setMusicTaste(response.data);
     } catch (err) {
-      console.error('Error updating taste data:', err);
-    } finally {
-      setLoading(false);
+      console.error('Error updating taste preferences:', err);
     }
   };
 
-  // Scroll to section
-  const scrollToSection = (sectionId) => {
-    const section = document.getElementById(sectionId);
-    if (section) {
-      window.scrollTo({
-        top: section.offsetTop - 80,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  // Scroll to top
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className={styles.container}>
-        <Navigation activePage="music-taste" />
-        <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner}></div>
-          <p>Analyzing your sonic DNA...</p>
-        </div>
-      </div>
-    );
+  if (status === 'loading') {
+    return <div className={styles.loadingContainer}>Loading...</div>;
   }
 
-  // Error state
-  if (error) {
+  if (!session) {
     return (
-      <div className={styles.container}>
-        <Navigation activePage="music-taste" />
-        <div className={styles.errorContainer}>
-          <h2>Error loading music taste</h2>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If no taste data yet
-  if (!tasteData) {
-    return (
-      <div className={styles.container}>
-        <Navigation activePage="music-taste" />
-        <div className={styles.loadingContainer}>
-          <p>Preparing your music taste profile...</p>
-        </div>
+      <div className={styles.errorContainer}>
+        <p>You must be signed in to view this page.</p>
+        <Link href="/api/auth/signin">
+          <a className={styles.signInButton}>Sign in</a>
+        </Link>
       </div>
     );
   }
 
   return (
     <div className={styles.container}>
+      <Head>
+        <title>Your Music Taste | Sonar EDM</title>
+        <meta name="description" content="Explore your EDM music preferences" />
+      </Head>
+
       <Navigation activePage="music-taste" />
-      
-      <div className={styles.header}>
-        <h1 className={styles.title}>Your Music Taste Profile</h1>
-        <div className={styles.tasteLabels}>
-          {tasteData.tasteLabels && tasteData.tasteLabels.map((label, index) => (
-            <span key={index} className={styles.tasteLabel}>{label}</span>
-          ))}
-        </div>
-      </div>
-      
-      {/* Quick Navigation for Mobile */}
-      <div className={styles.quickNav}>
-        <button 
-          className={`${styles.quickNavButton} ${activeSection === 'genre-affinity' ? styles.active : ''}`}
-          onClick={() => scrollToSection('genre-affinity')}
-        >
-          Genres
-        </button>
-        <button 
-          className={`${styles.quickNavButton} ${activeSection === 'top-artists' ? styles.active : ''}`}
-          onClick={() => scrollToSection('top-artists')}
-        >
-          Artists
-        </button>
-        <button 
-          className={`${styles.quickNavButton} ${activeSection === 'top-tracks' ? styles.active : ''}`}
-          onClick={() => scrollToSection('top-tracks')}
-        >
-          Tracks
-        </button>
-        <button 
-          className={`${styles.quickNavButton} ${activeSection === 'seasonal-mood' ? styles.active : ''}`}
-          onClick={() => scrollToSection('seasonal-mood')}
-        >
-          Seasons
-        </button>
-        <button 
-          className={`${styles.quickNavButton} ${activeSection === 'discover-events' ? styles.active : ''}`}
-          onClick={() => scrollToSection('discover-events')}
-        >
-          Events
-        </button>
-      </div>
-      
-      {/* Spider Chart Section */}
-      <section id="genre-affinity" className={styles.section}>
-        <h2 className={styles.sectionTitle}>Your Genre Affinity</h2>
-        <div className={styles.spiderChartContainer}>
-          {tasteData.topGenres && tasteData.topGenres.length > 0 ? (
-            <SpiderChart genres={tasteData.topGenres} />
-          ) : (
-            <p className={styles.noData}>No genre data available</p>
-          )}
-        </div>
-      </section>
-      
-      {/* Music Personality Section */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Your Music Personality</h2>
-        <p className={styles.personalityText}>{tasteData.tasteProfile}</p>
-      </section>
-      
-      {/* Vibe Quiz Card */}
-      <VibeQuizCard onTasteUpdate={handleTasteUpdate} />
-      
-      {/* Top Artists Section */}
-      <section id="top-artists" className={styles.section}>
-        <h2 className={styles.sectionTitle}>Top Artists</h2>
-        <div className={styles.artistsGrid}>
-          {tasteData.topArtists && tasteData.topArtists.length > 0 ? (
-            tasteData.topArtists.map((artist, index) => (
-              <ArtistCard key={index} artist={artist} rank={index + 1} />
-            ))
-          ) : (
-            <p className={styles.noData}>No artist data available</p>
-          )}
-        </div>
-      </section>
-      
-      {/* Top Tracks Section */}
-      <section id="top-tracks" className={styles.section}>
-        <h2 className={styles.sectionTitle}>Top Tracks</h2>
-        <div className={styles.tracksGrid}>
-          {tasteData.topTracks && tasteData.topTracks.length > 0 ? (
-            tasteData.topTracks.map((track, index) => (
-              <TrackCard key={index} track={track} rank={index + 1} />
-            ))
-          ) : (
-            <p className={styles.noData}>No track data available</p>
-          )}
-        </div>
-      </section>
-      
-      {/* Seasonal Mood Section */}
-      <section id="seasonal-mood" className={styles.section}>
-        <h2 className={styles.sectionTitle}>Seasonal Music Mood</h2>
-        <div className={styles.seasonalMoodGrid}>
-          {tasteData.seasonalMood && Object.keys(tasteData.seasonalMood).length > 0 ? (
-            Object.entries(tasteData.seasonalMood).map(([season, genres], index) => (
-              <SeasonalMoodCard key={index} season={season} genres={genres} />
-            ))
-          ) : (
-            <p className={styles.noData}>No seasonal mood data available</p>
-          )}
-        </div>
-      </section>
-      
-      {/* Events Navigation Card */}
-      <EventsNavigationCard correlatedEvents={correlatedEvents} userTaste={tasteData} />
-      
-      {/* Discover Events Section */}
-      <section id="discover-events" className={styles.section}>
-        <h2 className={styles.sectionTitle}>Discover Events Based on Your Taste</h2>
-        {userLocation && (
-          <p className={styles.locationText}>
-            Showing events near {userLocation.city || ''} {userLocation.region || ''}
+
+      <main className={styles.main}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Your Music Taste</h1>
+          <p className={styles.subtitle}>
+            Explore your EDM preferences based on your Spotify listening history
           </p>
-        )}
-        <div className={styles.eventsGrid}>
-          {correlatedEvents && correlatedEvents.length > 0 ? (
-            correlatedEvents.slice(0, 3).map((event, index) => (
-              <EventCard key={index} event={event} />
-            ))
-          ) : (
-            <p className={styles.noData}>No matching events found in your area</p>
-          )}
         </div>
-      </section>
-      
-      {/* Scroll to top button */}
-      {showScrollToTop && (
-        <button className={styles.scrollToTopButton} onClick={scrollToTop}>
-          ↑
-        </button>
-      )}
-      
-      <footer className={styles.footer}>
-        <p>© {new Date().getFullYear()} Sonar EDM Platform. All rights reserved.</p>
-      </footer>
+
+        {loading ? (
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <p>Loading your music taste profile...</p>
+          </div>
+        ) : error ? (
+          <div className={styles.errorCard}>
+            <h2>Error loading music taste</h2>
+            <p>{error}</p>
+            <button 
+              className={styles.retryButton}
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Quick Navigation */}
+            <div className={styles.quickNav}>
+              <button 
+                className={`${styles.quickNavButton} ${activeSection === 'genres' ? styles.active : ''}`}
+                onClick={() => handleSectionChange('genres')}
+              >
+                Genres
+              </button>
+              <button 
+                className={`${styles.quickNavButton} ${activeSection === 'artists' ? styles.active : ''}`}
+                onClick={() => handleSectionChange('artists')}
+              >
+                Artists
+              </button>
+              <button 
+                className={`${styles.quickNavButton} ${activeSection === 'tracks' ? styles.active : ''}`}
+                onClick={() => handleSectionChange('tracks')}
+              >
+                Tracks
+              </button>
+              <button 
+                className={`${styles.quickNavButton} ${activeSection === 'seasonal' ? styles.active : ''}`}
+                onClick={() => handleSectionChange('seasonal')}
+              >
+                Seasonal
+              </button>
+            </div>
+
+            {/* Genre Radar Chart */}
+            <section 
+              id="genres" 
+              className={`${styles.section} ${activeSection === 'genres' ? styles.active : ''}`}
+            >
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>Genre Affinity</h2>
+                <p className={styles.sectionSubtitle}>
+                  Your top EDM genres based on listening patterns
+                </p>
+              </div>
+
+              <div className={styles.chartContainer}>
+                {prepareChartData() && (
+                  <Radar data={prepareChartData()} options={chartOptions} />
+                )}
+              </div>
+            </section>
+
+            {/* Top Artists */}
+            <section 
+              id="artists" 
+              className={`${styles.section} ${activeSection === 'artists' ? styles.active : ''}`}
+            >
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>Top Artists</h2>
+                <p className={styles.sectionSubtitle}>
+                  Your most played EDM artists
+                </p>
+              </div>
+
+              <div className={styles.artistsGrid}>
+                {musicTaste?.topArtists?.map((artist, index) => (
+                  <div key={index} className={styles.artistCard}>
+                    <div className={styles.artistRank}>#{artist.rank}</div>
+                    <div className={styles.artistImageContainer}>
+                      <img 
+                        src={artist.image} 
+                        alt={artist.name} 
+                        className={styles.artistImage} 
+                      />
+                    </div>
+                    <h3 className={styles.artistName}>{artist.name}</h3>
+                    <div className={styles.artistGenres}>
+                      {artist.genres.join(' • ')}
+                    </div>
+                    
+                    {artist.similarArtists && artist.similarArtists.length > 0 && (
+                      <div className={styles.similarArtists}>
+                        <h4 className={styles.similarTitle}>Similar Artists</h4>
+                        <div className={styles.similarGrid}>
+                          {artist.similarArtists.map((similar, idx) => (
+                            <div key={idx} className={styles.similarArtist}>
+                              <img 
+                                src={similar.image} 
+                                alt={similar.name} 
+                                className={styles.similarImage} 
+                              />
+                              <span className={styles.similarName}>{similar.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Top Tracks */}
+            <section 
+              id="tracks" 
+              className={`${styles.section} ${activeSection === 'tracks' ? styles.active : ''}`}
+            >
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>Top Tracks</h2>
+                <p className={styles.sectionSubtitle}>
+                  Your most played EDM tracks
+                </p>
+              </div>
+
+              <div className={styles.tracksContainer}>
+                {musicTaste?.topTracks?.map((track, index) => (
+                  <div key={index} className={styles.trackCard}>
+                    <div className={styles.trackRank}>#{track.rank}</div>
+                    <img 
+                      src={track.image} 
+                      alt={track.name} 
+                      className={styles.trackImage} 
+                    />
+                    <div className={styles.trackInfo}>
+                      <h3 className={styles.trackName}>{track.name}</h3>
+                      <p className={styles.trackArtist}>{track.artist}</p>
+                    </div>
+                    {track.preview && (
+                      <audio 
+                        className={styles.trackPreview} 
+                        controls 
+                        src={track.preview}
+                      ></audio>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Seasonal Mood */}
+            <section 
+              id="seasonal" 
+              className={`${styles.section} ${activeSection === 'seasonal' ? styles.active : ''}`}
+            >
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>Seasonal Mood</h2>
+                <p className={styles.sectionSubtitle}>
+                  How your music taste changes with the seasons
+                </p>
+              </div>
+
+              <div className={styles.seasonalContainer}>
+                {musicTaste?.seasonalMood && (
+                  <>
+                    <div className={`${styles.seasonCard} ${styles.winter} ${musicTaste.seasonalMood.current === 'winter' ? styles.current : ''}`}>
+                      <h3 className={styles.seasonName}>Winter</h3>
+                      <div className={styles.seasonMood}>
+                        <span className={styles.moodLabel}>Mood:</span> 
+                        <span className={styles.moodValue}>{musicTaste.seasonalMood.winter.mood}</span>
+                      </div>
+                      <div className={styles.seasonGenres}>
+                        <span className={styles.genresLabel}>Genres:</span>
+                        <div className={styles.genresList}>
+                          {musicTaste.seasonalMood.winter.genres.map((genre, idx) => (
+                            <span key={idx} className={styles.genreTag}>{genre}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={`${styles.seasonCard} ${styles.spring} ${musicTaste.seasonalMood.current === 'spring' ? styles.current : ''}`}>
+                      <h3 className={styles.seasonName}>Spring</h3>
+                      <div className={styles.seasonMood}>
+                        <span className={styles.moodLabel}>Mood:</span> 
+                        <span className={styles.moodValue}>{musicTaste.seasonalMood.spring.mood}</span>
+                      </div>
+                      <div className={styles.seasonGenres}>
+                        <span className={styles.genresLabel}>Genres:</span>
+                        <div className={styles.genresList}>
+                          {musicTaste.seasonalMood.spring.genres.map((genre, idx) => (
+                            <span key={idx} className={styles.genreTag}>{genre}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={`${styles.seasonCard} ${styles.summer} ${musicTaste.seasonalMood.current === 'summer' ? styles.current : ''}`}>
+                      <h3 className={styles.seasonName}>Summer</h3>
+                      <div className={styles.seasonMood}>
+                        <span className={styles.moodLabel}>Mood:</span> 
+                        <span className={styles.moodValue}>{musicTaste.seasonalMood.summer.mood}</span>
+                      </div>
+                      <div className={styles.seasonGenres}>
+                        <span className={styles.genresLabel}>Genres:</span>
+                        <div className={styles.genresList}>
+                          {musicTaste.seasonalMood.summer.genres.map((genre, idx) => (
+                            <span key={idx} className={styles.genreTag}>{genre}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={`${styles.seasonCard} ${styles.fall} ${musicTaste.seasonalMood.current === 'fall' ? styles.current : ''}`}>
+                      <h3 className={styles.seasonName}>Fall</h3>
+                      <div className={styles.seasonMood}>
+                        <span className={styles.moodLabel}>Mood:</span> 
+                        <span className={styles.moodValue}>{musicTaste.seasonalMood.fall.mood}</span>
+                      </div>
+                      <div className={styles.seasonGenres}>
+                        <span className={styles.genresLabel}>Genres:</span>
+                        <div className={styles.genresList}>
+                          {musicTaste.seasonalMood.fall.genres.map((genre, idx) => (
+                            <span key={idx} className={styles.genreTag}>{genre}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+
+            {/* Vibe Quiz Card */}
+            <div className={styles.vibeQuizContainer}>
+              <div className={`${styles.vibeQuizCard} ${showVibeQuiz ? styles.expanded : ''}`}>
+                <div className={styles.vibeQuizHeader} onClick={toggleVibeQuiz}>
+                  <h3 className={styles.vibeQuizTitle}>
+                    {showVibeQuiz ? 'Refine Your Taste Profile' : 'Something doesn\'t feel right?'}
+                  </h3>
+                  <div className={styles.toggleIcon}>
+                    {showVibeQuiz ? '−' : '+'}
+                  </div>
+                </div>
+                
+                {showVibeQuiz && (
+                  <div className={styles.vibeQuizContent}>
+                    <p className={styles.vibeQuizDescription}>
+                      Answer a few quick questions to help us fine-tune your music recommendations.
+                    </p>
+                    
+                    <div className={styles.quizForm}>
+                      <div className={styles.quizQuestion}>
+                        <h4>What tempo do you prefer?</h4>
+                        <div className={styles.quizOptions}>
+                          <button 
+                            className={styles.quizOption}
+                            onClick={() => handleVibeQuizSubmit({ tempo: 'slow' })}
+                          >
+                            Slow & Chill
+                          </button>
+                          <button 
+                            className={styles.quizOption}
+                            onClick={() => handleVibeQuizSubmit({ tempo: 'medium' })}
+                          >
+                            Medium & Groovy
+                          </button>
+                          <button 
+                            className={styles.quizOption}
+                            onClick={() => handleVibeQuizSubmit({ tempo: 'fast' })}
+                          >
+                            Fast & Energetic
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className={styles.quizQuestion}>
+                        <h4>What mood resonates with you most?</h4>
+                        <div className={styles.quizOptions}>
+                          <button 
+                            className={styles.quizOption}
+                            onClick={() => handleVibeQuizSubmit({ mood: 'dark' })}
+                          >
+                            Dark & Mysterious
+                          </button>
+                          <button 
+                            className={styles.quizOption}
+                            onClick={() => handleVibeQuizSubmit({ mood: 'uplifting' })}
+                          >
+                            Uplifting & Euphoric
+                          </button>
+                          <button 
+                            className={styles.quizOption}
+                            onClick={() => handleVibeQuizSubmit({ mood: 'melodic' })}
+                          >
+                            Melodic & Emotional
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Events Navigation Card */}
+            <div className={styles.eventsNavContainer}>
+              <div className={styles.eventsNavCard}>
+                <div className={styles.eventsNavContent}>
+                  <h3 className={styles.eventsNavTitle}>Discover Events That Match Your Taste</h3>
+                  <p className={styles.eventsNavDescription}>
+                    Find EDM events featuring artists and genres you love
+                  </p>
+                  <Link href="/users/events">
+                    <a className={styles.eventsNavButton}>
+                      Explore Events
+                    </a>
+                  </Link>
+                </div>
+                <div className={styles.eventsNavDecoration}></div>
+              </div>
+            </div>
+          </>
+        )}
+      </main>
     </div>
   );
 }

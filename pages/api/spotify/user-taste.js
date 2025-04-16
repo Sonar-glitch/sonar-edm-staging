@@ -1,184 +1,130 @@
-// This file contains the updated implementation for the user-taste API endpoint
-// Path: pages/api/spotify/user-taste.js
-
 import { getSession } from 'next-auth/react';
 import axios from 'axios';
 
 export default async function handler(req, res) {
-  const session = await getSession({ req });
-  
-  if (!session) {
-    return res.status(401).json({ success: false, error: 'Not authenticated' });
-  }
-  
   try {
-    // Get access token from session
-    const accessToken = session.accessToken;
+    const session = await getSession({ req });
     
-    if (!accessToken) {
-      return res.status(400).json({ success: false, error: 'No access token available' });
+    if (!session) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
     
-    // Fetch user's top artists
-    const topArtistsResponse = await axios.get(
-      'https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=10',
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
+    // For demo purposes, return mock data
+    // In production, you would use the Spotify API with the user's access token
+    const mockData = {
+      topGenres: [
+        { name: 'Melodic House', value: 90 },
+        { name: 'Techno', value: 80 },
+        { name: 'Progressive House', value: 70 },
+        { name: 'Trance', value: 60 },
+        { name: 'Deep House', value: 50 }
+      ],
+      topArtists: [
+        { 
+          name: 'Max Styler', 
+          image: 'https://i.scdn.co/image/ab6761610000e5eb8cbc5b79c7ab0ac7e6c0ff03',
+          genres: ['melodic house', 'edm'],
+          popularity: 90,
+          rank: 1,
+          similarArtists: [
+            { name: 'Autograf', image: 'https://i.scdn.co/image/ab6761610000e5eb8a7af5d1f7eacb6addae5493' },
+            { name: 'Amtrac', image: 'https://i.scdn.co/image/ab6761610000e5eb90c4c8a6fb0b4142c57e0bce' }
+          ]
+        },
+        { 
+          name: 'ARTBAT', 
+          image: 'https://i.scdn.co/image/ab6761610000e5eb4293385d324db8558179afd9',
+          genres: ['melodic techno', 'organic house'],
+          popularity: 85,
+          rank: 2,
+          similarArtists: [
+            { name: 'Anyma', image: 'https://i.scdn.co/image/ab6761610000e5eb4c7c1e59b3e8c594dce7c2d2' },
+            { name: 'Mathame', image: 'https://i.scdn.co/image/ab6761610000e5eb7a487027eb0682d6d7a581c2' }
+          ]
+        },
+        { 
+          name: 'Lane 8', 
+          image: 'https://i.scdn.co/image/ab6761610000e5eb7f6d6a0a5b0d5e0747e01522',
+          genres: ['progressive house', 'melodic house'],
+          popularity: 80,
+          rank: 3,
+          similarArtists: [
+            { name: 'Yotto', image: 'https://i.scdn.co/image/ab6761610000e5eb5d27d18dfef4c76f1b3a0f32' },
+            { name: 'Ben Böhmer', image: 'https://i.scdn.co/image/ab6761610000e5eb7eb7d559b43f5e9775b20d9a' }
+          ]
+        },
+        { 
+          name: 'Boris Brejcha', 
+          image: 'https://i.scdn.co/image/ab6761610000e5eb7324ce0b63aec68c638e26f6',
+          genres: ['german techno', 'minimal techno'],
+          popularity: 75,
+          rank: 4,
+          similarArtists: [
+            { name: 'Stephan Bodzin', image: 'https://i.scdn.co/image/ab6761610000e5eb4e8b9c8e5c628c4d0d64b463' },
+            { name: 'Worakls', image: 'https://i.scdn.co/image/ab6761610000e5eb2d7d5f1fe46b7d1c0d11e0c0' }
+          ]
+        },
+        { 
+          name: 'Nora En Pure', 
+          image: 'https://i.scdn.co/image/ab6761610000e5eb7a487027eb0682d6d7a581c2',
+          genres: ['deep house', 'organic house'],
+          popularity: 70,
+          rank: 5,
+          similarArtists: [
+            { name: 'EDX', image: 'https://i.scdn.co/image/ab6761610000e5eb7a487027eb0682d6d7a581c2' },
+            { name: 'Klingande', image: 'https://i.scdn.co/image/ab6761610000e5eb7a487027eb0682d6d7a581c2' }
+          ]
         }
-      }
-    );
-    
-    // Fetch user's top tracks
-    const topTracksResponse = await axios.get(
-      'https://api.spotify.com/v1/me/top/tracks?time_range=short_term&limit=10',
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
+      ],
+      topTracks: [
+        {
+          name: 'Techno Cat',
+          artist: 'Max Styler',
+          image: 'https://i.scdn.co/image/ab67616d0000b273b1f6d5b276074d5d0cd2b66c',
+          preview: 'https://p.scdn.co/mp3-preview/7e8932d135d63e29e93c64a89b33dbc2c5a1dc3f',
+          rank: 1
+        },
+        {
+          name: 'Return To Oz (ARTBAT Remix) ',
+          artist: 'Monolink',
+          image: 'https://i.scdn.co/image/ab67616d0000b273b4a3631526592865ea4af096',
+          preview: 'https://p.scdn.co/mp3-preview/7e8932d135d63e29e93c64a89b33dbc2c5a1dc3f',
+          rank: 2
+        },
+        {
+          name: 'Atlas',
+          artist: 'Lane 8',
+          image: 'https://i.scdn.co/image/ab67616d0000b273b4a3631526592865ea4af096',
+          preview: 'https://p.scdn.co/mp3-preview/7e8932d135d63e29e93c64a89b33dbc2c5a1dc3f',
+          rank: 3
+        },
+        {
+          name: 'Purple Noise',
+          artist: 'Boris Brejcha',
+          image: 'https://i.scdn.co/image/ab67616d0000b273b4a3631526592865ea4af096',
+          preview: 'https://p.scdn.co/mp3-preview/7e8932d135d63e29e93c64a89b33dbc2c5a1dc3f',
+          rank: 4
+        },
+        {
+          name: 'Come With Me',
+          artist: 'Nora En Pure',
+          image: 'https://i.scdn.co/image/ab67616d0000b273b4a3631526592865ea4af096',
+          preview: 'https://p.scdn.co/mp3-preview/7e8932d135d63e29e93c64a89b33dbc2c5a1dc3f',
+          rank: 5
         }
+      ],
+      seasonalMood: {
+        winter: { genres: ['Deep House', 'Ambient Techno'], mood: 'Introspective' },
+        spring: { genres: ['Progressive House', 'Melodic House'], mood: 'Uplifting' },
+        summer: { genres: ['Tech House', 'House'], mood: 'Energetic' },
+        fall: { genres: ['Organic House', 'Downtempo'], mood: 'Melancholic' },
+        current: 'spring'
       }
-    );
-    
-    // Process top artists data
-    const topArtists = await Promise.all(topArtistsResponse.data.items.map(async (artist, index) => {
-      // Calculate match percentage (100 for first artist, decreasing by 5 for each subsequent artist)
-      const match = Math.max(100 - (index * 5), 60);
-      
-      // Fetch similar artists for each top artist
-      let similarArtists = [];
-      try {
-        const similarArtistsResponse = await axios.get(
-          `https://api.spotify.com/v1/artists/${artist.id}/related-artists`,
-          {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            }
-          }
-        );
-        
-        // Get names of top 5 similar artists
-        similarArtists = similarArtistsResponse.data.artists
-          .slice(0, 5)
-          .map(similarArtist => similarArtist.name);
-      } catch (error) {
-        console.error(`Error fetching similar artists for ${artist.name}:`, error.message);
-        // Continue even if similar artists fetch fails
-      }
-      
-      return {
-        id: artist.id,
-        name: artist.name,
-        genres: artist.genres,
-        image: artist.images && artist.images.length > 0 ? artist.images[0].url : null,
-        match: match,
-        similarArtists: similarArtists
-      };
-    }));
-    
-    // Process top tracks data
-    const topTracks = topTracksResponse.data.items.map(track => ({
-      id: track.id,
-      name: track.name,
-      artist: track.artists.map(artist => artist.name).join(', '),
-      album: track.album.name,
-      image: track.album.images && track.album.images.length > 0 ? track.album.images[0].url : null,
-      previewUrl: track.preview_url
-    }));
-    
-    // Extract genres from top artists and count occurrences
-    const genreCounts = {};
-    topArtists.forEach(artist => {
-      artist.genres.forEach(genre => {
-        genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-      });
-    });
-    
-    // Convert to array, sort by count, and take top 6 genres
-    const topGenres = Object.entries(genreCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([label, count], index) => ({
-        label: label.charAt(0).toUpperCase() + label.slice(1),
-        value: Math.max(100 - (index * 10), 20) // Scale values for better visualization
-      }));
-    
-    // Create seasonal mood data based on genres
-    const seasonalMood = {
-      spring: [],
-      summer: [],
-      fall: [],
-      winter: []
     };
     
-    // Assign genres to seasons based on their characteristics
-    // This is a simplified approach - in a real app, you might use more sophisticated analysis
-    Object.keys(genreCounts).forEach(genre => {
-      if (genre.includes('house') || genre.includes('pop') || genre.includes('tropical')) {
-        seasonalMood.spring.push(genre);
-      } else if (genre.includes('dance') || genre.includes('edm') || genre.includes('electro')) {
-        seasonalMood.summer.push(genre);
-      } else if (genre.includes('techno') || genre.includes('deep') || genre.includes('progressive')) {
-        seasonalMood.fall.push(genre);
-      } else if (genre.includes('ambient') || genre.includes('chill') || genre.includes('melodic')) {
-        seasonalMood.winter.push(genre);
-      } else {
-        // Randomly assign remaining genres
-        const seasons = ['spring', 'summer', 'fall', 'winter'];
-        const randomSeason = seasons[Math.floor(Math.random() * seasons.length)];
-        seasonalMood[randomSeason].push(genre);
-      }
-    });
-    
-    // Take top 3 genres for each season
-    Object.keys(seasonalMood).forEach(season => {
-      seasonalMood[season] = seasonalMood[season]
-        .slice(0, 3)
-        .map(genre => genre.charAt(0).toUpperCase() + genre.slice(1));
-    });
-    
-    // Generate taste labels based on top genres
-    const tasteLabels = [];
-    if (genreCounts['house'] || genreCounts['deep house'] || genreCounts['progressive house']) {
-      tasteLabels.push('House Enthusiast');
-    }
-    if (genreCounts['techno'] || genreCounts['tech house']) {
-      tasteLabels.push('Techno Lover');
-    }
-    if (genreCounts['trance'] || genreCounts['progressive trance']) {
-      tasteLabels.push('Trance Addict');
-    }
-    if (genreCounts['drum and bass'] || genreCounts['jungle']) {
-      tasteLabels.push('Bass Head');
-    }
-    if (genreCounts['ambient'] || genreCounts['chill']) {
-      tasteLabels.push('Chill Seeker');
-    }
-    
-    // If no specific labels were generated, add a generic one
-    if (tasteLabels.length === 0) {
-      tasteLabels.push('EDM Explorer');
-    }
-    
-    // Generate a taste profile description
-    const tasteProfile = `Your music taste shows a strong preference for ${topGenres[0]?.label || 'electronic music'} with elements of ${topGenres[1]?.label || 'various genres'}. You appreciate artists like ${topArtists[0]?.name || 'diverse performers'} who create immersive soundscapes and dynamic beats.`;
-    
-    // Compile all data
-    const tasteData = {
-      topGenres,
-      topArtists,
-      topTracks,
-      seasonalMood,
-      tasteLabels,
-      tasteProfile
-    };
-    
-    return res.status(200).json({ success: true, taste: tasteData });
+    return res.status(200) .json(mockData);
   } catch (error) {
-    console.error('Error fetching music taste data:', error.response?.data || error.message);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch music taste data',
-      details: error.response?.data || error.message
-    });
+    console.error('Error fetching user taste:', error);
+    return res.status(500).json({ error: 'Failed to fetch music taste data' });
   }
 }
