@@ -1,0 +1,163 @@
+.trackCard {
+    background-color: rgba(20, 20, 30, 0.7);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transform: skewX(-2deg);
+  }
+  
+  .trackCard:hover {
+    transform: skewX(-2deg) translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: rgba(138, 43, 226, 0.4);
+  }
+  
+  .rankBadge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(135deg, #8a2be2, #ff6b6b);
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+  }
+  
+  .trackImageContainer {
+    width: 100%;
+    padding-top: 100%; /* 1:1 Aspect Ratio */
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .trackImage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .trackCard:hover .trackImage {
+    transform: scale(1.05);
+  }
+  
+  .trackInfo {
+    padding: 12px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .trackName {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    /* Ensure text doesn't overflow */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  
+  .trackArtist {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    /* Ensure text doesn't overflow */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  
+  .playButton {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+    background: rgba(10, 10, 15, 0.7);
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  .trackCard:hover .playButton {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  
+  /* Add manga-style decorative elements */
+  .trackCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, transparent 50%);
+    z-index: 1;
+    pointer-events: none;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .rankBadge {
+      width: 30px;
+      height: 30px;
+      font-size: 0.9rem;
+    }
+    
+    .trackName {
+      font-size: 0.9rem;
+    }
+    
+    .trackArtist {
+      font-size: 0.8rem;
+    }
+    
+    .playButton {
+      width: 40px;
+      height: 40px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .rankBadge {
+      width: 25px;
+      height: 25px;
+      font-size: 0.8rem;
+    }
+    
+    .trackInfo {
+      padding: 8px;
+    }
+  }
+  

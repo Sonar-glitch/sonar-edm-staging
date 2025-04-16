@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import styles from '../styles/ArtistCard.module.css';
+import { useState } from 'react';
 
-const ArtistCard = ({ artist }) => {
+const ArtistCard = ({ artist, rank }) => {
   const [expanded, setExpanded] = useState(false);
   
   // Toggle expanded state
@@ -10,8 +10,11 @@ const ArtistCard = ({ artist }) => {
   };
   
   return (
-    <div className={`${styles.artistCard} ${expanded ? styles.expanded : ''}`}>
-      <div className={styles.mainContent} onClick={toggleExpanded}>
+    <div className={styles.artistCard}>
+      {/* Rank indicator */}
+      <div className={styles.rankBadge}>{rank}</div>
+      
+      <div className={styles.artistHeader}>
         {artist.image && (
           <div className={styles.artistImageContainer}>
             <img src={artist.image} alt={artist.name} className={styles.artistImage} />
@@ -19,10 +22,19 @@ const ArtistCard = ({ artist }) => {
         )}
         <div className={styles.artistInfo}>
           <h3 className={styles.artistName}>{artist.name}</h3>
-          <div className={styles.matchBadge}>{artist.match}% match</div>
+          <div className={styles.matchContainer}>
+            <div className={styles.matchLabel}>Match Strength</div>
+            <div className={styles.matchBar}>
+              <div 
+                className={styles.matchFill} 
+                style={{ width: `${artist.match}%` }}
+              ></div>
+            </div>
+          </div>
         </div>
         <button 
           className={styles.expandButton} 
+          onClick={toggleExpanded}
           aria-label={expanded ? "Hide similar artists" : "Show similar artists"}
         >
           <svg 

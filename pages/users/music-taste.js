@@ -1,65 +1,99 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import axios from 'axios';
+import styles from '../../styles/MusicTaste.module.css';
 import Navigation from '../../components/Navigation';
 import SpiderChart from '../../components/SpiderChart';
 import ArtistCard from '../../components/ArtistCard';
-import styles from '../../styles/MusicTaste.module.css';
+import TrackCard from '../../components/TrackCard';
+import SeasonalMoodCard from '../../components/SeasonalMoodCard';
+import EventCard from '../../components/EventCard';
 
 export default function MusicTaste() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: session } = useSession();
   const [tasteData, setTasteData] = useState(null);
+  const [correlatedEvents, setCorrelatedEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
-    }
-  }, [status, router]);
+  const [userLocation, setUserLocation] = useState(null);
 
   // Fetch music taste data
   useEffect(() => {
     const fetchTasteData = async () => {
-      if (status !== 'authenticated') return;
-
       try {
-        setIsLoading(true);
-        setError(null);
-        
-        console.log('Fetching music taste data...');
-        const response = await fetch('/api/spotify/user-taste');
-        const data = await response.json();
-        
-        if (data.success) {
-          console.log('Successfully fetched music taste data');
-          setTasteData(data.taste);
+        setLoading(true);
+        const response = await axios.get('/api/spotify/user-taste');
+        if (response.data.success) {
+          setTasteData(response.data.taste);
         } else {
-          console.error('Error in API response:', data.error);
-          setError(data.error || 'Failed to load music taste data');
+          setError('Failed to load music taste data');
         }
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching music taste data:', error);
+      } catch (err) {
+        console.error('Error fetching music taste data:', err);
         setError('Error fetching music taste data');
-        setIsLoading(false);
+      } finally {
+        setLoading(false);
       }
     };
-    
-    fetchTasteData();
-  }, [status]);
+
+    if (session) {
+      fetchTasteData();
+    }
+  }, [session]);
+
+  // Fetch correlated events
+  useEffect(() => {
+    const fetchCorrelatedEvents = async () => {
+      try {
+        // Get user's location if available
+        let locationParams = '';
+        if (navigator.geolocation) {
+          try {
+            const position = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                timeout: 10000,
+                maximumAge: 600000
+              });
+            });
+            
+            setUserLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            });
+            
+            locationParams = `?lat=${position.coords.latitude}&lon=${position.coords.longitude}`;
+          } catch (locErr) {
+            console.warn('Could not get user location:', locErr);
+            // Continue without location params
+          }
+        }
+        
+        const response = await axios.get(`/api/events/correlated-events${locationParams}`);
+        if (response.data.success) {
+          setCorrelatedEvents(response.data.events);
+          if (!userLocation && response.data.userLocation) {
+            setUserLocation(response.data.userLocation);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching correlated events:', err);
+        // Don't set error state here to avoid blocking the whole page if just events fail
+      }
+    };
+
+    if (tasteData) {
+      fetchCorrelatedEvents();
+    }
+  }, [tasteData]);
 
   // Loading state
-  if (status === 'loading' || isLoading) {
+  if (loading) {
     return (
       <div className={styles.container}>
         <Navigation activePage="music-taste" />
         <div className={styles.loadingContainer}>
           <div className={styles.loadingSpinner}></div>
-          <p>Loading your music taste profile...</p>
+          <p>Analyzing your sonic DNA...</p>
         </div>
       </div>
     );
@@ -71,38 +105,14 @@ export default function MusicTaste() {
       <div className={styles.container}>
         <Navigation activePage="music-taste" />
         <div className={styles.errorContainer}>
-          <h1>Error loading music taste</h1>
+          <h2>Error loading music taste</h2>
           <p>{error}</p>
-          <button 
-            className={styles.retryButton}
-            onClick={() => {
-              setIsLoading(true);
-              setError(null);
-              fetch('/api/spotify/user-taste')
-                .then(res => res.json())
-                .then(data => {
-                  if (data.success) {
-                    setTasteData(data.taste);
-                  } else {
-                    setError(data.error || 'Failed to load music taste data');
-                  }
-                  setIsLoading(false);
-                })
-                .catch(err => {
-                  console.error('Error fetching music taste data:', err);
-                  setError('Error fetching music taste data');
-                  setIsLoading(false);
-                });
-            }}
-          >
-            Try Again
-          </button>
         </div>
       </div>
     );
   }
 
-  // If tasteData is null or undefined, show a loading message
+  // If no taste data yet
   if (!tasteData) {
     return (
       <div className={styles.container}>
@@ -118,110 +128,97 @@ export default function MusicTaste() {
     <div className={styles.container}>
       <Navigation activePage="music-taste" />
       
-      <h1 className={styles.title}>Your Music Taste Profile</h1>
-      
-      {/* Spider Chart for Top Genres */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Your Genre Affinity</h2>
-        <div className={styles.spiderChartContainer}>
-          {tasteData && tasteData.topGenres && tasteData.topGenres.length > 0 ? (
-            <SpiderChart genres={tasteData.topGenres} />
-          ) : (
-            <p>No genre data available</p>
-          )}
+      <div className={styles.header}>
+        <h1 className={styles.title}>Your Music Taste Profile</h1>
+        <div className={styles.tasteLabels}>
+          {tasteData.tasteLabels && tasteData.tasteLabels.map((label, index) => (
+            <span key={index} className={styles.tasteLabel}>{label}</span>
+          ))}
         </div>
       </div>
       
-      {/* Your Music Personality */}
-      <div className={styles.section}>
+      {/* Spider Chart Section */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Your Genre Affinity</h2>
+        <div className={styles.spiderChartContainer}>
+          {tasteData.topGenres && tasteData.topGenres.length > 0 ? (
+            <SpiderChart genres={tasteData.topGenres} />
+          ) : (
+            <p className={styles.noData}>No genre data available</p>
+          )}
+        </div>
+      </section>
+      
+      {/* Music Personality Section */}
+      <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Your Music Personality</h2>
-        {tasteData && tasteData.tasteLabels && tasteData.tasteLabels.length > 0 ? (
-          <div className={styles.tasteLabels}>
-            {tasteData.tasteLabels.map((label, index) => (
-              <span key={index} className={styles.tasteLabel}>{label}</span>
-            ))}
-          </div>
-        ) : (
-          <p>No personality data available</p>
-        )}
-        {tasteData && tasteData.tasteProfile && (
-          <p className={styles.tasteProfile}>{tasteData.tasteProfile}</p>
-        )}
-      </div>
+        <p className={styles.personalityText}>{tasteData.tasteProfile}</p>
+      </section>
       
-      {/* Top Artists with Similar Artists */}
-      <div className={styles.section}>
+      {/* Top Artists Section */}
+      <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Top Artists</h2>
-        {tasteData && tasteData.topArtists && tasteData.topArtists.length > 0 ? (
-          <div className={styles.artistsList}>
-            {tasteData.topArtists.map((artist, index) => (
+        <div className={styles.artistsGrid}>
+          {tasteData.topArtists && tasteData.topArtists.length > 0 ? (
+            tasteData.topArtists.map((artist, index) => (
               <ArtistCard key={index} artist={artist} rank={index + 1} />
-            ))}
-          </div>
-        ) : (
-          <p>No artist data available</p>
-        )}
-      </div>
+            ))
+          ) : (
+            <p className={styles.noData}>No artist data available</p>
+          )}
+        </div>
+      </section>
       
-      {/* Top Tracks */}
-      <div className={styles.section}>
+      {/* Top Tracks Section */}
+      <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Top Tracks</h2>
-        {tasteData && tasteData.topTracks && tasteData.topTracks.length > 0 ? (
-          <div className={styles.tracksList}>
-            {tasteData.topTracks.map((track, index) => (
-              <div key={index} className={styles.trackItem}>
-                {track.image && (
-                  <div className={styles.trackImageContainer}>
-                    <img src={track.image} alt={track.name} className={styles.trackImage} />
-                  </div>
-                )}
-                <div className={styles.trackInfo}>
-                  <h3 className={styles.trackName}>{track.name}</h3>
-                  <p className={styles.trackArtist}>{track.artist}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No track data available</p>
-        )}
-      </div>
+        <div className={styles.tracksGrid}>
+          {tasteData.topTracks && tasteData.topTracks.length > 0 ? (
+            tasteData.topTracks.map((track, index) => (
+              <TrackCard key={index} track={track} rank={index + 1} />
+            ))
+          ) : (
+            <p className={styles.noData}>No track data available</p>
+          )}
+        </div>
+      </section>
       
-      {/* Seasonal Music Mood */}
-      <div className={styles.section}>
+      {/* Seasonal Mood Section */}
+      <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Seasonal Music Mood</h2>
-        {tasteData && tasteData.seasonalMood ? (
-          <div className={styles.seasonalContainer}>
-            {Object.entries(tasteData.seasonalMood).map(([season, genres]) => (
-              <div key={season} className={styles.seasonCard}>
-                <h3 className={styles.seasonName}>{season.charAt(0).toUpperCase() + season.slice(1)}</h3>
-                {genres && genres.length > 0 ? (
-                  <ul className={styles.seasonGenres}>
-                    {genres.map((genre, index) => (
-                      <li key={index} className={styles.seasonGenreItem}>{genre}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No genre data for this season</p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No seasonal mood data available</p>
-        )}
-      </div>
+        <div className={styles.seasonalMoodGrid}>
+          {tasteData.seasonalMood && Object.keys(tasteData.seasonalMood).length > 0 ? (
+            Object.entries(tasteData.seasonalMood).map(([season, genres], index) => (
+              <SeasonalMoodCard key={index} season={season} genres={genres} />
+            ))
+          ) : (
+            <p className={styles.noData}>No seasonal mood data available</p>
+          )}
+        </div>
+      </section>
       
-      {/* Discover Events Based on Your Taste */}
-      <div className={styles.section}>
+      {/* Discover Events Section */}
+      <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Discover Events Based on Your Taste</h2>
-        <button 
-          className={styles.eventsButton}
-          onClick={() => router.push('/users/events')}
-        >
-          Find Events
-        </button>
-      </div>
+        {userLocation && (
+          <p className={styles.locationText}>
+            Showing events near {userLocation.city || ''} {userLocation.region || ''}
+          </p>
+        )}
+        <div className={styles.eventsGrid}>
+          {correlatedEvents && correlatedEvents.length > 0 ? (
+            correlatedEvents.map((event, index) => (
+              <EventCard key={index} event={event} />
+            ))
+          ) : (
+            <p className={styles.noData}>No matching events found in your area</p>
+          )}
+        </div>
+      </section>
+      
+      <footer className={styles.footer}>
+        <p>© {new Date().getFullYear()} Sonar EDM Platform. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
