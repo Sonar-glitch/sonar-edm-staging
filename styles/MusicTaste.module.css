@@ -295,3 +295,43 @@
     margin: 25px 0;
   }
 }
+/* Add these styles to your existing MusicTaste.module.css file */
+
+.artistsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.sectionDescription {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sectionDescription {
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+  }
+  
+  .artistsList {
+    gap: 12px;
+    margin: 15px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionDescription {
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+  }
+  
+  .artistsList {
+    gap: 10px;
+    margin: 12px 0;
+  }
+}
