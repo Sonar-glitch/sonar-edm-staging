@@ -196,7 +196,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .optionsGrid {
     grid-template-columns: 1fr;

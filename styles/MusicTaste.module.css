@@ -1,294 +1,212 @@
 .container {
   min-height: 100vh;
-  background-color: #0f0f17;
-  color: white;
-}
-
-.main {
+  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  color: white;
+  background-color: #121212;
 }
 
 .header {
-  text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 40px;
+  position: relative;
 }
 
 .title {
   font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  background: linear-gradient(90deg, #ff6b8b, #5e72eb);
+  margin-bottom: 16px;
+  background: linear-gradient(90deg, #ff6b6b, #8a2be2);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   display: inline-block;
-}
-
-.subtitle {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 1.1rem;
-}
-
-.loadingContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 50vh;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #5e72eb;
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.errorContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 70vh;
-  text-align: center;
-}
-
-.signInButton {
-  display: inline-block;
-  background: linear-gradient(90deg, #ff6b8b, #5e72eb);
-  color: white;
-  padding: 0.8rem 2rem;
-  border-radius: 50px;
-  font-weight: 600;
-  margin-top: 1.5rem;
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.signInButton:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-.errorCard {
-  background-color: rgba(30, 30, 40, 0.7);
-  border-radius: 12px;
-  padding: 2rem;
-  text-align: center;
-  max-width: 500px;
-  margin: 0 auto;
-  border-left: 4px solid #ff6b6b;
-  transform: skewX(-2deg);
-  transform-origin: top left;
-}
-
-.errorCard h2 {
-  margin-top: 0;
-  transform: skewX(2deg);
-}
-
-.errorCard p {
-  margin-bottom: 1.5rem;
-  color: rgba(255, 255, 255, 0.8);
-  transform: skewX(2deg);
-}
-
-.retryButton {
-  background: linear-gradient(90deg, #ff6b6b, #ff8e8e);
-  color: white;
-  border: none;
-  padding: 0.7rem 1.5rem;
-  border-radius: 50px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  transform: skewX(2deg);
-}
-
-.retryButton:hover {
-  transform: translateY(-2px) skewX(2deg);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-/* Quick Navigation */
-.quickNav {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-.quickNavButton {
-  background-color: rgba(30, 30, 40, 0.7);
-  color: rgba(255, 255, 255, 0.7);
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-}
-
-.quickNavButton:hover {
-  background-color: rgba(138, 43, 226, 0.2);
-  color: white;
-}
-
-.quickNavButton.active {
-  background: linear-gradient(90deg, rgba(138, 43, 226, 0.3), rgba(255, 107, 107, 0.3));
-  color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-/* Sections */
-.section {
-  display: none;
-  margin-bottom: 3rem;
-  animation: fadeIn 0.5s ease;
-}
-
-.section.active {
-  display: block;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.sectionHeader {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.sectionTitle {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
   position: relative;
-  display: inline-block;
+  transform: skewX(-5deg);
 }
 
-.sectionTitle::after {
+.title::after {
   content: '';
   position: absolute;
   bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
+  left: 0;
+  width: 100px;
   height: 3px;
-  background: linear-gradient(90deg, #ff6b8b, #5e72eb);
-  border-radius: 3px;
+  background: linear-gradient(90deg, #ff6b6b, #8a2be2);
 }
 
-.sectionSubtitle {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 1rem;
+.tasteLabels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-/* Chart Container */
-.chartContainer {
+.tasteLabel {
+  background: rgba(138, 43, 226, 0.2);
+  border: 1px solid rgba(138, 43, 226, 0.4);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.section {
+  margin-bottom: 60px;
+  position: relative;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  width: calc(100% + 40px);
+  height: calc(100% + 40px);
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.05) 0%, transparent 70%);
+  z-index: -1;
+  border-radius: 16px;
+  transform: skewX(-2deg);
+}
+
+.sectionTitle {
+  font-size: 1.8rem;
+  margin-bottom: 24px;
+  color: #ff6b6b;
+  position: relative;
+  display: inline-block;
+  padding-right: 30px;
+}
+
+.sectionTitle::after {
+  content: '★';
+  position: absolute;
+  right: 0;
+  top: 0;
+  color: #8a2be2;
+}
+
+.spiderChartContainer {
   background-color: rgba(30, 30, 40, 0.7);
   border-radius: 12px;
-  padding: 2rem;
-  height: 400px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
   max-width: 600px;
   margin: 0 auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  border-left: 4px solid #8a2be2;
-  transform: skewX(-2deg);
-  transform-origin: top left;
 }
 
-/* Artists Section */
+.spiderChartContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, rgba(138, 43, 226, 0.1) 0%, transparent 70%);
+  z-index: 0;
+  animation: pulse 4s infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
 .artistsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
 }
 
 .artistCard {
   background-color: rgba(30, 30, 40, 0.7);
   border-radius: 12px;
-  padding: 2rem;
-  position: relative;
+  overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
   transition: all 0.3s ease;
-  border-left: 4px solid #8a2be2;
   transform: skewX(-2deg);
   transform-origin: top left;
 }
 
 .artistCard:hover {
-  transform: translateY(-5px) skewX(-2deg);
+  transform: skewX(-2deg) translateY(-5px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
 }
 
 .artistRank {
   position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #ff6b8b, #5e72eb);
+  top: 10px;
+  left: 10px;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, #ff6b6b, #8a2be2);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
   font-weight: 700;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  z-index: 2;
-  transform: skewX(2deg);
+  z-index: 1;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .artistImageContainer {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 1.5rem;
-  border-radius: 50%;
+  height: 180px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  transform: skewX(2deg);
 }
 
 .artistImage {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: all 0.5s ease;
+  transform: skewX(2deg) scale(1.05);
+}
+
+.artistCard:hover .artistImage {
+  transform: skewX(2deg) scale(1.1);
+}
+
+.artistInfo {
+  padding: 20px;
+  transform: skewX(2deg);
 }
 
 .artistName {
-  text-align: center;
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  transform: skewX(2deg);
+  font-size: 1.3rem;
+  margin: 0 0 10px;
+  color: white;
 }
 
 .artistGenres {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
-  transform: skewX(2deg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 15px;
+}
+
+.artistGenre {
+  font-size: 0.8rem;
+  padding: 3px 8px;
+  background-color: rgba(138, 43, 226, 0.2);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .similarArtists {
-  transform: skewX(2deg);
+  margin-top: 15px;
 }
 
 .similarTitle {
-  font-size: 1rem;
-  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  margin: 0 0 10px;
+  color: rgba(255, 255, 255, 0.7);
   position: relative;
   display: inline-block;
 }
@@ -296,495 +214,522 @@
 .similarTitle::after {
   content: '';
   position: absolute;
-  bottom: -5px;
+  bottom: -4px;
   left: 0;
   width: 30px;
   height: 2px;
-  background: linear-gradient(90deg, #ff6b8b, #5e72eb);
-  border-radius: 2px;
+  background: linear-gradient(90deg, #ff6b6b, transparent);
 }
 
 .similarGrid {
   display: flex;
-  gap: 1rem;
+  gap: 10px;
 }
 
 .similarArtist {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 70px;
+  width: 60px;
 }
 
 .similarImage {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  object-fit: cover;
+  margin-bottom: 5px;
+  border: 2px solid rgba(138, 43, 226, 0.3);
+  transition: all 0.3s ease;
+}
+
+.similarArtist:hover .similarImage {
+  border-color: #ff6b6b;
+  transform: scale(1.1);
 }
 
 .similarName {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   text-align: center;
-  color: rgba(255, 255, 255, 0.9);
-  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
+  white-space: nowrap;
 }
 
-/* Tracks Section */
-.tracksContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.tracksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
 }
 
 .trackCard {
   background-color: rgba(30, 30, 40, 0.7);
   border-radius: 12px;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
+  overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
   transition: all 0.3s ease;
-  border-left: 4px solid #8a2be2;
   transform: skewX(-2deg);
   transform-origin: top left;
 }
 
 .trackCard:hover {
-  transform: translateY(-3px) skewX(-2deg);
+  transform: skewX(-2deg) translateY(-5px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
 }
 
 .trackRank {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #ff6b8b, #5e72eb);
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, #ff6b6b, #8a2be2);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
   font-weight: 700;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  flex-shrink: 0;
-  transform: skewX(2deg);
+  z-index: 1;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.trackImageContainer {
+  height: 160px;
+  overflow: hidden;
+  position: relative;
 }
 
 .trackImage {
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  flex-shrink: 0;
-  transform: skewX(2deg);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: all 0.5s ease;
+  transform: skewX(2deg) scale(1.05);
+}
+
+.trackCard:hover .trackImage {
+  transform: skewX(2deg) scale(1.1);
+}
+
+.playButton {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(138, 43, 226, 0.7);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.trackCard:hover .playButton {
+  opacity: 1;
+}
+
+.playIcon {
+  color: white;
+  font-size: 1.2rem;
 }
 
 .trackInfo {
-  flex-grow: 1;
+  padding: 15px;
   transform: skewX(2deg);
 }
 
 .trackName {
-  font-size: 1.2rem;
-  margin: 0 0 0.3rem;
+  font-size: 1.1rem;
+  margin: 0 0 5px;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .trackArtist {
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
   margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.trackPreview {
-  width: 200px;
-  height: 40px;
-  transform: skewX(2deg);
-}
-
-/* Seasonal Mood Section */
-.seasonalContainer {
+.seasonalMoodGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
 }
 
 .seasonCard {
   background-color: rgba(30, 30, 40, 0.7);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
-  border-left: 4px solid;
+  transition: all 0.3s ease;
   transform: skewX(-2deg);
   transform-origin: top left;
 }
 
-.seasonCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 80%);
-  z-index: 0;
+.seasonCard:hover {
+  transform: skewX(-2deg) translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
 }
 
-.seasonCard.winter {
-  border-left-color: #5e72eb;
-}
-
-.seasonCard.spring {
-  border-left-color: #8a2be2;
-}
-
-.seasonCard.summer {
-  border-left-color: #ff6b8b;
-}
-
-.seasonCard.fall {
-  border-left-color: #ff8e3c;
-}
-
-.seasonCard.current::after {
-  content: 'Current Season';
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: linear-gradient(90deg, #ff6b8b, #5e72eb);
-  color: white;
-  font-size: 0.7rem;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-weight: 600;
-  transform: skewX(2deg);
+.currentSeason {
+  border-left: 4px solid #ff6b6b;
 }
 
 .seasonName {
-  font-size: 1.5rem;
-  margin-top: 0;
-  margin-bottom: 1rem;
-  position: relative;
-  z-index: 1;
+  font-size: 1.3rem;
+  margin: 0 0 15px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   transform: skewX(2deg);
 }
 
+.currentBadge {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  background: linear-gradient(90deg, #ff6b6b, #8a2be2);
+  border-radius: 12px;
+  color: white;
+}
+
 .seasonMood {
-  margin-bottom: 1rem;
-  position: relative;
-  z-index: 1;
+  margin-bottom: 15px;
   transform: skewX(2deg);
 }
 
 .moodLabel {
-  color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 5px;
 }
 
 .moodValue {
-  font-weight: 600;
-  margin-left: 0.3rem;
+  font-size: 1rem;
+  color: white;
+  font-weight: 500;
 }
 
 .seasonGenres {
-  position: relative;
-  z-index: 1;
   transform: skewX(2deg);
 }
 
 .genresLabel {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
   display: block;
-  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
 }
 
 .genresList {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 6px;
 }
 
-.genreTag {
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
+.seasonGenre {
   font-size: 0.8rem;
+  padding: 3px 8px;
+  background-color: rgba(138, 43, 226, 0.2);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-/* Vibe Quiz Card */
-.vibeQuizContainer {
-  margin: 3rem 0;
-}
-
-.vibeQuizCard {
+.eventsNavigation {
   background-color: rgba(30, 30, 40, 0.7);
   border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  padding: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  border-left: 4px solid #ff6b6b;
-  transform: skewX(-2deg);
-  transform-origin: top left;
-}
-
-.expanded {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-}
-
-.vibeQuizHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  cursor: pointer;
-  background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(255, 107, 107, 0.2));
-  position: relative;
-  z-index: 1;
-}
-
-.vibeQuizHeader::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, rgba(138, 43, 226, 0.1), transparent 70%);
-  z-index: -1;
-}
-
-.vibeQuizTitle {
-  margin: 0;
-  font-size: 1.2rem;
-  color: white;
-  font-weight: 600;
-  transform: skewX(2deg);
-}
-
-.toggleIcon {
-  font-size: 1.5rem;
-  color: #ff6b6b;
-  transform: skewX(2deg);
-}
-
-.vibeQuizContent {
-  padding: 2rem;
-  transform: skewX(2deg);
-}
-
-.vibeQuizDescription {
-  margin-top: 0;
-  margin-bottom: 2rem;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.quizForm {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-}
-
-.quizQuestion h4 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-}
-
-.quizOptions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-}
-
-.quizOption {
-  background-color: rgba(30, 30, 40, 0.9);
-  border: 1px solid rgba(138, 43, 226, 0.4);
-  color: white;
-  padding: 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-  text-align: center;
-}
-
-.quizOption:hover {
-  background-color: rgba(138, 43, 226, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* Events Navigation Card */
-.eventsNavContainer {
-  margin: 3rem 0;
-}
-
-.eventsNavCard {
-  background-color: rgba(30, 30, 40, 0.7);
-  border-radius: 12px;
-  padding: 2rem;
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  position: relative;
-  overflow: hidden;
-  border-left: 4px solid #5e72eb;
+  text-align: center;
   transform: skewX(-2deg);
   transform-origin: top left;
+  border-left: 4px solid #8a2be2;
 }
 
-.eventsNavCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(94, 114, 235, 0.2), transparent 70%);
-  z-index: 0;
-}
-
-.eventsNavContent {
-  position: relative;
-  z-index: 1;
+.eventsDescription {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  color: rgba(255, 255, 255, 0.9);
   transform: skewX(2deg);
 }
 
-.eventsNavTitle {
-  font-size: 1.5rem;
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-}
-
-.eventsNavDescription {
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 1.5rem;
-}
-
-.eventsNavButton {
-  display: inline-block;
-  background: linear-gradient(90deg, #5e72eb, #8a2be2);
+.eventsButton {
+  background: linear-gradient(90deg, #8a2be2, #ff6b6b);
   color: white;
-  padding: 0.8rem 2rem;
+  padding: 12px 30px;
   border-radius: 50px;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.3s ease;
+  display: inline-block;
+  transform: skewX(2deg);
 }
 
-.eventsNavButton:hover {
+.eventsButton:hover {
+  transform: skewX(2deg) translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.noData {
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+  background-color: rgba(30, 30, 40, 0.7);
+  border-radius: 12px;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: #8a2be2;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorContainer {
+  text-align: center;
+  padding: 40px;
+  background-color: rgba(255, 107, 107, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.retryButton {
+  background: linear-gradient(90deg, #ff6b6b, #8a2be2);
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 50px;
+  font-size: 1rem;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retryButton:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
-.eventsNavDecoration {
-  position: absolute;
-  top: 50%;
-  right: 2rem;
-  transform: translateY(-50%) skewX(2deg);
-  width: 100px;
-  height: 100px;
-  background: url('/images/event-icon.svg') no-repeat center;
-  background-size: contain;
-  opacity: 0.2;
+/* Quick Navigation */
+.quickNav {
+  display: none;
+  background-color: rgba(20, 20, 30, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 30px;
+  padding: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 70px;
+  z-index: 90;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+.quickNav::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.quickNavButton {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 8px 16px;
+  margin: 0 4px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.quickNavButton:first-child {
+  margin-left: 0;
+}
+
+.quickNavButton:last-child {
+  margin-right: 0;
+}
+
+.quickNavButton:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.quickNavButton.active {
+  color: white;
+  background: linear-gradient(90deg, rgba(138, 43, 226, 0.3), rgba(255, 107, 107, 0.3));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.scrollToTopButton {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8a2be2, #ff6b6b);
+  color: white;
+  border: none;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  z-index: 99;
+  opacity: 0.8;
+}
+
+.scrollToTopButton:hover {
+  transform: translateY(-3px);
+  opacity: 1;
+}
+
+/* Manga-style decorative elements */
+.container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(138, 43, 226, 0.1), transparent 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.container::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at bottom left, rgba(255, 107, 107, 0.1), transparent 70%);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+  .title {
+    font-size: 2.2rem;
+  }
+  
+  .sectionTitle {
+    font-size: 1.6rem;
+  }
+  
+  .artistsGrid, .eventsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
-  .main {
-    padding: 1.5rem 1rem;
+  .container {
+    padding: 15px;
   }
   
   .title {
     font-size: 2rem;
   }
   
-  .chartContainer {
-    padding: 1.5rem;
-    height: 350px;
+  .sectionTitle {
+    font-size: 1.4rem;
   }
   
-  .artistsGrid {
+  .artistsGrid, .eventsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+  
+  .tracksGrid, .seasonalMoodGrid {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
   
-  .trackCard {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1.5rem;
+  .quickNav {
+    display: flex;
   }
   
-  .trackRank {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-  }
-  
-  .trackImage {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1;
-    max-width: 200px;
-  }
-  
-  .trackInfo {
-    width: 100%;
-  }
-  
-  .trackPreview {
-    width: 100%;
+  .section {
+    scroll-margin-top: 140px; /* Account for sticky header and quick nav */
   }
 }
 
 @media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+  
   .title {
     font-size: 1.8rem;
   }
   
-  .subtitle {
-    font-size: 1rem;
-  }
-  
-  .quickNav {
-    gap: 0.5rem;
-  }
-  
-  .quickNavButton {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-  }
-  
-  .chartContainer {
-    height: 300px;
-    padding: 1rem;
-  }
-  
-  .artistsGrid {
-    grid-template-columns: 1fr;
-  }
-  
-  .seasonalContainer {
-    grid-template-columns: 1fr;
-  }
-  
-  .eventsNavCard {
-    padding: 1.5rem;
-  }
-  
-  .eventsNavTitle {
+  .sectionTitle {
     font-size: 1.3rem;
   }
   
-  .eventsNavDecoration {
-    display: none;
+  .artistsGrid, .tracksGrid, .seasonalMoodGrid, .eventsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tasteLabel {
+    font-size: 0.8rem;
+  }
+  
+  .section {
+    margin-bottom: 40px;
+  }
+  
+  .quickNavButton {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .scrollToTopButton {
+    width: 36px;
+    height: 36px;
+    bottom: 15px;
+    right: 15px;
   }
 }

@@ -2,36 +2,32 @@ import { getSession } from 'next-auth/react';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const session = await getSession({ req });
     
     if (!session) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
     
     const { preferences } = req.body;
     
     if (!preferences) {
-      return res.status(400).json({ success: false, message: 'Preferences data is required' });
+      return res.status(400).json({ error: 'Missing preferences data' });
     }
     
-    // In a production environment, you would store these preferences in a database
-    // and use them to adjust the user's taste profile
+    // In a real app, you would store these preferences in a database
+    // For demo purposes, we'll just return success
+    console.log('Received taste preferences:', preferences);
     
-    console.log('Updating user taste preferences:', preferences);
-    
-    // For now, we'll just return success
     return res.status(200).json({ 
       success: true, 
-      message: 'Taste preferences updated successfully',
-      preferences
+      message: 'Taste preferences updated successfully' 
     });
-    
   } catch (error) {
     console.error('Error updating taste preferences:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    return res.status(500).json({ error: 'Failed to update taste preferences' });
   }
 }

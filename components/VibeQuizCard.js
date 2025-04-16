@@ -9,7 +9,7 @@ export default function VibeQuizCard({ onTasteUpdate }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   
-  // Sample quiz questions - these would be fetched from an API in production
+  // Sample quiz questions
   const questions = [
     {
       id: 'tempo',
@@ -42,7 +42,6 @@ export default function VibeQuizCard({ onTasteUpdate }) {
 
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
-    // Reset quiz state when collapsing
     if (isExpanded) {
       setCurrentQuestion(0);
       setAnswers({});
@@ -56,7 +55,6 @@ export default function VibeQuizCard({ onTasteUpdate }) {
       [questionId]: value
     });
     
-    // Move to next question or submit if last question
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
@@ -67,12 +65,10 @@ export default function VibeQuizCard({ onTasteUpdate }) {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Submit answers to API
       const response = await axios.post('/api/user/update-taste-preferences', { preferences: answers });
       
       if (response.data.success) {
         setSubmitSuccess(true);
-        // Call the callback to update parent component if provided
         if (onTasteUpdate && typeof onTasteUpdate === 'function') {
           onTasteUpdate();
         }

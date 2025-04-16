@@ -1,4 +1,5 @@
 import { getSession } from 'next-auth/react';
+import axios from 'axios';
 
 export default async function handler(req, res) {
   try {
@@ -8,7 +9,8 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     
-    // Mock data for development and testing
+    // For demo purposes, return mock data
+    // In production, you would use the Spotify API with the user's access token
     const mockData = {
       topGenres: [
         { name: 'Melodic House', value: 90 },
@@ -117,11 +119,10 @@ export default async function handler(req, res) {
         summer: { genres: ['Tech House', 'House'], mood: 'Energetic' },
         fall: { genres: ['Organic House', 'Downtempo'], mood: 'Melancholic' },
         current: 'spring'
-      },
-      tasteLabels: ['Melodic', 'Progressive', 'Deep', 'Atmospheric', 'Energetic']
+      }
     };
     
-    return res.status(200).json(mockData);
+    return res.status(200) .json(mockData);
   } catch (error) {
     console.error('Error fetching user taste:', error);
     return res.status(500).json({ error: 'Failed to fetch music taste data' });
