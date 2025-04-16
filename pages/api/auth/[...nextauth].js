@@ -103,6 +103,16 @@ export default NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
+    // Force redirect to music-taste page after login
+    if (url.includes("callback") || url === baseUrl) {
+      return `${baseUrl}/users/music-taste`;
+    }
+    
+    // Original redirect logic for other cases
+    if (url.startsWith("/")) return `${baseUrl}${url}`;
+    else if (new URL(url).origin === baseUrl) return url;
+    return baseUrl;
+  }) {
       // Force redirect to music-taste page after login
       if (url.includes('callback') || url === baseUrl) {
         return `${baseUrl}/users/music-taste`;
