@@ -240,3 +240,58 @@
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 }
+spiderChartContainer {
+  background-color: rgba(30, 30, 40, 0.7);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.sectionTitle {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #fff;
+  text-align: center;
+  background: linear-gradient(90deg, #ff6b6b, #8a2be2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section {
+  margin: 40px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sectionTitle {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+  
+  .spiderChartContainer {
+    padding: 15px;
+    margin: 15px 0;
+  }
+  
+  .section {
+    margin: 30px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionTitle {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+  
+  .spiderChartContainer {
+    padding: 10px;
+    margin: 10px 0;
+  }
+  
+  .section {
+    margin: 25px 0;
+  }
+}
