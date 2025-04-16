@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     } else {
       // Fallback to IP geolocation
       try {
-        const geoResponse = await axios.get('https://ipapi.co/json/');
+        const geoResponse = await axios.get('https://ipapi.co/json/') ;
         userLocation = {
           latitude: geoResponse.data.latitude,
           longitude: geoResponse.data.longitude,
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
       {
         id: 'evt2',
         name: 'Techno Revolution',
-        date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        date: new Date(Date.now()  + 14 * 24 * 60 * 60 * 1000).toISOString(),
         venue: 'Club Space',
         genres: ['Techno', 'Dark Techno'],
         artists: ['Boris Brejcha', 'ANNA'],
@@ -90,7 +90,7 @@ export default async function handler(req, res) {
       {
         id: 'evt3',
         name: 'Deep Vibes',
-        date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        date: new Date(Date.now()  + 3 * 24 * 60 * 60 * 1000).toISOString(),
         venue: 'Sound Bar',
         genres: ['Deep House', 'Organic House'],
         artists: ['Nora En Pure', 'Ben Böhmer'],
@@ -104,7 +104,7 @@ export default async function handler(req, res) {
       {
         id: 'evt4',
         name: 'Trance Journey',
-        date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+        date: new Date(Date.now()  + 21 * 24 * 60 * 60 * 1000).toISOString(),
         venue: 'Avalon',
         genres: ['Trance', 'Progressive Trance'],
         artists: ['Above & Beyond', 'Armin van Buuren'],
@@ -118,7 +118,7 @@ export default async function handler(req, res) {
       {
         id: 'evt5',
         name: 'House Classics',
-        date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+        date: new Date(Date.now()  + 10 * 24 * 60 * 60 * 1000).toISOString(),
         venue: 'Ministry of Sound',
         genres: ['House', 'Tech House'],
         artists: ['CamelPhat', 'Solardo'],
@@ -134,7 +134,7 @@ export default async function handler(req, res) {
     // Calculate correlation scores for each event
     const correlatedEvents = mockEvents.map(event => {
       // Calculate genre match
-      const genreMatch = event.genres.reduce((score, genre) => {
+      const genreMatch = event.genres.reduce((score, genre)  => {
         const matchingGenre = userTaste.topGenres.find(g => g.name.toLowerCase() === genre.toLowerCase());
         return score + (matchingGenre ? matchingGenre.weight * 50 : 0);
       }, 0) / event.genres.length;
