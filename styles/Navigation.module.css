@@ -1,0 +1,281 @@
+.navigationContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(18, 18, 30, 0.95);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.tasteBadgeContainer {
+  position: absolute;
+  left: 1.5rem;
+  top: -1rem;
+  z-index: 101;
+}
+
+.tasteBadge {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff6b6b, #a16bff);
+  color: white;
+  font-weight: 600;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 0.5rem;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.navItem:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.navItem.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-weight: 600;
+}
+
+.navIcon {
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.profileContainer {
+  position: relative;
+}
+
+.profileButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.profileButton:hover {
+  transform: scale(1.05);
+}
+
+.profileImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profileInitial {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6b66ff, #a16bff);
+  color: white;
+  font-weight: 600;
+  font-size: 1.2rem;
+  border-radius: 50%;
+}
+
+.profileMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 240px;
+  background-color: #1e1e2d;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  z-index: 200;
+  animation: fadeIn 0.2s ease;
+}
+
+.profileMenuHeader {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.profileMenuAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.profileMenuAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profileMenuInitial {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6b66ff, #a16bff);
+  color: white;
+  font-weight: 600;
+  font-size: 1.2rem;
+  border-radius: 50%;
+}
+
+.profileMenuInfo {
+  flex: 1;
+  overflow: hidden;
+}
+
+.profileMenuName {
+  font-weight: 600;
+  color: white;
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileMenuEmail {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileMenuDivider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0;
+}
+
+.profileMenuList {
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0;
+}
+
+.profileMenuItem, .profileMenuSignOut {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.profileMenuItem:hover, .profileMenuSignOut:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.profileMenuSignOut {
+  color: #ff6b6b;
+}
+
+.profileMenuSignOut:hover {
+  background-color: rgba(255, 107, 107, 0.1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .navigationContainer {
+    padding: 0.5rem;
+    border-radius: 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    margin-bottom: 0;
+  }
+  
+  .navigation {
+    justify-content: space-around;
+  }
+  
+  .navItem {
+    flex-direction: column;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .navIcon {
+    margin-right: 0;
+    margin-bottom: 0.25rem;
+    font-size: 1.2rem;
+  }
+  
+  .profileContainer {
+    display: none;
+  }
+  
+  .tasteBadgeContainer {
+    position: static;
+    margin-right: 0.5rem;
+  }
+  
+  .tasteBadge {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.8rem;
+  }
+  
+  /* Add padding to body to account for fixed navigation */
+  :global(body) {
+    padding-bottom: 70px;
+  }
+}

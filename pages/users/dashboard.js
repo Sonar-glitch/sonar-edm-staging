@@ -1,13 +1,23 @@
-import { useSession, signIn } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
+import Navigation from '../../components/Navigation';
 import styles from '../../styles/Dashboard.module.css';
 import Link from 'next/link';
 
 export default function UserDashboard() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Protect route - redirect to login if not authenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/');
+    }
+  }, [status, router]);
   
   useEffect(() => {
     if (session?.accessToken) {
@@ -36,42 +46,12 @@ export default function UserDashboard() {
     }
   }, [session, status]);
   
-  // If the user is not authenticated, show sign in button
-  if (!session && !loading) {
-    return (
-      <div className={styles.container}>
-        <Head>
-          <title>User Dashboard - Sonar EDM Platform</title>
-        </Head>
-        
-        <div className={styles.authPrompt}>
-          <h1 className={styles.title}>Access Your EDM Experience</h1>
-          <p className={styles.description}>
-            Please sign in with your Spotify account to access your personalized dashboard.
-          </p>
-          <button 
-            onClick={() => signIn('spotify')}
-            className={styles.signInButton}
-          >
-            Sign in with Spotify
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
   // Show loading state
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
-      <div className={styles.container}>
-        <Head>
-          <title>Loading... - Sonar EDM Platform</title>
-        </Head>
-        
-        <div className={styles.loadingContainer}>
-          <div className={styles.loader}></div>
-          <p>Loading your profile...</p>
-        </div>
+      <div className={styles.loadingContainer}>
+        <div className={styles.loader}></div>
+        <p>Loading your profile...</p>
       </div>
     );
   }
@@ -80,34 +60,17 @@ export default function UserDashboard() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>User Dashboard - Sonar EDM Platform</title>
+        <title>Dashboard - Sonar EDM Platform</title>
+        <meta name="description" content="Your personalized EDM dashboard" />
       </Head>
       
-      <header className={styles.header}>
-        <div className={styles.logo}>SONAR</div>
-        <nav className={styles.nav}>
-          <Link href="/"><a className={styles.navLink}>Home</a></Link>
-          <Link href="/users/dashboard"><a className={styles.navLink}>Dashboard</a></Link>
-          <Link href="/auth/signout"><a className={styles.navLink}>Sign Out</a></Link>
-        </nav>
-        {userProfile && (
-          <div className={styles.profile}>
-            {userProfile.images && userProfile.images[0] && (
-              <img 
-                src={userProfile.images[0].url} 
-                alt={userProfile.display_name} 
-                className={styles.avatar}
-              />
-            )}
-            <span className={styles.username}>{userProfile.display_name}</span>
-          </div>
-        )}
-      </header>
+      {/* Add consistent navigation */}
+      <Navigation activePage="dashboard" />
       
       <main className={styles.main}>
         <section className={styles.welcomeSection}>
           <h1 className={styles.welcomeTitle}>
-            Welcome, {userProfile?.display_name || 'Music Fan'}!
+            Welcome, {userProfile?.display_name || session?.user?.name || 'Music Fan'}!
           </h1>
           <p className={styles.welcomeText}>
             Your personalized EDM experience awaits. Discover events that match your music taste.
@@ -115,45 +78,53 @@ export default function UserDashboard() {
         </section>
         
         <div className={styles.dashboardGrid}>
-          <section className={styles.dashboardCard}>
-            <h2 className={styles.cardTitle}>Your Sonic DNA</h2>
-            <p className={styles.cardDescription}>
-              Take our interactive Vibe Quiz to discover your unique Sonic DNA and get personalized event recommendations.
-            </p>
-            <div className={styles.cardAction}>
-              <button className={styles.actionButton}>Start Vibe Quiz</button>
-            </div>
-          </section>
+          <Link href="/users/music-taste">
+            <a className={styles.dashboardCard}>
+              <h2 className={styles.cardTitle}>Your Music Taste</h2>
+              <p className={styles.cardDescription}>
+                Explore your music preferences and discover new artists based on your Spotify listening history.
+              </p>
+              <div className={styles.cardAction}>
+                <span className={styles.actionButton}>View Music Taste</span>
+              </div>
+            </a>
+          </Link>
           
-          <section className={styles.dashboardCard}>
-            <h2 className={styles.cardTitle}>Upcoming Events</h2>
-            <p className={styles.cardDescription}>
-              Explore EDM events that match your music taste with Spotify preview integration.
-            </p>
-            <div className={styles.cardAction}>
-              <button className={styles.actionButton}>Explore Events</button>
-            </div>
-          </section>
+          <Link href="/users/vibe-quiz">
+            <a className={styles.dashboardCard}>
+              <h2 className={styles.cardTitle}>Vibe Quiz</h2>
+              <p className={styles.cardDescription}>
+                Take our interactive Vibe Quiz to discover your unique Sonic DNA and get personalized event recommendations.
+              </p>
+              <div className={styles.cardAction}>
+                <span className={styles.actionButton}>Start Vibe Quiz</span>
+              </div>
+            </a>
+          </Link>
           
-          <section className={styles.dashboardCard}>
-            <h2 className={styles.cardTitle}>Subgenre Visualization</h2>
-            <p className={styles.cardDescription}>
-              See your music preferences visualized across EDM subgenres with dynamic soundwave bars.
-            </p>
-            <div className={styles.cardAction}>
-              <button className={styles.actionButton}>View Visualization</button>
-            </div>
-          </section>
+          <Link href="/users/events">
+            <a className={styles.dashboardCard}>
+              <h2 className={styles.cardTitle}>Discover Events</h2>
+              <p className={styles.cardDescription}>
+                Find events that match your music taste with location-based recommendations and Spotify preview integration.
+              </p>
+              <div className={styles.cardAction}>
+                <span className={styles.actionButton}>Explore Events</span>
+              </div>
+            </a>
+          </Link>
           
-          <section className={styles.dashboardCard}>
-            <h2 className={styles.cardTitle}>Underground Map</h2>
-            <p className={styles.cardDescription}>
-              Discover venues and events on our interactive map filtered by your vibe preferences.
-            </p>
-            <div className={styles.cardAction}>
-              <button className={styles.actionButton}>Open Map</button>
-            </div>
-          </section>
+          <Link href="/users/venues">
+            <a className={styles.dashboardCard}>
+              <h2 className={styles.cardTitle}>Discover Venues</h2>
+              <p className={styles.cardDescription}>
+                Find venues that match your music preferences on our interactive map filtered by your taste profile.
+              </p>
+              <div className={styles.cardAction}>
+                <span className={styles.actionButton}>Explore Venues</span>
+              </div>
+            </a>
+          </Link>
         </div>
       </main>
       
