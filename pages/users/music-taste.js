@@ -339,7 +339,7 @@ export default function MusicTaste() {
             You're all about <span className={styles.highlight}>{getTopGenres()}</span> with 
             a vibe shift toward <span className={styles.highlight}>{getRecentTrends()}</span>. 
             {displayEvents.length > 0 ? 
-              ` Found ${displayEvents.length} events that match your sound.` : 
+              ` ` : 
               " Events coming soon that match your sound."}
           </p>
         </div>
@@ -382,7 +382,7 @@ export default function MusicTaste() {
         {/* Events section - prioritized and full width */}
         <section className={styles.eventsSection}>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Events That Match Your Vibe</h2>
+            <h2 className={styles.sectionTitle}>Events That Match Your Vibe {displayEvents.length > 0 ? `(Found ${displayEvents.length} events)` : ""}</h2>
             <div className={styles.dataSourceIndicator}>
               {isRealData.events ? 
                 <span className={styles.realDataBadge}>Real Data</span> : 
@@ -515,23 +515,6 @@ export default function MusicTaste() {
         </div>
         
         {/* Confidence score explanation */}
-        <section className={styles.confidenceSection}>
-          <div className={styles.confidenceExplanation}>
-            <h3>How We Match Your Vibe</h3>
-            <p>Our recommendations use a confidence scoring system that considers:</p>
-            <ul className={styles.confidenceFactors}>
-              <li><span className={styles.factorName}>Genre Match (40%):</span> How closely the genres align with your top genres</li>
-              <li><span className={styles.factorName}>Artist Match (25%):</span> Direct matches with your favorite artists or similar artists</li>
-              <li><span className={styles.factorName}>Geographic Relevance (15%):</span> Proximity to your location</li>
-              <li><span className={styles.factorName}>Temporal Relevance (10%):</span> How soon the event is happening</li>
-              <li><span className={styles.factorName}>Venue Affinity (5%):</span> Your history with this venue</li>
-              <li><span className={styles.factorName}>Social Factor (5%):</span> Popularity among similar listeners</li>
-            </ul>
-            <p className={styles.vibeInfluence}>
-              Your vibe quiz responses influence 30% of your recommendations, while your actual listening data accounts for 70%.
-            </p>
-          </div>
-        </section>
       </main>
     </div>
   );

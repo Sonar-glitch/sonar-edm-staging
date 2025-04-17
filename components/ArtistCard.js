@@ -18,10 +18,9 @@ const ArtistCard = ({ artist, correlation = 0.5, similarArtists = [], useTasteMa
   const image = artist.image || '/images/artist-placeholder.jpg';
   const genres = Array.isArray(artist.genres) ? artist.genres : [];
   
-  // Calculate popularity and obscurity
+  // Calculate popularity and taste match
   const popularity = typeof artist.popularity === 'number' ? artist.popularity : 50;
   const tasteMatch = typeof correlation === 'number' ? Math.round(correlation * 100) : 50;
-  const obscurity = 100 - popularity;
 
   return (
     <div className={styles.artistCard}>
@@ -45,17 +44,14 @@ const ArtistCard = ({ artist, correlation = 0.5, similarArtists = [], useTasteMa
             </div>
             
             <div className={styles.metricGroup}>
-              <span className={styles.metricLabel}>{useTasteMatch ? 'Taste Match' : 'Obscurity'}</span>
+              <span className={styles.metricLabel}>Taste Match</span>
               <div className={styles.progressBar}>
                 <div 
                   className={styles.progressFill} 
-                  style={{ 
-                    width: `${useTasteMatch ? tasteMatch : obscurity}%`, 
-                    backgroundColor: useTasteMatch ? '#ff00ff' : '#ff00a0' 
-                  }}
+                  style={{ width: `${tasteMatch}%`, backgroundColor: '#ff00ff' }}
                 ></div>
               </div>
-              <span className={styles.metricValue}>{useTasteMatch ? tasteMatch : obscurity}%</span>
+              <span className={styles.metricValue}>{tasteMatch}%</span>
             </div>
           </div>
         </div>
@@ -92,19 +88,6 @@ const ArtistCard = ({ artist, correlation = 0.5, similarArtists = [], useTasteMa
           </div>
         </div>
       )}
-      
-      <div className={styles.confidenceTooltip}>
-        <div className={styles.tooltipIcon}>i</div>
-        <div className={styles.tooltipContent}>
-          <h4>Why we recommended {name}</h4>
-          <ul>
-            <li>Genre match: {Math.round(Math.random() * 40)}%</li>
-            <li>Audience overlap: {Math.round(Math.random() * 30)}%</li>
-            <li>Sonic similarity: {Math.round(Math.random() * 30)}%</li>
-          </ul>
-          <p>Overall confidence: {tasteMatch}%</p>
-        </div>
-      </div>
     </div>
   );
 };

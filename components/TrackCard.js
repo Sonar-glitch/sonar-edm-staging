@@ -30,7 +30,6 @@ const TrackCard = ({ track, correlation = 0.5, duration = 0, popularity = 0, use
   const trackPopularity = typeof track.popularity === 'number' ? track.popularity : 
                          (typeof popularity === 'number' ? popularity : 50);
   const tasteMatch = typeof correlation === 'number' ? Math.round(correlation * 100) : 50;
-  const obscurity = 100 - trackPopularity;
 
   return (
     <div className={styles.trackCard}>
@@ -55,17 +54,14 @@ const TrackCard = ({ track, correlation = 0.5, duration = 0, popularity = 0, use
             </div>
             
             <div className={styles.metricGroup}>
-              <span className={styles.metricLabel}>{useTasteMatch ? 'Taste Match' : 'Obscurity'}</span>
+              <span className={styles.metricLabel}>Taste Match</span>
               <div className={styles.progressBar}>
                 <div 
                   className={styles.progressFill} 
-                  style={{ 
-                    width: `${useTasteMatch ? tasteMatch : obscurity}%`, 
-                    backgroundColor: useTasteMatch ? '#ff00ff' : '#ff00a0' 
-                  }}
+                  style={{ width: `${tasteMatch}%`, backgroundColor: '#ff00ff' }}
                 ></div>
               </div>
-              <span className={styles.metricValue}>{useTasteMatch ? tasteMatch : obscurity}%</span>
+              <span className={styles.metricValue}>{tasteMatch}%</span>
             </div>
           </div>
         </div>
@@ -73,19 +69,6 @@ const TrackCard = ({ track, correlation = 0.5, duration = 0, popularity = 0, use
       
       <div className={styles.trackDetails}>
         <span className={styles.duration}>Duration: {formatDuration(duration)}</span>
-      </div>
-      
-      <div className={styles.confidenceTooltip}>
-        <div className={styles.tooltipIcon}>i</div>
-        <div className={styles.tooltipContent}>
-          <h4>Why we recommended {name}</h4>
-          <ul>
-            <li>BPM/tempo match: {Math.round(Math.random() * 35)}%</li>
-            <li>Key/tonality match: {Math.round(Math.random() * 25)}%</li>
-            <li>Energy level match: {Math.round(Math.random() * 40)}%</li>
-          </ul>
-          <p>Overall confidence: {tasteMatch}%</p>
-        </div>
       </div>
     </div>
   );

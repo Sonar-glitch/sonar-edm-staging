@@ -1,3 +1,4 @@
+import { signOut } from "next-auth/react";
 import React from 'react';
 import { useSession } from 'next-auth/react';
 import Head from 'next/head';
