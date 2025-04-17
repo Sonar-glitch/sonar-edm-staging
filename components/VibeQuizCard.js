@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styles from '../styles/VibeQuizCard.module.css';
 
 const VibeQuizCard = ({ onSubmit }) => {
@@ -72,21 +72,6 @@ const VibeQuizCard = ({ onSubmit }) => {
     }
   ];
   
-  // Auto-navigate to next tab when 2 options are selected
-  useEffect(() => {
-    const currentTabId = tabs[activeTab]?.id;
-    if (currentTabId && Array.isArray(selections[currentTabId]) && selections[currentTabId].length >= 2) {
-      // Wait a moment before auto-advancing to next tab
-      const timer = setTimeout(() => {
-        if (activeTab < tabs.length - 1) {
-          setActiveTab(activeTab + 1);
-        }
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [selections, activeTab, tabs]);
-  
   const handleOptionToggle = (tabId, optionId) => {
     try {
       setSelections(prev => {
@@ -147,24 +132,12 @@ const VibeQuizCard = ({ onSubmit }) => {
     }
   };
   
-  const goToNextTab = () => {
-    if (activeTab < tabs.length - 1) {
-      setActiveTab(activeTab + 1);
-    }
-  };
-  
-  const goToPreviousTab = () => {
-    if (activeTab > 0) {
-      setActiveTab(activeTab - 1);
-    }
-  };
-  
   return (
     <div className={styles.vibeQuizCard}>
       <h3 className={styles.quizTitle}>Customize Your Vibe</h3>
       <p className={styles.quizDescription}>
         Select your preferences to fine-tune your music taste profile. 
-        Choose at least 2 options in each category to continue.
+        Choose multiple options in each category.
       </p>
       
       <div className={styles.tabsContainer}>
@@ -204,26 +177,6 @@ const VibeQuizCard = ({ onSubmit }) => {
                     <span className={styles.optionLabel}>{option.label}</span>
                   </div>
                 ))}
-              </div>
-              
-              <div className={styles.navigationButtons}>
-                {activeTab > 0 && (
-                  <button 
-                    className={styles.navButton}
-                    onClick={goToPreviousTab}
-                  >
-                    ← Back
-                  </button>
-                )}
-                
-                {activeTab < tabs.length - 1 && (
-                  <button 
-                    className={styles.navButton}
-                    onClick={goToNextTab}
-                  >
-                    Next →
-                  </button>
-                )}
               </div>
             </div>
           ))}

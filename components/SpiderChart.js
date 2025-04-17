@@ -25,7 +25,7 @@ const SpiderChart = ({ genres }) => {
       const points = [];
       const centerX = 150;
       const centerY = 150;
-      const radius = 120;
+      const radius = 100; // Reduced from 120 to make chart more compact
       
       genres.forEach((genre, index) => {
         const angle = (Math.PI * 2 * index) / genres.length;
@@ -70,7 +70,7 @@ const SpiderChart = ({ genres }) => {
       const lines = [];
       const centerX = 150;
       const centerY = 150;
-      const radius = 120;
+      const radius = 100; // Reduced from 120 to make chart more compact
       
       for (let i = 1; i <= count; i++) {
         const gridPoints = [];
@@ -99,7 +99,7 @@ const SpiderChart = ({ genres }) => {
       const lines = [];
       const centerX = 150;
       const centerY = 150;
-      const radius = 120;
+      const radius = 100; // Reduced from 120 to make chart more compact
       
       validGenres.forEach((genre, index) => {
         const angle = (Math.PI * 2 * index) / validGenres.length;
@@ -124,7 +124,7 @@ const SpiderChart = ({ genres }) => {
   try {
     points = calculatePoints(validGenres);
     webPath = createWebPath(points);
-    gridLines = createGridLines(4);
+    gridLines = createGridLines(3); // Reduced from 4 to 3 for more compact display
     axisLines = createAxisLines();
   } catch (error) {
     console.error('Error in SpiderChart calculations:', error);
@@ -134,7 +134,7 @@ const SpiderChart = ({ genres }) => {
   const getGenreLabelPosition = (index, totalGenres) => {
     const angle = (Math.PI * 2 * index) / totalGenres;
     // Increased label radius to provide more space for text
-    const labelRadius = 150;
+    const labelRadius = 130;
     const labelX = 150 + labelRadius * Math.cos(angle);
     const labelY = 150 + labelRadius * Math.sin(angle);
     
@@ -150,12 +150,45 @@ const SpiderChart = ({ genres }) => {
     return { labelX, labelY, textAnchor };
   };
   
+  // Abbreviate genre names to prevent truncation
+  const abbreviateGenreName = (name) => {
+    if (!name) return '';
+    
+    // If name is already short, return as is
+    if (name.length <= 10) return name;
+    
+    // Common abbreviations for EDM genres
+    const abbreviations = {
+      'Progressive': 'Prog',
+      'Electronic': 'Elec',
+      'Melodic': 'Melo',
+      'Techno': 'Tech',
+      'House': 'House',
+      'Trance': 'Trance',
+      'Dubstep': 'Dub',
+      'Drum and Bass': 'DnB',
+      'Drum & Bass': 'DnB',
+      'Future Bass': 'Fut Bass',
+      'Tropical': 'Trop',
+      'Hardstyle': 'Hard',
+      'Underground': 'Undgr'
+    };
+    
+    // Check if we can use a common abbreviation
+    for (const [full, abbr] of Object.entries(abbreviations)) {
+      if (name.includes(full)) {
+        return name.replace(full, abbr);
+      }
+    }
+    
+    // If no common abbreviation, truncate with ellipsis
+    return name.substring(0, 8) + '...';
+  };
+  
   return (
     <div className={styles.spiderChartContainer}>
       {points.length > 0 ? (
-        <svg viewBox="0 0 350 350" className={styles.spiderChart}>
-          {/* Increased viewBox size to accommodate labels */}
-          
+        <svg viewBox="0 0 300 300" className={styles.spiderChart}>
           {/* Grid lines */}
           {gridLines.map((line, index) => (
             <path
@@ -191,14 +224,15 @@ const SpiderChart = ({ genres }) => {
               key={`point-${index}`}
               cx={point.x}
               cy={point.y}
-              r="4"
+              r="3" // Reduced from 4 to make points smaller
               className={styles.dataPoint}
             />
           ))}
           
-          {/* Genre labels with improved positioning */}
+          {/* Genre labels with improved positioning and abbreviation */}
           {points.map((point, index) => {
             const { labelX, labelY, textAnchor } = getGenreLabelPosition(index, validGenres.length);
+            const abbreviatedName = abbreviateGenreName(point.name);
             
             return (
               <text
@@ -208,9 +242,9 @@ const SpiderChart = ({ genres }) => {
                 className={styles.genreLabel}
                 textAnchor={textAnchor}
                 dominantBaseline="middle"
-                fontSize="12"
+                fontSize="10" // Reduced from 12 to make text smaller
               >
-                {point.name}
+                {abbreviatedName}
               </text>
             );
           })}

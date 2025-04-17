@@ -21,7 +21,7 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
   const validSimilarArtists = Array.isArray(similarArtists) ? similarArtists : [];
   
   // Ensure popularity is a valid number
-  const popularity = typeof artist.popularity === 'number' && !isNaN(artist.popularity) ? artist.popularity : 0;
+  const popularity = typeof artist.popularity === 'number' && !isNaN(artist.popularity) ? artist.popularity : 50;
   
   // Calculate obscurity level (inverse of popularity)
   const obscurityLevel = 100 - popularity;
@@ -32,10 +32,20 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
         {artist.images && artist.images.length > 0 ? (
           <div 
             className={styles.artistImage}
-            style={{ backgroundImage: `url(${artist.images[0].url})` }}
+            style={{ 
+              backgroundImage: `url(${artist.images[0].url})`,
+              width: '80px',  // Reduced from default size
+              height: '80px'  // Reduced from default size
+            }}
           />
         ) : (
-          <div className={styles.artistImagePlaceholder}>
+          <div 
+            className={styles.artistImagePlaceholder}
+            style={{ 
+              width: '80px',  // Reduced from default size
+              height: '80px'  // Reduced from default size
+            }}
+          >
             <span>{artist.name ? artist.name.charAt(0) : '?'}</span>
           </div>
         )}
@@ -73,7 +83,7 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
         
         <div className={styles.artistGenres}>
           {artist.genres && Array.isArray(artist.genres) ? 
-            artist.genres.slice(0, 3).map((genre, index) => (
+            artist.genres.slice(0, 2).map((genre, index) => (
               <span key={index} className={styles.genreTag}>{genre}</span>
             )) : 
             <span className={styles.genreTag}>No genres available</span>

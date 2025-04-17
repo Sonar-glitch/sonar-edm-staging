@@ -15,17 +15,19 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 export default async function handler(req, res) {
   try {
-    console.log('Starting Ticketmaster API handler');
+    console.log('Starting Events API handler');
     
-    // Get API key from environment variables
-    const apiKey = process.env.TICKETMASTER_API_KEY || 'C06A6McesLlIUC0D8HR93j16Pwjj2Kdd';
+    // Get API keys from environment variables
+    const ticketmasterApiKey = process.env.TICKETMASTER_API_KEY;
+    const edmtrainApiKey = process.env.EDMTRAIN_API_KEY;
     
-    console.log('Using Ticketmaster API key:', apiKey);
+    console.log('Using Ticketmaster API key:', ticketmasterApiKey ? 'Available' : 'Not available');
+    console.log('Using EDMtrain API key:', edmtrainApiKey ? 'Available' : 'Not available');
     
-    if (!apiKey) {
+    if (!ticketmasterApiKey && !edmtrainApiKey) {
       return res.status(500).json({ 
         success: false, 
-        error: 'Ticketmaster API key is not configured' 
+        error: 'No API keys configured for event sources' 
       });
     }
     
@@ -62,96 +64,131 @@ export default async function handler(req, res) {
     let userTaste;
     try {
       const userTasteResponse = await axios.get(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/spotify/user-taste`);
-      userTaste = userTasteResponse.data.taste;
+      userTaste = userTasteResponse.data;
       console.log('Successfully fetched user taste data');
     } catch (error) {
       console.error('Error fetching user taste data:', error.message);
       // Continue with default taste data if user taste can't be fetched
       userTaste = {
-        topGenres: [
-          { label: 'House', value: 85 },
-          { label: 'Techno', value: 70 },
-          { label: 'Trance', value: 60 },
-          { label: 'Dubstep', value: 40 },
-          { label: 'Drum & Bass', value: 75 },
-          { label: 'Future Bass', value: 55 }
+        genres: [
+          { name: 'House', score: 85 },
+          { name: 'Techno', score: 70 },
+          { name: 'Trance', score: 60 },
+          { name: 'Dubstep', score: 40 },
+          { name: 'Drum & Bass', score: 75 },
+          { name: 'Future Bass', score: 55 }
         ]
       };
       console.log('Using default taste data instead');
     }
     
     // Extract user's top genres for matching
-    const userGenres = userTaste.topGenres.map(genre => genre.label.toLowerCase());
+    const userGenres = userTaste.genres ? 
+      userTaste.genres.map(genre => genre.name.toLowerCase()) : 
+      ['house', 'techno', 'trance', 'electronic', 'dance'];
+    
     console.log('User genres for matching:', userGenres);
     
-    // Set up parameters for Ticketmaster API
-    const params = {
-      apikey: apiKey,
-      classificationName: 'music',
-      // Broader keyword search to catch more EDM events
-      keyword: 'electronic OR dance OR dj OR festival OR rave',
-      size: 100, // Increased from 50 to get more results
-      sort: 'date,asc',
-      startDateTime: new Date().toISOString().slice(0, 19) + 'Z' // Current time in ISO format
-    };
-    
-    // Add location parameters if user location is available
-    if (userLocation) {
-      params.latlong = `${userLocation.latitude},${userLocation.longitude}`;
-      params.radius = '100'; // 100 mile radius
-      params.unit = 'miles';
-      console.log(`Adding location filter: ${params.latlong}, radius: ${params.radius} miles`);
-    }
-    
-    console.log('Ticketmaster API request params:', JSON.stringify(params));
-    
-    // Call Ticketmaster API with timeout and retry logic
-    let response;
+    // Initialize arrays for events from different sources
     let ticketmasterEvents = [];
+    let edmtrainEvents = [];
     let ticketmasterError = null;
+    let edmtrainError = null;
     
-    try {
-      console.log('Making Ticketmaster API request...');
-      response = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', { 
-        params,
-        timeout: 10000 // 10 second timeout
-      });
-      console.log('Ticketmaster API request successful');
-      
-      // Check if we have events in the response
-      if (response.data._embedded && response.data._embedded.events) {
-        ticketmasterEvents = response.data._embedded.events;
-        console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster`);
-      } else {
-        console.log('No events found in Ticketmaster response');
-        ticketmasterError = 'No events found from Ticketmaster';
-      }
-    } catch (error) {
-      console.error('Ticketmaster API request failed:', error.message);
-      ticketmasterError = error.message;
-      
-      // Try one more time with a simpler query
+    // Fetch from Ticketmaster API
+    if (ticketmasterApiKey) {
       try {
-        console.log('Retrying with simpler query...');
-        params.keyword = 'electronic';
-        delete params.classificationName; // Remove classification to broaden search
+        console.log('Making Ticketmaster API request...');
         
-        response = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', { 
+        // Set up parameters for Ticketmaster API
+        const params = {
+          apikey: ticketmasterApiKey,
+          classificationName: 'music',
+          // Broader keyword search to catch more EDM events
+          keyword: 'electronic OR dance OR dj OR festival OR rave',
+          size: 100, // Increased from 50 to get more results
+          sort: 'date,asc',
+          startDateTime: new Date().toISOString().slice(0, 19) + 'Z' // Current time in ISO format
+        };
+        
+        // Add location parameters if user location is available
+        if (userLocation) {
+          params.latlong = `${userLocation.latitude},${userLocation.longitude}`;
+          params.radius = '100'; // 100 mile radius
+          params.unit = 'miles';
+          console.log(`Adding location filter: ${params.latlong}, radius: ${params.radius} miles`);
+        }
+        
+        console.log('Ticketmaster API request params:', JSON.stringify(params));
+        
+        const response = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', { 
           params,
-          timeout: 10000
+          timeout: 15000 // 15 second timeout
         });
         
+        console.log('Ticketmaster API request successful');
+        
+        // Check if we have events in the response
         if (response.data._embedded && response.data._embedded.events) {
           ticketmasterEvents = response.data._embedded.events;
-          console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster retry`);
-          ticketmasterError = null;
+          console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster`);
         } else {
-          console.log('No events found in Ticketmaster retry response');
+          console.log('No events found in Ticketmaster response');
+          ticketmasterError = 'No events found from Ticketmaster';
+          
+          // Try one more time with a simpler query
+          console.log('Retrying with simpler query...');
+          params.keyword = 'electronic';
+          delete params.classificationName; // Remove classification to broaden search
+          
+          const retryResponse = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', { 
+            params,
+            timeout: 15000
+          });
+          
+          if (retryResponse.data._embedded && retryResponse.data._embedded.events) {
+            ticketmasterEvents = retryResponse.data._embedded.events;
+            console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster retry`);
+            ticketmasterError = null;
+          } else {
+            console.log('No events found in Ticketmaster retry response');
+          }
         }
-      } catch (retryError) {
-        console.error('Ticketmaster retry also failed:', retryError.message);
-        ticketmasterError = `${error.message} (retry also failed: ${retryError.message})`;
+      } catch (error) {
+        console.error('Ticketmaster API request failed:', error.message);
+        ticketmasterError = error.message;
+        
+        // Try one more time with a simpler query
+        try {
+          console.log('Retrying with simpler query after error...');
+          const params = {
+            apikey: ticketmasterApiKey,
+            keyword: 'electronic',
+            size: 50,
+            sort: 'date,asc',
+            startDateTime: new Date().toISOString().slice(0, 19) + 'Z'
+          };
+          
+          const retryResponse = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', { 
+            params,
+            timeout: 15000
+          });
+          
+          if (retryResponse.data._embedded && retryResponse.data._embedded.events) {
+            ticketmasterEvents = retryResponse.data._embedded.events;
+            console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster retry after error`);
+            ticketmasterError = null;
+          } else {
+            console.log('No events found in Ticketmaster retry response after error');
+          }
+        } catch (retryError) {
+          console.error('Ticketmaster retry also failed:', retryError.message);
+          ticketmasterError = `${error.message} (retry also failed: ${retryError.message})`;
+        }
       }
+    } else {
+      console.log('Skipping Ticketmaster API call - no API key configured');
+      ticketmasterError = 'Ticketmaster API key not configured';
     }
     
     // Process Ticketmaster events if available
@@ -202,7 +239,8 @@ export default async function handler(req, res) {
           // Check for partial matches in genre names
           if (normalizedEventGenre.includes(userGenre) || userGenre.includes(normalizedEventGenre)) {
             // Weight the match by the genre's importance to the user
-            const genreWeight = userTaste.topGenres[index].value / 100;
+            const genreWeight = userTaste.genres && userTaste.genres[index] ? 
+              userTaste.genres[index].score / 100 : 0.5;
             matchScore += genreWeight;
             matchCount++;
           }
@@ -261,46 +299,72 @@ export default async function handler(req, res) {
       };
     });
     
-    // Now fetch from EDMtrain API as backup
-    let edmtrainEvents = [];
-    let edmtrainError = null;
-    
-    try {
-      console.log('Fetching events from EDMtrain API...');
-      const edmtrainApiKey = process.env.EDMTRAIN_API_KEY || 'b5143e2e-21f2-4b45-b537-0b5b9ec9bdad';
-      
-      // Construct EDMtrain API request
-      let edmtrainUrl = 'https://edmtrain.com/api/events';
-      let edmtrainParams = { client: edmtrainApiKey };
-      
-      // Add location parameters if available
-      if (userLocation) {
-        if (userLocation.city && userLocation.region) {
-          edmtrainParams.city = userLocation.city;
-          edmtrainParams.state = userLocation.region;
+    // Fetch from EDMtrain API
+    if (edmtrainApiKey) {
+      try {
+        console.log('Fetching events from EDMtrain API...');
+        
+        // Construct EDMtrain API request
+        let edmtrainUrl = 'https://edmtrain.com/api/events';
+        let edmtrainParams = { client: edmtrainApiKey };
+        
+        // Add location parameters if available
+        if (userLocation) {
+          if (userLocation.city && userLocation.region) {
+            edmtrainParams.city = userLocation.city;
+            edmtrainParams.state = userLocation.region;
+          } else {
+            // Use latitude/longitude with radius
+            edmtrainParams.latitude = userLocation.latitude;
+            edmtrainParams.longitude = userLocation.longitude;
+            edmtrainParams.radius = 100; // 100 mile radius
+          }
+        }
+        
+        console.log('EDMtrain API request params:', JSON.stringify(edmtrainParams));
+        
+        const edmtrainResponse = await axios.get(edmtrainUrl, { 
+          params: edmtrainParams,
+          timeout: 15000
+        });
+        
+        if (edmtrainResponse.data && edmtrainResponse.data.data) {
+          edmtrainEvents = edmtrainResponse.data.data;
+          console.log(`Found ${edmtrainEvents.length} events from EDMtrain`);
         } else {
-          // Use latitude/longitude with radius
-          edmtrainParams.latitude = userLocation.latitude;
-          edmtrainParams.longitude = userLocation.longitude;
-          edmtrainParams.radius = 100; // 100 mile radius
+          console.log('No events found in EDMtrain response');
+          edmtrainError = 'No events found from EDMtrain';
+        }
+      } catch (error) {
+        console.error('EDMtrain API request failed:', error.message);
+        edmtrainError = error.message;
+        
+        // Try one more time with a simpler query
+        try {
+          console.log('Retrying EDMtrain with simpler query...');
+          const edmtrainUrl = 'https://edmtrain.com/api/events';
+          const edmtrainParams = { client: edmtrainApiKey };
+          
+          const retryResponse = await axios.get(edmtrainUrl, { 
+            params: edmtrainParams,
+            timeout: 15000
+          });
+          
+          if (retryResponse.data && retryResponse.data.data) {
+            edmtrainEvents = retryResponse.data.data;
+            console.log(`Found ${edmtrainEvents.length} events from EDMtrain retry`);
+            edmtrainError = null;
+          } else {
+            console.log('No events found in EDMtrain retry response');
+          }
+        } catch (retryError) {
+          console.error('EDMtrain retry also failed:', retryError.message);
+          edmtrainError = `${error.message} (retry also failed: ${retryError.message})`;
         }
       }
-      
-      const edmtrainResponse = await axios.get(edmtrainUrl, { 
-        params: edmtrainParams,
-        timeout: 10000
-      });
-      
-      if (edmtrainResponse.data && edmtrainResponse.data.data) {
-        edmtrainEvents = edmtrainResponse.data.data;
-        console.log(`Found ${edmtrainEvents.length} events from EDMtrain`);
-      } else {
-        console.log('No events found in EDMtrain response');
-        edmtrainError = 'No events found from EDMtrain';
-      }
-    } catch (error) {
-      console.error('EDMtrain API request failed:', error.message);
-      edmtrainError = error.message;
+    } else {
+      console.log('Skipping EDMtrain API call - no API key configured');
+      edmtrainError = 'EDMtrain API key not configured';
     }
     
     // Process EDMtrain events
@@ -331,7 +395,8 @@ export default async function handler(req, res) {
           // Check for partial matches in genre names
           if (normalizedEventGenre.includes(userGenre) || userGenre.includes(normalizedEventGenre)) {
             // Weight the match by the genre's importance to the user
-            const genreWeight = userTaste.topGenres[index].value / 100;
+            const genreWeight = userTaste.genres && userTaste.genres[index] ? 
+              userTaste.genres[index].score / 100 : 0.5;
             matchScore += genreWeight;
             matchCount++;
           }
@@ -388,117 +453,36 @@ export default async function handler(req, res) {
     // Combine events from both sources
     let allEvents = [...processedTicketmasterEvents, ...processedEdmtrainEvents];
     
-    // Add mock events if no real events found to ensure we have something to display
-    if (allEvents.length === 0) {
-      console.log('No events found from either source, adding mock events');
-      
-      // Create mock events based on user location and taste
-      const mockEvents = [
-        {
-          id: 'mock-1',
-          source: 'mock',
-          name: 'House Music Festival',
-          date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week from now
-          image: 'https://example.com/house-festival.jpg',
-          venue: {
-            id: 'mock-venue-1',
-            name: 'Central Park',
-            location: userLocation ? `${userLocation.city}, ${userLocation.region}` : 'New York, NY',
-            address: '5th Ave',
-            coordinates: userLocation ? {
-              latitude: userLocation.latitude + 0.01,
-              longitude: userLocation.longitude + 0.01
-            } : null
-          },
-          genres: ['House', 'Electronic', 'Dance'],
-          match: 85,
-          ticketLink: 'https://example.com/tickets',
-          distance: 1.2
-        },
-        {
-          id: 'mock-2',
-          source: 'mock',
-          name: 'Techno Underground',
-          date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 2 weeks from now
-          image: 'https://example.com/techno-underground.jpg',
-          venue: {
-            id: 'mock-venue-2',
-            name: 'The Warehouse',
-            location: userLocation ? `${userLocation.city}, ${userLocation.region}` : 'Chicago, IL',
-            address: '123 Main St',
-            coordinates: userLocation ? {
-              latitude: userLocation.latitude - 0.02,
-              longitude: userLocation.longitude - 0.01
-            } : null
-          },
-          genres: ['Techno', 'Underground', 'Electronic'],
-          match: 75,
-          ticketLink: 'https://example.com/tickets',
-          distance: 2.5
-        },
-        {
-          id: 'mock-3',
-          source: 'mock',
-          name: 'Trance Nation',
-          date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(), // 3 weeks from now
-          image: 'https://example.com/trance-nation.jpg',
-          venue: {
-            id: 'mock-venue-3',
-            name: 'Mega Club',
-            location: userLocation ? `${userLocation.city}, ${userLocation.region}` : 'Miami, FL',
-            address: '456 Ocean Dr',
-            coordinates: userLocation ? {
-              latitude: userLocation.latitude + 0.03,
-              longitude: userLocation.longitude - 0.02
-            } : null
-          },
-          genres: ['Trance', 'Progressive', 'Electronic'],
-          match: 85,
-          ticketLink: 'https://example.com/tickets',
-          distance: 3.7
-        }
-      ];
-      
-      allEvents = mockEvents;
-    }
+    // Sort by match score (highest first)
+    allEvents.sort((a, b) => b.match - a.match);
     
-    // Filter events by distance if user location is available
-    let filteredEvents = allEvents;
-    if (userLocation) {
-      // Keep events within 100 miles or those without distance info
-      filteredEvents = allEvents.filter(event => {
-        return !event.distance || event.distance <= 100;
-      });
-      console.log(`Filtered to ${filteredEvents.length} events within 100 miles`);
-      
-      // If no events within 100 miles, use all events
-      if (filteredEvents.length === 0) {
-        filteredEvents = allEvents;
-        console.log('No events within 100 miles, using all events');
-      }
-    }
+    // Log event counts by source
+    console.log(`Total events: ${allEvents.length}`);
+    console.log(`Ticketmaster events: ${processedTicketmasterEvents.length}`);
+    console.log(`EDMtrain events: ${processedEdmtrainEvents.length}`);
     
-    // Sort by match percentage (highest first)
-    const sortedEvents = filteredEvents.sort((a, b) => b.match - a.match);
-    
-    console.log(`Returning ${sortedEvents.length} events`);
-    
-    res.status(200).json({ 
+    return res.status(200).json({ 
       success: true, 
-      events: sortedEvents,
-      userLocation: userLocation,
-      apiStatus: {
-        ticketmaster: ticketmasterError ? { error: ticketmasterError } : { success: true, count: processedTicketmasterEvents.length },
-        edmtrain: edmtrainError ? { error: edmtrainError } : { success: true, count: processedEdmtrainEvents.length }
+      events: allEvents,
+      userLocation,
+      sources: {
+        ticketmaster: {
+          count: processedTicketmasterEvents.length,
+          error: ticketmasterError
+        },
+        edmtrain: {
+          count: processedEdmtrainEvents.length,
+          error: edmtrainError
+        }
       }
     });
-  } catch (error) {
-    console.error('Unexpected error in events API handler:', error.message);
     
-    res.status(500).json({ 
+  } catch (error) {
+    console.error('Error in events API handler:', error);
+    return res.status(500).json({ 
       success: false, 
-      error: 'Failed to fetch events',
-      details: error.message
+      message: 'Internal server error',
+      error: error.message
     });
   }
 }

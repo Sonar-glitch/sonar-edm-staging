@@ -16,7 +16,7 @@ const TrackCard = ({ track, correlation, duration, popularity }) => {
   // Ensure correlation, duration and popularity are valid numbers
   const validCorrelation = typeof correlation === 'number' && !isNaN(correlation) ? correlation : 0;
   const validDuration = typeof duration === 'number' && !isNaN(duration) ? duration : 0;
-  const validPopularity = typeof popularity === 'number' && !isNaN(popularity) ? popularity : 0;
+  const validPopularity = typeof popularity === 'number' && !isNaN(popularity) ? popularity : 50;
   
   // Format correlation as percentage
   const correlationPercent = Math.round(validCorrelation * 100);
@@ -42,10 +42,20 @@ const TrackCard = ({ track, correlation, duration, popularity }) => {
         {track.album && track.album.images && track.album.images.length > 0 && track.album.images[0].url ? (
           <div 
             className={styles.albumArt}
-            style={{ backgroundImage: `url(${track.album.images[0].url})` }}
+            style={{ 
+              backgroundImage: `url(${track.album.images[0].url})`,
+              width: '80px',  // Reduced from default size
+              height: '80px'  // Reduced from default size
+            }}
           />
         ) : (
-          <div className={styles.albumArtPlaceholder}>
+          <div 
+            className={styles.albumArtPlaceholder}
+            style={{ 
+              width: '80px',  // Reduced from default size
+              height: '80px'  // Reduced from default size
+            }}
+          >
             <span>{track.name ? track.name.charAt(0) : '?'}</span>
           </div>
         )}
