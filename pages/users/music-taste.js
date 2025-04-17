@@ -32,6 +32,7 @@ export default function MusicTaste() {
         throw new Error('Failed to fetch music taste data');
       }
       const data = await response.json();
+      console.log('API response data:', data); // Log data for debugging
       setUserTaste(data);
       setLoading(false);
     } catch (err) {
@@ -132,13 +133,22 @@ export default function MusicTaste() {
     );
   }
 
-  const { 
-    genres, 
-    topArtists, 
-    topTracks, 
-    seasonalMood,
-    suggestedEvents 
-  } = userTaste;
+  // Safely extract data with null checks and proper mapping to match API structure
+  const genres = userTaste.topGenres || [];
+  const topArtists = userTaste.topArtists || [];
+  const topTracks = userTaste.topTracks || [];
+  const seasonalMood = userTaste.seasonalMood || {};
+  
+  // Map current season string to an object with topGenres
+  const currentSeason = seasonalMood.current ? {
+    topGenres: seasonalMood[seasonalMood.current]?.genres || []
+  } : {};
+  
+  // Add currentSeason to seasonalMood object
+  const enhancedSeasonalMood = {...seasonalMood, currentSeason};
+  
+  // Create empty suggestedEvents if not present
+  const suggestedEvents = userTaste.suggestedEvents || [];
 
   return (
     <div className={styles.container}>
@@ -158,51 +168,67 @@ export default function MusicTaste() {
         
         <div className={styles.summary}>
           <p>
-            Your taste profile shows a strong affinity for {genres.slice(0, 3).map(g => g.name).join(', ')} 
-            with recent listening trends toward {seasonalMood.currentSeason.topGenres.slice(0, 2).join(' and ')}.
-            We've found {suggestedEvents.length} events that match your taste profile.
+            Your taste profile shows a strong affinity for {genres && genres.length > 0 ? genres.slice(0, 3).map(g => g.name || 'Unknown').join(', ') : 'loading genres...'} 
+            with recent listening trends toward {currentSeason && currentSeason.topGenres && currentSeason.topGenres.length > 0 ? currentSeason.topGenres.slice(0, 2).join(' and ') : 'loading trends...'}.
+            We've found {suggestedEvents ? suggestedEvents.length : '0'} events that match your taste profile.
           </p>
         </div>
         
         <section className={styles.genreSection}>
           <h2 className={styles.sectionTitle}>Genre Affinity</h2>
           <div className={styles.spiderChartContainer}>
-            <SpiderChart genres={genres} />
+            {genres && genres.length > 0 ? (
+              <SpiderChart genres={genres} />
+            ) : (
+              <p>No genre data available</p>
+            )}
           </div>
         </section>
         
         <section className={styles.artistsSection}>
           <h2 className={styles.sectionTitle}>Your Favorite Artists</h2>
           <div className={styles.artistsGrid}>
-            {topArtists.map((artist, index) => (
-              <ArtistCard 
-                key={artist.id} 
-                artist={artist} 
-                correlation={artist.correlation}
-                similarArtists={artist.similarArtists}
-              />
-            ))}
+            {topArtists && topArtists.length > 0 ? (
+              topArtists.map((artist, index) => (
+                <ArtistCard 
+                  key={artist.id || index} 
+                  artist={artist} 
+                  correlation={artist.correlation}
+                  similarArtists={artist.similarArtists || []}
+                />
+              ))
+            ) : (
+              <p>No artist data available</p>
+            )}
           </div>
         </section>
         
         <section className={styles.tracksSection}>
           <h2 className={styles.sectionTitle}>Your Top Tracks</h2>
           <div className={styles.tracksGrid}>
-            {topTracks.map((track, index) => (
-              <TrackCard 
-                key={track.id} 
-                track={track} 
-                correlation={track.correlation}
-                duration={track.duration_ms}
-                popularity={track.popularity}
-              />
-            ))}
+            {topTracks && topTracks.length > 0 ? (
+              topTracks.map((track, index) => (
+                <TrackCard 
+                  key={track.id || index} 
+                  track={track} 
+                  correlation={track.correlation}
+                  duration={track.duration_ms}
+                  popularity={track.popularity}
+                />
+              ))
+            ) : (
+              <p>No track data available</p>
+            )}
           </div>
         </section>
         
         <section className={styles.seasonalSection}>
           <h2 className={styles.sectionTitle}>Seasonal Mood Analysis</h2>
-          <SeasonalMoodCard seasonalMood={seasonalMood} />
+          {enhancedSeasonalMood ? (
+            <SeasonalMoodCard seasonalMood={enhancedSeasonalMood} />
+          ) : (
+            <p>No seasonal mood data available</p>
+          )}
         </section>
         
         <section className={styles.vibeQuizSection}>
@@ -223,21 +249,33 @@ export default function MusicTaste() {
         
         <section className={styles.eventsSection}>
           <h2 className={styles.sectionTitle}>Events You Might Like</h2>
-          <div className={styles.eventsGrid}>
-            {suggestedEvents.slice(0, 3).map((event) => (
-              <EventCard 
-                key={event.id} 
-                event={event} 
-                correlation={event.correlation}
-              />
-            ))}
-          </div>
-          
-          <div className={styles.viewMoreContainer}>
-            <Link href="/users/events" className={styles.viewMoreButton}>
-              View All Matching Events
-            </Link>
-          </div>
+          {suggestedEvents && suggestedEvents.length > 0 ? (
+            <div className={styles.eventsGrid}>
+              {suggestedEvents.slice(0, 3).map((event, index) => (
+                <EventCard 
+                  key={event.id || index} 
+                  event={event} 
+                  correlation={event.correlation}
+                />
+              ))}
+              
+              <div className={styles.viewMoreContainer}>
+                <Link href="/users/events" className={styles.viewMoreButton}>
+                  View All Matching Events
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p>No matching events found at this time.</p>
+              <p className={styles.eventsMessage}>Check back later or explore our events page for upcoming shows.</p>
+              <div className={styles.viewMoreContainer}>
+                <Link href="/users/events" className={styles.viewMoreButton}>
+                  Browse All Events
+                </Link>
+              </div>
+            </div>
+          )}
         </section>
       </main>
     </div>
