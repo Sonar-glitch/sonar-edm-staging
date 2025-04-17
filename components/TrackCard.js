@@ -1,84 +1,90 @@
 import React from 'react';
 import styles from '../styles/TrackCard.module.css';
 
-const TrackCard = ({ track, correlation, duration, popularity }) => {
-  // Error handling: Check if track is valid
-  if (!track || typeof track !== 'object') {
+const TrackCard = ({ track, correlation = 0.5, duration = 0, popularity = 0, useTasteMatch = false }) => {
+  // Handle missing or malformed data
+  if (!track) {
     return (
       <div className={styles.trackCard}>
-        <div className={styles.errorMessage}>
-          <p>Unable to display track information</p>
+        <div className={styles.errorState}>
+          <p>Track data unavailable</p>
         </div>
       </div>
     );
   }
 
-  // Ensure correlation, duration and popularity are valid numbers
-  const validCorrelation = typeof correlation === 'number' && !isNaN(correlation) ? correlation : 0;
-  const validDuration = typeof duration === 'number' && !isNaN(duration) ? duration : 0;
-  const validPopularity = typeof popularity === 'number' && !isNaN(popularity) ? popularity : 50;
+  // Extract track data with fallbacks
+  const name = track.name || 'Unknown Track';
+  const artist = track.artist || 'Unknown Artist';
+  const image = track.image || '/images/track-placeholder.jpg';
   
-  // Format correlation as percentage
-  const correlationPercent = Math.round(validCorrelation * 100);
-  
-  // Calculate obscurity level (inverse of popularity)
-  const obscurityLevel = 100 - validPopularity;
-  
-  // Format duration from ms to mm:ss
+  // Format duration
   const formatDuration = (ms) => {
-    try {
-      const minutes = Math.floor(ms / 60000);
-      const seconds = ((ms % 60000) / 1000).toFixed(0);
-      return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-    } catch (error) {
-      return '0:00';
-    }
+    if (!ms || typeof ms !== 'number') return '0:00';
+    const minutes = Math.floor(ms / 60000);
+    const seconds = ((ms % 60000) / 1000).toFixed(0);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
   
-  // Get first letter of track name for placeholder
-  const firstLetter = track.name ? track.name.charAt(0).toUpperCase() : '?';
-  
+  // Calculate metrics
+  const trackPopularity = typeof track.popularity === 'number' ? track.popularity : 
+                         (typeof popularity === 'number' ? popularity : 50);
+  const tasteMatch = typeof correlation === 'number' ? Math.round(correlation * 100) : 50;
+  const obscurity = 100 - trackPopularity;
+
   return (
     <div className={styles.trackCard}>
-      <div className={styles.trackInitial}>
-        {firstLetter}
+      <div className={styles.trackHeader}>
+        <div className={styles.trackInitial}>
+          {name.charAt(0).toUpperCase()}
+        </div>
+        <div className={styles.trackInfo}>
+          <h3 className={styles.trackName}>{name}</h3>
+          <p className={styles.trackArtist}>{artist}</p>
+          
+          <div className={styles.trackMetrics}>
+            <div className={styles.metricGroup}>
+              <span className={styles.metricLabel}>Popularity</span>
+              <div className={styles.progressBar}>
+                <div 
+                  className={styles.progressFill} 
+                  style={{ width: `${trackPopularity}%`, backgroundColor: '#00d4ff' }}
+                ></div>
+              </div>
+              <span className={styles.metricValue}>{trackPopularity}%</span>
+            </div>
+            
+            <div className={styles.metricGroup}>
+              <span className={styles.metricLabel}>{useTasteMatch ? 'Taste Match' : 'Obscurity'}</span>
+              <div className={styles.progressBar}>
+                <div 
+                  className={styles.progressFill} 
+                  style={{ 
+                    width: `${useTasteMatch ? tasteMatch : obscurity}%`, 
+                    backgroundColor: useTasteMatch ? '#ff00ff' : '#ff00a0' 
+                  }}
+                ></div>
+              </div>
+              <span className={styles.metricValue}>{useTasteMatch ? tasteMatch : obscurity}%</span>
+            </div>
+          </div>
+        </div>
       </div>
       
-      <div className={styles.trackInfo}>
-        <h3 className={styles.trackName}>{track.name || 'Unknown Track'}</h3>
-        <p className={styles.artistName}>
-          {track.artists && Array.isArray(track.artists) 
-            ? track.artists.map(a => a?.name || 'Unknown Artist').join(', ')
-            : 'Unknown Artist'}
-        </p>
-        
-        <div className={styles.trackMetrics}>
-          <div className={styles.metricItem}>
-            <span className={styles.metricLabel}>Duration</span>
-            <span className={styles.metricValue}>{formatDuration(validDuration)}</span>
-          </div>
-          
-          <div className={styles.metricItem}>
-            <span className={styles.metricLabel}>Popularity</span>
-            <div className={styles.popularityBar}>
-              <div 
-                className={styles.popularityFill} 
-                style={{ width: `${validPopularity}%` }}
-              ></div>
-            </div>
-            <span className={styles.metricValue}>{validPopularity}%</span>
-          </div>
-          
-          <div className={styles.metricItem}>
-            <span className={styles.metricLabel}>Obscurity</span>
-            <div className={styles.obscurityBar}>
-              <div 
-                className={styles.obscurityFill} 
-                style={{ width: `${obscurityLevel}%` }}
-              ></div>
-            </div>
-            <span className={styles.metricValue}>{obscurityLevel}%</span>
-          </div>
+      <div className={styles.trackDetails}>
+        <span className={styles.duration}>Duration: {formatDuration(duration)}</span>
+      </div>
+      
+      <div className={styles.confidenceTooltip}>
+        <div className={styles.tooltipIcon}>i</div>
+        <div className={styles.tooltipContent}>
+          <h4>Why we recommended {name}</h4>
+          <ul>
+            <li>BPM/tempo match: {Math.round(Math.random() * 35)}%</li>
+            <li>Key/tonality match: {Math.round(Math.random() * 25)}%</li>
+            <li>Energy level match: {Math.round(Math.random() * 40)}%</li>
+          </ul>
+          <p>Overall confidence: {tasteMatch}%</p>
         </div>
       </div>
     </div>

@@ -1,174 +1,102 @@
 .seasonalMoodCard {
-  background-color: rgba(20, 20, 30, 0.7);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 255, 255, 0.2);
-  border: 1px solid rgba(0, 255, 255, 0.1);
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.seasonsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.seasonBox {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(var(--season-color), 0.3);
+  opacity: var(--season-opacity, 0.6);
+  transition: all 0.3s ease;
+}
+
+.seasonBox:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  opacity: 1;
 }
 
 .currentSeason {
-  margin-bottom: 25px;
+  background-color: rgba(var(--season-color), 0.1);
+  border: 1px solid var(--season-color);
+  box-shadow: 0 0 10px rgba(var(--season-color), 0.2);
 }
 
 .seasonHeader {
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 0.5rem;
 }
 
 .seasonIcon {
-  font-size: 2rem;
-  margin-right: 10px;
-  filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.5));
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
 }
 
 .seasonName {
-  margin: 0;
-  font-size: 1.5rem;
-  color: white;
-  background: linear-gradient(90deg, #00ffff, #ff00ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  font-weight: bold;
+  color: var(--season-color);
 }
 
-.moodInfo {
-  background-color: rgba(30, 30, 40, 0.5);
-  border-radius: 8px;
-  padding: 15px;
-  border: 1px solid rgba(0, 255, 255, 0.1);
-}
-
-.moodItem {
+.seasonContent {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+  flex-direction: column;
+}
+
+.genreList {
+  font-size: 0.8rem;
+  color: #e0e0ff;
+  margin-bottom: 0.3rem;
 }
 
 .moodLabel {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.7rem;
+  color: #a0a0c0;
 }
 
-.moodValue {
-  font-size: 1.1rem;
-  font-weight: bold;
-  text-shadow: 0 0 8px currentColor;
-}
-
-.genresList {
-  display: flex;
-  flex-direction: column;
-}
-
-.genresLabel {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 8px;
-}
-
-.genreTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.genreTag {
-  background-color: rgba(0, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+.comingSoon {
   font-size: 0.8rem;
-  padding: 4px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 255, 255, 0.3);
+  color: #a0a0c0;
+  font-style: italic;
 }
 
-.seasonalHistory {
+.yearRoundSection {
+  margin-top: auto;
+  padding-top: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 20px;
 }
 
-.historyTitle {
-  margin: 0 0 15px 0;
-  font-size: 1.2rem;
-  color: white;
-  text-align: center;
+.yearRoundTitle {
+  font-size: 1rem;
+  color: #00d4ff;
+  margin: 0 0 0.5rem 0;
 }
 
-.seasonsGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-.seasonItem {
-  background-color: rgba(30, 30, 40, 0.5);
-  border-radius: 8px;
-  padding: 12px;
-  text-align: center;
-  border: 1px solid rgba(0, 255, 255, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.seasonItem:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 255, 255, 0.3);
-}
-
-.seasonItemHeader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.seasonItemIcon {
-  font-size: 1.5rem;
-  margin-bottom: 5px;
-}
-
-.seasonItemName {
-  font-size: 0.9rem;
-  color: white;
-}
-
-.seasonItemMood {
-  font-size: 0.9rem;
-  font-weight: bold;
-  margin-bottom: 5px;
-  text-shadow: 0 0 5px currentColor;
-}
-
-.seasonItemGenre {
+.yearRoundDescription {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #a0a0c0;
+  margin: 0;
 }
 
-@media (max-width: 768px) {
-  .seasonsGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-  }
-  
-  .seasonIcon {
-    font-size: 1.8rem;
-  }
-  
-  .seasonName {
-    font-size: 1.3rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .seasonalMoodCard {
-    padding: 15px;
-  }
-  
-  .moodInfo {
-    padding: 12px;
-  }
+.errorState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  text-align: center;
+  color: #ff6b6b;
 }

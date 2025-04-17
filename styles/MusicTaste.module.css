@@ -33,18 +33,26 @@
   margin-bottom: 1rem;
 }
 
+.artistsTracksSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 768px) {
-  .topSection {
+  .topSection, .artistsTracksSection {
     grid-template-columns: 1fr;
   }
 }
 
-.genreSection, .seasonalSection {
+.genreSection, .seasonalSection, .artistsSection, .tracksSection {
   background-color: rgba(20, 20, 40, 0.6);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   height: 100%;
+  position: relative;
 }
 
 .spiderChartContainer {
@@ -53,7 +61,7 @@
   position: relative;
 }
 
-.eventsSection {
+.eventsSection, .vibeQuizSection, .confidenceSection {
   background-color: rgba(20, 20, 40, 0.6);
   border-radius: 8px;
   padding: 1rem;
@@ -120,14 +128,6 @@
   background-color: rgba(0, 212, 255, 0.1);
 }
 
-.vibeQuizSection {
-  background-color: rgba(20, 20, 40, 0.6);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
 .vibeQuizPrompt {
   display: flex;
   justify-content: space-between;
@@ -152,25 +152,52 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.artistsSection, .tracksSection {
-  background-color: rgba(20, 20, 40, 0.6);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .sectionTitle {
   font-size: 1.5rem;
-  margin-bottom: 1rem;
   color: #00d4ff;
-  border-bottom: 1px solid rgba(0, 212, 255, 0.3);
-  padding-bottom: 0.5rem;
+  margin: 0;
+}
+
+.sectionSubtitle {
+  font-size: 1.2rem;
+  color: #00d4ff;
+  margin: 0 0 1rem 0;
+}
+
+.dataSourceIndicator {
+  display: flex;
+  align-items: center;
+}
+
+.realDataBadge, .mockDataBadge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.realDataBadge {
+  background-color: rgba(0, 255, 128, 0.2);
+  color: #00ff80;
+  border: 1px solid rgba(0, 255, 128, 0.3);
+}
+
+.mockDataBadge {
+  background-color: rgba(255, 192, 0, 0.2);
+  color: #ffc000;
+  border: 1px solid rgba(255, 192, 0, 0.3);
 }
 
 .artistsGrid, .tracksGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 
@@ -245,4 +272,41 @@
   background-color: rgba(255, 107, 107, 0.1);
   border-radius: 8px;
   max-width: 500px;
+}
+
+.confidenceExplanation {
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.confidenceExplanation h3 {
+  color: #00d4ff;
+  margin-top: 0;
+}
+
+.confidenceFactors {
+  list-style-type: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.confidenceFactors li {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.factorName {
+  color: #00d4ff;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.vibeInfluence {
+  font-style: italic;
+  color: #a0a0c0;
+  border-top: 1px solid rgba(0, 212, 255, 0.2);
+  padding-top: 1rem;
+  margin-top: 1rem;
 }

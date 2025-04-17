@@ -16,7 +16,7 @@ git add .
 
 # Commit changes
 echo "Committing changes..."
-git commit -m "Updated Sonar EDM User with authentication flow and event integration fixes"
+git commit -m "Updated Sonar EDM User with comprehensive fixes"
 
 # Check if Heroku remote exists
 if ! git remote | grep -q "heroku"; then
