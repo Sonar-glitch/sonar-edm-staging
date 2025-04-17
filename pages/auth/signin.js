@@ -1,43 +1,40 @@
-import { useEffect } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import { useSession, signIn } from 'next-auth/react';
 import styles from '../../styles/signin.module.css';
+import Layout from '../../components/Layout';
 
 export default function SignIn() {
-  const router = useRouter();
-  const { callbackUrl } = router.query;
-  
-  // Auto-redirect to Spotify auth immediately
-  useEffect(() => {
-    // Short timeout to ensure the component is mounted
-    const timer = setTimeout(() => {
-      signIn('spotify', { callbackUrl: callbackUrl || '/users/music-taste' });
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [callbackUrl]);
-  
+  const { data: session } = useSession();
+
+  if (session) {
+    return (
+      <Layout>
+        <div className={styles.container}>
+          <h1 className={styles.title}>Already signed in</h1>
+          <p className={styles.description}>
+            You are already signed in as {session.user.name || session.user.email}
+          </p>
+          <a href="/users/music-taste" className={styles.button}>
+            Go to Music Taste
+          </a>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <div className={styles.container}>
-      <div className={styles.signinCard}>
-        <div className={styles.logo}>SONAR</div>
-        <p className={styles.subtitle}>Connect with your sound</p>
-        
-        <h1 className={styles.title}>Redirecting to Spotify...</h1>
+    <Layout>
+      <div className={styles.container}>
+        <h1 className={styles.title}>Sign in to Sonar EDM</h1>
         <p className={styles.description}>
-          You'll be redirected to Spotify to authorize access to your listening data.
-          This helps us create your personalized music taste profile.
+          Connect with Spotify to unlock your sonic DNA
         </p>
-        
-        <div className={styles.loadingSpinner}></div>
-        
-        <button 
-          className={styles.manualButton}
-          onClick={() => signIn('spotify', { callbackUrl: callbackUrl || '/users/music-taste' })}
+        <button
+          onClick={() => signIn('spotify', { callbackUrl: '/users/music-taste' })}
+          className={styles.spotifyButton}
         >
-          Click here if you're not redirected automatically
+          Connect with Spotify
         </button>
       </div>
-    </div>
+    </Layout>
   );
 }
