@@ -1,70 +1,49 @@
+import React from 'react';
 import styles from '../styles/ArtistCard.module.css';
-import { useState } from 'react';
 
-const ArtistCard = ({ artist, rank }) => {
-  const [expanded, setExpanded] = useState(false);
-  
-  // Toggle expanded state
-  const toggleExpanded = () => {
-    setExpanded(!expanded);
-  };
+const ArtistCard = ({ artist, correlation, similarArtists }) => {
+  // Format correlation as percentage
+  const correlationPercent = Math.round(correlation * 100);
   
   return (
     <div className={styles.artistCard}>
-      {/* Rank indicator */}
-      <div className={styles.rankBadge}>{rank}</div>
-      
-      <div className={styles.artistHeader}>
-        {artist.image && (
-          <div className={styles.artistImageContainer}>
-            <img src={artist.image} alt={artist.name} className={styles.artistImage} />
+      <div className={styles.artistImageContainer}>
+        {artist.images && artist.images.length > 0 ? (
+          <div 
+            className={styles.artistImage}
+            style={{ backgroundImage: `url(${artist.images[0].url})` }}
+          />
+        ) : (
+          <div className={styles.artistImagePlaceholder}>
+            <span>{artist.name.charAt(0)}</span>
           </div>
         )}
-        <div className={styles.artistInfo}>
-          <h3 className={styles.artistName}>{artist.name}</h3>
-          <div className={styles.matchContainer}>
-            <div className={styles.matchLabel}>Match Strength</div>
-            <div className={styles.matchBar}>
-              <div 
-                className={styles.matchFill} 
-                style={{ width: `${artist.match}%` }}
-              ></div>
-            </div>
-          </div>
+        
+        <div className={styles.correlationBadge}>
+          <span className={styles.correlationValue}>{correlationPercent}%</span>
+          <span className={styles.correlationLabel}>match</span>
         </div>
-        <button 
-          className={styles.expandButton} 
-          onClick={toggleExpanded}
-          aria-label={expanded ? "Hide similar artists" : "Show similar artists"}
-        >
-          <svg 
-            className={`${styles.expandIcon} ${expanded ? styles.rotated : ''}`} 
-            viewBox="0 0 24 24" 
-            width="24" 
-            height="24"
-          >
-            <path 
-              fill="currentColor" 
-              d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"
-            />
-          </svg>
-        </button>
       </div>
       
-      {/* Similar Artists Section */}
-      <div className={`${styles.similarArtistsContainer} ${expanded ? styles.visible : ''}`}>
-        <h4 className={styles.similarArtistsTitle}>Similar Artists</h4>
-        {artist.similarArtists && artist.similarArtists.length > 0 ? (
-          <ul className={styles.similarArtistsList}>
-            {artist.similarArtists.map((similarArtist, index) => (
-              <li key={index} className={styles.similarArtistItem}>
-                {similarArtist}
-              </li>
+      <div className={styles.artistInfo}>
+        <h3 className={styles.artistName}>{artist.name}</h3>
+        
+        <div className={styles.artistGenres}>
+          {artist.genres && artist.genres.slice(0, 3).map((genre, index) => (
+            <span key={index} className={styles.genreTag}>{genre}</span>
+          ))}
+        </div>
+        
+        <div className={styles.similarArtistsSection}>
+          <h4 className={styles.similarArtistsTitle}>Similar Artists</h4>
+          <div className={styles.similarArtistsList}>
+            {similarArtists && similarArtists.slice(0, 3).map((similar, index) => (
+              <div key={index} className={styles.similarArtist}>
+                <span className={styles.similarArtistName}>{similar.name}</span>
+              </div>
             ))}
-          </ul>
-        ) : (
-          <p className={styles.noSimilarArtists}>No similar artists found</p>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

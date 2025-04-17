@@ -1,74 +1,64 @@
 .navigation {
-  background-color: rgba(20, 20, 30, 0.8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background-color: rgba(15, 15, 25, 0.8);
   backdrop-filter: blur(10px);
-  padding: 0.8rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.navContainer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 .logoContainer {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .logo {
-  font-size: 1.5rem;
-  font-weight: 800;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-}
-
-.logoText {
+  font-size: 1.8rem;
+  font-weight: bold;
   color: white;
+  text-decoration: none;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
 }
 
-.logoAccent {
-  background: linear-gradient(90deg, #ff6b8b, #5e72eb);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.tagline {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .navLinks {
   display: flex;
-  gap: 1rem;
-  flex: 2;
-  justify-content: center;
+  gap: 20px;
 }
 
 .navLink {
-  display: flex;
-  align-items: center;
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
-  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  padding: 8px 12px;
   border-radius: 8px;
-  transition: all 0.2s ease;
-  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
 .navLink:hover {
   color: white;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 255, 255, 0.1);
 }
 
-.navLink.active {
+.active {
   color: white;
-  background-color: rgba(138, 43, 226, 0.2);
-  position: relative;
+  background-color: rgba(0, 255, 255, 0.15);
 }
 
-.navLink.active::after {
+.active::after {
   content: '';
   position: absolute;
   bottom: -2px;
@@ -76,140 +66,103 @@
   transform: translateX(-50%);
   width: 20px;
   height: 2px;
-  background: linear-gradient(90deg, #ff6b8b, #5e72eb);
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
   border-radius: 2px;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
-.navIcon {
-  margin-right: 0.5rem;
-  font-size: 1.2rem;
-}
-
-.userMenu {
-  flex: 1;
-  display: flex;
-  justify-content: flex-end;
-  position: relative;
-}
-
-.userAvatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ff6b8b, #5e72eb);
+.authContainer {
   display: flex;
   align-items: center;
-  justify-content: center;
+}
+
+.authButton {
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
   color: white;
-  font-weight: 600;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 255, 255, 0.3);
 }
 
-.userAvatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+.authButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 255, 255, 0.5);
 }
 
-.profileMenu {
-  position: absolute;
-  top: 50px;
-  right: 0;
-  background-color: rgba(30, 30, 40, 0.95);
-  border-radius: 12px;
-  width: 220px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  z-index: 200;
-  animation: fadeIn 0.2s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transform: translateY(0) skewX(-2deg);
-  transform-origin: top right;
+.loadingDots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px) skewX(-2deg); }
-  to { opacity: 1; transform: translateY(0) skewX(-2deg); }
+.loadingDots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  animation: pulse 1.5s infinite ease-in-out;
 }
 
-.profileMenuHeader {
-  padding: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: center;
-  transform: skewX(2deg);
+.loadingDots span:nth-child(2) {
+  animation-delay: 0.2s;
 }
 
-.profileName {
-  display: block;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.2rem;
+.loadingDots span:nth-child(3) {
+  animation-delay: 0.4s;
 }
 
-.profileEmail {
-  display: block;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(0.5);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.profileMenuItems {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  transform: skewX(2deg);
-}
-
-.profileMenuItem {
-  padding: 0;
-}
-
-.profileMenuItem a {
-  display: block;
-  padding: 0.8rem 1rem;
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.profileMenuItem a:hover {
-  background-color: rgba(138, 43, 226, 0.2);
-  color: white;
-}
-
-.profileMenuDivider {
-  height: 1px;
-  background-color: rgba(255, 255, 255, 0.1);
-  margin: 0.5rem 0;
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  .navText {
-    display: none;
+  .navigation {
+    padding: 12px 20px;
+    flex-wrap: wrap;
   }
   
-  .navIcon {
-    margin-right: 0;
-    font-size: 1.4rem;
+  .logoContainer {
+    margin-bottom: 10px;
+  }
+  
+  .navLinks {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 10px;
+    overflow-x: auto;
+    padding-bottom: 5px;
   }
   
   .navLink {
-    padding: 0.5rem;
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    white-space: nowrap;
   }
 }
 
 @media (max-width: 480px) {
-  .navigation {
-    padding: 0.6rem 1rem;
-  }
-  
   .logo {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
   }
   
-  .userAvatar {
-    width: 35px;
-    height: 35px;
+  .tagline {
+    font-size: 0.7rem;
+  }
+  
+  .authButton {
+    padding: 6px 15px;
+    font-size: 0.8rem;
   }
 }

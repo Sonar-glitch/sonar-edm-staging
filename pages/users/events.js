@@ -1,281 +1,320 @@
+import React from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import Navigation from '../../components/Navigation';
-import styles from '../../styles/Events.module.css';
 import Link from 'next/link';
+import styles from '../../styles/Events.module.css';
+import EventCard from '../../components/EventCard';
+import Navigation from '../../components/Navigation';
 
 export default function Events() {
   const { data: session, status } = useSession();
-  const router = useRouter();
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [minMatch, setMinMatch] = useState(0);
-  const [userLocation, setUserLocation] = useState(null);
-  const [apiStatus, setApiStatus] = useState(null);
-  
-  // Protect route - redirect to login if not authenticated
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/');
-    }
-  }, [status, router]);
-  
-  // Fetch events data
-  useEffect(() => {
+  const [events, setEvents] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+  const [filters, setFilters] = React.useState({
+    genre: 'all',
+    date: 'all',
+    matchScore: 0
+  });
+
+  React.useEffect(() => {
     if (status === 'authenticated') {
-      const fetchEvents = async () => {
-        try {
-          setLoading(true);
-          setError(null);
-          
-          const response = await fetch('/api/events');
-          const data = await response.json();
-          
-          if (data.success) {
-            setEvents(data.events);
-            if (data.userLocation) {
-              setUserLocation(data.userLocation);
-            }
-            if (data.apiStatus) {
-              setApiStatus(data.apiStatus);
-            }
-          } else {
-            setError(data.error || 'Failed to load events');
-          }
-          
-          setLoading(false);
-        } catch (error) {
-          console.error('Error fetching events:', error);
-          setError('Unable to load events. Please try again later.');
-          setLoading(false);
-        }
-      };
-      
       fetchEvents();
     }
   }, [status]);
-  
-  // Filter events by match percentage
-  const filteredEvents = events.filter(event => event.match >= minMatch);
-  
-  // Handle slider change
-  const handleSliderChange = (e) => {
-    setMinMatch(parseInt(e.target.value));
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      // In a real implementation, this would fetch from your API
+      // For now, we'll use mock data
+      const mockEvents = [
+        {
+          id: 'event1',
+          name: 'Neon Pulse Festival',
+          date: '2025-05-15',
+          time: '20:00:00',
+          venue: 'Skyline Arena',
+          price: '$45-85',
+          image: 'https://example.com/events/neon-pulse.jpg',
+          artists: ['DJ Quantum', 'Synthwave Sisters', 'Electro Horizon'],
+          correlation: 0.87,
+          matchFactors: {
+            genres: ['Techno', 'House'],
+            artists: ['DJ Quantum'],
+            mood: 'Energetic',
+            recentListenBoost: true
+          }
+        },
+        {
+          id: 'event2',
+          name: 'Bass Drop Underground',
+          date: '2025-05-22',
+          time: '22:00:00',
+          venue: 'The Warehouse',
+          price: '$30',
+          image: 'https://example.com/events/bass-drop.jpg',
+          artists: ['Sub Tremor', 'Bass Mechanics', 'Waveform'],
+          correlation: 0.75,
+          matchFactors: {
+            genres: ['Dubstep', 'Drum & Bass'],
+            artists: [],
+            mood: 'Dark'
+          }
+        },
+        {
+          id: 'event3',
+          name: 'Melodic Dreams',
+          date: '2025-06-05',
+          time: '21:00:00',
+          venue: 'Cloud Nine Lounge',
+          price: '$35-60',
+          image: 'https://example.com/events/melodic-dreams.jpg',
+          artists: ['Harmony Project', 'Aurora Waves', 'Celestial'],
+          correlation: 0.92,
+          matchFactors: {
+            genres: ['Trance', 'Progressive House'],
+            artists: ['Aurora Waves'],
+            mood: 'Melodic',
+            recentListenBoost: true
+          }
+        },
+        {
+          id: 'event4',
+          name: 'Rhythm Collective',
+          date: '2025-06-12',
+          time: '20:30:00',
+          venue: 'Urban Beat Club',
+          price: '$25',
+          image: 'https://example.com/events/rhythm-collective.jpg',
+          artists: ['Groove Masters', 'Percussion Ensemble', 'Beat Architects'],
+          correlation: 0.68,
+          matchFactors: {
+            genres: ['House', 'Tech House'],
+            artists: [],
+            mood: 'Groovy'
+          }
+        },
+        {
+          id: 'event5',
+          name: 'Future Sound Expo',
+          date: '2025-06-20',
+          time: '19:00:00',
+          venue: 'Innovation Center',
+          price: '$50-120',
+          image: 'https://example.com/events/future-sound.jpg',
+          artists: ['Digital Frontier', 'Neural Beats', 'AI Soundscape', 'Quantum Noise'],
+          correlation: 0.81,
+          matchFactors: {
+            genres: ['Experimental', 'IDM'],
+            artists: ['Neural Beats'],
+            mood: 'Futuristic'
+          }
+        },
+        {
+          id: 'event6',
+          name: 'Summer Bass Festival',
+          date: '2025-07-10',
+          time: '16:00:00',
+          venue: 'Riverside Park',
+          price: '$65-150',
+          image: 'https://example.com/events/summer-bass.jpg',
+          artists: ['Bass Droppers', 'Low Frequency', 'Subwoofer Crew', 'Amplitude', 'Wave Riders'],
+          correlation: 0.79,
+          matchFactors: {
+            genres: ['Bass House', 'Dubstep'],
+            artists: [],
+            mood: 'Energetic'
+          }
+        }
+      ];
+      
+      // Simulate API delay
+      setTimeout(() => {
+        setEvents(mockEvents);
+        setLoading(false);
+      }, 1000);
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      setError(err.message);
+      setLoading(false);
+    }
   };
-  
-  // Navigate back to Music Taste page
-  const handleBackToMusicTaste = () => {
-    router.push('/users/music-taste');
+
+  const filteredEvents = events.filter(event => {
+    // Filter by match score
+    if (event.correlation * 100 < filters.matchScore) {
+      return false;
+    }
+    
+    // Filter by genre (if not 'all')
+    if (filters.genre !== 'all' && 
+        !event.matchFactors.genres.some(g => g.toLowerCase().includes(filters.genre.toLowerCase()))) {
+      return false;
+    }
+    
+    // Filter by date
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    
+    if (filters.date === 'this-week') {
+      const nextWeek = new Date();
+      nextWeek.setDate(today.getDate() + 7);
+      return eventDate >= today && eventDate <= nextWeek;
+    } else if (filters.date === 'this-month') {
+      const nextMonth = new Date();
+      nextMonth.setMonth(today.getMonth() + 1);
+      return eventDate >= today && eventDate <= nextMonth;
+    }
+    
+    return true; // 'all' dates
+  });
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
   };
-  
-  // Show loading state
+
   if (status === 'loading' || loading) {
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loader}></div>
-        <p>Finding events that match your taste...</p>
+      <div className={styles.container}>
+        <Head>
+          <title>Events | Sonar</title>
+        </Head>
+        <Navigation />
+        <div className={styles.loadingContainer}>
+          <div className={styles.loadingSpinner}></div>
+          <p>Finding events that match your taste...</p>
+        </div>
       </div>
     );
   }
-  
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className={styles.container}>
+        <Head>
+          <title>Events | Sonar</title>
+        </Head>
+        <Navigation />
+        <div className={styles.unauthorizedContainer}>
+          <h1 className={styles.title}>Connect to Discover Events</h1>
+          <p className={styles.subtitle}>Sign in with Spotify to find events that match your music taste</p>
+          <Link href="/api/auth/signin" className={styles.connectButton}>
+            Connect with Spotify
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <Head>
+          <title>Events | Sonar</title>
+        </Head>
+        <Navigation />
+        <div className={styles.errorContainer}>
+          <h1 className={styles.title}>Oops! Something went wrong</h1>
+          <p className={styles.errorMessage}>{error}</p>
+          <button onClick={fetchEvents} className={styles.retryButton}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <Head>
-        <title>Discover Events - Sonar EDM Platform</title>
-        <meta name="description" content="Find events that match your music taste" />
+        <title>Events | Sonar</title>
       </Head>
       
-      {/* Add consistent navigation */}
-      <Navigation activePage="events" />
+      <Navigation />
       
       <main className={styles.main}>
-        {/* Back button to Music Taste */}
-        <button 
-          className={styles.backButton}
-          onClick={handleBackToMusicTaste}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-          Back to Music Taste
-        </button>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Events For You</h1>
+          <p className={styles.subtitle}>
+            Discover events that match your unique music taste
+          </p>
+        </div>
         
-        <h1 className={styles.title}>Discover <span className={styles.highlight}>Events</span></h1>
-        
-        {/* User's taste badge */}
-        {session?.user?.tasteBadge && (
-          <div className={styles.tasteBadge}>{session.user.tasteBadge}</div>
-        )}
-        
-        {/* Filters section */}
-        <div className={styles.filtersSection}>
-          <h2 className={styles.sectionTitle}>Filters</h2>
-          
-          <div className={styles.filterControl}>
-            <label htmlFor="matchSlider" className={styles.filterLabel}>
-              Minimum Match Percentage
-            </label>
-            <div className={styles.sliderContainer}>
-              <input
-                id="matchSlider"
-                type="range"
-                min="0"
-                max="100"
-                value={minMatch}
-                onChange={handleSliderChange}
-                className={styles.slider}
-              />
-              <span className={styles.sliderValue}>{minMatch}%</span>
-            </div>
+        <div className={styles.filtersContainer}>
+          <div className={styles.filterGroup}>
+            <label className={styles.filterLabel}>Genre</label>
+            <select 
+              className={styles.filterSelect}
+              value={filters.genre}
+              onChange={(e) => handleFilterChange('genre', e.target.value)}
+            >
+              <option value="all">All Genres</option>
+              <option value="house">House</option>
+              <option value="techno">Techno</option>
+              <option value="trance">Trance</option>
+              <option value="dubstep">Dubstep</option>
+              <option value="drum">Drum & Bass</option>
+              <option value="experimental">Experimental</option>
+            </select>
           </div>
           
-          {userLocation && (
-            <div className={styles.locationInfo}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-              <span>
-                Showing events near {userLocation.city}, {userLocation.region}, {userLocation.country}
-              </span>
-            </div>
-          )}
+          <div className={styles.filterGroup}>
+            <label className={styles.filterLabel}>Date</label>
+            <select 
+              className={styles.filterSelect}
+              value={filters.date}
+              onChange={(e) => handleFilterChange('date', e.target.value)}
+            >
+              <option value="all">All Dates</option>
+              <option value="this-week">This Week</option>
+              <option value="this-month">This Month</option>
+            </select>
+          </div>
           
-          {/* API Status indicators */}
-          {apiStatus && (
-            <div className={styles.apiStatus}>
-              <div className={`${styles.apiIndicator} ${apiStatus.ticketmaster.error ? styles.apiError : styles.apiSuccess}`}>
-                <span className={styles.apiName}>Ticketmaster</span>
-                <span className={styles.apiStatusText}>
-                  {apiStatus.ticketmaster.error ? 'Error' : `${apiStatus.ticketmaster.count} events`}
-                </span>
-              </div>
-              <div className={`${styles.apiIndicator} ${apiStatus.edmtrain.error ? styles.apiError : styles.apiSuccess}`}>
-                <span className={styles.apiName}>EDMtrain</span>
-                <span className={styles.apiStatusText}>
-                  {apiStatus.edmtrain.error ? 'Error' : `${apiStatus.edmtrain.count} events`}
-                </span>
-              </div>
+          <div className={styles.filterGroup}>
+            <label className={styles.filterLabel}>Match Score</label>
+            <div className={styles.rangeContainer}>
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                value={filters.matchScore}
+                onChange={(e) => handleFilterChange('matchScore', parseInt(e.target.value))}
+                className={styles.rangeInput}
+              />
+              <span className={styles.rangeValue}>{filters.matchScore}%+</span>
             </div>
-          )}
+          </div>
         </div>
         
-        {/* Events list */}
-        <div className={styles.eventsSection}>
-          <h2 className={styles.sectionTitle}>
-            Events Matching Your Taste
-            <span className={styles.eventCount}>{filteredEvents.length} events</span>
-          </h2>
-          
-          {error ? (
-            <div className={styles.errorMessage}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-              <p>{error}</p>
-              <button 
-                className={styles.retryButton}
-                onClick={() => window.location.reload()}
-              >
-                Retry
-              </button>
-            </div>
-          ) : filteredEvents.length > 0 ? (
-            <div className={styles.eventsList}>
-              {filteredEvents.map(event => (
-                <div key={event.id} className={styles.eventCard}>
-                  <div className={styles.eventImageContainer}>
-                    <img 
-                      src={event.image || '/event-placeholder.jpg'} 
-                      alt={event.name} 
-                      className={styles.eventImage}
-                    />
-                    <div className={styles.matchBadge}>{event.match}%</div>
-                    {event.source === 'mock' && (
-                      <div className={styles.mockBadge}>Demo</div>
-                    )}
-                  </div>
-                  
-                  <div className={styles.eventInfo}>
-                    <h3 className={styles.eventName}>{event.name}</h3>
-                    <p className={styles.eventDate}>
-                      {new Date(event.date).toLocaleDateString('en-US', { 
-                        weekday: 'short',
-                        month: 'short', 
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </p>
-                    <p className={styles.eventVenue}>{event.venue.name}</p>
-                    <p className={styles.eventLocation}>{event.venue.location}</p>
-                    
-                    {event.distance && (
-                      <p className={styles.eventDistance}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        {event.distance.toFixed(1)} miles away
-                      </p>
-                    )}
-                    
-                    <div className={styles.eventGenres}>
-                      {event.genres.slice(0, 3).map((genre, idx) => (
-                        <span key={idx} className={styles.genreTag}>{genre}</span>
-                      ))}
-                    </div>
-                    
-                    {event.ticketLink && (
-                      <a 
-                        href={event.ticketLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.ticketButton}
-                      >
-                        Get Tickets
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className={styles.noEvents}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              <p>No events match your current filter settings</p>
-              <p className={styles.noEventsSubtext}>Try lowering the minimum match percentage</p>
-              <button 
-                className={styles.resetButton}
-                onClick={() => setMinMatch(0)}
-              >
-                Reset Filters
-              </button>
-            </div>
-          )}
-        </div>
-        
-        {/* Link to venues */}
-        <div className={styles.venuesLinkSection}>
-          <Link href="/users/venues">
-            <a className={styles.venuesLink}>
-              <span>Discover Venues</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
-              </svg>
-            </a>
-          </Link>
-        </div>
+        {filteredEvents.length > 0 ? (
+          <div className={styles.eventsGrid}>
+            {filteredEvents.map((event) => (
+              <EventCard 
+                key={event.id} 
+                event={event} 
+                correlation={event.correlation}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className={styles.noEventsContainer}>
+            <h2 className={styles.noEventsTitle}>No matching events found</h2>
+            <p className={styles.noEventsMessage}>
+              Try adjusting your filters or check back later for new events.
+            </p>
+            <button 
+              className={styles.resetButton}
+              onClick={() => setFilters({ genre: 'all', date: 'all', matchScore: 0 })}
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

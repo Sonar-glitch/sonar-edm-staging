@@ -1,141 +1,124 @@
-.correlationIndicator {
+.correlationContainer {
+  background-color: rgba(20, 20, 30, 0.7);
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 255, 255, 0.2);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.correlationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.correlationValue {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 12px;
-  position: relative;
 }
 
-.correlationBadge {
-  background: linear-gradient(135deg, rgba(30, 30, 40, 0.9), rgba(20, 20, 30, 0.9));
-  border-radius: 12px;
-  padding: 4px 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 6px;
-  position: relative;
-  transform: skewX(-5deg);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  z-index: 1;
-}
-
-.correlationScore {
+.correlationPercent {
+  font-size: 1.8rem;
   font-weight: bold;
-  font-size: 0.9rem;
+  text-shadow: 0 0 10px currentColor;
+}
+
+.high {
+  color: #00ffff;
+}
+
+.medium {
+  color: #33ccff;
+}
+
+.moderate {
+  color: #9966ff;
+}
+
+.low {
+  color: #ff66cc;
 }
 
 .correlationLabel {
   font-size: 0.8rem;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.correlationBars {
-  display: flex;
-  gap: 3px;
-  height: 4px;
-  width: 100%;
-  max-width: 60px;
-}
-
-.correlationBar {
-  height: 100%;
-  flex: 1;
-  border-radius: 2px;
-  transition: all 0.3s ease;
-}
-
-.bar1 {
-  animation: pulse 2s infinite alternate;
-}
-
-.bar2 {
-  animation: pulse 2s infinite alternate 0.5s;
-}
-
-.bar3 {
-  animation: pulse 2s infinite alternate 1s;
-}
-
-.inactive {
-  opacity: 0.3;
-  animation: none;
+.recentBoostBadge {
+  background: linear-gradient(90deg, #ff00ff, #ff3366);
+  color: white;
+  font-size: 0.7rem;
+  padding: 5px 10px;
+  border-radius: 20px;
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+  animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
   0% {
-    opacity: 0.7;
+    box-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
   }
   100% {
-    opacity: 1;
+    box-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
   }
 }
 
-/* High correlation styling */
-.high .correlationBadge {
-  background: linear-gradient(135deg, rgba(138, 43, 226, 0.9), rgba(255, 107, 107, 0.9));
+.matchFactors {
+  background-color: rgba(30, 30, 40, 0.5);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
 }
 
-.high .correlationScore {
+.matchFactorsTitle {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.factorsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.factorItem {
+  display: flex;
+  margin-bottom: 5px;
+  font-size: 0.8rem;
+}
+
+.factorItem:last-child {
+  margin-bottom: 0;
+}
+
+.factorLabel {
+  color: rgba(255, 255, 255, 0.6);
+  margin-right: 5px;
+  min-width: 60px;
+}
+
+.factorValue {
   color: white;
+  flex: 1;
 }
 
-.high .correlationLabel {
-  color: #ff6b6b;
-}
-
-.high .correlationBar {
-  background-color: #ff6b6b;
-}
-
-/* Medium correlation styling */
-.medium .correlationBadge {
-  background: linear-gradient(135deg, rgba(255, 193, 7, 0.9), rgba(255, 107, 107, 0.7));
-}
-
-.medium .correlationScore {
-  color: white;
-}
-
-.medium .correlationLabel {
-  color: #ffc107;
-}
-
-.medium .correlationBar {
-  background-color: #ffc107;
-}
-
-/* Low correlation styling */
-.low .correlationBadge {
-  background: linear-gradient(135deg, rgba(100, 100, 150, 0.9), rgba(70, 70, 100, 0.7));
-}
-
-.low .correlationScore {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.low .correlationLabel {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.low .correlationBar {
-  background-color: rgba(100, 100, 150, 0.7);
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  .correlationBadge {
-    padding: 3px 8px;
+  .correlationContainer {
+    padding: 12px;
   }
   
-  .correlationScore {
-    font-size: 0.8rem;
+  .correlationPercent {
+    font-size: 1.5rem;
   }
   
-  .correlationLabel {
-    font-size: 0.7rem;
+  .recentBoostBadge {
+    font-size: 0.6rem;
+    padding: 4px 8px;
   }
 }

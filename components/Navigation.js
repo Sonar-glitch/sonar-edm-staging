@@ -1,85 +1,70 @@
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { signOut, useSession } from 'next-auth/react';
+import React from 'react';
 import styles from '../styles/Navigation.module.css';
+import Link from 'next/link';
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { useRouter } from 'next/router';
 
-export default function Navigation({ activePage }) {
+const Navigation = () => {
+  const { data: session, status } = useSession();
   const router = useRouter();
-  const { data: session } = useSession();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   
-  // Toggle profile menu
-  const toggleProfileMenu = () => {
-    setShowProfileMenu(!showProfileMenu);
-  };
-  
-  // Handle sign out
-  const handleSignOut = async (e) => {
-    e.preventDefault();
-    await signOut({ redirect: false });
-    router.push('/');
+  const isActive = (path) => {
+    return router.pathname === path ? styles.active : '';
   };
   
   return (
     <nav className={styles.navigation}>
-      <div className={styles.navContainer}>
-        <div className={styles.logoContainer}>
-          <Link href="/users/music-taste">
-            <a className={styles.logo}>
-              <span className={styles.logoText}>Sonar</span>
-              <span className={styles.logoAccent}>EDM</span>
-            </a>
-          </Link>
-        </div>
-        
-        <div className={styles.navLinks}>
-          <Link href="/users/music-taste">
-            <a className={`${styles.navLink} ${activePage === 'music-taste' ? styles.active : ''}`}>
-              <span className={styles.navIcon}>🎵</span>
-              <span className={styles.navText}>Music Taste</span>
-            </a>
-          </Link>
-          
-          <Link href="/users/events">
-            <a className={`${styles.navLink} ${activePage === 'events' ? styles.active : ''}`}>
-              <span className={styles.navIcon}>🎭</span>
-              <span className={styles.navText}>Events</span>
-            </a>
-          </Link>
-        </div>
-        
-        <div className={styles.userMenu}>
-          <div className={styles.userAvatar} onClick={toggleProfileMenu}>
-            <span>{session?.user?.name?.charAt(0) || 'S'}</span>
+      <div className={styles.logoContainer}>
+        <Link href="/" className={styles.logo}>
+          SONAR
+        </Link>
+        <span className={styles.tagline}>Connect with your sound</span>
+      </div>
+      
+      <div className={styles.navLinks}>
+        {status === 'authenticated' && (
+          <>
+            <Link href="/users/music-taste" className={`${styles.navLink} ${isActive('/users/music-taste')}`}>
+              Music Taste
+            </Link>
+            <Link href="/users/events" className={`${styles.navLink} ${isActive('/users/events')}`}>
+              Events
+            </Link>
+            <Link href="/users/profile" className={`${styles.navLink} ${isActive('/users/profile')}`}>
+              Profile
+            </Link>
+            <Link href="/users/settings" className={`${styles.navLink} ${isActive('/users/settings')}`}>
+              Settings
+            </Link>
+          </>
+        )}
+      </div>
+      
+      <div className={styles.authContainer}>
+        {status === 'loading' ? (
+          <div className={styles.loadingDots}>
+            <span></span>
+            <span></span>
+            <span></span>
           </div>
-          
-          {showProfileMenu && (
-            <div className={styles.profileMenu}>
-              <div className={styles.profileMenuHeader}>
-                <span className={styles.profileName}>{session?.user?.name || 'User'}</span>
-                <span className={styles.profileEmail}>{session?.user?.email || ''}</span>
-              </div>
-              <ul className={styles.profileMenuItems}>
-                <li className={styles.profileMenuItem}>
-                  <Link href="/users/profile">
-                    <a>Profile</a>
-                  </Link>
-                </li>
-                <li className={styles.profileMenuItem}>
-                  <Link href="/users/settings">
-                    <a>Settings</a>
-                  </Link>
-                </li>
-                <li className={styles.profileMenuDivider}></li>
-                <li className={styles.profileMenuItem}>
-                  <a href="#" onClick={handleSignOut}>Sign Out</a>
-                </li>
-              </ul>
-            </div>
-          )}
-        </div>
+        ) : status === 'authenticated' ? (
+          <button 
+            onClick={() => signOut({ callbackUrl: '/' })}
+            className={styles.authButton}
+          >
+            Sign Out
+          </button>
+        ) : (
+          <button 
+            onClick={() => signIn('spotify')}
+            className={styles.authButton}
+          >
+            Connect
+          </button>
+        )}
       </div>
     </nav>
   );
-}
+};
+
+export default Navigation;

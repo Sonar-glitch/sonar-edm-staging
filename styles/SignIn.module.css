@@ -1,99 +1,116 @@
 .container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   min-height: 100vh;
-  padding: 2rem;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, #15121E 100%);
-  color: var(--text-primary);
+  padding: 20px;
+  background-color: #0c0c14;
+  color: white;
 }
 
-.logoContainer {
-  margin-bottom: 3rem;
+.signinCard {
+  max-width: 500px;
+  margin: 100px auto;
+  background-color: rgba(20, 20, 30, 0.7);
+  border-radius: 12px;
+  padding: 30px;
   text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 255, 255, 0.2);
+  border: 1px solid rgba(0, 255, 255, 0.1);
 }
 
 .logo {
-  font-family: 'Audiowide', sans-serif;
-  font-size: 3.5rem;
-  margin: 0;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
 }
 
-.tagline {
-  font-size: 1.2rem;
-  color: var(--text-secondary);
-  margin-top: 0.5rem;
-}
-
-.authContainer {
-  background: rgba(30, 30, 30, 0.5);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 2.5rem;
-  width: 100%;
-  max-width: 480px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 30px;
 }
 
 .title {
   font-size: 1.8rem;
-  margin-top: 0;
-  margin-bottom: 1rem;
-  text-align: center;
+  margin-bottom: 15px;
+  color: white;
 }
 
 .description {
-  color: var(--text-secondary);
-  text-align: center;
-  margin-bottom: 2rem;
-  line-height: 1.6;
-}
-
-.providerContainer {
-  margin-top: 1.5rem;
-}
-
-.spotifyButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.8rem 1.5rem;
-  background-color: #1DB954;
-  color: white;
-  border: none;
-  border-radius: 50px;
   font-size: 1rem;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 30px;
+  line-height: 1.5;
+}
+
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(0, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #00ffff;
+  animation: spin 1s ease-in-out infinite;
+  margin: 0 auto 30px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.manualButton {
+  background: linear-gradient(90deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
+  color: white;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  padding: 12px 25px;
+  border-radius: 25px;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.spotifyButton:hover {
-  background-color: #1ED760;
+.manualButton:hover {
+  background: linear-gradient(90deg, rgba(0, 255, 255, 0.3), rgba(255, 0, 255, 0.3));
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 255, 255, 0.3);
 }
 
-.spotifyIcon {
-  width: 24px;
-  height: 24px;
-  margin-right: 10px;
-  fill: white;
-}
-
-@media (max-width: 600px) {
-  .authContainer {
-    padding: 1.5rem;
+@media (max-width: 768px) {
+  .signinCard {
+    margin: 50px auto;
+    padding: 20px;
   }
   
   .logo {
-    font-size: 2.5rem;
+    font-size: 2rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .signinCard {
+    padding: 15px;
+  }
+  
+  .logo {
+    font-size: 1.8rem;
+  }
+  
+  .title {
+    font-size: 1.3rem;
+  }
+  
+  .description {
+    font-size: 0.9rem;
   }
 }

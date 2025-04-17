@@ -1,148 +1,184 @@
-import { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 import styles from '../styles/VibeQuizCard.module.css';
 
-export default function VibeQuizCard({ onTasteUpdate }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+const VibeQuizCard = ({ onSubmit }) => {
+  const [activeTab, setActiveTab] = useState(0);
+  const [selections, setSelections] = useState({
+    tempo: [],
+    mood: [],
+    elements: [],
+    subgenres: [],
+    venues: []
+  });
   
-  // Sample quiz questions
-  const questions = [
+  const tabs = [
     {
       id: 'tempo',
-      question: 'What tempo do you prefer?',
+      label: 'Tempo',
       options: [
-        { value: 'slow', label: 'Slow & Chill' },
-        { value: 'medium', label: 'Medium & Groovy' },
-        { value: 'fast', label: 'Fast & Energetic' }
+        { id: 'slow', label: 'Slow & Chill' },
+        { id: 'medium', label: 'Medium Groove' },
+        { id: 'fast', label: 'Fast & Energetic' },
+        { id: 'varying', label: 'Varying Tempos' },
+        { id: 'experimental', label: 'Experimental Rhythms' }
       ]
     },
     {
       id: 'mood',
-      question: 'What mood resonates with you most?',
+      label: 'Mood',
       options: [
-        { value: 'dark', label: 'Dark & Mysterious' },
-        { value: 'uplifting', label: 'Uplifting & Euphoric' },
-        { value: 'melodic', label: 'Melodic & Emotional' }
+        { id: 'uplifting', label: 'Uplifting & Euphoric' },
+        { id: 'dark', label: 'Dark & Intense' },
+        { id: 'melodic', label: 'Melodic & Emotional' },
+        { id: 'aggressive', label: 'Aggressive & Hard' },
+        { id: 'ambient', label: 'Ambient & Atmospheric' }
       ]
     },
     {
       id: 'elements',
-      question: 'Which elements do you enjoy in tracks?',
+      label: 'Elements',
       options: [
-        { value: 'vocals', label: 'Strong Vocals' },
-        { value: 'bass', label: 'Heavy Bass' },
-        { value: 'melody', label: 'Complex Melodies' }
+        { id: 'vocals', label: 'Vocal Tracks' },
+        { id: 'instrumental', label: 'Instrumental Only' },
+        { id: 'bass', label: 'Heavy Bass' },
+        { id: 'melody', label: 'Melodic Focus' },
+        { id: 'drops', label: 'Epic Drops' }
+      ]
+    },
+    {
+      id: 'subgenres',
+      label: 'Subgenres',
+      options: [
+        { id: 'house', label: 'House' },
+        { id: 'techno', label: 'Techno' },
+        { id: 'trance', label: 'Trance' },
+        { id: 'dubstep', label: 'Dubstep' },
+        { id: 'dnb', label: 'Drum & Bass' }
+      ]
+    },
+    {
+      id: 'venues',
+      label: 'Venues',
+      options: [
+        { id: 'club', label: 'Club Nights' },
+        { id: 'festival', label: 'Festivals' },
+        { id: 'warehouse', label: 'Warehouse Parties' },
+        { id: 'underground', label: 'Underground Scene' },
+        { id: 'mainstream', label: 'Mainstream Events' }
       ]
     }
   ];
-
-  const handleToggle = () => {
-    setIsExpanded(!isExpanded);
-    if (isExpanded) {
-      setCurrentQuestion(0);
-      setAnswers({});
-      setSubmitSuccess(false);
-    }
+  
+  const handleOptionToggle = (tabId, optionId) => {
+    setSelections(prev => {
+      const currentSelections = [...prev[tabId]];
+      
+      if (currentSelections.includes(optionId)) {
+        return {
+          ...prev,
+          [tabId]: currentSelections.filter(id => id !== optionId)
+        };
+      } else {
+        return {
+          ...prev,
+          [tabId]: [...currentSelections, optionId]
+        };
+      }
+    });
   };
-
-  const handleAnswer = (questionId, value) => {
-    setAnswers({
-      ...answers,
-      [questionId]: value
+  
+  const handleSubmit = () => {
+    onSubmit(selections);
+  };
+  
+  const isOptionSelected = (tabId, optionId) => {
+    return selections[tabId].includes(optionId);
+  };
+  
+  const getCompletionPercentage = () => {
+    let selectedCount = 0;
+    let totalCount = 0;
+    
+    Object.keys(selections).forEach(key => {
+      selectedCount += selections[key].length;
+      totalCount += tabs.find(tab => tab.id === key).options.length;
     });
     
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    } else {
-      handleSubmit();
-    }
+    return Math.round((selectedCount / totalCount) * 100);
   };
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      const response = await axios.post('/api/user/update-taste-preferences', { preferences: answers });
-      
-      if (response.data.success) {
-        setSubmitSuccess(true);
-        if (onTasteUpdate && typeof onTasteUpdate === 'function') {
-          onTasteUpdate();
-        }
-      }
-    } catch (error) {
-      console.error('Error updating taste preferences:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleReset = () => {
-    setCurrentQuestion(0);
-    setAnswers({});
-    setSubmitSuccess(false);
-  };
-
+  
   return (
-    <div className={`${styles.quizCard} ${isExpanded ? styles.expanded : ''}`}>
-      <div className={styles.quizHeader} onClick={handleToggle}>
-        <h3 className={styles.quizTitle}>
-          {isExpanded ? 'Refine Your Taste Profile' : 'Something doesn\'t feel right?'}
-        </h3>
-        <div className={styles.toggleIcon}>
-          {isExpanded ? '−' : '+'}
+    <div className={styles.vibeQuizCard}>
+      <h3 className={styles.quizTitle}>Customize Your Vibe</h3>
+      <p className={styles.quizDescription}>
+        Select your preferences to fine-tune your music taste profile. 
+        Choose multiple options in each category.
+      </p>
+      
+      <div className={styles.tabsContainer}>
+        <div className={styles.tabsHeader}>
+          {tabs.map((tab, index) => (
+            <button
+              key={tab.id}
+              className={`${styles.tabButton} ${activeTab === index ? styles.activeTab : ''}`}
+              onClick={() => setActiveTab(index)}
+            >
+              {tab.label}
+              {selections[tab.id].length > 0 && (
+                <span className={styles.selectionCount}>
+                  {selections[tab.id].length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        
+        <div className={styles.tabContent}>
+          {tabs.map((tab, index) => (
+            <div 
+              key={tab.id}
+              className={`${styles.tabPanel} ${activeTab === index ? styles.activePanel : ''}`}
+            >
+              <div className={styles.optionsGrid}>
+                {tab.options.map(option => (
+                  <div 
+                    key={option.id}
+                    className={`${styles.optionItem} ${isOptionSelected(tab.id, option.id) ? styles.selectedOption : ''}`}
+                    onClick={() => handleOptionToggle(tab.id, option.id)}
+                  >
+                    <div className={styles.optionCheckmark}>
+                      {isOptionSelected(tab.id, option.id) && '✓'}
+                    </div>
+                    <span className={styles.optionLabel}>{option.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
       
-      {isExpanded && (
-        <div className={styles.quizContent}>
-          {!submitSuccess ? (
-            <>
-              <p className={styles.quizDescription}>
-                Answer a few quick questions to help us fine-tune your music recommendations.
-              </p>
-              
-              <div className={styles.questionContainer}>
-                <h4 className={styles.questionText}>{questions[currentQuestion].question}</h4>
-                
-                <div className={styles.optionsGrid}>
-                  {questions[currentQuestion].options.map((option, index) => (
-                    <button
-                      key={index}
-                      className={styles.optionButton}
-                      onClick={() => handleAnswer(questions[currentQuestion].id, option.value)}
-                      disabled={isSubmitting}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-                
-                <div className={styles.progressIndicator}>
-                  {questions.map((_, index) => (
-                    <span 
-                      key={index} 
-                      className={`${styles.progressDot} ${index === currentQuestion ? styles.active : ''} ${index < currentQuestion ? styles.completed : ''}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className={styles.successMessage}>
-              <div className={styles.successIcon}>✓</div>
-              <h4>Thanks for your input!</h4>
-              <p>We've updated your taste profile with your preferences.</p>
-              <button className={styles.resetButton} onClick={handleReset}>
-                Refine Further
-              </button>
-            </div>
-          )}
+      <div className={styles.quizFooter}>
+        <div className={styles.completionBar}>
+          <div 
+            className={styles.completionFill}
+            style={{ width: `${getCompletionPercentage()}%` }}
+          ></div>
         </div>
-      )}
+        <span className={styles.completionText}>
+          {getCompletionPercentage()}% Complete
+        </span>
+        
+        <button 
+          className={styles.submitButton}
+          onClick={handleSubmit}
+          disabled={getCompletionPercentage() === 0}
+        >
+          Update My Taste Profile
+        </button>
+      </div>
     </div>
   );
-}
+};
+
+export default VibeQuizCard;

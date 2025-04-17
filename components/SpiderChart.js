@@ -1,126 +1,155 @@
-import React, { useRef, useEffect } from 'react';
-import { Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from 'chart.js';
-import { Radar } from 'react-chartjs-2';
+import React from 'react';
 import styles from '../styles/SpiderChart.module.css';
 
-// Register required Chart.js components
-ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
-
 const SpiderChart = ({ genres }) => {
-  const chartRef = useRef(null);
-  
-  // Prepare data for the chart
-  const data = {
-    labels: genres.map(genre => genre.label),
-    datasets: [
-      {
-        label: 'Genre Affinity',
-        data: genres.map(genre => genre.value),
-        backgroundColor: 'rgba(138, 43, 226, 0.2)', // Blueviolet with transparency
-        borderColor: 'rgba(138, 43, 226, 0.8)',
-        borderWidth: 2,
-        pointBackgroundColor: 'rgba(138, 43, 226, 1)',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: 'rgba(138, 43, 226, 1)',
-        pointRadius: 4,
-        pointHoverRadius: 6,
-      },
-    ],
+  // Calculate positions for each genre on the spider chart
+  const calculatePoints = (genres) => {
+    const points = [];
+    const centerX = 150;
+    const centerY = 150;
+    const radius = 120;
+    
+    genres.forEach((genre, index) => {
+      const angle = (Math.PI * 2 * index) / genres.length;
+      const x = centerX + radius * Math.cos(angle) * (genre.score / 100);
+      const y = centerY + radius * Math.sin(angle) * (genre.score / 100);
+      points.push({ x, y, name: genre.name, score: genre.score });
+    });
+    
+    return points;
   };
   
-  // Chart options
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      r: {
-        angleLines: {
-          display: true,
-          color: 'rgba(255, 255, 255, 0.2)',
-        },
-        grid: {
-          color: 'rgba(255, 255, 255, 0.2)',
-        },
-        pointLabels: {
-          color: 'rgba(255, 255, 255, 0.9)',
-          font: {
-            size: function(context) {
-              // Responsive font size based on screen width
-              const width = window.innerWidth;
-              if (width < 768) return 10; // Mobile
-              if (width < 1024) return 12; // Tablet
-              return 14; // Desktop
-            },
-            family: "'Poppins', sans-serif",
-          },
-          // Handle long labels
-          callback: function(value) {
-            // For mobile screens, truncate long labels
-            if (window.innerWidth < 768 && value.length > 12) {
-              return value.substring(0, 10) + '...';
-            }
-            return value;
-          },
-        },
-        ticks: {
-          color: 'rgba(255, 255, 255, 0.7)',
-          backdropColor: 'transparent',
-          stepSize: 20,
-          max: 100,
-          min: 0,
-        },
-      },
-    },
-    plugins: {
-      legend: {
-        display: false, // Hide legend as it's not needed for a single dataset
-      },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: 'rgba(255, 255, 255, 1)',
-        bodyColor: 'rgba(255, 255, 255, 1)',
-        titleFont: {
-          size: 14,
-          family: "'Poppins', sans-serif",
-        },
-        bodyFont: {
-          size: 12,
-          family: "'Poppins', sans-serif",
-        },
-        padding: 10,
-        displayColors: false,
-        callbacks: {
-          title: function(tooltipItems) {
-            // Show full genre name in tooltip title (no truncation)
-            return genres[tooltipItems[0].dataIndex].label;
-          },
-          label: function(context) {
-            return `Affinity: ${context.raw}%`;
-          },
-        },
-      },
-    },
-  };
-  
-  // Effect to handle resize events
-  useEffect(() => {
-    const handleResize = () => {
-      if (chartRef.current) {
-        chartRef.current.resize();
+  // Create SVG path for the spider web
+  const createWebPath = (points) => {
+    let path = '';
+    points.forEach((point, index) => {
+      if (index === 0) {
+        path += `M ${point.x} ${point.y} `;
+      } else {
+        path += `L ${point.x} ${point.y} `;
       }
-    };
+    });
+    path += 'Z';
+    return path;
+  };
+  
+  // Create grid lines for the spider chart
+  const createGridLines = (count) => {
+    const lines = [];
+    const centerX = 150;
+    const centerY = 150;
+    const radius = 120;
     
-    window.addEventListener('resize', handleResize);
+    for (let i = 1; i <= count; i++) {
+      const gridPoints = [];
+      const gridRadius = (radius * i) / count;
+      
+      for (let j = 0; j < genres.length; j++) {
+        const angle = (Math.PI * 2 * j) / genres.length;
+        const x = centerX + gridRadius * Math.cos(angle);
+        const y = centerY + gridRadius * Math.sin(angle);
+        gridPoints.push({ x, y });
+      }
+      
+      lines.push(createWebPath(gridPoints));
+    }
     
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+    return lines;
+  };
+  
+  // Create axis lines for each genre
+  const createAxisLines = () => {
+    const lines = [];
+    const centerX = 150;
+    const centerY = 150;
+    const radius = 120;
+    
+    genres.forEach((genre, index) => {
+      const angle = (Math.PI * 2 * index) / genres.length;
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+      lines.push({ x1: centerX, y1: centerY, x2: x, y2: y });
+    });
+    
+    return lines;
+  };
+  
+  const points = calculatePoints(genres);
+  const webPath = createWebPath(points);
+  const gridLines = createGridLines(4);
+  const axisLines = createAxisLines();
   
   return (
-    <div className={styles.chartContainer}>
-      <Radar ref={chartRef} data={data} options={options} />
+    <div className={styles.spiderChartContainer}>
+      <svg viewBox="0 0 300 300" className={styles.spiderChart}>
+        {/* Grid lines */}
+        {gridLines.map((line, index) => (
+          <path
+            key={`grid-${index}`}
+            d={line}
+            className={styles.gridLine}
+          />
+        ))}
+        
+        {/* Axis lines */}
+        {axisLines.map((line, index) => (
+          <line
+            key={`axis-${index}`}
+            x1={line.x1}
+            y1={line.y1}
+            x2={line.x2}
+            y2={line.y2}
+            className={styles.axisLine}
+          />
+        ))}
+        
+        {/* Data web */}
+        <path
+          d={webPath}
+          className={styles.dataWeb}
+        />
+        
+        {/* Data points */}
+        {points.map((point, index) => (
+          <circle
+            key={`point-${index}`}
+            cx={point.x}
+            cy={point.y}
+            r="4"
+            className={styles.dataPoint}
+          />
+        ))}
+        
+        {/* Genre labels */}
+        {points.map((point, index) => {
+          const angle = (Math.PI * 2 * index) / genres.length;
+          const labelRadius = 140;
+          const labelX = 150 + labelRadius * Math.cos(angle);
+          const labelY = 150 + labelRadius * Math.sin(angle);
+          
+          return (
+            <text
+              key={`label-${index}`}
+              x={labelX}
+              y={labelY}
+              className={styles.genreLabel}
+              textAnchor="middle"
+              dominantBaseline="middle"
+            >
+              {point.name}
+            </text>
+          );
+        })}
+      </svg>
+      
+      <div className={styles.legend}>
+        {genres.map((genre, index) => (
+          <div key={`legend-${index}`} className={styles.legendItem}>
+            <span className={styles.legendColor} style={{ backgroundColor: `hsl(${index * (360 / genres.length)}, 100%, 50%)` }}></span>
+            <span className={styles.legendText}>{genre.name}: {genre.score}%</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

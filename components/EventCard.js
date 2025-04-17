@@ -3,90 +3,93 @@ import Link from 'next/link';
 import styles from '../styles/EventCard.module.css';
 import EventCorrelationIndicator from './EventCorrelationIndicator';
 
-export default function EventCard({ event }) {
+const EventCard = ({ event, correlation }) => {
   // Format date
   const formatDate = (dateString) => {
     const options = { weekday: 'short', month: 'short', day: 'numeric' };
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', options);
+    return new Date(dateString).toLocaleDateString('en-US', options);
   };
-
+  
   // Format time
-  const formatTime = (dateString) => {
-    const options = { hour: 'numeric', minute: '2-digit' };
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', options);
+  const formatTime = (timeString) => {
+    const options = { hour: 'numeric', minute: '2-digit', hour12: true };
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', options);
   };
-
+  
   return (
     <div className={styles.eventCard}>
       <div className={styles.eventImageContainer}>
         {event.image ? (
-          <img 
-            src={event.image} 
-            alt={event.name} 
-            className={styles.eventImage} 
+          <div 
+            className={styles.eventImage}
+            style={{ backgroundImage: `url(${event.image})` }}
           />
         ) : (
-          <div className={styles.placeholderImage}>
-            <span>EDM</span>
+          <div className={styles.eventImagePlaceholder}>
+            <span>{event.name.charAt(0)}</span>
           </div>
         )}
+        
         <div className={styles.eventDate}>
-          <span className={styles.dateText}>{formatDate(event.date)}</span>
+          <span className={styles.dateValue}>{formatDate(event.date)}</span>
         </div>
       </div>
       
-      <div className={styles.eventContent}>
-        {/* Correlation indicator */}
-        {event.correlationScore && (
-          <EventCorrelationIndicator correlationScore={event.correlationScore} />
-        )}
-        
+      <div className={styles.eventInfo}>
         <h3 className={styles.eventName}>{event.name}</h3>
         
         <div className={styles.eventDetails}>
-          <div className={styles.eventDetail}>
-            <span className={styles.detailIcon}>🕒</span>
-            <span className={styles.detailText}>{formatTime(event.date)}</span>
-          </div>
-          
-          <div className={styles.eventDetail}>
+          <div className={styles.detailItem}>
             <span className={styles.detailIcon}>📍</span>
             <span className={styles.detailText}>{event.venue}</span>
           </div>
           
-          {event.distance && (
-            <div className={styles.eventDetail}>
-              <span className={styles.detailIcon}>📏</span>
-              <span className={styles.detailText}>{Math.round(event.distance)} miles away</span>
+          <div className={styles.detailItem}>
+            <span className={styles.detailIcon}>🕒</span>
+            <span className={styles.detailText}>{formatTime(event.time)}</span>
+          </div>
+          
+          {event.price && (
+            <div className={styles.detailItem}>
+              <span className={styles.detailIcon}>💲</span>
+              <span className={styles.detailText}>{event.price}</span>
             </div>
           )}
         </div>
         
-        <div className={styles.eventGenres}>
-          {event.genres && event.genres.map((genre, index) => (
-            <span key={index} className={styles.genreTag}>{genre}</span>
-          ))}
+        <div className={styles.eventArtists}>
+          <span className={styles.artistsLabel}>Artists:</span>
+          <span className={styles.artistsList}>
+            {event.artists.join(', ')}
+          </span>
+        </div>
+        
+        <div className={styles.correlationSection}>
+          <EventCorrelationIndicator 
+            correlation={correlation} 
+            matchFactors={event.matchFactors}
+          />
         </div>
         
         <div className={styles.eventActions}>
-          {event.ticketUrl && (
+          <Link href={`/events/${event.id}`} className={styles.detailsButton}>
+            View Details
+          </Link>
+          
+          {event.ticketLink && (
             <a 
-              href={event.ticketUrl} 
+              href={event.ticketLink} 
               target="_blank" 
-              rel="noopener noreferrer" 
-              className={styles.ticketButton}
+              rel="noopener noreferrer"
+              className={styles.ticketsButton}
             >
               Get Tickets
             </a>
           )}
-          
-          <Link href={`/events/${event.id}`}>
-            <a className={styles.detailsButton}>More Info</a>
-          </Link>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default EventCard;

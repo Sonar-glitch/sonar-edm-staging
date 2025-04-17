@@ -1,114 +1,224 @@
+import React from 'react';
 import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
-import Layout from '../../components/Layout';
+import Head from 'next/head';
+import Link from 'next/link';
 import styles from '../../styles/Profile.module.css';
-import SpiderChart from '../../components/SpiderChart';
 import Navigation from '../../components/Navigation';
 
 export default function Profile() {
   const { data: session, status } = useSession();
-  const [userProfile, setUserProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (status === 'authenticated') {
-      // Fetch user profile data
-      fetch('/api/spotify/user-taste')
-        .then(res => res.json())
-        .then(data => {
-          setUserProfile(data);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error('Error fetching user profile:', err);
-          setLoading(false);
-        });
+      fetchProfile();
     }
   }, [status]);
 
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      // In a real implementation, this would fetch from your API
+      // For now, we'll use mock data
+      const mockProfile = {
+        name: 'Music Lover',
+        email: 'user@example.com',
+        image: 'https://example.com/profile.jpg',
+        spotifyConnected: true,
+        joinDate: '2024-12-15',
+        stats: {
+          eventsAttended: 12,
+          favoriteGenres: ['Techno', 'House', 'Trance'],
+          topArtist: 'DJ Quantum',
+          listenTime: '320 hours'
+        },
+        preferences: {
+          notificationsEnabled: true,
+          eventRecommendationsEnabled: true,
+          locationSharing: 'events-only',
+          darkMode: true
+        }
+      };
+      
+      // Simulate API delay
+      setTimeout(() => {
+        setProfile(mockProfile);
+        setLoading(false);
+      }, 1000);
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
   if (status === 'loading' || loading) {
     return (
-      <Layout>
+      <div className={styles.container}>
+        <Head>
+          <title>Profile | Sonar</title>
+        </Head>
+        <Navigation />
         <div className={styles.loadingContainer}>
           <div className={styles.loadingSpinner}></div>
           <p>Loading your profile...</p>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (status === 'unauthenticated') {
     return (
-      <Layout>
-        <div className={styles.container}>
-          <h1 className={styles.title}>Please sign in to view your profile</h1>
+      <div className={styles.container}>
+        <Head>
+          <title>Profile | Sonar</title>
+        </Head>
+        <Navigation />
+        <div className={styles.unauthorizedContainer}>
+          <h1 className={styles.title}>Sign In to View Your Profile</h1>
+          <p className={styles.subtitle}>Connect with Spotify to access your profile</p>
+          <Link href="/api/auth/signin" className={styles.connectButton}>
+            Connect with Spotify
+          </Link>
         </div>
-      </Layout>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <Head>
+          <title>Profile | Sonar</title>
+        </Head>
+        <Navigation />
+        <div className={styles.errorContainer}>
+          <h1 className={styles.title}>Oops! Something went wrong</h1>
+          <p className={styles.errorMessage}>{error}</p>
+          <button onClick={fetchProfile} className={styles.retryButton}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className={styles.container}>
+        <Head>
+          <title>Profile | Sonar</title>
+        </Head>
+        <Navigation />
+        <div className={styles.noDataContainer}>
+          <h1 className={styles.title}>No Profile Data Available</h1>
+          <p className={styles.subtitle}>
+            We couldn't find your profile data. Please try again later.
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <div className={styles.container}>
+      <Head>
+        <title>Profile | Sonar</title>
+      </Head>
+      
       <Navigation />
-      <div className={styles.container}>
-        <div className={styles.profileHeader}>
-          <div className={styles.profileImage}>
-            {session?.user?.image ? (
-              <img src={session.user.image} alt={session.user.name} />
-            ) : (
-              <div className={styles.profileInitial}>
-                {session?.user?.name?.charAt(0) || 'U'}
-              </div>
-            )}
-          </div>
-          <div className={styles.profileInfo}>
-            <h1 className={styles.title}>{session?.user?.name || 'User'}'s Profile</h1>
-            <p className={styles.email}>{session?.user?.email || ''}</p>
-          </div>
+      
+      <main className={styles.main}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Your Profile</h1>
         </div>
-
-        {userProfile && (
-          <div className={styles.profileContent}>
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>Your Music DNA</h2>
-              <div className={styles.chartContainer}>
-                <SpiderChart genres={userProfile.genres} />
-              </div>
+        
+        <div className={styles.profileContainer}>
+          <div className={styles.profileHeader}>
+            <div className={styles.profileImageContainer}>
+              {profile.image ? (
+                <img 
+                  src={profile.image} 
+                  alt={profile.name} 
+                  className={styles.profileImage}
+                />
+              ) : (
+                <div className={styles.profileImagePlaceholder}>
+                  {profile.name.charAt(0)}
+                </div>
+              )}
             </div>
-
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>Account Information</h2>
-              <div className={styles.accountInfo}>
-                <div className={styles.infoItem}>
-                  <span className={styles.label}>Member Since:</span>
-                  <span className={styles.value}>
-                    {new Date().toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </span>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.label}>Spotify Connected:</span>
-                  <span className={styles.value}>Yes</span>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.label}>Events Attended:</span>
-                  <span className={styles.value}>0</span>
-                </div>
+            
+            <div className={styles.profileInfo}>
+              <h2 className={styles.profileName}>{profile.name}</h2>
+              <p className={styles.profileEmail}>{profile.email}</p>
+              
+              <div className={styles.connectionStatus}>
+                <div className={`${styles.connectionIndicator} ${profile.spotifyConnected ? styles.connected : ''}`}></div>
+                <span className={styles.connectionText}>
+                  {profile.spotifyConnected ? 'Connected to Spotify' : 'Not connected to Spotify'}
+                </span>
               </div>
-            </div>
-
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>Preferences</h2>
-              <p className={styles.preferencesText}>
-                Manage your preferences in the <a href="/users/settings" className={styles.link}>Settings</a> page.
+              
+              <p className={styles.joinDate}>
+                Member since {new Date(profile.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
           </div>
-        )}
-      </div>
-    </Layout>
+          
+          <div className={styles.profileContent}>
+            <div className={styles.statsSection}>
+              <h3 className={styles.sectionTitle}>Your Stats</h3>
+              
+              <div className={styles.statsGrid}>
+                <div className={styles.statCard}>
+                  <span className={styles.statIcon}>🎵</span>
+                  <span className={styles.statValue}>{profile.stats.listenTime}</span>
+                  <span className={styles.statLabel}>Total Listen Time</span>
+                </div>
+                
+                <div className={styles.statCard}>
+                  <span className={styles.statIcon}>🎭</span>
+                  <span className={styles.statValue}>{profile.stats.eventsAttended}</span>
+                  <span className={styles.statLabel}>Events Attended</span>
+                </div>
+                
+                <div className={styles.statCard}>
+                  <span className={styles.statIcon}>👑</span>
+                  <span className={styles.statValue}>{profile.stats.topArtist}</span>
+                  <span className={styles.statLabel}>Top Artist</span>
+                </div>
+                
+                <div className={styles.statCard}>
+                  <span className={styles.statIcon}>🎧</span>
+                  <div className={styles.genreTags}>
+                    {profile.stats.favoriteGenres.map((genre, index) => (
+                      <span key={index} className={styles.genreTag}>{genre}</span>
+                    ))}
+                  </div>
+                  <span className={styles.statLabel}>Favorite Genres</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className={styles.actionsSection}>
+              <Link href="/users/music-taste" className={styles.actionButton}>
+                View Music Taste
+              </Link>
+              
+              <Link href="/users/settings" className={styles.actionButton}>
+                Edit Settings
+              </Link>
+              
+              <Link href="/users/events" className={styles.actionButton}>
+                Find Events
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

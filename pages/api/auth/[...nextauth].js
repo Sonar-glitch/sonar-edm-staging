@@ -1,75 +1,86 @@
-import NextAuth from "next-auth";
-import SpotifyProvider from "next-auth/providers/spotify";
+import NextAuth from 'next-auth';
+import SpotifyProvider from 'next-auth/providers/spotify';
 
-// Configure scopes for Spotify API
-const scopes = [
-  "user-read-email",
-  "user-read-private",
-  "user-top-read",
-  "user-read-recently-played",
-  "user-library-read",
-  "playlist-read-private",
-  "playlist-read-collaborative",
-].join(",");
-
-const params = {
-  scope: scopes,
-};
-
-// Create query string from params
-const queryParamString = new URLSearchParams(params).toString();
-
-// Configure NextAuth
-export default NextAuth({
+export const authOptions = {
   providers: [
     SpotifyProvider({
       clientId: process.env.SPOTIFY_CLIENT_ID,
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-      authorization: `https://accounts.spotify.com/authorize?${queryParamString}`,
-    }) ,
-  ],
-  secret: process.env.NEXTAUTH_SECRET,
-  pages: {
-    signIn: "/auth/signin",
-  },
-  callbacks: {
-    async jwt({ token, account, user }) {
-      // Initial sign in
-      if (account && user) {
-        return {
-          ...token,
-          accessToken: account.access_token,
-          refreshToken: account.refresh_token,
-          username: account.providerAccountId,
-          accessTokenExpires: account.expires_at * 1000, // Convert to milliseconds
-        };
+      authorization: {
+        params: {
+          scope: 'user-read-email user-top-read user-read-recently-played user-read-private user-library-read'
+        }
       }
-
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, account }) {
+      // Initial sign in
+      if (account) {
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+        token.expiresAt = account.expires_at;
+      }
+      
       // Return previous token if the access token has not expired yet
-      if (Date.now() < token.accessTokenExpires) {
+      if (Date.now() < token.expiresAt * 1000) {
         return token;
       }
-
+      
       // Access token has expired, try to update it
-      return token;
+      return refreshAccessToken(token);
     },
     async session({ session, token }) {
-      session.user.accessToken = token.accessToken;
-      session.user.refreshToken = token.refreshToken;
-      session.user.username = token.username;
-
+      session.accessToken = token.accessToken;
+      session.error = token.error;
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Force redirect to music-taste page after login
-      if (url.includes('callback') || url === baseUrl) {
-        return `${baseUrl}/users/music-taste`;
-      }
-      
-      // Original redirect logic for other cases
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      else if (new URL(url).origin === baseUrl) return url;
-      return baseUrl;
-    },
+      // Redirect to music-taste page after sign in
+      return `${baseUrl}/users/music-taste`;
+    }
   },
-});
+  pages: {
+    signIn: '/auth/signin',
+  },
+  debug: process.env.NODE_ENV === 'development',
+};
+
+async function refreshAccessToken(token) {
+  try {
+    const url = 'https://accounts.spotify.com/api/token';
+    const params = new URLSearchParams();
+    params.append('grant_type', 'refresh_token');
+    params.append('refresh_token', token.refreshToken);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params
+    });
+    
+    const refreshedTokens = await response.json();
+    
+    if (!response.ok) {
+      throw refreshedTokens;
+    }
+    
+    return {
+      ...token,
+      accessToken: refreshedTokens.access_token,
+      expiresAt: Math.floor(Date.now() / 1000 + refreshedTokens.expires_in),
+      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+    };
+  } catch (error) {
+    console.error('Error refreshing access token', error);
+    return {
+      ...token,
+      error: 'RefreshAccessTokenError',
+    };
+  }
+}
+
+export default NextAuth(authOptions);
