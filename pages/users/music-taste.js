@@ -4,12 +4,12 @@ import Head from 'next/head';
 import Link from 'next/link';
 import styles from '../../styles/MusicTaste.module.css';
 import SpiderChart from '../../components/SpiderChart';
-import ArtistCard from '../components/ArtistCard';
-import TrackCard from '../components/TrackCard';
-import SeasonalMoodCard from '../components/SeasonalMoodCard';
-import VibeQuizCard from '../components/VibeQuizCard';
-import EventCard from '../components/EventCard';
-import Navigation from '../components/Navigation';
+import ArtistCard from '../../components/ArtistCard';
+import TrackCard from '../../components/TrackCard';
+import SeasonalMoodCard from '../../components/SeasonalMoodCard';
+import VibeQuizCard from '../../components/VibeQuizCard';
+import EventCard from '../../components/EventCard';
+import Navigation from '../../components/Navigation';
 
 export default function MusicTaste() {
   const { data: session, status } = useSession();

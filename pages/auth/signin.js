@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import styles from '../../styles/Signin.module.css';
+import styles from '../../styles/signin.module.css';
 
 export default function SignIn() {
   const router = useRouter();

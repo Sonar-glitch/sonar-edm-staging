@@ -1,114 +1,87 @@
+#!/usr/bin/env node
+
 /**
- * Automated fix script for Sonar EDM Platform import path issues
- * 
- * This script automatically fixes the incorrect import paths in the Backend API
- * by changing "../../lib/" to "../lib/" and "../../config" to "../config"
+ * This script automatically fixes import paths in the Sonar EDM Platform project
+ * It specifically targets the pages/users/ and pages/auth/ directories
+ * to ensure imports correctly reference the root directories
  */
 
 const fs = require('fs');
 const path = require('path');
-const { promisify } = require('util');
 
-const readFile = promisify(fs.readFile);
-const writeFile = promisify(fs.writeFile);
-
-// Define the directory containing the pages
-const pagesDir = path.join(__dirname, 'sonar-edm-platform', 'pages');
-
-// Define the patterns to search for and their replacements
-const replacements = [
-  { from: /from\s+['"]\.\.\/\.\.\/(lib\/[^'"]+)['"]/g, to: 'from "../$1"' },
-  { from: /import\s+['"]\.\.\/\.\.\/(lib\/[^'"]+)['"]/g, to: 'import "../$1"' },
-  { from: /from\s+['"]\.\.\/\.\.\/config['"]/g, to: 'from "../config"' },
-  { from: /import\s+['"]\.\.\/\.\.\/config['"]/g, to: 'import "../config"' },
-  { from: /require\(['"]\.\.\/\.\.\/(lib\/[^'"]+)['"]\)/g, to: 'require("../$1")' },
-  { from: /require\(['"]\.\.\/\.\.\/config['"]\)/g, to: 'require("../config")' }
+// Define the files we need to fix
+const filesToFix = [
+  'pages/users/music-taste.js',
+  'pages/auth/signin.js'
 ];
 
-// Function to recursively find all JavaScript files
-async function findJsFiles(dir) {
-  const files = await fs.promises.readdir(dir, { withFileTypes: true });
-  const jsFiles = [];
-
-  for (const file of files) {
-    const fullPath = path.join(dir, file.name);
-    
-    if (file.isDirectory()) {
-      const subDirFiles = await findJsFiles(fullPath);
-      jsFiles.push(...subDirFiles);
-    } else if (file.name.endsWith('.js')) {
-      jsFiles.push(fullPath);
-    }
-  }
-
-  return jsFiles;
-}
-
 // Function to fix import paths in a file
-async function fixImportPaths(filePath) {
+function fixImportPaths(filePath) {
+  console.log(`Fixing import paths in ${filePath}...`);
+  
   try {
     // Read the file content
-    const content = await readFile(filePath, 'utf8');
+    let content = fs.readFileSync(filePath, 'utf8');
     
-    // Check if the file contains any of the patterns
-    let hasPatterns = false;
-    let newContent = content;
+    // Fix import paths for components and styles
+    if (filePath.includes('pages/users/')) {
+      // Fix component imports
+      content = content.replace(/from ['"]\.\.\/components\//g, 'from \'../../components/');
+      
+      // Fix style imports
+      content = content.replace(/from ['"]\.\.\/styles\//g, 'from \'../../styles/');
+    }
     
-    for (const { from, to } of replacements) {
-      if (from.test(content)) {
-        hasPatterns = true;
-        newContent = newContent.replace(from, to);
+    // Fix Signin.module.css import in signin.js
+    if (filePath.includes('pages/auth/signin.js')) {
+      // Check if we need to fix capitalization
+      if (fs.existsSync('styles/signin.module.css')) {
+        content = content.replace(/['"]\.\.\/\.\.\/styles\/Signin\.module\.css['"]/g, '\'../../styles/signin.module.css\'');
+      } else {
+        content = content.replace(/['"]\.\.\/\.\.\/styles\/[^'"]+['"]/g, '\'../../styles/Signin.module.css\'');
       }
     }
     
-    // If the file contains patterns, write the fixed content
-    if (hasPatterns) {
-      await writeFile(filePath, newContent, 'utf8');
-      console.log(`✅ Fixed import paths in: ${path.relative(__dirname, filePath)}`);
-      return true;
-    }
+    // Write the fixed content back to the file
+    fs.writeFileSync(filePath, content, 'utf8');
+    console.log(`✅ Fixed ${filePath}`);
     
-    return false;
+    return true;
   } catch (error) {
-    console.error(`❌ Error fixing import paths in ${filePath}:`, error.message);
+    console.error(`❌ Error fixing ${filePath}:`, error.message);
     return false;
   }
 }
 
-// Main function to fix all import paths
-async function main() {
-  try {
-    console.log('🔍 Searching for JavaScript files in pages directory...');
-    const jsFiles = await findJsFiles(pagesDir);
-    console.log(`Found ${jsFiles.length} JavaScript files.`);
-    
-    console.log('🔧 Fixing import paths...');
-    let fixedCount = 0;
-    
-    for (const filePath of jsFiles) {
-      const fixed = await fixImportPaths(filePath);
-      if (fixed) fixedCount++;
-    }
-    
-    console.log(`\n✨ Import path fix completed!`);
-    console.log(`📊 Summary: Fixed ${fixedCount} files out of ${jsFiles.length} total files.`);
-    
-    if (fixedCount > 0) {
-      console.log(`\n📝 Next steps:`);
-      console.log(`1. Commit the changes: git add . && git commit -m "Fix import paths in API files"`);
-      console.log(`2. Push to your repository: git push origin main`);
-      console.log(`3. Deploy to Heroku: git push heroku main:main --force`);
+// Main function to run the script
+function main() {
+  console.log('🔧 Starting import path fixer for Sonar EDM Platform...');
+  
+  let successCount = 0;
+  let failCount = 0;
+  
+  // Process each file
+  filesToFix.forEach(file => {
+    if (fixImportPaths(file)) {
+      successCount++;
     } else {
-      console.log(`\n⚠️ No files needed fixing. This could mean:`);
-      console.log(`- The import paths are already correct`);
-      console.log(`- The patterns in the script don't match the actual import statements`);
-      console.log(`- The files with incorrect imports are in a different location`);
+      failCount++;
     }
-  } catch (error) {
-    console.error('❌ Error:', error.message);
-    process.exit(1);
+  });
+  
+  console.log('\n📊 Summary:');
+  console.log(`✅ Successfully fixed ${successCount} files`);
+  console.log(`❌ Failed to fix ${failCount} files`);
+  
+  if (failCount === 0) {
+    console.log('\n🎉 All import paths have been fixed!');
+    console.log('Next steps:');
+    console.log('1. Commit the changes: git add . && git commit -m "Fix import paths"');
+    console.log('2. Push to Heroku: git push heroku main');
+  } else {
+    console.log('\n⚠️ Some files could not be fixed. Please check the errors above.');
   }
 }
 
-// Run the main function
+// Run the script
 main();
