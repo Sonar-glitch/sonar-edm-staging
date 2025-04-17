@@ -44,16 +44,16 @@ const TrackCard = ({ track, correlation, duration, popularity }) => {
             className={styles.albumArt}
             style={{ 
               backgroundImage: `url(${track.album.images[0].url})`,
-              width: '70px',
-              height: '70px'
+              width: '80px',
+              height: '80px'
             }}
           />
         ) : (
           <div 
             className={styles.albumArtPlaceholder}
             style={{ 
-              width: '70px',
-              height: '70px'
+              width: '80px',
+              height: '80px'
             }}
           >
             <span>{track.name ? track.name.charAt(0) : '?'}</span>
@@ -88,6 +88,7 @@ const TrackCard = ({ track, correlation, duration, popularity }) => {
                 style={{ width: `${validPopularity}%` }}
               ></div>
             </div>
+            <span className={styles.metricValue}>{validPopularity}%</span>
           </div>
           
           <div className={styles.metricItem}>
@@ -98,6 +99,7 @@ const TrackCard = ({ track, correlation, duration, popularity }) => {
                 style={{ width: `${obscurityLevel}%` }}
               ></div>
             </div>
+            <span className={styles.metricValue}>{obscurityLevel}%</span>
           </div>
         </div>
       </div>

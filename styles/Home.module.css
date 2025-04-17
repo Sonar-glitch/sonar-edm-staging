@@ -1,13 +1,13 @@
 .container {
   min-height: 100vh;
-  background-color: #0f0f17;
-  color: white;
+  background-color: #0f0f1a;
+  color: #ffffff;
 }
 
 .main {
-  padding: 2rem 1rem;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 2rem 1rem;
 }
 
 .heroSection {
@@ -16,134 +16,121 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 4rem 1rem;
-  min-height: 60vh;
+  min-height: 70vh;
+  padding: 2rem;
+  background: linear-gradient(rgba(15, 15, 26, 0.7), rgba(15, 15, 26, 0.9)), url('/hero-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  border-radius: 20px;
+  margin-bottom: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroSection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
+  z-index: 0;
 }
 
 .title {
   font-size: 3.5rem;
   margin-bottom: 1.5rem;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
-.highlight {
-  background: linear-gradient(90deg, #ff6b8b, #5e72eb);
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
   -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+  position: relative;
+  z-index: 1;
 }
 
 .description {
-  font-size: 1.2rem;
-  line-height: 1.6;
-  max-width: 700px;
-  margin-bottom: 2.5rem;
+  font-size: 1.5rem;
   color: rgba(255, 255, 255, 0.8);
-}
-
-.connectButton {
-  background: linear-gradient(90deg, #32CD32, #228B22);
-  color: white;
-  font-weight: 600;
-  padding: 0.8rem 2rem;
-  border-radius: 50px;
-  font-size: 1.1rem;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  display: inline-block;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.connectButton:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-.howItWorks {
-  padding: 4rem 1rem;
-  text-align: center;
-}
-
-.sectionTitle {
-  font-size: 2.5rem;
-  margin-bottom: 3rem;
+  max-width: 800px;
+  margin-bottom: 2.5rem;
   position: relative;
-  display: inline-block;
-  background: linear-gradient(90deg, #ff6b8b, #5e72eb);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  z-index: 1;
 }
 
-.sectionTitle::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(90deg, #ff6b8b, #5e72eb);
+.button {
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  color: #000;
+  border: none;
+  border-radius: 30px;
+  padding: 1rem 2.5rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  text-decoration: none;
+  position: relative;
+  z-index: 1;
 }
 
-.stepsContainer {
+.button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+}
+
+.featuresSection {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: 1fr;
   gap: 2rem;
-  margin-top: 2rem;
+  margin-bottom: 3rem;
 }
 
-.stepCard {
-  background-color: rgba(30, 30, 40, 0.7);
+@media (min-width: 768px) {
+  .featuresSection {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.featureCard {
+  background: rgba(20, 20, 30, 0.7);
   border-radius: 12px;
   padding: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 255, 255, 0.2);
+  border: 1px solid rgba(0, 255, 255, 0.1);
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-.stepCard:hover {
+.featureCard:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 255, 255, 0.3);
+  border: 1px solid rgba(0, 255, 255, 0.3);
 }
 
-.stepCard h3 {
+.featureIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.featureCard h2 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  color: #5e72eb;
+  color: #ffffff;
 }
 
-.stepCard p {
-  color: rgba(255, 255, 255, 0.8);
+.featureCard p {
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.6;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .title {
-    font-size: 2.5rem;
-  }
-  
-  .description {
-    font-size: 1rem;
-  }
-  
-  .sectionTitle {
-    font-size: 2rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .title {
-    font-size: 2rem;
-  }
-  
-  .heroSection {
-    padding: 2rem 1rem;
-  }
-  
-  .connectButton {
-    padding: 0.7rem 1.5rem;
-    font-size: 1rem;
-  }
+.footer {
+  text-align: center;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.5);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }

@@ -34,16 +34,16 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
             className={styles.artistImage}
             style={{ 
               backgroundImage: `url(${artist.images[0].url})`,
-              width: '70px',
-              height: '70px'
+              width: '80px',
+              height: '80px'
             }}
           />
         ) : (
           <div 
             className={styles.artistImagePlaceholder}
             style={{ 
-              width: '70px',
-              height: '70px'
+              width: '80px',
+              height: '80px'
             }}
           >
             <span>{artist.name ? artist.name.charAt(0) : '?'}</span>
@@ -68,6 +68,7 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
                 style={{ width: `${popularity}%` }}
               ></div>
             </div>
+            <span className={styles.metricValue}>{popularity}%</span>
           </div>
           
           <div className={styles.metricItem}>
@@ -78,6 +79,7 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
                 style={{ width: `${obscurityLevel}%` }}
               ></div>
             </div>
+            <span className={styles.metricValue}>{obscurityLevel}%</span>
           </div>
         </div>
         

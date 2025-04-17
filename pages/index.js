@@ -1,65 +1,65 @@
+import React from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Link from 'next/link';
 import styles from '../styles/Home.module.css';
+import Navigation from '../components/Navigation';
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const router = useRouter();
-  
-  // Removed automatic redirect to allow users to see the landing page
-  // Users can navigate to music taste page via navigation menu
 
   return (
     <div className={styles.container}>
+      <Head>
+        <title>Sonar EDM | Unlock Your Sonic DNA</title>
+        <meta name="description" content="Discover your music taste, find events that match your vibe, and connect with the EDM community." />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <Navigation />
+
       <main className={styles.main}>
         <div className={styles.heroSection}>
-          <h1 className={styles.title}>
-            Unlock Your <span className={styles.highlight}>Sonic DNA</span>
-          </h1>
-          
+          <h1 className={styles.title}>Unlock Your Sonic DNA</h1>
           <p className={styles.description}>
-            Connect your Spotify and discover events that perfectly match your
-            unique music taste. No more wasted nights at venues that don't
-            match your vibe.
+            Discover your music taste, find events that match your vibe, and connect with the EDM community.
           </p>
           
-          {!session ? (
-            <Link href="/api/auth/signin">
-              <a className={styles.connectButton}>
-                Connect with Spotify
-              </a>
+          {status === 'authenticated' ? (
+            <Link href="/users/music-taste">
+              <a className={styles.button}>View Your Music Taste</a>
             </Link>
           ) : (
-            <Link href="/users/music-taste">
-              <a className={styles.connectButton}>
-                View Your Music Taste
-              </a>
+            <Link href="/api/auth/signin">
+              <a className={styles.button}>Connect with Spotify</a>
             </Link>
           )}
         </div>
-        
-        <section className={styles.howItWorks}>
-          <h2 className={styles.sectionTitle}>How It Works</h2>
-          
-          <div className={styles.stepsContainer}>
-            <div className={styles.stepCard}>
-              <h3>Connect</h3>
-              <p>Link your Spotify account to analyze your music preferences</p>
-            </div>
-            
-            <div className={styles.stepCard}>
-              <h3>Discover</h3>
-              <p>Find events and venues that match your unique taste profile</p>
-            </div>
-            
-            <div className={styles.stepCard}>
-              <h3>Experience</h3>
-              <p>Enjoy events knowing they're perfectly aligned with your preferences</p>
-            </div>
+
+        <div className={styles.featuresSection}>
+          <div className={styles.featureCard}>
+            <div className={styles.featureIcon}>🎵</div>
+            <h2>Music Taste Analysis</h2>
+            <p>Get insights into your listening habits and discover your unique sound profile.</p>
           </div>
-        </section>
+          
+          <div className={styles.featureCard}>
+            <div className={styles.featureIcon}>🎭</div>
+            <h2>Event Matching</h2>
+            <p>Find events and venues that match your music taste and preferences.</p>
+          </div>
+          
+          <div className={styles.featureCard}>
+            <div className={styles.featureIcon}>🔍</div>
+            <h2>Artist Discovery</h2>
+            <p>Discover new artists based on your current favorites and listening patterns.</p>
+          </div>
+        </div>
       </main>
+
+      <footer className={styles.footer}>
+        <p>Sonar EDM Platform &copy; {new Date().getFullYear()}</p>
+      </footer>
     </div>
   );
 }

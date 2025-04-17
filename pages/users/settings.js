@@ -7,64 +7,48 @@ import Navigation from '../../components/Navigation';
 
 export default function Settings() {
   const { data: session, status } = useSession();
-  const [settings, setSettings] = useState({
-    notifications: {
-      email: true,
-      push: true,
-      eventReminders: true,
-      newEvents: true
-    },
-    privacy: {
-      shareListeningHistory: true,
-      showAttendedEvents: true,
-      locationSharing: 'events-only' // 'always', 'events-only', 'never'
-    },
-    appearance: {
-      darkMode: true,
-      highContrast: false,
-      fontSize: 'medium' // 'small', 'medium', 'large'
-    },
-    account: {
-      email: 'user@example.com',
-      displayName: 'Music Lover'
-    }
+  const [activeSection, setActiveSection] = useState('appearance');
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: false,
+    events: true,
+    artists: true,
+    recommendations: true
+  });
+  const [privacy, setPrivacy] = useState({
+    publicProfile: true,
+    shareListening: true,
+    allowRecommendations: true
+  });
+  const [appearance, setAppearance] = useState({
+    theme: 'neon',
+    darkMode: true,
+    animations: true
   });
   
-  const [loading, setLoading] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setError] = useState(null);
-
-  const handleSettingChange = (category, setting, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [setting]: value
-      }
-    }));
-    
-    // Reset status messages
-    setSaveSuccess(false);
-    setError(null);
+  const handleSignOut = () => {
+    signOut({ callbackUrl: '/' });
   };
-
-  const handleSaveSettings = async () => {
-    try {
-      setLoading(true);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulate success
-      setSaveSuccess(true);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error saving settings:', err);
-      setError('Failed to save settings. Please try again.');
-      setLoading(false);
+  
+  const handleThemeChange = (theme) => {
+    setAppearance({...appearance, theme});
+  };
+  
+  const handleToggleChange = (section, setting) => {
+    if (section === 'notifications') {
+      setNotifications({...notifications, [setting]: !notifications[setting]});
+    } else if (section === 'privacy') {
+      setPrivacy({...privacy, [setting]: !privacy[setting]});
+    } else if (section === 'appearance') {
+      setAppearance({...appearance, [setting]: !appearance[setting]});
     }
   };
-
+  
+  const saveSettings = () => {
+    // In a real app, this would save to the backend
+    alert('Settings saved successfully!');
+  };
+  
   if (status === 'loading') {
     return (
       <div className={styles.container}>
@@ -72,14 +56,15 @@ export default function Settings() {
           <title>Settings | Sonar</title>
         </Head>
         <Navigation />
-        <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner}></div>
-          <p>Loading your settings...</p>
-        </div>
+        <main className={styles.main}>
+          <div className={styles.loadingContainer}>
+            <p>Loading settings...</p>
+          </div>
+        </main>
       </div>
     );
   }
-
+  
   if (status === 'unauthenticated') {
     return (
       <div className={styles.container}>
@@ -87,17 +72,19 @@ export default function Settings() {
           <title>Settings | Sonar</title>
         </Head>
         <Navigation />
-        <div className={styles.unauthorizedContainer}>
-          <h1 className={styles.title}>Sign In to Access Settings</h1>
-          <p className={styles.subtitle}>Connect with Spotify to manage your settings</p>
-          <Link href="/api/auth/signin" className={styles.connectButton}>
-            Connect with Spotify
-          </Link>
-        </div>
+        <main className={styles.main}>
+          <div className={styles.unauthorizedContainer}>
+            <h1 className={styles.title}>Sign in required</h1>
+            <p className={styles.subtitle}>Please sign in to access your settings</p>
+            <Link href="/api/auth/signin">
+              <a className={styles.signInButton}>Sign In</a>
+            </Link>
+          </div>
+        </main>
       </div>
     );
   }
-
+  
   return (
     <div className={styles.container}>
       <Head>
@@ -109,298 +96,308 @@ export default function Settings() {
       <main className={styles.main}>
         <div className={styles.header}>
           <h1 className={styles.title}>Settings</h1>
-          <p className={styles.subtitle}>
-            Customize your Sonar experience
-          </p>
+          <p className={styles.subtitle}>Customize your Sonar experience</p>
         </div>
         
-        <div className={styles.settingsContainer}>
-          <div className={styles.settingsSidebar}>
-            <div className={styles.sidebarLinks}>
-              <a href="#notifications" className={styles.sidebarLink}>Notifications</a>
-              <a href="#privacy" className={styles.sidebarLink}>Privacy</a>
-              <a href="#appearance" className={styles.sidebarLink}>Appearance</a>
-              <a href="#account" className={styles.sidebarLink}>Account</a>
-            </div>
+        <div className={styles.settingsGrid}>
+          {/* Settings Navigation */}
+          <div className={styles.settingsNav}>
+            <h2 className={styles.navTitle}>Settings</h2>
+            <ul className={styles.navList}>
+              <li className={styles.navItem}>
+                <a 
+                  className={`${styles.navLink} ${activeSection === 'appearance' ? styles.navLinkActive : ''}`}
+                  onClick={() => setActiveSection('appearance')}
+                >
+                  Appearance
+                </a>
+              </li>
+              <li className={styles.navItem}>
+                <a 
+                  className={`${styles.navLink} ${activeSection === 'notifications' ? styles.navLinkActive : ''}`}
+                  onClick={() => setActiveSection('notifications')}
+                >
+                  Notifications
+                </a>
+              </li>
+              <li className={styles.navItem}>
+                <a 
+                  className={`${styles.navLink} ${activeSection === 'privacy' ? styles.navLinkActive : ''}`}
+                  onClick={() => setActiveSection('privacy')}
+                >
+                  Privacy
+                </a>
+              </li>
+              <li className={styles.navItem}>
+                <a 
+                  className={`${styles.navLink} ${activeSection === 'account' ? styles.navLinkActive : ''}`}
+                  onClick={() => setActiveSection('account')}
+                >
+                  Account
+                </a>
+              </li>
+            </ul>
           </div>
           
+          {/* Settings Content */}
           <div className={styles.settingsContent}>
-            {saveSuccess && (
-              <div className={styles.successMessage}>
-                Settings saved successfully!
-              </div>
-            )}
-            
-            {saveError && (
-              <div className={styles.errorMessage}>
-                {saveError}
-              </div>
-            )}
-            
-            <section id="notifications" className={styles.settingsSection}>
-              <h2 className={styles.sectionTitle}>Notifications</h2>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>Email Notifications</h3>
-                  <p className={styles.settingDescription}>
-                    Receive updates and recommendations via email
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <label className={styles.toggle}>
-                    <input 
-                      type="checkbox" 
-                      checked={settings.notifications.email}
-                      onChange={(e) => handleSettingChange('notifications', 'email', e.target.checked)}
-                    />
-                    <span className={styles.toggleSlider}></span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>Push Notifications</h3>
-                  <p className={styles.settingDescription}>
-                    Receive notifications in your browser
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <label className={styles.toggle}>
-                    <input 
-                      type="checkbox" 
-                      checked={settings.notifications.push}
-                      onChange={(e) => handleSettingChange('notifications', 'push', e.target.checked)}
-                    />
-                    <span className={styles.toggleSlider}></span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>Event Reminders</h3>
-                  <p className={styles.settingDescription}>
-                    Get reminded about upcoming events you're interested in
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <label className={styles.toggle}>
-                    <input 
-                      type="checkbox" 
-                      checked={settings.notifications.eventReminders}
-                      onChange={(e) => handleSettingChange('notifications', 'eventReminders', e.target.checked)}
-                    />
-                    <span className={styles.toggleSlider}></span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>New Event Alerts</h3>
-                  <p className={styles.settingDescription}>
-                    Get notified when new events match your music taste
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <label className={styles.toggle}>
-                    <input 
-                      type="checkbox" 
-                      checked={settings.notifications.newEvents}
-                      onChange={(e) => handleSettingChange('notifications', 'newEvents', e.target.checked)}
-                    />
-                    <span className={styles.toggleSlider}></span>
-                  </label>
-                </div>
-              </div>
-            </section>
-            
-            <section id="privacy" className={styles.settingsSection}>
-              <h2 className={styles.sectionTitle}>Privacy</h2>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>Share Listening History</h3>
-                  <p className={styles.settingDescription}>
-                    Allow Sonar to analyze your Spotify listening history
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <label className={styles.toggle}>
-                    <input 
-                      type="checkbox" 
-                      checked={settings.privacy.shareListeningHistory}
-                      onChange={(e) => handleSettingChange('privacy', 'shareListeningHistory', e.target.checked)}
-                    />
-                    <span className={styles.toggleSlider}></span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>Show Attended Events</h3>
-                  <p className={styles.settingDescription}>
-                    Display events you've attended on your profile
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <label className={styles.toggle}>
-                    <input 
-                      type="checkbox" 
-                      checked={settings.privacy.showAttendedEvents}
-                      onChange={(e) => handleSettingChange('privacy', 'showAttendedEvents', e.target.checked)}
-                    />
-                    <span className={styles.toggleSlider}></span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>Location Sharing</h3>
-                  <p className={styles.settingDescription}>
-                    Control when your location is used for event recommendations
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <select 
-                    className={styles.select}
-                    value={settings.privacy.locationSharing}
-                    onChange={(e) => handleSettingChange('privacy', 'locationSharing', e.target.value)}
-                  >
-                    <option value="always">Always</option>
-                    <option value="events-only">Events Only</option>
-                    <option value="never">Never</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-            
-            <section id="appearance" className={styles.settingsSection}>
-              <h2 className={styles.sectionTitle}>Appearance</h2>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>Dark Mode</h3>
-                  <p className={styles.settingDescription}>
-                    Use dark theme for the application
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <label className={styles.toggle}>
-                    <input 
-                      type="checkbox" 
-                      checked={settings.appearance.darkMode}
-                      onChange={(e) => handleSettingChange('appearance', 'darkMode', e.target.checked)}
-                    />
-                    <span className={styles.toggleSlider}></span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>High Contrast</h3>
-                  <p className={styles.settingDescription}>
-                    Increase contrast for better readability
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <label className={styles.toggle}>
-                    <input 
-                      type="checkbox" 
-                      checked={settings.appearance.highContrast}
-                      onChange={(e) => handleSettingChange('appearance', 'highContrast', e.target.checked)}
-                    />
-                    <span className={styles.toggleSlider}></span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>Font Size</h3>
-                  <p className={styles.settingDescription}>
-                    Adjust text size throughout the application
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <select 
-                    className={styles.select}
-                    value={settings.appearance.fontSize}
-                    onChange={(e) => handleSettingChange('appearance', 'fontSize', e.target.value)}
-                  >
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-            
-            <section id="account" className={styles.settingsSection}>
-              <h2 className={styles.sectionTitle}>Account</h2>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>Email Address</h3>
-                  <p className={styles.settingDescription}>
-                    Update your email address
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <input 
-                    type="email" 
-                    className={styles.input}
-                    value={settings.account.email}
-                    onChange={(e) => handleSettingChange('account', 'email', e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className={styles.settingItem}>
-                <div className={styles.settingInfo}>
-                  <h3 className={styles.settingTitle}>Display Name</h3>
-                  <p className={styles.settingDescription}>
-                    Change how your name appears
-                  </p>
-                </div>
-                <div className={styles.settingControl}>
-                  <input 
-                    type="text" 
-                    className={styles.input}
-                    value={settings.account.displayName}
-                    onChange={(e) => handleSettingChange('account', 'displayName', e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className={styles.accountActions}>
-                <button 
-                  className={styles.signOutButton}
-                  onClick={() => signOut({ callbackUrl: '/' })}
-                >
-                  Sign Out
-                </button>
+            {/* Appearance Settings */}
+            {activeSection === 'appearance' && (
+              <div>
+                <h2 className={styles.sectionTitle}>Appearance</h2>
                 
-                <button className={styles.deleteAccountButton}>
-                  Delete Account
-                </button>
+                <div className={styles.settingGroup}>
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Theme</h3>
+                      <p className={styles.settingDescription}>Choose your preferred visual theme</p>
+                      
+                      <div className={styles.themeSelector}>
+                        <div 
+                          className={`${styles.themeOption} ${styles.neonTheme} ${appearance.theme === 'neon' ? styles.active : ''}`}
+                          onClick={() => handleThemeChange('neon')}
+                        ></div>
+                        <div 
+                          className={`${styles.themeOption} ${styles.minimalTheme} ${appearance.theme === 'minimal' ? styles.active : ''}`}
+                          onClick={() => handleThemeChange('minimal')}
+                        ></div>
+                        <div 
+                          className={`${styles.themeOption} ${styles.cyberpunkTheme} ${appearance.theme === 'cyberpunk' ? styles.active : ''}`}
+                          onClick={() => handleThemeChange('cyberpunk')}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Dark Mode</h3>
+                      <p className={styles.settingDescription}>Use dark theme throughout the app</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input 
+                        type="checkbox" 
+                        checked={appearance.darkMode}
+                        onChange={() => handleToggleChange('appearance', 'darkMode')}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Animations</h3>
+                      <p className={styles.settingDescription}>Enable animations and transitions</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input 
+                        type="checkbox" 
+                        checked={appearance.animations}
+                        onChange={() => handleToggleChange('appearance', 'animations')}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                </div>
               </div>
-            </section>
+            )}
             
-            <div className={styles.saveButtonContainer}>
-              <button 
-                className={styles.saveButton}
-                onClick={handleSaveSettings}
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save Settings'}
-              </button>
-            </div>
+            {/* Notifications Settings */}
+            {activeSection === 'notifications' && (
+              <div>
+                <h2 className={styles.sectionTitle}>Notifications</h2>
+                
+                <div className={styles.settingGroup}>
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Email Notifications</h3>
+                      <p className={styles.settingDescription}>Receive updates via email</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input 
+                        type="checkbox" 
+                        checked={notifications.email}
+                        onChange={() => handleToggleChange('notifications', 'email')}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Push Notifications</h3>
+                      <p className={styles.settingDescription}>Receive push notifications on your device</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input 
+                        type="checkbox" 
+                        checked={notifications.push}
+                        onChange={() => handleToggleChange('notifications', 'push')}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Event Notifications</h3>
+                      <p className={styles.settingDescription}>Get notified about events matching your taste</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input 
+                        type="checkbox" 
+                        checked={notifications.events}
+                        onChange={() => handleToggleChange('notifications', 'events')}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Artist Updates</h3>
+                      <p className={styles.settingDescription}>Get notified about your favorite artists</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input 
+                        type="checkbox" 
+                        checked={notifications.artists}
+                        onChange={() => handleToggleChange('notifications', 'artists')}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Recommendations</h3>
+                      <p className={styles.settingDescription}>Get notified about personalized recommendations</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input 
+                        type="checkbox" 
+                        checked={notifications.recommendations}
+                        onChange={() => handleToggleChange('notifications', 'recommendations')}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Privacy Settings */}
+            {activeSection === 'privacy' && (
+              <div>
+                <h2 className={styles.sectionTitle}>Privacy</h2>
+                
+                <div className={styles.settingGroup}>
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Public Profile</h3>
+                      <p className={styles.settingDescription}>Allow others to view your profile</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input 
+                        type="checkbox" 
+                        checked={privacy.publicProfile}
+                        onChange={() => handleToggleChange('privacy', 'publicProfile')}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Share Listening Activity</h3>
+                      <p className={styles.settingDescription}>Share your listening activity with others</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input 
+                        type="checkbox" 
+                        checked={privacy.shareListening}
+                        onChange={() => handleToggleChange('privacy', 'shareListening')}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Allow Recommendations</h3>
+                      <p className={styles.settingDescription}>Allow us to use your data for recommendations</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input 
+                        type="checkbox" 
+                        checked={privacy.allowRecommendations}
+                        onChange={() => handleToggleChange('privacy', 'allowRecommendations')}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Account Settings */}
+            {activeSection === 'account' && (
+              <div>
+                <h2 className={styles.sectionTitle}>Account</h2>
+                
+                <div className={styles.settingGroup}>
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Connected Accounts</h3>
+                      <p className={styles.settingDescription}>Manage your connected accounts</p>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Spotify</h3>
+                      <p className={styles.settingDescription}>
+                        {session?.user?.name || session?.user?.email || 'Connected'}
+                      </p>
+                    </div>
+                    <button className={styles.reconnectButton}>Reconnect</button>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Data & Privacy</h3>
+                      <p className={styles.settingDescription}>Manage your data and privacy settings</p>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Download Your Data</h3>
+                      <p className={styles.settingDescription}>Download a copy of your data</p>
+                    </div>
+                    <button className={styles.downloadButton}>Download</button>
+                  </div>
+                  
+                  <div className={styles.settingItem}>
+                    <div>
+                      <h3 className={styles.settingLabel}>Delete Account</h3>
+                      <p className={styles.settingDescription}>Permanently delete your account and data</p>
+                    </div>
+                    <button className={styles.deleteButton}>Delete</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Save Button */}
+            <button className={styles.saveButton} onClick={saveSettings}>
+              Save Changes
+            </button>
+            
+            {/* Sign Out Button */}
+            <button className={styles.signOutButton} onClick={handleSignOut}>
+              Sign Out
+            </button>
           </div>
         </div>
       </main>
