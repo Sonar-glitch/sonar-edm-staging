@@ -1,58 +1,97 @@
 .container {
   min-height: 100vh;
-  padding: 20px;
-  background-color: #0c0c14;
-  color: white;
+  background-color: #0f0f1a;
+  color: #ffffff;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 1rem;
 }
 
 .signinCard {
-  max-width: 500px;
-  margin: 100px auto;
-  background-color: rgba(20, 20, 30, 0.7);
+  background: rgba(20, 20, 30, 0.7);
   border-radius: 12px;
-  padding: 30px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
   text-align: center;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 255, 255, 0.2);
   border: 1px solid rgba(0, 255, 255, 0.1);
 }
 
-.logo {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 5px;
+.title {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
   background: linear-gradient(90deg, #00ffff, #ff00ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
 }
 
 .subtitle {
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 30px;
+  margin-bottom: 2rem;
 }
 
-.title {
-  font-size: 1.8rem;
-  margin-bottom: 15px;
-  color: white;
+.providersContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.description {
+.providerItem {
+  width: 100%;
+}
+
+.providerButton {
+  width: 100%;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  color: #000;
+  border: none;
+  border-radius: 25px;
+  padding: 0.75rem 1.5rem;
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 30px;
-  line-height: 1.5;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.providerButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.providerIcon {
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
 }
 
 .loadingSpinner {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border: 3px solid rgba(0, 255, 255, 0.3);
   border-radius: 50%;
   border-top-color: #00ffff;
   animation: spin 1s ease-in-out infinite;
-  margin: 0 auto 30px;
+  margin-bottom: 1rem;
 }
 
 @keyframes spin {
@@ -61,56 +100,23 @@
   }
 }
 
-.manualButton {
-  background: linear-gradient(90deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
-  color: white;
+.alreadySignedIn {
+  padding: 1rem 0;
+}
+
+.redirectButton {
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
   border: 1px solid rgba(0, 255, 255, 0.3);
-  padding: 12px 25px;
-  border-radius: 25px;
-  font-size: 0.9rem;
+  border-radius: 20px;
+  padding: 0.5rem 1.5rem;
+  font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
+  margin-top: 1rem;
 }
 
-.manualButton:hover {
-  background: linear-gradient(90deg, rgba(0, 255, 255, 0.3), rgba(255, 0, 255, 0.3));
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 255, 255, 0.3);
-}
-
-@media (max-width: 768px) {
-  .signinCard {
-    margin: 50px auto;
-    padding: 20px;
-  }
-  
-  .logo {
-    font-size: 2rem;
-  }
-  
-  .title {
-    font-size: 1.5rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding: 15px;
-  }
-  
-  .signinCard {
-    padding: 15px;
-  }
-  
-  .logo {
-    font-size: 1.8rem;
-  }
-  
-  .title {
-    font-size: 1.3rem;
-  }
-  
-  .description {
-    font-size: 0.9rem;
-  }
+.redirectButton:hover {
+  background: rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
 }

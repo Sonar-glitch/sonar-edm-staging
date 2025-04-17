@@ -23,6 +23,9 @@ export default function MusicTaste() {
   useEffect(() => {
     if (status === 'authenticated') {
       fetchUserTaste();
+    } else if (status === 'unauthenticated') {
+      // Redirect to home page if not authenticated
+      window.location.href = '/';
     }
   }, [status]);
 
@@ -76,7 +79,7 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Your Sound | Sonar</title>
+          <title>Music Taste | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.loadingContainer}>
@@ -91,7 +94,7 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Your Sound | Sonar</title>
+          <title>Music Taste | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.unauthorizedContainer}>
@@ -109,7 +112,7 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Your Sound | Sonar</title>
+          <title>Music Taste | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.errorContainer}>
@@ -127,7 +130,7 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Your Sound | Sonar</title>
+          <title>Music Taste | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.noDataContainer}>
@@ -187,17 +190,20 @@ export default function MusicTaste() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Your Sound | Sonar</title>
+        <title>Music Taste | Sonar</title>
       </Head>
       
       <Navigation />
       
       <main className={styles.main}>
-        {/* Compact header section */}
-        <div className={styles.header}>
-          <h1 className={styles.title}>Your Sound</h1>
-          <p className={styles.subtitle}>
-            Based on what you're streaming
+        {/* Concise summary */}
+        <div className={styles.summary}>
+          <p>
+            You're all about <span className={styles.highlight}>{getTopGenres()}</span> with 
+            a vibe shift toward <span className={styles.highlight}>{getRecentTrends()}</span>. 
+            {suggestedEvents.length > 0 ? 
+              ` Found ${suggestedEvents.length} events that match your sound.` : 
+              " Events coming soon that match your sound."}
             {dataSource === 'mock' && (
               <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock Data</span>
             )}
@@ -207,111 +213,93 @@ export default function MusicTaste() {
           </p>
         </div>
         
-        {/* Two-column layout for better space usage */}
-        <div className={styles.twoColumnLayout}>
-          {/* Left column: User taste data */}
-          <div className={styles.leftColumn}>
-            {/* Concise summary */}
-            <div className={styles.summary}>
-              <p>
-                You're all about <span className={styles.highlight}>{getTopGenres()}</span> with 
-                a vibe shift toward <span className={styles.highlight}>{getRecentTrends()}</span>. 
-                {suggestedEvents.length > 0 ? 
-                  ` Found ${suggestedEvents.length} events that match your sound.` : 
-                  " Events coming soon that match your sound."}
-              </p>
+        {/* Main content grid - 2 columns on desktop */}
+        <div className={styles.mainContent}>
+          {/* Left column: Genre mix */}
+          <div className={styles.genreSection}>
+            <h2 className={styles.sectionTitle}>
+              Your Mix
+              {dataSource === 'mock' && (
+                <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
+              )}
+            </h2>
+            <div className={styles.spiderChartContainer}>
+              {genres.length > 0 ? (
+                <SpiderChart genres={genres} />
+              ) : (
+                <div className={styles.noDataMessage}>
+                  <p>No genre data yet. Keep streaming!</p>
+                </div>
+              )}
             </div>
-            
-            {/* Genre section with spider chart */}
-            <section className={styles.genreSection}>
-              <h2 className={styles.sectionTitle}>
-                Your Mix
-                {dataSource === 'mock' && (
-                  <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
-                )}
-              </h2>
-              <div className={styles.spiderChartContainer}>
-                {genres.length > 0 ? (
-                  <SpiderChart genres={genres} />
-                ) : (
-                  <div className={styles.noDataMessage}>
-                    <p>No genre data yet. Keep streaming!</p>
-                  </div>
-                )}
-              </div>
-            </section>
-            
-            {/* Seasonal section */}
-            <section className={styles.seasonalSection}>
-              <h2 className={styles.sectionTitle}>
-                Your Seasonal Vibes
-                {dataSource === 'mock' && (
-                  <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
-                )}
-              </h2>
-              <SeasonalMoodCard seasonalMood={seasonalMood} />
-            </section>
           </div>
           
-          {/* Right column: Events and recommendations */}
-          <div className={styles.rightColumn}>
-            {/* Events section - prioritized */}
-            <section className={styles.eventsSection}>
-              <h2 className={styles.sectionTitle}>
-                Events That Match Your Vibe
-                {dataSource === 'mock' && (
-                  <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
-                )}
-              </h2>
-              
-              {suggestedEvents.length > 0 ? (
-                <div className={styles.eventsGrid}>
-                  {suggestedEvents.slice(0, Math.min(3, suggestedEvents.length)).map((event, index) => (
-                    <EventCard 
-                      key={event.id || `event-${index}`} 
-                      event={event} 
-                      correlation={event.correlation || 0.5}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className={styles.noEventsMessage}>
-                  <p>Events coming soon. Check back!</p>
-                  <button className={styles.refreshButton} onClick={fetchUserTaste}>
-                    Refresh
-                  </button>
-                </div>
+          {/* Right column: Seasonal mood */}
+          <div className={styles.seasonalSection}>
+            <h2 className={styles.sectionTitle}>
+              Seasonal Vibes
+              {dataSource === 'mock' && (
+                <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
               )}
-              
-              {suggestedEvents.length > 0 && (
-                <div className={styles.viewMoreContainer}>
-                  <Link href="/users/events">
-                    <a className={styles.viewMoreButton}>See All Events</a>
-                  </Link>
-                </div>
-              )}
-            </section>
-            
-            {/* Vibe Quiz section */}
-            <section className={styles.vibeQuizSection}>
-              <div className={styles.vibeQuizPrompt}>
-                <p>Not feeling this vibe? Tell us what you're into</p>
-                <button 
-                  className={styles.vibeQuizButton}
-                  onClick={() => setShowVibeQuiz(!showVibeQuiz)}
-                >
-                  {showVibeQuiz ? 'Hide Quiz' : 'Take Quiz'}
-                </button>
-              </div>
-              
-              {showVibeQuiz && (
-                <VibeQuizCard onSubmit={handleVibeQuizSubmit} />
-              )}
-            </section>
+            </h2>
+            <SeasonalMoodCard seasonalMood={seasonalMood} />
           </div>
         </div>
         
-        {/* Full-width sections below */}
+        {/* Events section */}
+        <section className={styles.eventsSection}>
+          <h2 className={styles.sectionTitle}>
+            Events That Match Your Vibe
+            {dataSource === 'mock' && (
+              <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
+            )}
+          </h2>
+          
+          {suggestedEvents.length > 0 ? (
+            <div className={styles.eventsGrid}>
+              {suggestedEvents.slice(0, Math.min(3, suggestedEvents.length)).map((event, index) => (
+                <EventCard 
+                  key={event.id || `event-${index}`} 
+                  event={event} 
+                  correlation={event.correlation || 0.5}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.noEventsMessage}>
+              <p>Events coming soon. Check back!</p>
+              <button className={styles.refreshButton} onClick={fetchUserTaste}>
+                Refresh
+              </button>
+            </div>
+          )}
+          
+          {suggestedEvents.length > 0 && (
+            <div className={styles.viewMoreContainer}>
+              <Link href="/users/events">
+                <a className={styles.viewMoreButton}>See All Events</a>
+              </Link>
+            </div>
+          )}
+        </section>
+        
+        {/* Vibe Quiz section */}
+        <section className={styles.vibeQuizSection}>
+          <div className={styles.vibeQuizPrompt}>
+            <h2 className={styles.sectionTitle}>Not feeling this vibe?</h2>
+            <button 
+              className={styles.vibeQuizButton}
+              onClick={() => setShowVibeQuiz(!showVibeQuiz)}
+            >
+              {showVibeQuiz ? 'Hide Quiz' : 'Take Quiz'}
+            </button>
+          </div>
+          
+          {showVibeQuiz && (
+            <VibeQuizCard onSubmit={handleVibeQuizSubmit} />
+          )}
+        </section>
+        
         {/* Artists section */}
         <section className={styles.artistsSection}>
           <h2 className={styles.sectionTitle}>

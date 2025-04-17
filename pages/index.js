@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import styles from '../styles/Home.module.css';
@@ -7,6 +8,14 @@ import Navigation from '../components/Navigation';
 
 export default function Home() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  
+  // Redirect authenticated users directly to music-taste page
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/users/music-taste');
+    }
+  }, [status, router]);
 
   return (
     <div className={styles.container}>
@@ -25,7 +34,12 @@ export default function Home() {
             Discover your music taste, find events that match your vibe, and connect with the EDM community.
           </p>
           
-          {status === 'authenticated' ? (
+          {status === 'loading' ? (
+            <div className={styles.loadingButton}>
+              <div className={styles.loadingSpinner}></div>
+              Loading...
+            </div>
+          ) : status === 'authenticated' ? (
             <Link href="/users/music-taste">
               <a className={styles.button}>View Your Music Taste</a>
             </Link>
@@ -56,10 +70,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-
-      <footer className={styles.footer}>
-        <p>Sonar EDM Platform &copy; {new Date().getFullYear()}</p>
-      </footer>
     </div>
   );
 }

@@ -7,7 +7,7 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
     return (
       <div className={styles.artistCard}>
         <div className={styles.errorMessage}>
-          <p>Unable to display artist information. Invalid artist data.</p>
+          <p>Unable to display artist information</p>
         </div>
       </div>
     );
@@ -26,34 +26,13 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
   // Calculate obscurity level (inverse of popularity)
   const obscurityLevel = 100 - popularity;
   
+  // Get first letter of artist name for placeholder
+  const firstLetter = artist.name ? artist.name.charAt(0).toUpperCase() : '?';
+  
   return (
     <div className={styles.artistCard}>
-      <div className={styles.artistImageContainer}>
-        {artist.images && artist.images.length > 0 ? (
-          <div 
-            className={styles.artistImage}
-            style={{ 
-              backgroundImage: `url(${artist.images[0].url})`,
-              width: '80px',
-              height: '80px'
-            }}
-          />
-        ) : (
-          <div 
-            className={styles.artistImagePlaceholder}
-            style={{ 
-              width: '80px',
-              height: '80px'
-            }}
-          >
-            <span>{artist.name ? artist.name.charAt(0) : '?'}</span>
-          </div>
-        )}
-        
-        <div className={styles.correlationBadge}>
-          <span className={styles.correlationValue}>{correlationPercent}%</span>
-          <span className={styles.correlationLabel}>match</span>
-        </div>
+      <div className={styles.artistInitial}>
+        {firstLetter}
       </div>
       
       <div className={styles.artistInfo}>
@@ -91,22 +70,18 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
             <span className={styles.genreTag}>No genres available</span>
           }
         </div>
-        
-        <div className={styles.similarArtistsSection}>
-          <h4 className={styles.similarArtistsTitle}>Similar Artists</h4>
+      </div>
+      
+      <div className={styles.similarArtistsSection}>
+        {validSimilarArtists.length > 0 && (
           <div className={styles.similarArtistsList}>
-            {validSimilarArtists.length > 0 ? 
-              validSimilarArtists.slice(0, 3).map((similar, index) => (
-                <div key={index} className={styles.similarArtist}>
-                  <span className={styles.similarArtistName}>{similar.name || 'Unknown Artist'}</span>
-                </div>
-              )) : 
-              <div className={styles.similarArtist}>
-                <span className={styles.similarArtistName}>No similar artists found</span>
+            {validSimilarArtists.slice(0, 2).map((similar, index) => (
+              <div key={index} className={styles.similarArtist}>
+                {similar.name || 'Unknown Artist'}
               </div>
-            }
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

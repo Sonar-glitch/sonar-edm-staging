@@ -7,7 +7,7 @@ const TrackCard = ({ track, correlation, duration, popularity }) => {
     return (
       <div className={styles.trackCard}>
         <div className={styles.errorMessage}>
-          <p>Unable to display track information. Invalid track data.</p>
+          <p>Unable to display track information</p>
         </div>
       </div>
     );
@@ -31,39 +31,17 @@ const TrackCard = ({ track, correlation, duration, popularity }) => {
       const seconds = ((ms % 60000) / 1000).toFixed(0);
       return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     } catch (error) {
-      console.error('Error formatting duration:', error);
       return '0:00';
     }
   };
   
+  // Get first letter of track name for placeholder
+  const firstLetter = track.name ? track.name.charAt(0).toUpperCase() : '?';
+  
   return (
     <div className={styles.trackCard}>
-      <div className={styles.albumArtContainer}>
-        {track.album && track.album.images && track.album.images.length > 0 && track.album.images[0].url ? (
-          <div 
-            className={styles.albumArt}
-            style={{ 
-              backgroundImage: `url(${track.album.images[0].url})`,
-              width: '80px',
-              height: '80px'
-            }}
-          />
-        ) : (
-          <div 
-            className={styles.albumArtPlaceholder}
-            style={{ 
-              width: '80px',
-              height: '80px'
-            }}
-          >
-            <span>{track.name ? track.name.charAt(0) : '?'}</span>
-          </div>
-        )}
-        
-        <div className={styles.correlationBadge}>
-          <span className={styles.correlationValue}>{correlationPercent}%</span>
-          <span className={styles.correlationLabel}>match</span>
-        </div>
+      <div className={styles.trackInitial}>
+        {firstLetter}
       </div>
       
       <div className={styles.trackInfo}>
