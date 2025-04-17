@@ -17,15 +17,11 @@ export default function MusicTaste() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showVibeQuiz, setShowVibeQuiz] = useState(false);
-  const [dataSource, setDataSource] = useState('loading');
-  const [theme, setTheme] = useState('neon');
+  const [refreshingEvents, setRefreshingEvents] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated') {
       fetchUserTaste();
-    } else if (status === 'unauthenticated') {
-      // Redirect to home page if not authenticated
-      window.location.href = '/';
     }
   }, [status]);
 
@@ -39,12 +35,22 @@ export default function MusicTaste() {
       const data = await response.json();
       console.log('API response:', data); // For debugging
       setUserTaste(data);
-      setDataSource(data.source || 'real');
       setLoading(false);
     } catch (err) {
       console.error('Error fetching user taste:', err);
       setError(err.message);
       setLoading(false);
+    }
+  };
+
+  const refreshEvents = async () => {
+    try {
+      setRefreshingEvents(true);
+      await fetchUserTaste();
+      setRefreshingEvents(false);
+    } catch (err) {
+      console.error('Error refreshing events:', err);
+      setRefreshingEvents(false);
     }
   };
 
@@ -71,15 +77,11 @@ export default function MusicTaste() {
     }
   };
 
-  const toggleTheme = () => {
-    setTheme(theme === 'neon' ? 'minimal' : 'neon');
-  };
-
   if (status === 'loading' || loading) {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Music Taste | Sonar</title>
+          <title>Your Sound | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.loadingContainer}>
@@ -94,7 +96,7 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Music Taste | Sonar</title>
+          <title>Your Sound | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.unauthorizedContainer}>
@@ -112,7 +114,7 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Music Taste | Sonar</title>
+          <title>Your Sound | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.errorContainer}>
@@ -130,7 +132,7 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Music Taste | Sonar</title>
+          <title>Your Sound | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.noDataContainer}>
@@ -170,6 +172,7 @@ export default function MusicTaste() {
     seasonalMood.seasons = [];
   }
   
+  // Get suggested events with fallback
   const suggestedEvents = Array.isArray(userTaste.suggestedEvents) ? userTaste.suggestedEvents : [];
 
   // Create a more concise, ADHD-friendly summary
@@ -190,13 +193,13 @@ export default function MusicTaste() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Music Taste | Sonar</title>
+        <title>Your Sound | Sonar</title>
       </Head>
       
       <Navigation />
       
-      <main className={styles.main}>
-        {/* Concise summary */}
+      <main className={styles.optimizedMain}>
+        {/* Compact summary section - no header needed */}
         <div className={styles.summary}>
           <p>
             You're all about <span className={styles.highlight}>{getTopGenres()}</span> with 
@@ -204,25 +207,13 @@ export default function MusicTaste() {
             {suggestedEvents.length > 0 ? 
               ` Found ${suggestedEvents.length} events that match your sound.` : 
               " Events coming soon that match your sound."}
-            {dataSource === 'mock' && (
-              <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock Data</span>
-            )}
-            {dataSource === 'real' && (
-              <span className={`${styles.dataSourceIndicator} ${styles.realData}`}>Real Data</span>
-            )}
           </p>
         </div>
         
-        {/* Main content grid - 2 columns on desktop */}
-        <div className={styles.mainContent}>
-          {/* Left column: Genre mix */}
+        {/* Top section: Two-column layout with genre mix and seasonal mood */}
+        <div className={styles.topSection}>
+          {/* Left column: Genre mix with spider chart */}
           <div className={styles.genreSection}>
-            <h2 className={styles.sectionTitle}>
-              Your Mix
-              {dataSource === 'mock' && (
-                <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
-              )}
-            </h2>
             <div className={styles.spiderChartContainer}>
               {genres.length > 0 ? (
                 <SpiderChart genres={genres} />
@@ -236,24 +227,13 @@ export default function MusicTaste() {
           
           {/* Right column: Seasonal mood */}
           <div className={styles.seasonalSection}>
-            <h2 className={styles.sectionTitle}>
-              Seasonal Vibes
-              {dataSource === 'mock' && (
-                <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
-              )}
-            </h2>
             <SeasonalMoodCard seasonalMood={seasonalMood} />
           </div>
         </div>
         
-        {/* Events section */}
+        {/* Events section - prioritized and full width */}
         <section className={styles.eventsSection}>
-          <h2 className={styles.sectionTitle}>
-            Events That Match Your Vibe
-            {dataSource === 'mock' && (
-              <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
-            )}
-          </h2>
+          <h2 className={styles.sectionTitle}>Events That Match Your Vibe</h2>
           
           {suggestedEvents.length > 0 ? (
             <div className={styles.eventsGrid}>
@@ -268,8 +248,12 @@ export default function MusicTaste() {
           ) : (
             <div className={styles.noEventsMessage}>
               <p>Events coming soon. Check back!</p>
-              <button className={styles.refreshButton} onClick={fetchUserTaste}>
-                Refresh
+              <button 
+                className={styles.refreshButton} 
+                onClick={refreshEvents}
+                disabled={refreshingEvents}
+              >
+                {refreshingEvents ? 'Refreshing...' : 'Refresh'}
               </button>
             </div>
           )}
@@ -286,7 +270,7 @@ export default function MusicTaste() {
         {/* Vibe Quiz section */}
         <section className={styles.vibeQuizSection}>
           <div className={styles.vibeQuizPrompt}>
-            <h2 className={styles.sectionTitle}>Not feeling this vibe?</h2>
+            <p>Not feeling this vibe? Tell us what you're into</p>
             <button 
               className={styles.vibeQuizButton}
               onClick={() => setShowVibeQuiz(!showVibeQuiz)}
@@ -300,14 +284,9 @@ export default function MusicTaste() {
           )}
         </section>
         
-        {/* Artists section */}
+        {/* Artists section - optimized grid */}
         <section className={styles.artistsSection}>
-          <h2 className={styles.sectionTitle}>
-            Artists You Vibe With
-            {dataSource === 'mock' && (
-              <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
-            )}
-          </h2>
+          <h2 className={styles.sectionTitle}>Artists You Vibe With</h2>
           {topArtists.length > 0 ? (
             <div className={styles.artistsGrid}>
               {/* Show top 5 artists with up to 3 similar artists each */}
@@ -327,14 +306,9 @@ export default function MusicTaste() {
           )}
         </section>
         
-        {/* Tracks section */}
+        {/* Tracks section - optimized grid */}
         <section className={styles.tracksSection}>
-          <h2 className={styles.sectionTitle}>
-            Your Repeat Tracks
-            {dataSource === 'mock' && (
-              <span className={`${styles.dataSourceIndicator} ${styles.mockData}`}>Mock</span>
-            )}
-          </h2>
+          <h2 className={styles.sectionTitle}>Your Repeat Tracks</h2>
           {topTracks.length > 0 ? (
             <div className={styles.tracksGrid}>
               {/* Show top 5 tracks based on the last 3 months */}
@@ -355,15 +329,6 @@ export default function MusicTaste() {
           )}
         </section>
       </main>
-      
-      {/* Theme toggle */}
-      <div className={styles.themeToggleContainer}>
-        <div className={styles.themeToggle} onClick={toggleTheme}>
-          <span className={styles.themeIcon}>
-            {theme === 'neon' ? '✨' : '🔆'}
-          </span>
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,129 +1,101 @@
 .container {
   min-height: 100vh;
-  background-color: #0f0f1a;
-  color: #ffffff;
+  background-color: #0a0a14;
+  color: #e0e0ff;
 }
 
-.main {
+.optimizedMain {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1rem;
-}
-
-.header {
-  display: none; /* Hide the header as requested */
-}
-
-.summary {
-  background: rgba(20, 20, 30, 0.7);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(0, 255, 255, 0.1);
-  font-size: 1rem;
-  line-height: 1.4;
-}
-
-.highlight {
-  font-weight: bold;
-  color: #00ffff;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-}
-
-.sectionTitle {
-  font-size: 1.2rem;
-  margin-bottom: 0.8rem;
-  color: #ffffff;
-  position: relative;
-  display: inline-block;
-}
-
-.sectionTitle::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, #00ffff, #ff00ff);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-}
-
-.mainContent {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
 }
 
-@media (min-width: 768px) {
-  .mainContent {
-    grid-template-columns: 1fr 1fr;
+.summary {
+  background: linear-gradient(90deg, rgba(0,212,255,0.1) 0%, rgba(157,0,255,0.1) 100%);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #00d4ff;
+}
+
+.highlight {
+  color: #00d4ff;
+  font-weight: bold;
+}
+
+.topSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .topSection {
+    grid-template-columns: 1fr;
   }
 }
 
-.genreSection,
-.seasonalSection,
-.eventsSection,
-.vibeQuizSection,
-.artistsSection,
-.tracksSection {
-  background: rgba(15, 15, 25, 0.7);
+.genreSection, .seasonalSection {
+  background-color: rgba(20, 20, 40, 0.6);
   border-radius: 8px;
   padding: 1rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  height: 100%;
 }
 
 .spiderChartContainer {
-  height: 250px;
-  margin: 0 auto;
+  height: 300px;
+  width: 100%;
+  position: relative;
+}
+
+.eventsSection {
+  background-color: rgba(20, 20, 40, 0.6);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .eventsGrid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
-@media (min-width: 640px) {
-  .eventsGrid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  }
+.noEventsMessage {
+  text-align: center;
+  padding: 2rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
 }
 
-.artistsGrid, .tracksGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.5rem;
-}
-
-.vibeQuizPrompt {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.8rem;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-}
-
-.vibeQuizButton {
-  background: linear-gradient(90deg, #00ffff, #ff00ff);
-  color: #000;
+.refreshButton {
+  background: linear-gradient(90deg, #00d4ff 0%, #9d00ff 100%);
+  color: white;
   border: none;
-  border-radius: 20px;
-  padding: 0.4rem 1rem;
+  padding: 0.5rem 1.5rem;
+  border-radius: 50px;
   font-weight: bold;
   cursor: pointer;
+  margin-top: 1rem;
   transition: all 0.3s ease;
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-  font-size: 0.9rem;
 }
 
-.vibeQuizButton:hover {
+.refreshButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.refreshButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .viewMoreContainer {
@@ -132,161 +104,145 @@
 }
 
 .viewMoreButton {
-  background: rgba(0, 255, 255, 0.1);
-  color: #00ffff;
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 20px;
-  padding: 0.4rem 1rem;
+  background: transparent;
+  color: #00d4ff;
+  border: 1px solid #00d4ff;
+  padding: 0.5rem 1.5rem;
+  border-radius: 50px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
-  display: inline-block;
   text-decoration: none;
-  font-size: 0.9rem;
+  display: inline-block;
 }
 
 .viewMoreButton:hover {
-  background: rgba(0, 255, 255, 0.2);
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  background-color: rgba(0, 212, 255, 0.1);
 }
 
-.refreshButton {
-  background: rgba(0, 255, 255, 0.1);
-  color: #00ffff;
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 20px;
-  padding: 0.4rem 1rem;
+.vibeQuizSection {
+  background-color: rgba(20, 20, 40, 0.6);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.vibeQuizPrompt {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.vibeQuizButton {
+  background: linear-gradient(90deg, #00d4ff 0%, #9d00ff 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 50px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 0.9rem;
 }
 
-.refreshButton:hover {
-  background: rgba(0, 255, 255, 0.2);
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+.vibeQuizButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.noDataMessage,
-.noEventsMessage {
+.artistsSection, .tracksSection {
+  background-color: rgba(20, 20, 40, 0.6);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #00d4ff;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+  padding-bottom: 0.5rem;
+}
+
+.artistsGrid, .tracksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.noDataMessage {
   text-align: center;
-  padding: 1.5rem;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.9rem;
+  padding: 2rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
 }
 
-.loadingContainer {
+.loadingContainer, .unauthorizedContainer, .errorContainer, .noDataContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 70vh;
+  text-align: center;
+  padding: 2rem;
 }
 
 .loadingSpinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #00d4ff;
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(0, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #00ffff;
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 1s linear infinite;
   margin-bottom: 1rem;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.unauthorizedContainer,
-.errorContainer,
-.noDataContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 70vh;
-  text-align: center;
-  padding: 0 1rem;
+.title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(90deg, #00d4ff 0%, #9d00ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.connectButton,
-.retryButton {
-  background: linear-gradient(90deg, #00ffff, #ff00ff);
-  color: #000;
+.subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  opacity: 0.8;
+}
+
+.connectButton, .retryButton {
+  background: linear-gradient(90deg, #00d4ff 0%, #9d00ff 100%);
+  color: white;
   border: none;
-  border-radius: 25px;
   padding: 0.75rem 2rem;
-  font-size: 1rem;
+  border-radius: 50px;
   font-weight: bold;
+  font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
   text-decoration: none;
-  display: inline-block;
-  margin-top: 1.5rem;
 }
 
-.connectButton:hover,
-.retryButton:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+.connectButton:hover, .retryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .errorMessage {
   color: #ff6b6b;
-  margin: 1rem 0;
-}
-
-/* Theme toggle styles */
-.themeToggleContainer {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 100;
-}
-
-.themeToggle {
-  background: rgba(20, 20, 30, 0.8);
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-  transition: all 0.3s ease;
-}
-
-.themeToggle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-}
-
-.themeIcon {
-  font-size: 20px;
-  color: #00ffff;
-}
-
-/* Data source indicators */
-.dataSourceIndicator {
-  display: inline-block;
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.4);
-  background: rgba(0, 0, 0, 0.3);
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-left: 6px;
-  vertical-align: middle;
-}
-
-.realData {
-  color: #00ffaa;
-}
-
-.mockData {
-  color: #ff00aa;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: rgba(255, 107, 107, 0.1);
+  border-radius: 8px;
+  max-width: 500px;
 }

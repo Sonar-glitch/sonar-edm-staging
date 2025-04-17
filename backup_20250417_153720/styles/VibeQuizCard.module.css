@@ -1,0 +1,230 @@
+.vibeQuizCard {
+  background-color: rgba(20, 20, 30, 0.7);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 255, 255, 0.2);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  padding: 20px;
+  margin-top: 15px;
+}
+
+.quizTitle {
+  margin: 0 0 10px 0;
+  font-size: 1.5rem;
+  color: white;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.quizDescription {
+  margin: 0 0 20px 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tabsContainer {
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: rgba(30, 30, 40, 0.5);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.tabsHeader {
+  display: flex;
+  overflow-x: auto;
+  background-color: rgba(20, 20, 30, 0.8);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.tabButton {
+  padding: 12px 15px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.tabButton:hover {
+  color: white;
+  background-color: rgba(0, 255, 255, 0.1);
+}
+
+.activeTab {
+  color: white;
+  background-color: rgba(0, 255, 255, 0.15);
+  box-shadow: inset 0 -2px 0 #00ffff;
+}
+
+.selectionCount {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  color: white;
+  font-size: 0.7rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tabContent {
+  position: relative;
+  min-height: 200px;
+}
+
+.tabPanel {
+  display: none;
+  padding: 20px;
+}
+
+.activePanel {
+  display: block;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.optionItem {
+  background-color: rgba(30, 30, 40, 0.7);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.optionItem:hover {
+  background-color: rgba(0, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.selectedOption {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(255, 0, 255, 0.15));
+  border: 1px solid rgba(0, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.optionCheckmark {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  color: #00ffff;
+  font-size: 0.8rem;
+}
+
+.selectedOption .optionCheckmark {
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  border: none;
+  color: white;
+}
+
+.optionLabel {
+  font-size: 0.9rem;
+  color: white;
+}
+
+.quizFooter {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.completionBar {
+  width: 100%;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.completionFill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.completionText {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 15px;
+}
+
+.submitButton {
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.submitButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  .optionsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  
+  .tabButton {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .optionItem {
+    padding: 10px;
+  }
+  
+  .optionLabel {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .vibeQuizCard {
+    padding: 15px;
+  }
+  
+  .optionsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .tabPanel {
+    padding: 15px;
+  }
+}

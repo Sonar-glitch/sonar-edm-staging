@@ -1,4 +1,5 @@
 import { getSession } from 'next-auth/react';
+import axios from 'axios';
 
 export default async function handler(req, res) {
   try {
@@ -7,6 +8,9 @@ export default async function handler(req, res) {
     if (!session) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+    
+    // Get base URL for API calls
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     
     // Mock data for development and testing
     const mockData = {
@@ -121,7 +125,133 @@ export default async function handler(req, res) {
       tasteLabels: ['Melodic', 'Progressive', 'Deep', 'Atmospheric', 'Energetic']
     };
     
-    return res.status(200).json(mockData);
+    // Fetch events from the events API
+    let suggestedEvents = [];
+    try {
+      console.log('Fetching events from events API...');
+      const eventsResponse = await axios.get(`${baseUrl}/api/events`);
+      
+      if (eventsResponse.data && Array.isArray(eventsResponse.data.events)) {
+        suggestedEvents = eventsResponse.data.events;
+        console.log(`Successfully fetched ${suggestedEvents.length} events`);
+      } else {
+        console.log('No events found in API response, trying correlated-events endpoint');
+        
+        // Try the correlated-events endpoint as fallback
+        const correlatedEventsResponse = await axios.get(`${baseUrl}/api/events/correlated-events`);
+        
+        if (correlatedEventsResponse.data && Array.isArray(correlatedEventsResponse.data.events)) {
+          suggestedEvents = correlatedEventsResponse.data.events;
+          console.log(`Successfully fetched ${suggestedEvents.length} correlated events`);
+        } else {
+          console.log('No events found in correlated-events API response, using mock events');
+          
+          // Use mock events as a last resort
+          suggestedEvents = [
+            {
+              id: 'evt1',
+              name: 'Melodic Nights',
+              date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              venue: {
+                name: 'Echostage',
+                location: 'Washington, DC'
+              },
+              genres: ['Melodic House', 'Progressive House'],
+              artists: ['Lane 8', 'Yotto'],
+              image: 'https://i.scdn.co/image/ab67616d0000b273b4a3631526592865ea4af096',
+              ticketLink: 'https://example.com/tickets/1',
+              correlation: 0.85
+            },
+            {
+              id: 'evt2',
+              name: 'Techno Revolution',
+              date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+              venue: {
+                name: 'Club Space',
+                location: 'Miami, FL'
+              },
+              genres: ['Techno', 'Dark Techno'],
+              artists: ['Boris Brejcha', 'ANNA'],
+              image: 'https://i.scdn.co/image/ab67616d0000b273b1f6d5b276074d5d0cd2b66c',
+              ticketLink: 'https://example.com/tickets/2',
+              correlation: 0.78
+            },
+            {
+              id: 'evt3',
+              name: 'Deep Vibes',
+              date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+              venue: {
+                name: 'Sound Bar',
+                location: 'Chicago, IL'
+              },
+              genres: ['Deep House', 'Organic House'],
+              artists: ['Nora En Pure', 'Ben Böhmer'],
+              image: 'https://i.scdn.co/image/ab67616d0000b273b4a3631526592865ea4af096',
+              ticketLink: 'https://example.com/tickets/3',
+              correlation: 0.72
+            }
+          ];
+          console.log('Using mock events as fallback');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error.message);
+      console.log('Using mock events due to API error');
+      
+      // Use mock events as fallback
+      suggestedEvents = [
+        {
+          id: 'evt1',
+          name: 'Melodic Nights',
+          date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          venue: {
+            name: 'Echostage',
+            location: 'Washington, DC'
+          },
+          genres: ['Melodic House', 'Progressive House'],
+          artists: ['Lane 8', 'Yotto'],
+          image: 'https://i.scdn.co/image/ab67616d0000b273b4a3631526592865ea4af096',
+          ticketLink: 'https://example.com/tickets/1',
+          correlation: 0.85
+        },
+        {
+          id: 'evt2',
+          name: 'Techno Revolution',
+          date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          venue: {
+            name: 'Club Space',
+            location: 'Miami, FL'
+          },
+          genres: ['Techno', 'Dark Techno'],
+          artists: ['Boris Brejcha', 'ANNA'],
+          image: 'https://i.scdn.co/image/ab67616d0000b273b1f6d5b276074d5d0cd2b66c',
+          ticketLink: 'https://example.com/tickets/2',
+          correlation: 0.78
+        },
+        {
+          id: 'evt3',
+          name: 'Deep Vibes',
+          date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+          venue: {
+            name: 'Sound Bar',
+            location: 'Chicago, IL'
+          },
+          genres: ['Deep House', 'Organic House'],
+          artists: ['Nora En Pure', 'Ben Böhmer'],
+          image: 'https://i.scdn.co/image/ab67616d0000b273b4a3631526592865ea4af096',
+          ticketLink: 'https://example.com/tickets/3',
+          correlation: 0.72
+        }
+      ];
+    }
+    
+    // Add suggested events to the response
+    const responseData = {
+      ...mockData,
+      suggestedEvents
+    };
+    
+    return res.status(200).json(responseData);
   } catch (error) {
     console.error('Error fetching user taste:', error);
     return res.status(500).json({ error: 'Failed to fetch music taste data' });

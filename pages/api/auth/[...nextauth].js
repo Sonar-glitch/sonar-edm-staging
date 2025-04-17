@@ -36,13 +36,12 @@ export const authOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Redirect to music-taste page after sign in
+      // Always redirect to music-taste page after sign in
       return `${baseUrl}/users/music-taste`;
     }
   },
-  pages: {
-    signIn: '/auth/signin',
-  },
+  // Remove the custom signin page to use the default flow
+  // This prevents the intermediate page from showing
   debug: process.env.NODE_ENV === 'development',
 };
 

@@ -1,172 +1,149 @@
 .eventCard {
-  background-color: rgba(20, 20, 30, 0.7);
-  border-radius: 12px;
+  background-color: rgba(15, 15, 30, 0.8);
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 255, 255, 0.2);
-  border: 1px solid rgba(0, 255, 255, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  border: 1px solid rgba(0, 212, 255, 0.1);
 }
 
 .eventCard:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 255, 255, 0.3);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  border-color: rgba(0, 212, 255, 0.3);
 }
 
 .eventImageContainer {
   position: relative;
-  height: 180px;
+  height: 150px;
   overflow: hidden;
 }
 
 .eventImage {
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
-  transition: transform 0.5s ease;
+  object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
 .eventCard:hover .eventImage {
   transform: scale(1.05);
 }
 
-.eventImagePlaceholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #00ffff, #ff00ff);
-  color: white;
-  font-size: 3rem;
-  font-weight: bold;
-}
-
-.eventDate {
+.matchBadge {
   position: absolute;
   top: 10px;
-  left: 10px;
-  background: linear-gradient(90deg, #00ffff, #ff00ff);
-  border-radius: 8px;
-  padding: 5px 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-.dateValue {
-  font-size: 0.9rem;
-  font-weight: bold;
+  right: 10px;
+  background: linear-gradient(90deg, #00d4ff 0%, #9d00ff 100%);
   color: white;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.eventInfo {
-  padding: 15px;
-  flex-grow: 1;
+.eventContent {
+  padding: 1rem;
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
 }
 
 .eventName {
-  margin: 0 0 10px 0;
   font-size: 1.2rem;
-  color: white;
+  margin: 0 0 0.5rem 0;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .eventDetails {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.detailItem {
-  display: flex;
-  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
   font-size: 0.9rem;
 }
 
-.detailIcon {
-  margin-right: 5px;
+.eventDate, .eventVenue {
+  display: flex;
+  flex-direction: column;
 }
 
-.detailText {
-  color: rgba(255, 255, 255, 0.8);
+.dateLabel, .venueName {
+  color: #00d4ff;
+  font-weight: bold;
+}
+
+.timeLabel, .venueLocation {
+  color: #a0a0c0;
+  font-size: 0.8rem;
 }
 
 .eventArtists {
-  margin-bottom: 15px;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 
 .artistsLabel {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-right: 5px;
+  color: #00d4ff;
+  font-weight: bold;
+  margin-right: 0.5rem;
 }
 
 .artistsList {
-  font-size: 0.9rem;
-  color: white;
+  color: #a0a0c0;
 }
 
-.correlationSection {
-  margin-bottom: 15px;
+.eventGenres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.genreTag {
+  background-color: rgba(0, 212, 255, 0.1);
+  color: #00d4ff;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  border: 1px solid rgba(0, 212, 255, 0.3);
 }
 
 .eventActions {
-  display: flex;
-  gap: 10px;
   margin-top: auto;
+  padding-top: 0.5rem;
 }
 
-.detailsButton, .ticketsButton {
-  padding: 8px 15px;
-  border-radius: 20px;
-  font-size: 0.9rem;
+.ticketButton {
+  display: block;
+  width: 100%;
+  background: linear-gradient(90deg, #00d4ff 0%, #9d00ff 100%);
+  color: white;
   text-align: center;
+  padding: 0.5rem;
+  border-radius: 4px;
   text-decoration: none;
+  font-weight: bold;
   transition: all 0.3s ease;
 }
 
-.detailsButton {
-  background-color: rgba(0, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(0, 255, 255, 0.4);
-  flex: 1;
-}
-
-.detailsButton:hover {
-  background-color: rgba(0, 255, 255, 0.3);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
-}
-
-.ticketsButton {
-  background: linear-gradient(90deg, #00ffff, #ff00ff);
-  color: white;
-  border: none;
-  flex: 1;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 255, 255, 0.3);
-}
-
-.ticketsButton:hover {
+.ticketButton:hover {
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 255, 255, 0.5);
 }
 
-@media (max-width: 768px) {
-  .eventImageContainer {
-    height: 150px;
-  }
-  
-  .eventInfo {
-    padding: 12px;
-  }
-  
-  .eventName {
-    font-size: 1.1rem;
-  }
-  
-  .detailItem, .artistsLabel, .artistsList {
-    font-size: 0.8rem;
-  }
+.errorState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  text-align: center;
+  color: #ff6b6b;
 }
