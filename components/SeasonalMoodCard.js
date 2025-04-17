@@ -7,7 +7,7 @@ const SeasonalMoodCard = ({ seasonalMood }) => {
     return (
       <div className={styles.seasonalMoodCard}>
         <div className={styles.errorMessage}>
-          <p>Can't show your vibe right now. Try again later!</p>
+          <p>Can't show your seasonal vibes right now. Try again later!</p>
         </div>
       </div>
     );
@@ -46,32 +46,58 @@ const SeasonalMoodCard = ({ seasonalMood }) => {
   
   // Get mood color based on mood name
   const getMoodColor = (mood) => {
-    if (!mood) return '#00ffff';
+    if (!mood) return 'rgba(0, 255, 255, 0.7)';
     
     try {
       const moodName = typeof mood === 'string' ? mood.toLowerCase() : '';
       
       switch(moodName) {
         case 'energetic':
-          return '#ff3366';
+          return 'rgba(255, 51, 102, 0.7)';
         case 'chill':
-          return '#33ccff';
+          return 'rgba(51, 204, 255, 0.7)';
         case 'melancholic':
-          return '#9966ff';
+          return 'rgba(153, 102, 255, 0.7)';
         case 'happy':
-          return '#ffcc33';
+          return 'rgba(255, 204, 51, 0.7)';
         case 'dark':
-          return '#6633cc';
+          return 'rgba(102, 51, 204, 0.7)';
         case 'uplifting':
-          return '#33ff99';
+          return 'rgba(51, 255, 153, 0.7)';
         default:
-          return '#00ffff';
+          return 'rgba(0, 255, 255, 0.7)';
       }
     } catch (error) {
       console.error('Error getting mood color:', error);
-      return '#00ffff';
+      return 'rgba(0, 255, 255, 0.7)';
     }
   };
+  
+  // Create a complete seasons array with all four seasons
+  const getAllSeasons = () => {
+    const allSeasonNames = ['Spring', 'Summer', 'Fall', 'Winter'];
+    const existingSeasons = seasons.reduce((acc, season) => {
+      if (season && season.name) {
+        acc[season.name.toLowerCase()] = season;
+      }
+      return acc;
+    }, {});
+    
+    return allSeasonNames.map(name => {
+      const lowerName = name.toLowerCase();
+      if (existingSeasons[lowerName]) {
+        return existingSeasons[lowerName];
+      } else {
+        return {
+          name: name,
+          primaryMood: 'Coming soon',
+          topGenres: []
+        };
+      }
+    });
+  };
+  
+  const allSeasons = getAllSeasons();
   
   // Check if currentSeason has required properties
   const hasValidCurrentSeason = currentSeason && 
@@ -80,114 +106,49 @@ const SeasonalMoodCard = ({ seasonalMood }) => {
                                Array.isArray(currentSeason.topGenres);
   
   return (
-    <div className={styles.seasonalMoodCard} style={{ maxHeight: '200px', overflow: 'hidden' }}>
-      {/* Current vibe section with Gen Z friendly language - more compact */}
-      {hasValidCurrentSeason ? (
-        <div className={styles.currentSeason} style={{ padding: '10px' }}>
-          <div className={styles.seasonHeader} style={{ marginBottom: '5px' }}>
-            <span className={styles.seasonIcon}>{getSeasonIcon(currentSeason.name)}</span>
-            <h3 className={styles.seasonName} style={{ fontSize: '16px', margin: '0 5px' }}>
-              Your {currentSeason.name} Vibe
-            </h3>
-            <span 
-              className={styles.moodValue}
-              style={{ 
-                color: getMoodColor(currentSeason.primaryMood),
-                fontSize: '14px'
-              }}
-            >
-              {currentSeason.primaryMood}
-            </span>
-          </div>
-          
-          {/* Simplified genre tags in a more compact layout */}
-          <div className={styles.genreTags} style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {currentSeason.topGenres.length > 0 ? (
-              currentSeason.topGenres.slice(0, 2).map((genre, index) => (
-                <span 
-                  key={index} 
-                  className={styles.genreTag}
-                  style={{ 
-                    fontSize: '12px', 
-                    padding: '2px 8px',
-                    borderRadius: '10px',
-                    background: 'rgba(0,0,0,0.2)'
-                  }}
-                >
-                  {genre}
-                </span>
-              ))
-            ) : (
-              <span className={styles.genreTag}>No genres yet</span>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className={styles.currentSeason} style={{ padding: '10px' }}>
-          <div className={styles.seasonHeader}>
-            <span className={styles.seasonIcon}>🎵</span>
-            <h3 className={styles.seasonName} style={{ fontSize: '16px', margin: '0 5px' }}>
-              Your Current Vibe
-            </h3>
-          </div>
-          <p style={{ fontSize: '12px', margin: '5px 0' }}>Still figuring out your vibe...</p>
-        </div>
-      )}
-      
-      {/* Year-round vibes section with Gen Z friendly language - more compact */}
-      <div className={styles.seasonalHistory} style={{ padding: '5px 10px' }}>
-        <h4 className={styles.historyTitle} style={{ fontSize: '14px', margin: '5px 0' }}>
-          Your Year-Round Vibes
-        </h4>
-        
-        {seasons.length > 0 ? (
-          <div className={styles.seasonsGrid} style={{ 
-            display: 'flex', 
-            flexWrap: 'wrap',
-            gap: '5px'
-          }}>
-            {seasons.map((season, index) => {
-              // Validate season object
-              if (!season || typeof season !== 'object' || !season.name) {
-                return null;
-              }
+    <div className={styles.seasonalMoodCard}>
+      <div className={styles.seasonsGrid}>
+        {allSeasons.map((season, index) => (
+          <div key={index} className={`${styles.seasonCard} ${season.name === currentSeason.name ? styles.currentSeason : ''}`}>
+            <div className={styles.seasonHeader}>
+              <span className={styles.seasonIcon}>{getSeasonIcon(season.name)}</span>
+              <h3 className={styles.seasonName}>{season.name}</h3>
+            </div>
+            
+            <div className={styles.seasonContent}>
+              <div 
+                className={styles.moodBadge}
+                style={{ backgroundColor: getMoodColor(season.primaryMood) }}
+              >
+                {season.primaryMood}
+              </div>
               
-              return (
-                <div key={index} className={styles.seasonItem} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontSize: '12px',
-                  padding: '2px 5px',
-                  background: 'rgba(0,0,0,0.1)',
-                  borderRadius: '8px',
-                  margin: '0'
-                }}>
-                  <span className={styles.seasonItemIcon} style={{ marginRight: '3px' }}>
-                    {getSeasonIcon(season.name)}
-                  </span>
-                  <span className={styles.seasonItemName} style={{ marginRight: '3px' }}>
-                    {season.name}
-                  </span>
-                  
-                  {season.primaryMood && (
-                    <span 
-                      className={styles.seasonItemMood}
-                      style={{ 
-                        color: getMoodColor(season.primaryMood),
-                        fontSize: '11px'
-                      }}
-                    >
-                      {season.primaryMood}
-                    </span>
-                  )}
+              {Array.isArray(season.topGenres) && season.topGenres.length > 0 ? (
+                <div className={styles.genreTags}>
+                  {season.topGenres.slice(0, 2).map((genre, idx) => (
+                    <span key={idx} className={styles.genreTag}>{genre}</span>
+                  ))}
                 </div>
-              );
-            })}
+              ) : (
+                <div className={styles.noGenres}>
+                  {season.primaryMood === 'Coming soon' ? 'Keep listening!' : 'No genres yet'}
+                </div>
+              )}
+            </div>
           </div>
+        ))}
+      </div>
+      
+      <div className={styles.yearRoundSection}>
+        <h4 className={styles.yearRoundTitle}>Your Year-Round Vibes</h4>
+        {hasValidCurrentSeason ? (
+          <p className={styles.yearRoundDescription}>
+            Your sound evolves with the seasons. We track how your taste changes throughout the year.
+          </p>
         ) : (
-          <div className={styles.noDataMessage} style={{ fontSize: '12px' }}>
-            <p>No seasonal vibes yet - keep listening!</p>
-          </div>
+          <p className={styles.yearRoundDescription}>
+            Keep streaming! We'll track how your taste changes with the seasons.
+          </p>
         )}
       </div>
     </div>

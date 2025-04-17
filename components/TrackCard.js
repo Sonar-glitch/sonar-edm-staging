@@ -44,16 +44,16 @@ const TrackCard = ({ track, correlation, duration, popularity }) => {
             className={styles.albumArt}
             style={{ 
               backgroundImage: `url(${track.album.images[0].url})`,
-              width: '80px',  // Reduced from default size
-              height: '80px'  // Reduced from default size
+              width: '70px',
+              height: '70px'
             }}
           />
         ) : (
           <div 
             className={styles.albumArtPlaceholder}
             style={{ 
-              width: '80px',  // Reduced from default size
-              height: '80px'  // Reduced from default size
+              width: '70px',
+              height: '70px'
             }}
           >
             <span>{track.name ? track.name.charAt(0) : '?'}</span>

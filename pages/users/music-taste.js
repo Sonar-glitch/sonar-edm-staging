@@ -187,108 +187,108 @@ export default function MusicTaste() {
       
       <main className={styles.main}>
         {/* Compact header section */}
-        <div className={styles.header} style={{ marginBottom: '15px' }}>
-          <h1 className={styles.title} style={{ fontSize: '24px', marginBottom: '5px' }}>Your Sound</h1>
-          <p className={styles.subtitle} style={{ fontSize: '14px', marginTop: '0' }}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Your Sound</h1>
+          <p className={styles.subtitle}>
             Based on what you're streaming
           </p>
         </div>
         
-        {/* Concise summary */}
-        <div className={styles.summary} style={{ 
-          padding: '10px', 
-          marginBottom: '15px',
-          background: 'rgba(0,0,0,0.2)',
-          borderRadius: '8px'
-        }}>
-          <p style={{ margin: '0', fontSize: '14px' }}>
-            You're all about <span className={styles.highlight}>{getTopGenres()}</span> with 
-            a vibe shift toward <span className={styles.highlight}>{getRecentTrends()}</span>. 
-            {suggestedEvents.length > 0 ? 
-              `Found ${suggestedEvents.length} events that match your sound.` : 
-              "Events coming soon that match your sound."}
-          </p>
+        {/* Two-column layout for better space usage */}
+        <div className={styles.twoColumnLayout}>
+          {/* Left column: User taste data */}
+          <div className={styles.leftColumn}>
+            {/* Concise summary */}
+            <div className={styles.summary}>
+              <p>
+                You're all about <span className={styles.highlight}>{getTopGenres()}</span> with 
+                a vibe shift toward <span className={styles.highlight}>{getRecentTrends()}</span>. 
+                {suggestedEvents.length > 0 ? 
+                  ` Found ${suggestedEvents.length} events that match your sound.` : 
+                  " Events coming soon that match your sound."}
+              </p>
+            </div>
+            
+            {/* Genre section with spider chart */}
+            <section className={styles.genreSection}>
+              <h2 className={styles.sectionTitle}>Your Mix</h2>
+              <div className={styles.spiderChartContainer}>
+                {genres.length > 0 ? (
+                  <SpiderChart genres={genres} />
+                ) : (
+                  <div className={styles.noDataMessage}>
+                    <p>No genre data yet. Keep streaming!</p>
+                  </div>
+                )}
+              </div>
+            </section>
+            
+            {/* Seasonal section */}
+            <section className={styles.seasonalSection}>
+              <h2 className={styles.sectionTitle}>Your Seasonal Vibes</h2>
+              <SeasonalMoodCard seasonalMood={seasonalMood} />
+            </section>
+          </div>
+          
+          {/* Right column: Events and recommendations */}
+          <div className={styles.rightColumn}>
+            {/* Events section - prioritized */}
+            <section className={styles.eventsSection}>
+              <h2 className={styles.sectionTitle}>Events That Match Your Vibe</h2>
+              
+              {suggestedEvents.length > 0 ? (
+                <div className={styles.eventsGrid}>
+                  {suggestedEvents.slice(0, Math.min(3, suggestedEvents.length)).map((event, index) => (
+                    <EventCard 
+                      key={event.id || `event-${index}`} 
+                      event={event} 
+                      correlation={event.correlation || 0.5}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.noEventsMessage}>
+                  <p>Events coming soon. Check back!</p>
+                  <button className={styles.refreshButton} onClick={fetchUserTaste}>
+                    Refresh
+                  </button>
+                </div>
+              )}
+              
+              {suggestedEvents.length > 0 && (
+                <div className={styles.viewMoreContainer}>
+                  <Link href="/users/events">
+                    <a className={styles.viewMoreButton}>See All Events</a>
+                  </Link>
+                </div>
+              )}
+            </section>
+            
+            {/* Vibe Quiz section */}
+            <section className={styles.vibeQuizSection}>
+              <div className={styles.vibeQuizPrompt}>
+                <p>Not feeling this vibe? Tell us what you're into</p>
+                <button 
+                  className={styles.vibeQuizButton}
+                  onClick={() => setShowVibeQuiz(!showVibeQuiz)}
+                >
+                  {showVibeQuiz ? 'Hide Quiz' : 'Take Quiz'}
+                </button>
+              </div>
+              
+              {showVibeQuiz && (
+                <VibeQuizCard onSubmit={handleVibeQuizSubmit} />
+              )}
+            </section>
+          </div>
         </div>
         
-        {/* Events section - moved up to prioritize */}
-        <section className={styles.eventsSection} style={{ 
-          marginBottom: '20px',
-          padding: '15px',
-          background: 'rgba(0,0,0,0.1)',
-          borderRadius: '10px',
-          border: '1px solid rgba(0,255,255,0.2)'
-        }}>
-          <h2 className={styles.sectionTitle} style={{ 
-            fontSize: '20px', 
-            marginBottom: '10px',
-            color: '#00ffff'
-          }}>Events That Match Your Vibe</h2>
-          
-          {suggestedEvents.length > 0 ? (
-            <div className={styles.eventsGrid}>
-              {suggestedEvents.slice(0, Math.min(3, suggestedEvents.length)).map((event, index) => (
-                <EventCard 
-                  key={event.id || `event-${index}`} 
-                  event={event} 
-                  correlation={event.correlation || 0.5}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className={styles.noDataMessage} style={{ textAlign: 'center', padding: '20px' }}>
-              <p>Events coming soon. Check back!</p>
-              <button className={styles.refreshButton} onClick={fetchUserTaste} style={{
-                marginTop: '10px',
-                padding: '8px 15px',
-                background: 'rgba(0,255,255,0.2)',
-                border: 'none',
-                borderRadius: '20px',
-                cursor: 'pointer'
-              }}>
-                Refresh
-              </button>
-            </div>
-          )}
-          
-          {suggestedEvents.length > 0 && (
-            <div className={styles.viewMoreContainer} style={{ textAlign: 'center', marginTop: '10px' }}>
-              <Link href="/users/events">
-                <a className={styles.viewMoreButton} style={{
-                  display: 'inline-block',
-                  padding: '8px 20px',
-                  background: 'linear-gradient(90deg, #00ffff, #ff00ff)',
-                  borderRadius: '20px',
-                  textDecoration: 'none',
-                  fontWeight: 'bold'
-                }}>See All Events</a>
-              </Link>
-            </div>
-          )}
-        </section>
-        
-        {/* More compact genre section */}
-        <section className={styles.genreSection} style={{ marginBottom: '15px' }}>
-          <h2 className={styles.sectionTitle} style={{ fontSize: '18px', marginBottom: '5px' }}>Your Mix</h2>
-          <div className={styles.spiderChartContainer} style={{ maxHeight: '250px' }}>
-            {genres.length > 0 ? (
-              <SpiderChart genres={genres} />
-            ) : (
-              <div className={styles.noDataMessage}>
-                <p>No genre data yet. Keep streaming!</p>
-              </div>
-            )}
-          </div>
-        </section>
-        
-        {/* More compact artists section */}
-        <section className={styles.artistsSection} style={{ marginBottom: '15px' }}>
-          <h2 className={styles.sectionTitle} style={{ fontSize: '18px', marginBottom: '5px' }}>Artists You Vibe With</h2>
+        {/* Full-width sections below */}
+        {/* Artists section */}
+        <section className={styles.artistsSection}>
+          <h2 className={styles.sectionTitle}>Artists You Vibe With</h2>
           {topArtists.length > 0 ? (
-            <div className={styles.artistsGrid} style={{ 
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '10px'
-            }}>
+            <div className={styles.artistsGrid}>
               {/* Show top 5 artists with up to 3 similar artists each */}
               {topArtists.slice(0, 5).map((artist, index) => (
                 <ArtistCard 
@@ -306,15 +306,11 @@ export default function MusicTaste() {
           )}
         </section>
         
-        {/* More compact tracks section */}
-        <section className={styles.tracksSection} style={{ marginBottom: '15px' }}>
-          <h2 className={styles.sectionTitle} style={{ fontSize: '18px', marginBottom: '5px' }}>Your Repeat Tracks</h2>
+        {/* Tracks section */}
+        <section className={styles.tracksSection}>
+          <h2 className={styles.sectionTitle}>Your Repeat Tracks</h2>
           {topTracks.length > 0 ? (
-            <div className={styles.tracksGrid} style={{ 
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '10px'
-            }}>
+            <div className={styles.tracksGrid}>
               {/* Show top 5 tracks based on the last 3 months */}
               {topTracks.slice(0, 5).map((track, index) => (
                 <TrackCard 
@@ -330,43 +326,6 @@ export default function MusicTaste() {
             <div className={styles.noDataMessage}>
               <p>No track data yet. Keep streaming!</p>
             </div>
-          )}
-        </section>
-        
-        {/* More compact seasonal section */}
-        <section className={styles.seasonalSection} style={{ marginBottom: '15px' }}>
-          <h2 className={styles.sectionTitle} style={{ fontSize: '18px', marginBottom: '5px' }}>Your Seasonal Vibes</h2>
-          <SeasonalMoodCard seasonalMood={seasonalMood} />
-        </section>
-        
-        {/* Vibe Quiz section */}
-        <section className={styles.vibeQuizSection} style={{ marginBottom: '15px' }}>
-          <div className={styles.vibeQuizPrompt} style={{ 
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '10px',
-            background: 'rgba(0,0,0,0.2)',
-            borderRadius: '8px'
-          }}>
-            <p style={{ margin: '0', fontSize: '14px' }}>Not feeling this vibe? Tell us what you're into</p>
-            <button 
-              className={styles.vibeQuizButton}
-              onClick={() => setShowVibeQuiz(!showVibeQuiz)}
-              style={{
-                padding: '5px 15px',
-                background: 'linear-gradient(90deg, #00ffff, #ff00ff)',
-                border: 'none',
-                borderRadius: '20px',
-                cursor: 'pointer'
-              }}
-            >
-              {showVibeQuiz ? 'Hide Quiz' : 'Take Quiz'}
-            </button>
-          </div>
-          
-          {showVibeQuiz && (
-            <VibeQuizCard onSubmit={handleVibeQuizSubmit} />
           )}
         </section>
       </main>

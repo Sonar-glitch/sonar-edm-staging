@@ -34,16 +34,16 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
             className={styles.artistImage}
             style={{ 
               backgroundImage: `url(${artist.images[0].url})`,
-              width: '80px',  // Reduced from default size
-              height: '80px'  // Reduced from default size
+              width: '70px',
+              height: '70px'
             }}
           />
         ) : (
           <div 
             className={styles.artistImagePlaceholder}
             style={{ 
-              width: '80px',  // Reduced from default size
-              height: '80px'  // Reduced from default size
+              width: '70px',
+              height: '70px'
             }}
           >
             <span>{artist.name ? artist.name.charAt(0) : '?'}</span>

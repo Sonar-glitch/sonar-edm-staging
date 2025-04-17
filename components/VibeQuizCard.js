@@ -112,23 +112,38 @@ const VibeQuizCard = ({ onSubmit }) => {
     }
   };
   
+  // Improved completion percentage calculation
+  // Now calculates based on having at least one selection per category
+  // rather than assuming all options need to be selected
   const getCompletionPercentage = () => {
     try {
-      let selectedCount = 0;
-      let totalCount = 0;
+      let completedCategories = 0;
+      const totalCategories = Object.keys(selections).length;
       
       Object.keys(selections).forEach(key => {
         const selectionArray = Array.isArray(selections[key]) ? selections[key] : [];
-        selectedCount += selectionArray.length;
-        
-        const tabOptions = tabs.find(tab => tab.id === key)?.options;
-        totalCount += Array.isArray(tabOptions) ? tabOptions.length : 0;
+        if (selectionArray.length > 0) {
+          completedCategories++;
+        }
       });
       
-      return totalCount > 0 ? Math.round((selectedCount / totalCount) * 100) : 0;
+      return totalCategories > 0 ? Math.round((completedCategories / totalCategories) * 100) : 0;
     } catch (error) {
       console.error('Error calculating completion percentage:', error);
       return 0;
+    }
+  };
+  
+  // Navigation functions
+  const goToNextTab = () => {
+    if (activeTab < tabs.length - 1) {
+      setActiveTab(activeTab + 1);
+    }
+  };
+  
+  const goToPrevTab = () => {
+    if (activeTab > 0) {
+      setActiveTab(activeTab - 1);
     }
   };
   
@@ -136,8 +151,8 @@ const VibeQuizCard = ({ onSubmit }) => {
     <div className={styles.vibeQuizCard}>
       <h3 className={styles.quizTitle}>Customize Your Vibe</h3>
       <p className={styles.quizDescription}>
-        Select your preferences to fine-tune your music taste profile. 
-        Choose multiple options in each category.
+        Select what you're into to fine-tune your music profile. 
+        Choose at least one option in each category.
       </p>
       
       <div className={styles.tabsContainer}>
@@ -177,6 +192,26 @@ const VibeQuizCard = ({ onSubmit }) => {
                     <span className={styles.optionLabel}>{option.label}</span>
                   </div>
                 ))}
+              </div>
+              
+              <div className={styles.tabNavigation}>
+                {activeTab > 0 && (
+                  <button 
+                    className={styles.navButton}
+                    onClick={goToPrevTab}
+                  >
+                    ← Previous
+                  </button>
+                )}
+                
+                {activeTab < tabs.length - 1 && (
+                  <button 
+                    className={styles.navButton}
+                    onClick={goToNextTab}
+                  >
+                    Next →
+                  </button>
+                )}
               </div>
             </div>
           ))}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from '../styles/Navigation.module.css';
 import Link from 'next/link';
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
 
 const Navigation = () => {
@@ -14,14 +14,18 @@ const Navigation = () => {
     return router.pathname === path ? styles.active : '';
   };
   
-  // Fixed sign-out functionality
-  const handleSignOut = async () => {
+  // Fixed sign-out functionality with direct window.location approach
+  const handleSignOut = async (e) => {
+    e.preventDefault();
     try {
-      // Use callbackUrl to ensure proper redirection after sign-out
-      await signOut({ callbackUrl: '/' });
+      // First try the NextAuth signOut
+      await signOut({ redirect: false });
+      
+      // Then force a redirect regardless of NextAuth's success
+      window.location.href = '/';
     } catch (error) {
-      console.error('Error signing out:', error);
-      // Fallback manual redirect if signOut fails
+      console.error('Error during sign out:', error);
+      // Fallback: direct redirect
       window.location.href = '/';
     }
   };
@@ -129,13 +133,14 @@ const Navigation = () => {
                   </a>
                 </Link>
                 <div className={styles.dropdownDivider}></div>
-                <button 
+                <a 
+                  href="#"
                   onClick={handleSignOut}
                   className={styles.dropdownItem}
                 >
                   <span className={styles.dropdownIcon}>🚪</span>
                   Sign Out
-                </button>
+                </a>
               </div>
             )}
           </div>
