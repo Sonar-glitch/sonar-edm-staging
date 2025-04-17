@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import styles from '../styles/VibeQuizCard.module.css';
 
 const VibeQuizCard = ({ onSubmit }) => {
+  // Error handling: Check if onSubmit is a valid function
+  const handleSubmit = typeof onSubmit === 'function' ? onSubmit : () => console.warn('No onSubmit handler provided');
+  
   const [activeTab, setActiveTab] = useState(0);
   const [selections, setSelections] = useState({
     tempo: [],
@@ -70,41 +73,63 @@ const VibeQuizCard = ({ onSubmit }) => {
   ];
   
   const handleOptionToggle = (tabId, optionId) => {
-    setSelections(prev => {
-      const currentSelections = [...prev[tabId]];
-      
-      if (currentSelections.includes(optionId)) {
-        return {
-          ...prev,
-          [tabId]: currentSelections.filter(id => id !== optionId)
-        };
-      } else {
-        return {
-          ...prev,
-          [tabId]: [...currentSelections, optionId]
-        };
-      }
-    });
+    try {
+      setSelections(prev => {
+        // Ensure prev[tabId] exists and is an array
+        const currentSelections = Array.isArray(prev[tabId]) ? [...prev[tabId]] : [];
+        
+        if (currentSelections.includes(optionId)) {
+          return {
+            ...prev,
+            [tabId]: currentSelections.filter(id => id !== optionId)
+          };
+        } else {
+          return {
+            ...prev,
+            [tabId]: [...currentSelections, optionId]
+          };
+        }
+      });
+    } catch (error) {
+      console.error('Error toggling option:', error);
+    }
   };
   
-  const handleSubmit = () => {
-    onSubmit(selections);
+  const submitSelections = () => {
+    try {
+      handleSubmit(selections);
+    } catch (error) {
+      console.error('Error submitting selections:', error);
+    }
   };
   
   const isOptionSelected = (tabId, optionId) => {
-    return selections[tabId].includes(optionId);
+    try {
+      return Array.isArray(selections[tabId]) && selections[tabId].includes(optionId);
+    } catch (error) {
+      console.error('Error checking if option is selected:', error);
+      return false;
+    }
   };
   
   const getCompletionPercentage = () => {
-    let selectedCount = 0;
-    let totalCount = 0;
-    
-    Object.keys(selections).forEach(key => {
-      selectedCount += selections[key].length;
-      totalCount += tabs.find(tab => tab.id === key).options.length;
-    });
-    
-    return Math.round((selectedCount / totalCount) * 100);
+    try {
+      let selectedCount = 0;
+      let totalCount = 0;
+      
+      Object.keys(selections).forEach(key => {
+        const selectionArray = Array.isArray(selections[key]) ? selections[key] : [];
+        selectedCount += selectionArray.length;
+        
+        const tabOptions = tabs.find(tab => tab.id === key)?.options;
+        totalCount += Array.isArray(tabOptions) ? tabOptions.length : 0;
+      });
+      
+      return totalCount > 0 ? Math.round((selectedCount / totalCount) * 100) : 0;
+    } catch (error) {
+      console.error('Error calculating completion percentage:', error);
+      return 0;
+    }
   };
   
   return (
@@ -124,7 +149,7 @@ const VibeQuizCard = ({ onSubmit }) => {
               onClick={() => setActiveTab(index)}
             >
               {tab.label}
-              {selections[tab.id].length > 0 && (
+              {Array.isArray(selections[tab.id]) && selections[tab.id].length > 0 && (
                 <span className={styles.selectionCount}>
                   {selections[tab.id].length}
                 </span>
@@ -140,7 +165,7 @@ const VibeQuizCard = ({ onSubmit }) => {
               className={`${styles.tabPanel} ${activeTab === index ? styles.activePanel : ''}`}
             >
               <div className={styles.optionsGrid}>
-                {tab.options.map(option => (
+                {Array.isArray(tab.options) && tab.options.map(option => (
                   <div 
                     key={option.id}
                     className={`${styles.optionItem} ${isOptionSelected(tab.id, option.id) ? styles.selectedOption : ''}`}
@@ -171,7 +196,7 @@ const VibeQuizCard = ({ onSubmit }) => {
         
         <button 
           className={styles.submitButton}
-          onClick={handleSubmit}
+          onClick={submitSelections}
           disabled={getCompletionPercentage() === 0}
         >
           Update My Taste Profile
