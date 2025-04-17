@@ -12,11 +12,23 @@ const Navigation = () => {
     return router.pathname === path ? styles.active : '';
   };
   
+  // Fixed sign-out functionality
+  const handleSignOut = async () => {
+    try {
+      // Use callbackUrl to ensure proper redirection after sign-out
+      await signOut({ callbackUrl: '/' });
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Fallback manual redirect if signOut fails
+      window.location.href = '/';
+    }
+  };
+  
   return (
     <nav className={styles.navigation}>
       <div className={styles.logoContainer}>
-        <Link href="/" className={styles.logo}>
-          SONAR
+        <Link href="/">
+          <a className={styles.logo}>SONAR</a>
         </Link>
         <span className={styles.tagline}>Connect with your sound</span>
       </div>
@@ -24,17 +36,25 @@ const Navigation = () => {
       <div className={styles.navLinks}>
         {status === 'authenticated' && (
           <>
-            <Link href="/users/music-taste" className={`${styles.navLink} ${isActive('/users/music-taste')}`}>
-              Music Taste
+            <Link href="/users/music-taste">
+              <a className={`${styles.navLink} ${isActive('/users/music-taste')}`}>
+                Music Taste
+              </a>
             </Link>
-            <Link href="/users/events" className={`${styles.navLink} ${isActive('/users/events')}`}>
-              Events
+            <Link href="/users/events">
+              <a className={`${styles.navLink} ${isActive('/users/events')}`}>
+                Events
+              </a>
             </Link>
-            <Link href="/users/profile" className={`${styles.navLink} ${isActive('/users/profile')}`}>
-              Profile
+            <Link href="/users/profile">
+              <a className={`${styles.navLink} ${isActive('/users/profile')}`}>
+                Profile
+              </a>
             </Link>
-            <Link href="/users/settings" className={`${styles.navLink} ${isActive('/users/settings')}`}>
-              Settings
+            <Link href="/users/settings">
+              <a className={`${styles.navLink} ${isActive('/users/settings')}`}>
+                Settings
+              </a>
             </Link>
           </>
         )}
@@ -49,7 +69,7 @@ const Navigation = () => {
           </div>
         ) : status === 'authenticated' ? (
           <button 
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={handleSignOut}
             className={styles.authButton}
           >
             Sign Out

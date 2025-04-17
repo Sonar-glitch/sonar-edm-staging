@@ -21,6 +21,9 @@ const TrackCard = ({ track, correlation, duration, popularity }) => {
   // Format correlation as percentage
   const correlationPercent = Math.round(validCorrelation * 100);
   
+  // Calculate obscurity level (inverse of popularity)
+  const obscurityLevel = 100 - validPopularity;
+  
   // Format duration from ms to mm:ss
   const formatDuration = (ms) => {
     try {
@@ -73,6 +76,16 @@ const TrackCard = ({ track, correlation, duration, popularity }) => {
               <div 
                 className={styles.popularityFill} 
                 style={{ width: `${validPopularity}%` }}
+              ></div>
+            </div>
+          </div>
+          
+          <div className={styles.metricItem}>
+            <span className={styles.metricLabel}>Obscurity</span>
+            <div className={styles.obscurityBar}>
+              <div 
+                className={styles.obscurityFill} 
+                style={{ width: `${obscurityLevel}%` }}
               ></div>
             </div>
           </div>

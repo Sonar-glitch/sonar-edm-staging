@@ -1,6 +1,5 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
 import Link from 'next/link';
 import styles from '../styles/Home.module.css';
 
@@ -8,12 +7,8 @@ export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
   
-  // Redirect to music taste page if already logged in
-  useEffect(() => {
-    if (session) {
-      router.push('/users/music-taste');
-    }
-  }, [session, router]);
+  // Removed automatic redirect to allow users to see the landing page
+  // Users can navigate to music taste page via navigation menu
 
   return (
     <div className={styles.container}>
@@ -29,11 +24,19 @@ export default function Home() {
             match your vibe.
           </p>
           
-          <Link href="/api/auth/signin">
-            <a className={styles.connectButton}>
-              Connect with Spotify
-            </a>
-          </Link>
+          {!session ? (
+            <Link href="/api/auth/signin">
+              <a className={styles.connectButton}>
+                Connect with Spotify
+              </a>
+            </Link>
+          ) : (
+            <Link href="/users/music-taste">
+              <a className={styles.connectButton}>
+                View Your Music Taste
+              </a>
+            </Link>
+          )}
         </div>
         
         <section className={styles.howItWorks}>

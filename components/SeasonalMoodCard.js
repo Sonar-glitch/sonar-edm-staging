@@ -7,7 +7,7 @@ const SeasonalMoodCard = ({ seasonalMood }) => {
     return (
       <div className={styles.seasonalMoodCard}>
         <div className={styles.errorMessage}>
-          <p>Unable to display seasonal mood information. Invalid data.</p>
+          <p>Can't show your vibe right now. Try again later!</p>
         </div>
       </div>
     );
@@ -79,57 +79,49 @@ const SeasonalMoodCard = ({ seasonalMood }) => {
   
   return (
     <div className={styles.seasonalMoodCard}>
+      {/* Current vibe section with Gen Z friendly language */}
       {hasValidCurrentSeason ? (
         <div className={styles.currentSeason}>
           <div className={styles.seasonHeader}>
             <span className={styles.seasonIcon}>{getSeasonIcon(currentSeason.name)}</span>
-            <h3 className={styles.seasonName}>{currentSeason.name}</h3>
+            <h3 className={styles.seasonName}>Your {currentSeason.name} Vibe</h3>
+            <span 
+              className={styles.moodValue}
+              style={{ color: getMoodColor(currentSeason.primaryMood) }}
+            >
+              {currentSeason.primaryMood}
+            </span>
           </div>
           
-          <div className={styles.moodInfo}>
-            <div className={styles.moodItem}>
-              <span className={styles.moodLabel}>Primary Mood</span>
-              <span 
-                className={styles.moodValue}
-                style={{ color: getMoodColor(currentSeason.primaryMood) }}
-              >
-                {currentSeason.primaryMood}
-              </span>
-            </div>
-            
-            <div className={styles.genresList}>
-              <span className={styles.genresLabel}>Top Genres</span>
-              <div className={styles.genreTags}>
-                {currentSeason.topGenres.length > 0 ? (
-                  currentSeason.topGenres.map((genre, index) => (
-                    <span 
-                      key={index} 
-                      className={styles.genreTag}
-                    >
-                      {genre}
-                    </span>
-                  ))
-                ) : (
-                  <span className={styles.genreTag}>No genres available</span>
-                )}
-              </div>
-            </div>
+          {/* Simplified genre tags in a more compact layout */}
+          <div className={styles.genreTags}>
+            {currentSeason.topGenres.length > 0 ? (
+              currentSeason.topGenres.slice(0, 3).map((genre, index) => (
+                <span 
+                  key={index} 
+                  className={styles.genreTag}
+                >
+                  {genre}
+                </span>
+              ))
+            ) : (
+              <span className={styles.genreTag}>No genres yet</span>
+            )}
           </div>
         </div>
       ) : (
         <div className={styles.currentSeason}>
           <div className={styles.seasonHeader}>
             <span className={styles.seasonIcon}>🎵</span>
-            <h3 className={styles.seasonName}>Current Season</h3>
+            <h3 className={styles.seasonName}>Your Current Vibe</h3>
           </div>
-          <div className={styles.moodInfo}>
-            <p>Seasonal mood data not available</p>
-          </div>
+          <p>Still figuring out your vibe...</p>
         </div>
       )}
       
+      {/* Year-round vibes section with Gen Z friendly language */}
       <div className={styles.seasonalHistory}>
-        <h4 className={styles.historyTitle}>Your Year in Music</h4>
+        <h4 className={styles.historyTitle}>Your Year-Round Vibes</h4>
         
         {seasons.length > 0 ? (
           <div className={styles.seasonsGrid}>
@@ -141,24 +133,16 @@ const SeasonalMoodCard = ({ seasonalMood }) => {
               
               return (
                 <div key={index} className={styles.seasonItem}>
-                  <div className={styles.seasonItemHeader}>
-                    <span className={styles.seasonItemIcon}>{getSeasonIcon(season.name)}</span>
-                    <span className={styles.seasonItemName}>{season.name}</span>
-                  </div>
+                  <span className={styles.seasonItemIcon}>{getSeasonIcon(season.name)}</span>
+                  <span className={styles.seasonItemName}>{season.name}</span>
                   
                   {season.primaryMood && (
-                    <div 
+                    <span 
                       className={styles.seasonItemMood}
                       style={{ color: getMoodColor(season.primaryMood) }}
                     >
                       {season.primaryMood}
-                    </div>
-                  )}
-                  
-                  {season.topGenres && Array.isArray(season.topGenres) && season.topGenres.length > 0 && (
-                    <div className={styles.seasonItemGenre}>
-                      {season.topGenres[0]}
-                    </div>
+                    </span>
                   )}
                 </div>
               );
@@ -166,7 +150,7 @@ const SeasonalMoodCard = ({ seasonalMood }) => {
           </div>
         ) : (
           <div className={styles.noDataMessage}>
-            <p>No seasonal history available yet</p>
+            <p>No seasonal vibes yet - keep listening!</p>
           </div>
         )}
       </div>

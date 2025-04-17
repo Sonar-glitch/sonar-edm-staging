@@ -20,6 +20,12 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
   // Validate similarArtists array
   const validSimilarArtists = Array.isArray(similarArtists) ? similarArtists : [];
   
+  // Ensure popularity is a valid number
+  const popularity = typeof artist.popularity === 'number' && !isNaN(artist.popularity) ? artist.popularity : 0;
+  
+  // Calculate obscurity level (inverse of popularity)
+  const obscurityLevel = 100 - popularity;
+  
   return (
     <div className={styles.artistCard}>
       <div className={styles.artistImageContainer}>
@@ -42,6 +48,28 @@ const ArtistCard = ({ artist, correlation, similarArtists }) => {
       
       <div className={styles.artistInfo}>
         <h3 className={styles.artistName}>{artist.name || 'Unknown Artist'}</h3>
+        
+        <div className={styles.artistMetrics}>
+          <div className={styles.metricItem}>
+            <span className={styles.metricLabel}>Popularity</span>
+            <div className={styles.popularityBar}>
+              <div 
+                className={styles.popularityFill} 
+                style={{ width: `${popularity}%` }}
+              ></div>
+            </div>
+          </div>
+          
+          <div className={styles.metricItem}>
+            <span className={styles.metricLabel}>Obscurity</span>
+            <div className={styles.obscurityBar}>
+              <div 
+                className={styles.obscurityFill} 
+                style={{ width: `${obscurityLevel}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
         
         <div className={styles.artistGenres}>
           {artist.genres && Array.isArray(artist.genres) ? 

@@ -130,10 +130,32 @@ const SpiderChart = ({ genres }) => {
     console.error('Error in SpiderChart calculations:', error);
   }
   
+  // Function to position and format genre labels to prevent truncation
+  const getGenreLabelPosition = (index, totalGenres) => {
+    const angle = (Math.PI * 2 * index) / totalGenres;
+    // Increased label radius to provide more space for text
+    const labelRadius = 150;
+    const labelX = 150 + labelRadius * Math.cos(angle);
+    const labelY = 150 + labelRadius * Math.sin(angle);
+    
+    // Determine text anchor based on position in the circle
+    // This helps align text better to prevent truncation
+    let textAnchor = "middle";
+    if (angle < Math.PI * 0.25 || angle > Math.PI * 1.75) {
+      textAnchor = "start";
+    } else if (angle >= Math.PI * 0.75 && angle <= Math.PI * 1.25) {
+      textAnchor = "end";
+    }
+    
+    return { labelX, labelY, textAnchor };
+  };
+  
   return (
     <div className={styles.spiderChartContainer}>
       {points.length > 0 ? (
-        <svg viewBox="0 0 300 300" className={styles.spiderChart}>
+        <svg viewBox="0 0 350 350" className={styles.spiderChart}>
+          {/* Increased viewBox size to accommodate labels */}
+          
           {/* Grid lines */}
           {gridLines.map((line, index) => (
             <path
@@ -174,12 +196,9 @@ const SpiderChart = ({ genres }) => {
             />
           ))}
           
-          {/* Genre labels */}
+          {/* Genre labels with improved positioning */}
           {points.map((point, index) => {
-            const angle = (Math.PI * 2 * index) / validGenres.length;
-            const labelRadius = 140;
-            const labelX = 150 + labelRadius * Math.cos(angle);
-            const labelY = 150 + labelRadius * Math.sin(angle);
+            const { labelX, labelY, textAnchor } = getGenreLabelPosition(index, validGenres.length);
             
             return (
               <text
@@ -187,8 +206,9 @@ const SpiderChart = ({ genres }) => {
                 x={labelX}
                 y={labelY}
                 className={styles.genreLabel}
-                textAnchor="middle"
+                textAnchor={textAnchor}
                 dominantBaseline="middle"
+                fontSize="12"
               >
                 {point.name}
               </text>

@@ -69,12 +69,12 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Your Music Taste | Sonar</title>
+          <title>Your Sound | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.loadingContainer}>
           <div className={styles.loadingSpinner}></div>
-          <p>Analyzing your sonic DNA...</p>
+          <p>Loading your vibe...</p>
         </div>
       </div>
     );
@@ -84,14 +84,14 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Your Music Taste | Sonar</title>
+          <title>Your Sound | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.unauthorizedContainer}>
-          <h1 className={styles.title}>Connect to Discover Your Taste</h1>
-          <p className={styles.subtitle}>Sign in with Spotify to unlock your music taste profile</p>
+          <h1 className={styles.title}>Connect to see your sound</h1>
+          <p className={styles.subtitle}>Link Spotify. Get your vibe. Find your scene.</p>
           <Link href="/api/auth/signin">
-            <a className={styles.connectButton}>Connect with Spotify</a>
+            <a className={styles.connectButton}>Connect Spotify</a>
           </Link>
         </div>
       </div>
@@ -102,11 +102,11 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Your Music Taste | Sonar</title>
+          <title>Your Sound | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.errorContainer}>
-          <h1 className={styles.title}>Oops! Something went wrong</h1>
+          <h1 className={styles.title}>Oops! That didn't work</h1>
           <p className={styles.errorMessage}>{error}</p>
           <button onClick={fetchUserTaste} className={styles.retryButton}>
             Try Again
@@ -120,13 +120,13 @@ export default function MusicTaste() {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Your Music Taste | Sonar</title>
+          <title>Your Sound | Sonar</title>
         </Head>
         <Navigation />
         <div className={styles.noDataContainer}>
-          <h1 className={styles.title}>No Taste Data Available</h1>
+          <h1 className={styles.title}>No vibe data yet</h1>
           <p className={styles.subtitle}>
-            We couldn't find any listening data for your profile. Try listening to more music on Spotify and check back later.
+            Play more tracks on Spotify. Check back soon.
           </p>
         </div>
       </div>
@@ -162,74 +162,87 @@ export default function MusicTaste() {
   
   const suggestedEvents = Array.isArray(userTaste.suggestedEvents) ? userTaste.suggestedEvents : [];
 
+  // Create a more concise, ADHD-friendly summary
+  const getTopGenres = () => {
+    if (genres.length === 0) return "your fav beats";
+    return genres.slice(0, Math.min(2, genres.length)).map(g => g.name || 'Unknown').join(' + ');
+  };
+
+  const getRecentTrends = () => {
+    if (!seasonalMood.currentSeason || 
+        !Array.isArray(seasonalMood.currentSeason.topGenres) || 
+        seasonalMood.currentSeason.topGenres.length === 0) {
+      return "fresh sounds";
+    }
+    return seasonalMood.currentSeason.topGenres.slice(0, 1).join('');
+  };
+
   return (
     <div className={styles.container}>
       <Head>
-        <title>Your Music Taste | Sonar</title>
+        <title>Your Sound | Sonar</title>
       </Head>
       
       <Navigation />
       
       <main className={styles.main}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Your Music Taste</h1>
+          <h1 className={styles.title}>Your Sound</h1>
           <p className={styles.subtitle}>
-            Based on your Spotify listening history and preferences
+            Based on what you're streaming
           </p>
         </div>
         
         <div className={styles.summary}>
           <p>
-            Your taste profile shows a strong affinity for {genres.length > 0 ? 
-              genres.slice(0, Math.min(3, genres.length)).map(g => g.name || 'Unknown').join(', ') : 
-              'various genres'} 
-            with recent listening trends toward {seasonalMood.currentSeason && 
-              Array.isArray(seasonalMood.currentSeason.topGenres) && 
-              seasonalMood.currentSeason.topGenres.length > 0 ? 
-              seasonalMood.currentSeason.topGenres.slice(0, Math.min(2, seasonalMood.currentSeason.topGenres.length)).join(' and ') : 
-              'various styles'}.
-            We've found {suggestedEvents.length} events that match your taste profile.
+            You're all about <span className={styles.highlight}>{getTopGenres()}</span> with 
+            a vibe shift toward <span className={styles.highlight}>{getRecentTrends()}</span>. 
+            {suggestedEvents.length > 0 ? 
+              `Found ${suggestedEvents.length} events that match your sound.` : 
+              "Events coming soon that match your sound."}
           </p>
         </div>
         
         <section className={styles.genreSection}>
-          <h2 className={styles.sectionTitle}>Genre Affinity</h2>
+          <h2 className={styles.sectionTitle}>Your Mix</h2>
           <div className={styles.spiderChartContainer}>
             {genres.length > 0 ? (
               <SpiderChart genres={genres} />
             ) : (
               <div className={styles.noDataMessage}>
-                <p>No genre data available. Try listening to more music on Spotify.</p>
+                <p>No genre data yet. Keep streaming!</p>
               </div>
             )}
           </div>
         </section>
         
         <section className={styles.artistsSection}>
-          <h2 className={styles.sectionTitle}>Your Favorite Artists</h2>
+          <h2 className={styles.sectionTitle}>Artists You Vibe With</h2>
           {topArtists.length > 0 ? (
             <div className={styles.artistsGrid}>
-              {topArtists.map((artist, index) => (
+              {/* Show top 5 artists with up to 3 similar artists each */}
+              {topArtists.slice(0, 5).map((artist, index) => (
                 <ArtistCard 
                   key={artist.id || `artist-${index}`} 
                   artist={artist} 
                   correlation={artist.correlation || 0.5}
-                  similarArtists={Array.isArray(artist.similarArtists) ? artist.similarArtists : []}
+                  similarArtists={Array.isArray(artist.similarArtists) ? artist.similarArtists.slice(0, 3) : []}
                 />
               ))}
             </div>
           ) : (
             <div className={styles.noDataMessage}>
-              <p>No artist data available. Try listening to more music on Spotify.</p>
+              <p>No artist data yet. Keep streaming!</p>
             </div>
           )}
         </section>
         
         <section className={styles.tracksSection}>
-          <h2 className={styles.sectionTitle}>Your Top Tracks</h2>
+          <h2 className={styles.sectionTitle}>Your Repeat Tracks</h2>
           {topTracks.length > 0 ? (
             <div className={styles.tracksGrid}>
-              {topTracks.map((track, index) => (
+              {/* Show top 5 tracks based on the last 3 months */}
+              {topTracks.slice(0, 5).map((track, index) => (
                 <TrackCard 
                   key={track.id || `track-${index}`} 
                   track={track} 
@@ -241,24 +254,24 @@ export default function MusicTaste() {
             </div>
           ) : (
             <div className={styles.noDataMessage}>
-              <p>No track data available. Try listening to more music on Spotify.</p>
+              <p>No track data yet. Keep streaming!</p>
             </div>
           )}
         </section>
         
         <section className={styles.seasonalSection}>
-          <h2 className={styles.sectionTitle}>Seasonal Mood Analysis</h2>
+          <h2 className={styles.sectionTitle}>Your Seasonal Vibes</h2>
           <SeasonalMoodCard seasonalMood={seasonalMood} />
         </section>
         
         <section className={styles.vibeQuizSection}>
           <div className={styles.vibeQuizPrompt}>
-            <p>Something doesn't feel right about your taste profile?</p>
+            <p>Not feeling this vibe? Tell us what you're into</p>
             <button 
               className={styles.vibeQuizButton}
               onClick={() => setShowVibeQuiz(!showVibeQuiz)}
             >
-              {showVibeQuiz ? 'Hide Vibe Quiz' : 'Take the Vibe Quiz'}
+              {showVibeQuiz ? 'Hide Quiz' : 'Take Quiz'}
             </button>
           </div>
           
@@ -268,7 +281,7 @@ export default function MusicTaste() {
         </section>
         
         <section className={styles.eventsSection}>
-          <h2 className={styles.sectionTitle}>Events You Might Like</h2>
+          <h2 className={styles.sectionTitle}>Events That Match Your Vibe</h2>
           {suggestedEvents.length > 0 ? (
             <div className={styles.eventsGrid}>
               {suggestedEvents.slice(0, Math.min(3, suggestedEvents.length)).map((event, index) => (
@@ -281,14 +294,14 @@ export default function MusicTaste() {
             </div>
           ) : (
             <div className={styles.noDataMessage}>
-              <p>No matching events found. Check back later for new events.</p>
+              <p>Events coming soon. Check back!</p>
             </div>
           )}
           
           {suggestedEvents.length > 0 && (
             <div className={styles.viewMoreContainer}>
               <Link href="/users/events">
-                <a className={styles.viewMoreButton}>View All Matching Events</a>
+                <a className={styles.viewMoreButton}>See All Events</a>
               </Link>
             </div>
           )}
