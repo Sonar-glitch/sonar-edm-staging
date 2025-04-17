@@ -3,13 +3,25 @@ import { useSession } from 'next-auth/react';
 import Head from 'next/head';
 import Link from 'next/link';
 import styles from '../../styles/MusicTaste.module.css';
-import SpiderChart from '../../components/SpiderChart';
-import ArtistCard from '../../components/ArtistCard';
-import TrackCard from '../../components/TrackCard';
-import SeasonalMoodCard from '../../components/SeasonalMoodCard';
-import VibeQuizCard from '../../components/VibeQuizCard';
-import EventCard from '../../components/EventCard';
 import Navigation from '../../components/Navigation';
+
+// Import components conditionally to prevent rendering errors
+let SpiderChart = null;
+let ArtistCard = null;
+let TrackCard = null;
+let SeasonalMoodCard = null;
+let VibeQuizCard = null;
+let EventCard = null;
+
+// Only import components on client-side to prevent SSR issues
+if (typeof window !== 'undefined') {
+  SpiderChart = require('../../components/SpiderChart').default;
+  ArtistCard = require('../../components/ArtistCard').default;
+  TrackCard = require('../../components/TrackCard').default;
+  SeasonalMoodCard = require('../../components/SeasonalMoodCard').default;
+  VibeQuizCard = require('../../components/VibeQuizCard').default;
+  EventCard = require('../../components/EventCard').default;
+}
 
 export default function MusicTaste() {
   const { data: session, status } = useSession();
@@ -17,6 +29,7 @@ export default function MusicTaste() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showVibeQuiz, setShowVibeQuiz] = useState(false);
+  const [dataReady, setDataReady] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -27,19 +40,63 @@ export default function MusicTaste() {
   const fetchUserTaste = async () => {
     try {
       setLoading(true);
+      console.log('Fetching user taste data...');
       const response = await fetch('/api/spotify/user-taste');
       if (!response.ok) {
         throw new Error('Failed to fetch music taste data');
       }
       const data = await response.json();
-      console.log('API response data:', data); // Log data for debugging
+      console.log('API response data:', JSON.stringify(data, null, 2));
       setUserTaste(data);
       setLoading(false);
+      
+      // Verify data structure before rendering components
+      const isDataValid = validateData(data);
+      setDataReady(isDataValid);
+      
+      if (!isDataValid) {
+        console.warn('Data structure is not valid for rendering components');
+        setError('Received incomplete data from API. Some sections may not display correctly.');
+      }
     } catch (err) {
       console.error('Error fetching user taste:', err);
       setError(err.message);
       setLoading(false);
     }
+  };
+
+  // Validate data structure to ensure all required properties exist
+  const validateData = (data) => {
+    if (!data) return false;
+    
+    // Check if topGenres exists and has valid structure
+    const hasValidGenres = Array.isArray(data.topGenres) && 
+                          data.topGenres.length > 0 && 
+                          data.topGenres.every(g => g && typeof g === 'object' && g.name && typeof g.value === 'number');
+    
+    // Check if topArtists exists and has valid structure
+    const hasValidArtists = Array.isArray(data.topArtists) && 
+                           data.topArtists.length > 0;
+    
+    // Check if topTracks exists and has valid structure
+    const hasValidTracks = Array.isArray(data.topTracks) && 
+                          data.topTracks.length > 0;
+    
+    // Check if seasonalMood exists and has valid structure
+    const hasValidSeasonalMood = data.seasonalMood && 
+                               typeof data.seasonalMood === 'object' && 
+                               data.seasonalMood.current && 
+                               data.seasonalMood[data.seasonalMood.current];
+    
+    console.log('Data validation results:', {
+      hasValidGenres,
+      hasValidArtists,
+      hasValidTracks,
+      hasValidSeasonalMood
+    });
+    
+    // Return true if at least some of the data is valid
+    return hasValidGenres || hasValidArtists || hasValidTracks || hasValidSeasonalMood;
   };
 
   const handleVibeQuizSubmit = async (preferences) => {
@@ -98,7 +155,7 @@ export default function MusicTaste() {
     );
   }
 
-  if (error) {
+  if (error && !userTaste) {
     return (
       <div className={styles.container}>
         <Head>
@@ -142,13 +199,19 @@ export default function MusicTaste() {
   // Map current season string to an object with topGenres
   const currentSeason = seasonalMood.current ? {
     topGenres: seasonalMood[seasonalMood.current]?.genres || []
-  } : {};
+  } : { topGenres: [] };
   
   // Add currentSeason to seasonalMood object
   const enhancedSeasonalMood = {...seasonalMood, currentSeason};
   
   // Create empty suggestedEvents if not present
   const suggestedEvents = userTaste.suggestedEvents || [];
+
+  // Ensure genres have valid values for SpiderChart
+  const validGenres = genres.map(genre => ({
+    name: genre.name || 'Unknown',
+    value: typeof genre.value === 'number' && !isNaN(genre.value) ? genre.value : 0
+  }));
 
   return (
     <div className={styles.container}>
@@ -157,6 +220,15 @@ export default function MusicTaste() {
       </Head>
       
       <Navigation />
+      
+      {error && (
+        <div className={styles.warningBanner}>
+          <p>{error}</p>
+          <button onClick={fetchUserTaste} className={styles.retryButton}>
+            Refresh Data
+          </button>
+        </div>
+      )}
       
       <main className={styles.main}>
         <div className={styles.header}>
@@ -168,19 +240,35 @@ export default function MusicTaste() {
         
         <div className={styles.summary}>
           <p>
-            Your taste profile shows a strong affinity for {genres && genres.length > 0 ? genres.slice(0, 3).map(g => g.name || 'Unknown').join(', ') : 'loading genres...'} 
-            with recent listening trends toward {currentSeason && currentSeason.topGenres && currentSeason.topGenres.length > 0 ? currentSeason.topGenres.slice(0, 2).join(' and ') : 'loading trends...'}.
-            We've found {suggestedEvents ? suggestedEvents.length : '0'} events that match your taste profile.
+            {genres && genres.length > 0 ? (
+              <>
+                Your taste profile shows a strong affinity for {genres.slice(0, Math.min(3, genres.length)).map(g => g.name || 'Unknown').join(', ')} 
+                {currentSeason && currentSeason.topGenres && currentSeason.topGenres.length > 0 ? (
+                  <>with recent listening trends toward {currentSeason.topGenres.slice(0, Math.min(2, currentSeason.topGenres.length)).join(' and ')}.</>
+                ) : (
+                  <>.</>
+                )}
+              </>
+            ) : (
+              <>Your taste profile is being analyzed. Check back soon for detailed insights.</>
+            )}
+            {suggestedEvents && suggestedEvents.length > 0 ? (
+              <> We've found {suggestedEvents.length} events that match your taste profile.</>
+            ) : (
+              <> We're finding events that match your taste profile.</>
+            )}
           </p>
         </div>
         
         <section className={styles.genreSection}>
           <h2 className={styles.sectionTitle}>Genre Affinity</h2>
           <div className={styles.spiderChartContainer}>
-            {genres && genres.length > 0 ? (
-              <SpiderChart genres={genres} />
+            {typeof window !== 'undefined' && SpiderChart && validGenres && validGenres.length > 0 ? (
+              <SpiderChart genres={validGenres} />
             ) : (
-              <p>No genre data available</p>
+              <div className={styles.placeholderChart}>
+                <p>Genre data visualization is loading...</p>
+              </div>
             )}
           </div>
         </section>
@@ -188,13 +276,19 @@ export default function MusicTaste() {
         <section className={styles.artistsSection}>
           <h2 className={styles.sectionTitle}>Your Favorite Artists</h2>
           <div className={styles.artistsGrid}>
-            {topArtists && topArtists.length > 0 ? (
+            {typeof window !== 'undefined' && ArtistCard && topArtists && topArtists.length > 0 ? (
               topArtists.map((artist, index) => (
                 <ArtistCard 
-                  key={artist.id || index} 
-                  artist={artist} 
-                  correlation={artist.correlation}
-                  similarArtists={artist.similarArtists || []}
+                  key={artist.id || `artist-${index}`} 
+                  artist={{
+                    ...artist,
+                    name: artist.name || 'Unknown Artist',
+                    image: artist.image || 'https://via.placeholder.com/300',
+                    genres: Array.isArray(artist.genres) ? artist.genres : [],
+                    popularity: typeof artist.popularity === 'number' ? artist.popularity : 50
+                  }} 
+                  correlation={artist.correlation || 0.5}
+                  similarArtists={Array.isArray(artist.similarArtists) ? artist.similarArtists : []}
                 />
               ))
             ) : (
@@ -206,14 +300,19 @@ export default function MusicTaste() {
         <section className={styles.tracksSection}>
           <h2 className={styles.sectionTitle}>Your Top Tracks</h2>
           <div className={styles.tracksGrid}>
-            {topTracks && topTracks.length > 0 ? (
+            {typeof window !== 'undefined' && TrackCard && topTracks && topTracks.length > 0 ? (
               topTracks.map((track, index) => (
                 <TrackCard 
-                  key={track.id || index} 
-                  track={track} 
-                  correlation={track.correlation}
-                  duration={track.duration_ms}
-                  popularity={track.popularity}
+                  key={track.id || `track-${index}`} 
+                  track={{
+                    ...track,
+                    name: track.name || 'Unknown Track',
+                    artist: track.artist || 'Unknown Artist',
+                    image: track.image || 'https://via.placeholder.com/300'
+                  }} 
+                  correlation={track.correlation || 0.5}
+                  duration={track.duration_ms || 0}
+                  popularity={track.popularity || 50}
                 />
               ))
             ) : (
@@ -224,7 +323,7 @@ export default function MusicTaste() {
         
         <section className={styles.seasonalSection}>
           <h2 className={styles.sectionTitle}>Seasonal Mood Analysis</h2>
-          {enhancedSeasonalMood ? (
+          {typeof window !== 'undefined' && SeasonalMoodCard && enhancedSeasonalMood && Object.keys(enhancedSeasonalMood).length > 0 ? (
             <SeasonalMoodCard seasonalMood={enhancedSeasonalMood} />
           ) : (
             <p>No seasonal mood data available</p>
@@ -242,20 +341,26 @@ export default function MusicTaste() {
             </button>
           </div>
           
-          {showVibeQuiz && (
+          {showVibeQuiz && typeof window !== 'undefined' && VibeQuizCard && (
             <VibeQuizCard onSubmit={handleVibeQuizSubmit} />
           )}
         </section>
         
         <section className={styles.eventsSection}>
           <h2 className={styles.sectionTitle}>Events You Might Like</h2>
-          {suggestedEvents && suggestedEvents.length > 0 ? (
+          {typeof window !== 'undefined' && EventCard && suggestedEvents && suggestedEvents.length > 0 ? (
             <div className={styles.eventsGrid}>
-              {suggestedEvents.slice(0, 3).map((event, index) => (
+              {suggestedEvents.slice(0, Math.min(3, suggestedEvents.length)).map((event, index) => (
                 <EventCard 
-                  key={event.id || index} 
-                  event={event} 
-                  correlation={event.correlation}
+                  key={event.id || `event-${index}`} 
+                  event={{
+                    ...event,
+                    name: event.name || 'Upcoming Event',
+                    venue: event.venue || 'TBA',
+                    date: event.date || 'TBA',
+                    image: event.image || 'https://via.placeholder.com/300'
+                  }} 
+                  correlation={event.correlation || 0.5}
                 />
               ))}
               
