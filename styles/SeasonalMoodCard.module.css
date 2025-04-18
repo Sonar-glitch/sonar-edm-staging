@@ -1,102 +1,181 @@
 .seasonalMoodCard {
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--card-shadow);
   display: flex;
-  flex-direction: column;
+  gap: 2rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.seasonalMoodCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.seasonalVisual {
+  flex: 0 0 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seasonCircle {
+  width: 180px;
+  height: 180px;
+  position: relative;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.seasonSegment {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100%;
-}
-
-.seasonsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 0.8rem;
-  margin-bottom: 1rem;
-}
-
-.seasonBox {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
-  padding: 0.8rem;
   display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(var(--season-color), 0.3);
-  opacity: var(--season-opacity, 0.6);
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15px;
   transition: all 0.3s ease;
 }
 
-.seasonBox:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  opacity: 1;
-}
-
-.currentSeason {
-  background-color: rgba(var(--season-color), 0.1);
-  border: 1px solid var(--season-color);
-  box-shadow: 0 0 10px rgba(var(--season-color), 0.2);
-}
-
-.seasonHeader {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.seasonIcon {
-  font-size: 1.2rem;
-  margin-right: 0.5rem;
-}
-
-.seasonName {
-  font-weight: bold;
-  color: var(--season-color);
+.seasonSegment:hover {
+  transform: scale(1.05) rotate(var(--rotation)) !important;
 }
 
 .seasonContent {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: rotate(90deg);
 }
 
-.genreList {
+.seasonName {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.seasonGenre {
   font-size: 0.8rem;
-  color: #e0e0ff;
-  margin-bottom: 0.3rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
 }
 
-.moodLabel {
-  font-size: 0.7rem;
-  color: #a0a0c0;
+.currentSeason .seasonName,
+.currentSeason .seasonGenre {
+  color: var(--primary-color);
 }
 
-.comingSoon {
-  font-size: 0.8rem;
-  color: #a0a0c0;
-  font-style: italic;
-}
-
-.yearRoundSection {
-  margin-top: auto;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.yearRoundTitle {
-  font-size: 1rem;
-  color: #00d4ff;
-  margin: 0 0 0.5rem 0;
-}
-
-.yearRoundDescription {
-  font-size: 0.8rem;
-  color: #a0a0c0;
-  margin: 0;
-}
-
-.errorState {
+.centerCircle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  padding: 2rem;
   text-align: center;
-  color: #ff6b6b;
+}
+
+.yearText {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+.seasonalInsights {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.insightsTitle {
+  font-size: 1.1rem;
+  margin: 0 0 0.75rem 0;
+  color: var(--text-color);
+}
+
+.insightsText {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 1.5rem 0;
+}
+
+.currentSeasonHighlight {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+}
+
+.currentSeasonTitle {
+  font-size: 1rem;
+  margin: 0 0 0.75rem 0;
+  color: var(--primary-color);
+}
+
+.moodTag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.moodLabel {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.moodValue {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.genreTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.genreTag {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+.errorMessage {
+  padding: 1rem;
+  background-color: rgba(255, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  color: var(--error-color);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .seasonalMoodCard {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .seasonalVisual {
+    flex: 0 0 auto;
+  }
+  
+  .seasonCircle {
+    margin: 0 auto;
+  }
 }

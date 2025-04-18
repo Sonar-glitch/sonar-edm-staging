@@ -1,75 +1,102 @@
 import React from 'react';
 import styles from '../styles/TrackCard.module.css';
 
-const TrackCard = ({ track, correlation = 0.5, duration = 0, popularity = 0, useTasteMatch = false }) => {
-  // Handle missing or malformed data
-  if (!track) {
+const TrackCard = ({ track, correlation, duration, popularity }) => {
+  // Error handling: Check if track is valid
+  if (!track || typeof track !== 'object') {
     return (
       <div className={styles.trackCard}>
-        <div className={styles.errorState}>
-          <p>Track data unavailable</p>
+        <div className={styles.errorMessage}>
+          <p>Unable to display track information. Invalid track data.</p>
         </div>
       </div>
     );
   }
 
-  // Extract track data with fallbacks
-  const name = track.name || 'Unknown Track';
-  const artist = track.artist || 'Unknown Artist';
-  const image = track.image || '/images/track-placeholder.jpg';
+  // Ensure correlation is a valid number
+  const validCorrelation = typeof correlation === 'number' && !isNaN(correlation) ? correlation : 0;
+  const correlationPercent = Math.round(validCorrelation * 100);
+  
+  // Ensure popularity is a valid number
+  const validPopularity = typeof popularity === 'number' && !isNaN(popularity) ? popularity : 50;
   
   // Format duration
   const formatDuration = (ms) => {
-    if (!ms || typeof ms !== 'number') return '0:00';
+    if (!ms || typeof ms !== 'number' || isNaN(ms)) return '0:00';
+    
     const minutes = Math.floor(ms / 60000);
     const seconds = ((ms % 60000) / 1000).toFixed(0);
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
   
-  // Calculate metrics
-  const trackPopularity = typeof track.popularity === 'number' ? track.popularity : 
-                         (typeof popularity === 'number' ? popularity : 50);
-  const tasteMatch = typeof correlation === 'number' ? Math.round(correlation * 100) : 50;
-
   return (
     <div className={styles.trackCard}>
       <div className={styles.trackHeader}>
-        <div className={styles.trackInitial}>
-          {name.charAt(0).toUpperCase()}
-        </div>
-        <div className={styles.trackInfo}>
-          <h3 className={styles.trackName}>{name}</h3>
-          <p className={styles.trackArtist}>{artist}</p>
+        <div className={styles.trackImageContainer}>
+          {track.image ? (
+            <div 
+              className={styles.trackImage}
+              style={{ backgroundImage: `url(${track.image})` }}
+            />
+          ) : (
+            <div className={styles.trackImagePlaceholder}>
+              <span>{track.name ? track.name.charAt(0) : '?'}</span>
+            </div>
+          )}
           
-          <div className={styles.trackMetrics}>
-            <div className={styles.metricGroup}>
-              <span className={styles.metricLabel}>Popularity</span>
-              <div className={styles.progressBar}>
-                <div 
-                  className={styles.progressFill} 
-                  style={{ width: `${trackPopularity}%`, backgroundColor: '#00d4ff' }}
-                ></div>
-              </div>
-              <span className={styles.metricValue}>{trackPopularity}%</span>
-            </div>
-            
-            <div className={styles.metricGroup}>
-              <span className={styles.metricLabel}>Taste Match</span>
-              <div className={styles.progressBar}>
-                <div 
-                  className={styles.progressFill} 
-                  style={{ width: `${tasteMatch}%`, backgroundColor: '#ff00ff' }}
-                ></div>
-              </div>
-              <span className={styles.metricValue}>{tasteMatch}%</span>
-            </div>
+          {track.preview && (
+            <button className={styles.previewButton} title="Play preview">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
+          )}
+        </div>
+        
+        <div className={styles.trackInfo}>
+          <h3 className={styles.trackName}>{track.name || 'Unknown Track'}</h3>
+          <p className={styles.trackArtist}>{track.artist || 'Unknown Artist'}</p>
+          
+          {duration > 0 && (
+            <span className={styles.trackDuration}>{formatDuration(duration)}</span>
+          )}
+        </div>
+      </div>
+      
+      <div className={styles.trackMetrics}>
+        <div className={styles.metricItem}>
+          <div className={styles.metricHeader}>
+            <span className={styles.metricLabel}>Popularity</span>
+            <span className={styles.metricValue}>{validPopularity}%</span>
+          </div>
+          <div className={styles.metricBar}>
+            <div 
+              className={styles.metricFill} 
+              style={{ width: `${validPopularity}%` }}
+            ></div>
+          </div>
+        </div>
+        
+        <div className={styles.metricItem}>
+          <div className={styles.metricHeader}>
+            <span className={styles.metricLabel}>Taste Match</span>
+            <span className={styles.metricValue}>{correlationPercent}%</span>
+          </div>
+          <div className={styles.metricBar}>
+            <div 
+              className={styles.metricFill} 
+              style={{ width: `${correlationPercent}%` }}
+            ></div>
           </div>
         </div>
       </div>
       
-      <div className={styles.trackDetails}>
-        <span className={styles.duration}>Duration: {formatDuration(duration)}</span>
-      </div>
+      {track.album && (
+        <div className={styles.trackAlbum}>
+          <span className={styles.albumLabel}>Album:</span>
+          <span className={styles.albumName}>{track.album}</span>
+        </div>
+      )}
     </div>
   );
 };

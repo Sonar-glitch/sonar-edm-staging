@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "mongodb": "^4.8.1",
     "axios": "^0.27.2",
     "chart.js": "^3.9.1",
     "dotenv": "^16.0.1",

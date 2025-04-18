@@ -2,116 +2,124 @@ import React from 'react';
 import styles from '../styles/SeasonalMoodCard.module.css';
 
 const SeasonalMoodCard = ({ seasonalMood }) => {
-  // Handle missing or malformed data
+  // Error handling: Check if seasonalMood is valid
   if (!seasonalMood || typeof seasonalMood !== 'object') {
     return (
       <div className={styles.seasonalMoodCard}>
-        <div className={styles.errorState}>
-          <p>Seasonal mood data unavailable</p>
+        <div className={styles.errorMessage}>
+          <p>Unable to display seasonal mood information. Invalid data.</p>
         </div>
       </div>
     );
   }
 
-  // Determine current season
-  const getCurrentSeason = () => {
-    // First check if there's a current property
-    if (seasonalMood.current) {
-      return seasonalMood.current.toLowerCase();
+  // Get current season
+  const currentSeason = seasonalMood.currentSeason || {};
+  const currentSeasonName = currentSeason.name || seasonalMood.current || 'Current Season';
+  
+  // Get all seasons
+  const seasons = Array.isArray(seasonalMood.seasons) ? seasonalMood.seasons : [];
+  
+  // Generate insights based on seasonal data
+  const generateInsights = () => {
+    if (seasons.length < 2) {
+      return "Your taste evolves throughout the year. Keep listening to see your seasonal patterns.";
     }
     
-    // Otherwise determine based on current month
-    const month = new Date().getMonth();
-    if (month >= 2 && month <= 4) return 'spring';
-    if (month >= 5 && month <= 7) return 'summer';
-    if (month >= 8 && month <= 10) return 'fall';
-    return 'winter';
-  };
-  
-  const currentSeason = getCurrentSeason();
-  
-  // Get season data with fallbacks
-  const getSeasonData = (season) => {
-    // If the season data exists directly
-    if (seasonalMood[season] && typeof seasonalMood[season] === 'object') {
-      return {
-        genres: Array.isArray(seasonalMood[season].genres) ? seasonalMood[season].genres : [],
-        mood: seasonalMood[season].mood || 'Unknown'
-      };
+    // Find previous season
+    const seasonOrder = ['winter', 'spring', 'summer', 'fall'];
+    const currentIndex = seasonOrder.findIndex(s => 
+      s.toLowerCase() === currentSeasonName.toLowerCase()
+    );
+    
+    if (currentIndex === -1) return "Your taste evolves throughout the year.";
+    
+    const prevIndex = (currentIndex - 1 + 4) % 4;
+    const prevSeasonName = seasonOrder[prevIndex];
+    const prevSeason = seasons.find(s => 
+      s.name.toLowerCase() === prevSeasonName.toLowerCase()
+    );
+    
+    if (!prevSeason) return "Your taste evolves throughout the year.";
+    
+    // Compare current and previous season
+    const currentGenres = currentSeason.topGenres || [];
+    const prevGenres = prevSeason.topGenres || [];
+    
+    if (currentGenres.length === 0 || prevGenres.length === 0) {
+      return "Your taste evolves throughout the year.";
     }
     
-    // Default fallbacks
-    const fallbacks = {
-      spring: { genres: ['Progressive House', 'Melodic House'], mood: 'Uplifting' },
-      summer: { genres: ['Tech House', 'House'], mood: 'Energetic' },
-      fall: { genres: ['Organic House', 'Downtempo'], mood: 'Melancholic' },
-      winter: { genres: ['Deep House', 'Ambient Techno'], mood: 'Introspective' }
-    };
+    // Find unique genres in current season
+    const uniqueCurrentGenres = currentGenres.filter(g => 
+      !prevGenres.includes(g)
+    );
     
-    return fallbacks[season] || { genres: [], mood: 'Unknown' };
+    if (uniqueCurrentGenres.length > 0) {
+      return `Your taste has shifted from ${prevGenres[0]} in ${prevSeason.name} to include ${uniqueCurrentGenres[0]} in ${currentSeason.name}.`;
+    }
+    
+    return `In ${currentSeason.name}, you're gravitating toward ${currentSeason.primaryMood.toLowerCase()} sounds like ${currentGenres[0]}.`;
   };
   
-  // Get data for all seasons
-  const seasons = {
-    spring: getSeasonData('spring'),
-    summer: getSeasonData('summer'),
-    fall: getSeasonData('fall'),
-    winter: getSeasonData('winter')
-  };
-
-  // Season icons and colors
-  const seasonIcons = {
-    spring: '🌸',
-    summer: '☀️',
-    fall: '🍂',
-    winter: '❄️'
-  };
+  const insight = generateInsights();
   
-  const seasonColors = {
-    spring: '#ff9ff3',
-    summer: '#feca57',
-    fall: '#ff6b6b',
-    winter: '#48dbfb'
-  };
-
   return (
     <div className={styles.seasonalMoodCard}>
-      <div className={styles.seasonsGrid}>
-        {Object.entries(seasons).map(([season, data]) => (
-          <div 
-            key={season} 
-            className={`${styles.seasonBox} ${currentSeason === season ? styles.currentSeason : ''}`}
-            style={{ 
-              '--season-color': seasonColors[season],
-              '--season-opacity': currentSeason === season ? '1' : '0.6'
-            }}
-          >
-            <div className={styles.seasonHeader}>
-              <span className={styles.seasonIcon}>{seasonIcons[season]}</span>
-              <span className={styles.seasonName}>{season.charAt(0).toUpperCase() + season.slice(1)}</span>
-            </div>
+      <div className={styles.seasonalVisual}>
+        <div className={styles.seasonCircle}>
+          {seasons.map((season, index) => {
+            const isCurrentSeason = season.name.toLowerCase() === currentSeasonName.toLowerCase();
+            const angle = (index * 90) - 90; // -90, 0, 90, 180 degrees
             
-            <div className={styles.seasonContent}>
-              {data.genres.length > 0 ? (
-                <>
-                  <span className={styles.genreList}>
-                    {data.genres.slice(0, 2).join(', ')}
-                  </span>
-                  <span className={styles.moodLabel}>Keep listening!</span>
-                </>
-              ) : (
-                <span className={styles.comingSoon}>Keep listening!</span>
-              )}
-            </div>
+            return (
+              <div 
+                key={season.name}
+                className={`${styles.seasonSegment} ${isCurrentSeason ? styles.currentSeason : ''}`}
+                style={{ 
+                  transform: `rotate(${angle}deg)`,
+                }}
+              >
+                <div className={styles.seasonContent}>
+                  <span className={styles.seasonName}>{season.name}</span>
+                  {season.topGenres && season.topGenres.length > 0 && (
+                    <span className={styles.seasonGenre}>{season.topGenres[0]}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          
+          <div className={styles.centerCircle}>
+            <span className={styles.yearText}>Year-Round</span>
           </div>
-        ))}
+        </div>
       </div>
       
-      <div className={styles.yearRoundSection}>
-        <h3 className={styles.yearRoundTitle}>Your Year-Round Vibes</h3>
-        <p className={styles.yearRoundDescription}>
-          Your sound evolves with the seasons. We track how your taste changes throughout the year.
-        </p>
+      <div className={styles.seasonalInsights}>
+        <h3 className={styles.insightsTitle}>Your Seasonal Patterns</h3>
+        <p className={styles.insightsText}>{insight}</p>
+        
+        <div className={styles.currentSeasonHighlight}>
+          <h4 className={styles.currentSeasonTitle}>
+            {currentSeasonName} Vibe
+          </h4>
+          
+          {currentSeason.primaryMood && (
+            <div className={styles.moodTag}>
+              <span className={styles.moodLabel}>Mood:</span>
+              <span className={styles.moodValue}>{currentSeason.primaryMood}</span>
+            </div>
+          )}
+          
+          {currentSeason.topGenres && currentSeason.topGenres.length > 0 && (
+            <div className={styles.genreTags}>
+              {currentSeason.topGenres.map((genre, index) => (
+                <span key={index} className={styles.genreTag}>{genre}</span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

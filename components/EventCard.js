@@ -1,140 +1,157 @@
 import React from 'react';
+import Link from 'next/link';
 import styles from '../styles/EventCard.module.css';
+import EventCorrelationIndicator from './EventCorrelationIndicator';
 
-const EventCard = ({ event, correlation = 0 }) => {
-  // Handle missing or malformed data
-  if (!event) {
+const EventCard = ({ event, correlation }) => {
+  // Error handling: Check if event is valid
+  if (!event || typeof event !== 'object') {
     return (
       <div className={styles.eventCard}>
-        <div className={styles.errorState}>
-          <p>Event data unavailable</p>
+        <div className={styles.errorMessage}>
+          <p>Unable to display event information. Invalid event data.</p>
         </div>
       </div>
     );
   }
 
+  // Ensure correlation is a valid number
+  const validCorrelation = typeof correlation === 'number' && !isNaN(correlation) ? correlation : 0;
+  
   // Format date
   const formatDate = (dateString) => {
     try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return 'Date TBA';
-      }
-      return date.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      });
+      if (!dateString) return 'Date TBA';
+      const options = { weekday: 'short', month: 'short', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString('en-US', options);
     } catch (error) {
       console.error('Error formatting date:', error);
       return 'Date TBA';
     }
   };
-
+  
   // Format time
-  const formatTime = (dateString) => {
+  const formatTime = (timeString) => {
     try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return 'Time TBA';
-      }
-      return date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-      });
+      if (!timeString) return 'Time TBA';
+      const options = { hour: 'numeric', minute: '2-digit', hour12: true };
+      return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', options);
     } catch (error) {
       console.error('Error formatting time:', error);
       return 'Time TBA';
     }
   };
-
-  // Calculate match percentage
-  const matchPercentage = typeof correlation === 'number' 
-    ? Math.round(correlation * 100) 
-    : (event.match || event.correlationScore || 0);
-
-  // Extract venue information
-  const venueName = event.venue?.name || event.venue || 'Venue TBA';
-  const venueLocation = event.venue?.location || event.location || 'Location TBA';
-
-  // Extract ticket link
-  const ticketLink = event.ticketLink || event.url || '#';
-
-  // Extract event image
-  const eventImage = event.image || 
-                    (event.images && event.images.length > 0 ? event.images[0].url : null) ||
-                    '/images/event-placeholder.jpg';
-
-  // Extract artists
-  const artists = Array.isArray(event.artists) ? event.artists : 
-                 (event.lineup ? event.lineup : []);
-
-  // Extract genres
-  const genres = Array.isArray(event.genres) ? event.genres : [];
-
+  
+  // Handle venue data which might be a string or an object
+  const getVenueName = () => {
+    if (!event.venue) return 'Venue TBA';
+    if (typeof event.venue === 'string') return event.venue;
+    if (typeof event.venue === 'object' && event.venue.name) return event.venue.name;
+    return 'Venue TBA';
+  };
+  
+  // Handle location data which might be in different formats
+  const getLocationString = () => {
+    // If venue is an object with location
+    if (typeof event.venue === 'object') {
+      if (event.venue.location) return event.venue.location;
+      if (event.venue.city) {
+        return `${event.venue.city}${event.venue.state ? `, ${event.venue.state}` : ''}`;
+      }
+    }
+    
+    // If there's a separate location object
+    if (event.location) {
+      if (typeof event.location === 'string') return event.location;
+      if (typeof event.location === 'object') {
+        const city = event.location.city || '';
+        const region = event.location.region || '';
+        if (city || region) return `${city}${city && region ? ', ' : ''}${region}`;
+      }
+    }
+    
+    return 'Location TBA';
+  };
+  
   return (
     <div className={styles.eventCard}>
       <div className={styles.eventImageContainer}>
-        {eventImage && (
-          <img 
-            src={eventImage} 
-            alt={event.name || 'Event'} 
+        {event.image ? (
+          <div 
             className={styles.eventImage}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = '/images/event-placeholder.jpg';
-            }}
+            style={{ backgroundImage: `url(${event.image})` }}
           />
+        ) : (
+          <div className={styles.eventImagePlaceholder}>
+            <span>{event.name ? event.name.charAt(0) : '?'}</span>
+          </div>
         )}
-        <div className={styles.matchBadge}>
-          <span>{matchPercentage}% Match</span>
+        
+        <div className={styles.eventDate}>
+          <span className={styles.dateValue}>{formatDate(event.date)}</span>
         </div>
       </div>
       
-      <div className={styles.eventContent}>
+      <div className={styles.eventInfo}>
         <h3 className={styles.eventName}>{event.name || 'Unnamed Event'}</h3>
         
         <div className={styles.eventDetails}>
-          <div className={styles.eventDate}>
-            <span className={styles.dateLabel}>{formatDate(event.date)}</span>
-            <span className={styles.timeLabel}>{formatTime(event.date)}</span>
+          <div className={styles.detailItem}>
+            <span className={styles.detailIcon}>📍</span>
+            <span className={styles.detailText}>{getVenueName()}</span>
           </div>
           
-          <div className={styles.eventVenue}>
-            <span className={styles.venueName}>{venueName}</span>
-            <span className={styles.venueLocation}>{venueLocation}</span>
+          <div className={styles.detailItem}>
+            <span className={styles.detailIcon}>📌</span>
+            <span className={styles.detailText}>{getLocationString()}</span>
           </div>
+          
+          <div className={styles.detailItem}>
+            <span className={styles.detailIcon}>🕒</span>
+            <span className={styles.detailText}>{formatTime(event.time)}</span>
+          </div>
+          
+          {event.price && (
+            <div className={styles.detailItem}>
+              <span className={styles.detailIcon}>💲</span>
+              <span className={styles.detailText}>{event.price}</span>
+            </div>
+          )}
         </div>
         
-        {artists.length > 0 && (
-          <div className={styles.eventArtists}>
-            <span className={styles.artistsLabel}>Lineup:</span>
-            <span className={styles.artistsList}>
-              {artists.slice(0, 3).join(', ')}
-              {artists.length > 3 && ' + more'}
-            </span>
-          </div>
-        )}
+        <div className={styles.eventArtists}>
+          <span className={styles.artistsLabel}>Artists:</span>
+          <span className={styles.artistsList}>
+            {Array.isArray(event.artists) && event.artists.length > 0 
+              ? event.artists.join(', ')
+              : 'Artists TBA'}
+          </span>
+        </div>
         
-        {genres.length > 0 && (
-          <div className={styles.eventGenres}>
-            {genres.slice(0, 3).map((genre, index) => (
-              <span key={index} className={styles.genreTag}>
-                {genre}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className={styles.correlationSection}>
+          <EventCorrelationIndicator 
+            correlation={validCorrelation} 
+            matchFactors={event.matchFactors}
+          />
+        </div>
         
         <div className={styles.eventActions}>
-          <a 
-            href={ticketLink} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className={styles.ticketButton}
-          >
-            Get Tickets
-          </a>
+          {event.id && (
+            <Link href={`/events/${event.id}`}>
+              <a className={styles.detailsButton}>View Details</a>
+            </Link>
+          )}
+          
+          {event.ticketLink && (
+            <a 
+              href={event.ticketLink} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className={styles.ticketsButton}
+            >
+              Get Tickets
+            </a>
+          )}
         </div>
       </div>
     </div>

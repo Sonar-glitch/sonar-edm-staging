@@ -1,155 +1,72 @@
 .container {
   min-height: 100vh;
-  background-color: #0a0a14;
-  color: #e0e0ff;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
-.optimizedMain {
+.main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  padding: 2rem 1rem;
+}
+
+.header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.title {
+  font-size: 2rem;
+  margin: 0 0 0.5rem 0;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .summary {
-  background: linear-gradient(90deg, rgba(0,212,255,0.1) 0%, rgba(157,0,255,0.1) 100%);
-  border-radius: 8px;
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
   padding: 1rem;
-  margin-bottom: 1rem;
-  border-left: 4px solid #00d4ff;
+  margin-bottom: 2rem;
+  text-align: center;
+  box-shadow: var(--card-shadow);
+}
+
+.summary p {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.5;
 }
 
 .highlight {
-  color: #00d4ff;
-  font-weight: bold;
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
-.topSection {
+.twoColumnLayout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1rem;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
 
-.artistsTracksSection {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-@media (max-width: 768px) {
-  .topSection, .artistsTracksSection {
-    grid-template-columns: 1fr;
-  }
-}
-
-.genreSection, .seasonalSection, .artistsSection, .tracksSection {
-  background-color: rgba(20, 20, 40, 0.6);
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  height: 100%;
-  position: relative;
-}
-
-.spiderChartContainer {
-  height: 300px;
-  width: 100%;
-  position: relative;
-}
-
-.eventsSection, .vibeQuizSection, .confidenceSection {
-  background-color: rgba(20, 20, 40, 0.6);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.eventsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.noEventsMessage {
-  text-align: center;
-  padding: 2rem;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-}
-
-.refreshButton {
-  background: linear-gradient(90deg, #00d4ff 0%, #9d00ff 100%);
-  color: white;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 50px;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 1rem;
-  transition: all 0.3s ease;
-}
-
-.refreshButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.refreshButton:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.viewMoreContainer {
-  text-align: center;
-  margin-top: 1rem;
-}
-
-.viewMoreButton {
-  background: transparent;
-  color: #00d4ff;
-  border: 1px solid #00d4ff;
-  padding: 0.5rem 1.5rem;
-  border-radius: 50px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  display: inline-block;
-}
-
-.viewMoreButton:hover {
-  background-color: rgba(0, 212, 255, 0.1);
-}
-
-.vibeQuizPrompt {
+.column {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
+  flex-direction: column;
 }
 
-.vibeQuizButton {
-  background: linear-gradient(90deg, #00d4ff 0%, #9d00ff 100%);
-  color: white;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 50px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.vibeQuizButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+.sectionTitle {
+  font-size: 1.5rem;
+  margin: 0 0 1rem 0;
+  color: var(--text-color);
 }
 
 .sectionHeader {
@@ -159,53 +76,107 @@
   margin-bottom: 1rem;
 }
 
-.sectionTitle {
-  font-size: 1.5rem;
-  color: #00d4ff;
-  margin: 0;
+.eventCount {
+  font-size: 1rem;
+  font-weight: normal;
+  color: var(--text-secondary);
 }
 
-.sectionSubtitle {
-  font-size: 1.2rem;
-  color: #00d4ff;
-  margin: 0 0 1rem 0;
+.genreSection, 
+.seasonalSection, 
+.eventsSection, 
+.vibeQuizSection, 
+.artistsSection, 
+.tracksSection {
+  margin-bottom: 2rem;
 }
 
-.dataSourceIndicator {
+.spiderChartContainer {
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+  height: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
-.realDataBadge, .mockDataBadge {
-  font-size: 0.7rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 20px;
-  font-weight: bold;
-}
-
-.realDataBadge {
-  background-color: rgba(0, 255, 128, 0.2);
-  color: #00ff80;
-  border: 1px solid rgba(0, 255, 128, 0.3);
-}
-
-.mockDataBadge {
-  background-color: rgba(255, 192, 0, 0.2);
-  color: #ffc000;
-  border: 1px solid rgba(255, 192, 0, 0.3);
+.eventsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
 .artistsGrid, .tracksGrid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: 1.5rem;
+}
+
+.viewMoreContainer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.viewMoreButton {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: var(--gradient-primary);
+  color: var(--text-color);
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.viewMoreButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.vibeQuizPrompt {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--card-shadow);
+}
+
+.vibeQuizPrompt p {
+  margin: 0;
+}
+
+.vibeQuizButton, .refreshButton {
+  padding: 0.5rem 1rem;
+  background: var(--gradient-primary);
+  color: var(--text-color);
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vibeQuizButton:hover, .refreshButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .noDataMessage {
-  text-align: center;
   padding: 2rem;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.noEventsMessage {
+  padding: 3rem;
+  text-align: center;
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
 }
 
 .loadingContainer, .unauthorizedContainer, .errorContainer, .noDataContainer {
@@ -213,100 +184,56 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 70vh;
+  min-height: 80vh;
   text-align: center;
   padding: 2rem;
 }
 
 .loadingSpinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
   border-radius: 50%;
-  border-top: 4px solid #00d4ff;
-  width: 40px;
-  height: 40px;
+  border-top-color: var(--primary-color);
   animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.title {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  background: linear-gradient(90deg, #00d4ff 0%, #9d00ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.subtitle {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-  opacity: 0.8;
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .connectButton, .retryButton {
-  background: linear-gradient(90deg, #00d4ff 0%, #9d00ff 100%);
-  color: white;
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--gradient-primary);
+  color: var(--text-color);
   border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 50px;
-  font-weight: bold;
-  font-size: 1.1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
+  transition: all 0.2s ease;
 }
 
 .connectButton:hover, .retryButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .errorMessage {
-  color: #ff6b6b;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background-color: rgba(255, 107, 107, 0.1);
-  border-radius: 8px;
-  max-width: 500px;
-}
-
-.confidenceExplanation {
-  padding: 1rem;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-}
-
-.confidenceExplanation h3 {
-  color: #00d4ff;
-  margin-top: 0;
-}
-
-.confidenceFactors {
-  list-style-type: none;
-  padding: 0;
+  color: var(--error-color);
   margin: 1rem 0;
 }
 
-.confidenceFactors li {
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-}
-
-.factorName {
-  color: #00d4ff;
-  font-weight: bold;
-  margin-right: 0.5rem;
-}
-
-.vibeInfluence {
-  font-style: italic;
-  color: #a0a0c0;
-  border-top: 1px solid rgba(0, 212, 255, 0.2);
-  padding-top: 1rem;
-  margin-top: 1rem;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .twoColumnLayout {
+    grid-template-columns: 1fr;
+  }
+  
+  .eventsGrid {
+    grid-template-columns: 1fr;
+  }
 }
