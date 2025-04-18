@@ -69,17 +69,17 @@ export default function Home() {
         
         <div className={styles.featuresContainer}>
           <div className={styles.featureItem}>
-            <span className={`${styles.bullet} ${styles.yellowBullet}`} aria-hidden="true"></span>
+            <span className={`${styles.bullet} ${styles.purpleBullet}`} aria-hidden="true"></span>
             Real events, matched to your taste
           </div>
           
           <div className={styles.featureItem}>
-            <span className={`${styles.bullet} ${styles.yellowBullet}`} aria-hidden="true"></span>
+            <span className={`${styles.bullet} ${styles.pinkBullet}`} aria-hidden="true"></span>
             Your vibe, not just your genre
           </div>
           
           <div className={styles.featureItem}>
-            <span className={`${styles.bullet} ${styles.yellowBullet}`} aria-hidden="true"></span>
+            <span className={`${styles.bullet} ${styles.cyanBullet}`} aria-hidden="true"></span>
             No flyers, no fluff – just your scene
           </div>
         </div>

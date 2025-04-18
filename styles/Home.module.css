@@ -119,8 +119,19 @@
   flex-shrink: 0;
 }
 
-.yellowBullet {
-  background-color: #ffd54f;
+.purpleBullet {
+  background-color: #9966ff;
+  box-shadow: 0 0 10px rgba(153, 102, 255, 0.7);
+}
+
+.pinkBullet {
+  background-color: #ff00ff;
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.7);
+}
+
+.cyanBullet {
+  background-color: #00e5ff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.7);
 }
 
 .footer {
