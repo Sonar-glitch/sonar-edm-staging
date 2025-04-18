@@ -87,11 +87,9 @@
 }
 
 .spotifyIcon {
-  display: inline-flex;
   margin-right: 0.75rem;
   color: white;
-  width: 24px;
-  height: 24px;
+  font-size: 1.5rem;
 }
 
 .featuresContainer {
