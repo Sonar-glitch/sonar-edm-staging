@@ -37,16 +37,10 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         <link rel="icon" href="/favicon.ico" />
         
-        {/* Google Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet" />
-        
-        {/* Open Graph tags for social sharing */}
-        <meta property="og:title" content="TIKO | Find your next night out" />
-        <meta property="og:description" content="Find your next night out. Powered by your vibe." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://sonar-edm-user-50e4fb038f6e.herokuapp.com/" />
+        {/* Cache busting meta tags */}
+        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta httpEquiv="Pragma" content="no-cache" />
+        <meta httpEquiv="Expires" content="0" />
       </Head>
 
       <main className={styles.main}>
@@ -78,17 +72,17 @@ export default function Home() {
         
         <div className={styles.featuresContainer}>
           <div className={styles.featureItem}>
-            <span className={`${styles.bullet} ${styles.purpleBullet}`} aria-hidden="true"></span>
+            <span className={`${styles.bullet} ${styles.yellowBullet}`} aria-hidden="true"></span>
             <p>Real events, matched to your taste</p>
           </div>
           
           <div className={styles.featureItem}>
-            <span className={`${styles.bullet} ${styles.pinkBullet}`} aria-hidden="true"></span>
+            <span className={`${styles.bullet} ${styles.yellowBullet}`} aria-hidden="true"></span>
             <p>Your vibe, not just your genre</p>
           </div>
           
           <div className={styles.featureItem}>
-            <span className={`${styles.bullet} ${styles.blueBullet}`} aria-hidden="true"></span>
+            <span className={`${styles.bullet} ${styles.yellowBullet}`} aria-hidden="true"></span>
             <p>No flyers, no fluff – just your scene</p>
           </div>
         </div>

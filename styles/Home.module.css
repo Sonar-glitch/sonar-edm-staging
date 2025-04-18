@@ -4,10 +4,9 @@
   min-height: 100vh;
   padding: 0;
   background-color: #0a0014;
-  background-image: radial-gradient(circle at 50% 0%, rgba(26, 0, 51, 0.4) 0%, rgba(10, 0, 20, 0) 70%);
+  background-image: radial-gradient(circle at 50% 0%, rgba(255, 213, 79, 0.1) 0%, rgba(10, 0, 20, 0) 70%);
   color: #fff;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   opacity: 0;
   transform: translateY(10px);
   transition: opacity 0.5s ease, transform 0.5s ease;
@@ -24,7 +23,6 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  max-width: 100%;
   width: 100%;
   margin: 0 auto;
   padding: 0;
@@ -34,25 +32,18 @@
   margin-bottom: 1.5rem;
   text-align: center;
   width: 100%;
-  display: flex;
-  justify-content: center;
 }
 
 .logo {
   font-size: 8rem;
   font-weight: 500;
   margin: 0;
-  color: #ff00ff;
-  text-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
+  color: #ffd54f;
+  text-shadow: 0 0 20px rgba(255, 213, 79, 0.8);
   letter-spacing: -0.01em;
   line-height: 0.9;
-  font-family: 'Anton', 'Archivo Black', sans-serif;
-  will-change: text-shadow;
-  transform: translateZ(0);
-  animation: glow 3s infinite ease-in-out;
+  font-family: 'Anton', sans-serif;
   text-transform: uppercase;
-  height: auto;
-  padding-bottom: 0;
 }
 
 .taglineContainer {
@@ -63,11 +54,11 @@
 
 .tagline {
   font-size: 1.75rem;
-  color: #00e5ff;
+  color: #ffd54f;
   margin: 0;
   line-height: 1.4;
   text-align: center;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-weight: 400;
 }
 
@@ -86,25 +77,13 @@
   font-size: 1.25rem;
   font-weight: 500;
   color: white;
-  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
+  background: linear-gradient(90deg, #ffd54f 0%, #ffca28 100%);
   border: none;
   border-radius: 50px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
   max-width: 320px;
-  font-family: 'Inter', sans-serif;
-  will-change: transform;
-  transform: translateZ(0);
-}
-
-.spotifyButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(142, 84, 233, 0.3);
-}
-
-.spotifyButton:active {
-  transform: translateY(0);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .spotifyIcon {
@@ -125,12 +104,13 @@
 }
 
 .featureItem {
+  gap: 0.75rem;
+  line-height: 1.5;
   display: flex;
   align-items: center;
   font-size: 1.125rem;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-weight: 400;
-  letter-spacing: 0;
 }
 
 .bullet {
@@ -141,16 +121,8 @@
   flex-shrink: 0;
 }
 
-.purpleBullet {
-  background-color: #9966ff;
-}
-
-.pinkBullet {
-  background-color: #ff00ff;
-}
-
-.blueBullet {
-  background-color: #00e5ff;
+.yellowBullet {
+  background-color: #ffd54f;
 }
 
 .footer {
@@ -160,83 +132,18 @@
   padding: 2rem 0;
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.6);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-weight: 400;
   width: 100%;
   margin-top: auto;
 }
 
-/* Media Queries for Responsive Design */
 @media (min-width: 640px) {
-  .main {
-    padding: 2rem 0;
-  }
-  
   .logo {
     font-size: 10rem;
   }
-  
+
   .tagline {
     font-size: 2rem;
-  }
-  
-  .spotifyButton {
-    font-size: 1.5rem;
-    padding: 1rem 2.5rem;
-  }
-  
-  .featuresContainer {
-    max-width: 400px;
-  }
-  
-  .featureItem {
-    font-size: 1.25rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .container {
-    padding: 0 2rem;
-  }
-  
-  .logo {
-    font-size: 12rem;
-  }
-  
-  .tagline {
-    font-size: 2.25rem;
-  }
-  
-  .spotifyButton {
-    max-width: 400px;
-  }
-  
-  .featuresContainer {
-    max-width: 500px;
-  }
-}
-
-/* Animation for the logo glow effect */
-@keyframes glow {
-  0% {
-    text-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
-  }
-  50% {
-    text-shadow: 0 0 25px rgba(255, 0, 255, 0.9), 0 0 35px rgba(255, 0, 255, 0.6);
-  }
-  100% {
-    text-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
-  }
-}
-
-/* Optimize for reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .container {
-    transition: none;
-  }
-  
-  .logo {
-    animation: none;
-    text-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
   }
 }
