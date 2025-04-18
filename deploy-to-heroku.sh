@@ -74,7 +74,7 @@ git commit -m "Enhance theme with artist card design and implement theme options
 
 # Deploy to Heroku
 echo -e "${YELLOW}Deploying to Heroku...${NC}"
-git push heroku master
+git push heroku main:master
 
 echo -e "${GREEN}Deployment complete!${NC}"
 echo -e "${GREEN}Your app is now available at: https://sonar-edm-user-50e4fb038f6e.herokuapp.com${NC}"
