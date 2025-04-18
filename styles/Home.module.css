@@ -3,10 +3,19 @@
   flex-direction: column;
   min-height: 100vh;
   padding: 0 1rem;
-  background-color: #000;
+  background-color: #0a0014;
+  background-image: radial-gradient(circle at 50% 0%, #1a0033 0%, #0a0014 70%);
   color: #fff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.container.loaded {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .main {
@@ -34,6 +43,10 @@
   text-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
   letter-spacing: -0.02em;
   line-height: 1;
+  font-family: 'Archivo Black', 'Anton', sans-serif;
+  will-change: text-shadow;
+  transform: translateZ(0);
+  animation: glow 3s infinite ease-in-out;
 }
 
 .taglineContainer {
@@ -47,6 +60,8 @@
   margin: 0;
   line-height: 1.4;
   text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
 }
 
 .spotifyButton {
@@ -57,7 +72,7 @@
   font-size: 1.25rem;
   font-weight: 600;
   color: white;
-  background: linear-gradient(90deg, #1DB954 0%, #4776E6 100%);
+  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
   border: none;
   border-radius: 50px;
   cursor: pointer;
@@ -65,11 +80,14 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
   max-width: 320px;
+  font-family: 'Inter', sans-serif;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .spotifyButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 229, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(142, 84, 233, 0.3);
 }
 
 .spotifyButton:active {
@@ -87,15 +105,17 @@
 .featuresContainer {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
   width: 100%;
   max-width: 320px;
+  margin-left: 1rem;
 }
 
 .featureItem {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   font-size: 1.125rem;
+  font-family: 'Inter', sans-serif;
 }
 
 .bullet {
@@ -103,6 +123,7 @@
   height: 12px;
   border-radius: 50%;
   margin-right: 1rem;
+  margin-top: 0.4rem;
   flex-shrink: 0;
 }
 
@@ -125,6 +146,7 @@
   padding: 2rem 0;
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.7);
+  font-family: 'Inter', sans-serif;
 }
 
 /* Media Queries for Responsive Design */
@@ -190,6 +212,14 @@
   }
 }
 
-.logo {
-  animation: glow 3s infinite ease-in-out;
+/* Optimize for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .container {
+    transition: none;
+  }
+  
+  .logo {
+    animation: none;
+    text-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
+  }
 }
