@@ -1,157 +1,124 @@
-import React, { useState, useRef, useEffect } from 'react';
-import styles from '../styles/Navigation.module.css';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { useSession, signOut } from 'next-auth/react';
+import styles from '../styles/Navigation.module.css';
+import { FaHome, FaUser, FaCalendarAlt, FaMapMarkerAlt, FaCog, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
 
 const Navigation = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  const handleSignOut = async (e) => {
+    e.preventDefault();
+    await signOut({ redirect: false });
+    router.push('/');
+  };
+  
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+  
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
   
   const isActive = (path) => {
     return router.pathname === path ? styles.active : '';
   };
   
-  // Fixed sign-out functionality with direct window.location approach
-  const handleSignOut = async (e) => {
-    e.preventDefault();
-    try {
-      // First try the NextAuth signOut
-      await signOut({ redirect: false });
-      
-      // Then force a redirect regardless of NextAuth's success
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Error during sign out:', error);
-      // Fallback: direct redirect
-      window.location.href = '/';
-    }
-  };
-  
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownOpen(false);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-  
   return (
-    <nav className={styles.navigation}>
-      <div className={styles.logoContainer}>
-        <Link href="/">
-          <a className={styles.logo}>SONAR</a>
-        </Link>
-        <span className={styles.tagline}>Connect with your sound</span>
-      </div>
-      
-      <div className={styles.navLinks}>
-        {status === 'authenticated' && (
-          <>
-            <Link href="/users/music-taste">
-              <a className={`${styles.navLink} ${isActive('/users/music-taste')}`}>
-                Music Taste
-              </a>
-            </Link>
-            <Link href="/users/events">
-              <a className={`${styles.navLink} ${isActive('/users/events')}`}>
-                Events
-              </a>
-            </Link>
-          </>
-        )}
-      </div>
-      
-      <div className={styles.authContainer}>
-        {status === 'loading' ? (
-          <div className={styles.loadingDots}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        ) : status === 'authenticated' ? (
-          <div className={styles.profileDropdown} ref={dropdownRef}>
-            <button 
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className={styles.profileButton}
-            >
-              {session.user?.image ? (
-                <img 
-                  src={session.user.image} 
-                  alt={session.user.name || 'User'} 
-                  className={styles.profileImage}
-                />
-              ) : (
-                <div className={styles.profileInitial}>
-                  {session.user?.name ? session.user.name.charAt(0) : 'U'}
-                </div>
-              )}
-              <span className={styles.profileName}>
-                {session.user?.name ? session.user.name.split(' ')[0] : 'User'}
-              </span>
-              <span className={styles.dropdownArrow}>▼</span>
-            </button>
-            
-            {dropdownOpen && (
-              <div className={styles.dropdownMenu}>
-                <Link href="/users/profile">
-                  <a className={styles.dropdownItem}>
-                    <span className={styles.dropdownIcon}>👤</span>
-                    Profile
-                  </a>
-                </Link>
-                <Link href="/users/settings">
-                  <a className={styles.dropdownItem}>
-                    <span className={styles.dropdownIcon}>⚙️</span>
-                    Settings
-                  </a>
-                </Link>
-                <Link href="/users/account">
-                  <a className={styles.dropdownItem}>
-                    <span className={styles.dropdownIcon}>🔑</span>
-                    Account
-                  </a>
-                </Link>
-                <Link href="/users/appearance">
-                  <a className={styles.dropdownItem}>
-                    <span className={styles.dropdownIcon}>🎨</span>
-                    Appearance
-                  </a>
-                </Link>
-                <Link href="/users/notifications">
-                  <a className={styles.dropdownItem}>
-                    <span className={styles.dropdownIcon}>🔔</span>
-                    Notifications
-                  </a>
-                </Link>
-                <div className={styles.dropdownDivider}></div>
-                <a 
-                  href="#"
-                  onClick={handleSignOut}
-                  className={styles.dropdownItem}
-                >
-                  <span className={styles.dropdownIcon}>🚪</span>
-                  Sign Out
+    <nav className={`${styles.navigation} ${scrolled ? styles.scrolled : ''}`}>
+      <div className={styles.navContainer}>
+        <div className={styles.logoContainer}>
+          <Link href="/">
+            <a className={styles.logo} onClick={closeMobileMenu}>
+              <span className={styles.logoText}>TIKO</span>
+            </a>
+          </Link>
+        </div>
+        
+        <div className={styles.mobileMenuButton} onClick={toggleMobileMenu}>
+          {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+        </div>
+        
+        <div className={`${styles.navLinks} ${mobileMenuOpen ? styles.active : ''}`}>
+          <Link href="/">
+            <a className={`${styles.navLink} ${isActive('/')}`} onClick={closeMobileMenu}>
+              <FaHome className={styles.navIcon} />
+              <span>Home</span>
+            </a>
+          </Link>
+          
+          {status === 'authenticated' && (
+            <>
+              <Link href="/users/music-taste">
+                <a className={`${styles.navLink} ${isActive('/users/music-taste')}`} onClick={closeMobileMenu}>
+                  <FaUser className={styles.navIcon} />
+                  <span>Your Taste</span>
                 </a>
-              </div>
-            )}
-          </div>
-        ) : (
-          <button 
-            onClick={() => signIn('spotify')}
-            className={styles.authButton}
-          >
-            Connect
-          </button>
-        )}
+              </Link>
+              
+              <Link href="/users/events">
+                <a className={`${styles.navLink} ${isActive('/users/events')}`} onClick={closeMobileMenu}>
+                  <FaCalendarAlt className={styles.navIcon} />
+                  <span>Events</span>
+                </a>
+              </Link>
+              
+              <Link href="/users/venues">
+                <a className={`${styles.navLink} ${isActive('/users/venues')}`} onClick={closeMobileMenu}>
+                  <FaMapMarkerAlt className={styles.navIcon} />
+                  <span>Venues</span>
+                </a>
+              </Link>
+              
+              <div className={styles.navDivider}></div>
+              
+              <Link href="/users/profile">
+                <a className={`${styles.navLink} ${isActive('/users/profile')}`} onClick={closeMobileMenu}>
+                  <FaUser className={styles.navIcon} />
+                  <span>Profile</span>
+                </a>
+              </Link>
+              
+              <Link href="/users/settings">
+                <a className={`${styles.navLink} ${isActive('/users/settings')}`} onClick={closeMobileMenu}>
+                  <FaCog className={styles.navIcon} />
+                  <span>Settings</span>
+                </a>
+              </Link>
+              
+              <a href="#" className={styles.navLink} onClick={(e) => { handleSignOut(e); closeMobileMenu(); }}>
+                <FaSignOutAlt className={styles.navIcon} />
+                <span>Sign Out</span>
+              </a>
+            </>
+          )}
+          
+          {status === 'unauthenticated' && (
+            <Link href="/api/auth/signin">
+              <a className={`${styles.navLink} ${styles.signInButton}`} onClick={closeMobileMenu}>
+                <span>Connect with Spotify</span>
+              </a>
+            </Link>
+          )}
+        </div>
       </div>
     </nav>
   );

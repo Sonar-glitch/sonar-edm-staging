@@ -1,179 +1,109 @@
 import React, { useEffect, useRef } from 'react';
+import * as d3 from 'd3';
 import styles from '../styles/SpiderChart.module.css';
 
-const SpiderChart = ({ genres = [] }) => {
-  const canvasRef = useRef(null);
+const SpiderChart = ({ genres }) => {
+  const chartRef = useRef(null);
   
   useEffect(() => {
-    if (!canvasRef.current || !Array.isArray(genres) || genres.length === 0) {
-      return;
-    }
+    if (!genres || genres.length === 0 || !chartRef.current) return;
     
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    // Clear previous chart
+    d3.select(chartRef.current).selectAll("*").remove();
     
-    // Set canvas dimensions with higher resolution for better text rendering
-    const canvasWidth = canvas.offsetWidth;
-    const canvasHeight = canvas.offsetHeight;
-    canvas.width = canvasWidth * 2;
-    canvas.height = canvasHeight * 2;
-    ctx.scale(2, 2);
+    // Chart dimensions
+    const width = 400;
+    const height = 400;
+    const margin = 60;
+    const radius = Math.min(width, height) / 2 - margin;
     
-    // Clear canvas
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    // Create SVG
+    const svg = d3.select(chartRef.current)
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", `translate(${width/2}, ${height/2})`);
     
-    try {
-      drawSpiderChart(ctx, canvasWidth, canvasHeight, genres);
-    } catch (error) {
-      console.error('Error drawing spider chart:', error);
-      drawErrorState(ctx, canvasWidth, canvasHeight);
-    }
+    // Scale for the radius
+    const radialScale = d3.scaleLinear()
+      .domain([0, 100])
+      .range([0, radius]);
+    
+    // Angle for each genre
+    const angleSlice = (Math.PI * 2) / genres.length;
+    
+    // Create circular grid lines
+    const gridLevels = 5;
+    const gridCircles = svg.selectAll(".gridCircle")
+      .data(d3.range(1, gridLevels + 1).reverse())
+      .enter()
+      .append("circle")
+      .attr("class", "gridCircle")
+      .attr("r", d => radius / gridLevels * d)
+      .style("fill", "none")
+      .style("stroke", "rgba(255, 255, 255, 0.1)")
+      .style("stroke-width", 1);
+    
+    // Create axis lines
+    const axes = svg.selectAll(".axis")
+      .data(genres)
+      .enter()
+      .append("g")
+      .attr("class", "axis");
+    
+    axes.append("line")
+      .attr("x1", 0)
+      .attr("y1", 0)
+      .attr("x2", (d, i) => radialScale(100) * Math.cos(angleSlice * i - Math.PI/2))
+      .attr("y2", (d, i) => radialScale(100) * Math.sin(angleSlice * i - Math.PI/2))
+      .style("stroke", "rgba(255, 255, 255, 0.1)")
+      .style("stroke-width", 1);
+    
+    // Add genre labels
+    axes.append("text")
+      .attr("class", styles.axisLabel)
+      .attr("text-anchor", "middle")
+      .attr("dy", "0.35em")
+      .attr("x", (d, i) => radialScale(110) * Math.cos(angleSlice * i - Math.PI/2))
+      .attr("y", (d, i) => radialScale(110) * Math.sin(angleSlice * i - Math.PI/2))
+      .text(d => d.name)
+      .style("fill", "#00ffff")
+      .style("font-size", "12px");
+    
+    // Create the radar chart path
+    const radarLine = d3.lineRadial()
+      .radius(d => radialScale(d.value))
+      .angle((d, i) => i * angleSlice)
+      .curve(d3.curveLinearClosed);
+    
+    // Draw the radar chart path
+    const dataPoints = genres.map(genre => ({ value: genre.score }));
+    
+    svg.append("path")
+      .datum(dataPoints)
+      .attr("class", styles.radarArea)
+      .attr("d", radarLine)
+      .style("fill", "rgba(255, 0, 255, 0.2)")
+      .style("stroke", "#ff00ff")
+      .style("stroke-width", 2);
+    
+    // Add data points
+    svg.selectAll(".dataPoint")
+      .data(dataPoints)
+      .enter()
+      .append("circle")
+      .attr("class", styles.dataPoint)
+      .attr("cx", (d, i) => radialScale(d.value) * Math.cos(angleSlice * i - Math.PI/2))
+      .attr("cy", (d, i) => radialScale(d.value) * Math.sin(angleSlice * i - Math.PI/2))
+      .attr("r", 4)
+      .style("fill", "#ff00ff");
+      
   }, [genres]);
   
-  const drawSpiderChart = (ctx, width, height, genres) => {
-    // Normalize data for display
-    const normalizedGenres = genres.map(genre => {
-      const name = typeof genre === 'string' ? genre : (genre.name || 'Unknown');
-      const value = typeof genre === 'object' && genre.value !== undefined ? 
-                   genre.value : 
-                   (typeof genre === 'object' && genre.score !== undefined ? 
-                   genre.score : 50);
-      return { name, value: Math.min(Math.max(value, 0), 100) };
-    });
-    
-    // Calculate center and radius
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = Math.min(centerX, centerY) * 0.8;
-    
-    // Calculate points for each genre
-    const points = [];
-    const numPoints = normalizedGenres.length;
-    
-    if (numPoints < 3) {
-      throw new Error('Not enough genres to draw a spider chart');
-    }
-    
-    // Draw background web
-    drawWeb(ctx, centerX, centerY, radius, numPoints);
-    
-    // Calculate and draw data points
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (Math.PI * 2 * i) / numPoints - Math.PI / 2;
-      const value = normalizedGenres[i].value / 100;
-      const x = centerX + radius * value * Math.cos(angle);
-      const y = centerY + radius * value * Math.sin(angle);
-      points.push({ x, y });
-    }
-    
-    // Draw data shape
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-      ctx.lineTo(points[i].x, points[i].y);
-    }
-    ctx.lineTo(points[0].x, points[0].y);
-    ctx.fillStyle = 'rgba(0, 212, 255, 0.2)';
-    ctx.fill();
-    
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#00d4ff';
-    ctx.stroke();
-    
-    // Draw data points
-    for (const point of points) {
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#00d4ff';
-      ctx.fill();
-    }
-    
-    // Draw genre labels with improved positioning and wrapping
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (Math.PI * 2 * i) / numPoints - Math.PI / 2;
-      const labelRadius = radius * 1.15; // Position labels slightly outside the web
-      const x = centerX + labelRadius * Math.cos(angle);
-      const y = centerY + labelRadius * Math.sin(angle);
-      
-      // Adjust text alignment based on position
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      // Adjust horizontal alignment based on angle
-      if (angle > Math.PI / 4 && angle < Math.PI * 3 / 4) {
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-      } else if (angle >= Math.PI * 3 / 4 && angle < Math.PI * 5 / 4) {
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-      } else if (angle >= Math.PI * 5 / 4 && angle < Math.PI * 7 / 4) {
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-      } else {
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-      }
-      
-      // Draw text with better visibility
-      const genreName = normalizedGenres[i].name;
-      ctx.font = 'bold 12px Arial';
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillText(genreName, x + 1, y + 1); // Shadow for better readability
-      ctx.fillStyle = '#00d4ff';
-      ctx.fillText(genreName, x, y);
-    }
-  };
-  
-  const drawWeb = (ctx, centerX, centerY, radius, numPoints) => {
-    // Draw concentric circles
-    const numCircles = 4;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineWidth = 1;
-    
-    for (let i = 1; i <= numCircles; i++) {
-      const circleRadius = (radius * i) / numCircles;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, circleRadius, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    
-    // Draw lines from center to each point
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (Math.PI * 2 * i) / numPoints - Math.PI / 2;
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
-      
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.lineTo(x, y);
-      ctx.stroke();
-    }
-  };
-  
-  const drawErrorState = (ctx, width, height) => {
-    ctx.fillStyle = 'rgba(255, 107, 107, 0.2)';
-    ctx.fillRect(0, 0, width, height);
-    
-    ctx.font = '14px Arial';
-    ctx.fillStyle = '#ff6b6b';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Error displaying genre chart', width / 2, height / 2);
-  };
-  
   return (
-    <div className={styles.spiderChartContainer}>
-      <canvas 
-        ref={canvasRef} 
-        className={styles.spiderChart}
-        width="300"
-        height="300"
-      />
-      {(!Array.isArray(genres) || genres.length === 0) && (
-        <div className={styles.noDataOverlay}>
-          <p>No genre data available</p>
-        </div>
-      )}
+    <div className={styles.spiderChartWrapper}>
+      <div ref={chartRef} className={styles.spiderChart}></div>
     </div>
   );
 };

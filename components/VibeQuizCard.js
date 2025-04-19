@@ -2,151 +2,111 @@ import React, { useState } from 'react';
 import styles from '../styles/VibeQuizCard.module.css';
 
 const VibeQuizCard = ({ onSubmit }) => {
-  const [step, setStep] = useState(0);
-  const [selections, setSelections] = useState({
+  const [step, setStep] = useState(1);
+  const [preferences, setPreferences] = useState({
     genres: [],
-    moods: [],
-    venues: [],
-    artists: []
+    mood: 'energetic',
+    tempo: 'medium',
+    discovery: 'balanced',
+    venues: []
   });
-
-  const questions = [
-    {
-      id: 'genres',
-      question: 'What genres are you into right now?',
-      options: [
-        { id: 'house', label: 'House' },
-        { id: 'techno', label: 'Techno' },
-        { id: 'trance', label: 'Trance' },
-        { id: 'dubstep', label: 'Dubstep' },
-        { id: 'dnb', label: 'Drum & Bass' },
-        { id: 'ambient', label: 'Ambient' },
-        { id: 'progressive', label: 'Progressive' },
-        { id: 'melodic', label: 'Melodic' }
-      ]
-    },
-    {
-      id: 'moods',
-      question: 'What mood are you looking for?',
-      options: [
-        { id: 'energetic', label: 'Energetic' },
-        { id: 'chill', label: 'Chill' },
-        { id: 'dark', label: 'Dark' },
-        { id: 'uplifting', label: 'Uplifting' },
-        { id: 'emotional', label: 'Emotional' },
-        { id: 'euphoric', label: 'Euphoric' }
-      ]
-    },
-    {
-      id: 'venues',
-      question: 'What type of venues do you prefer?',
-      options: [
-        { id: 'club', label: 'Club' },
-        { id: 'festival', label: 'Festival' },
-        { id: 'underground', label: 'Underground' },
-        { id: 'warehouse', label: 'Warehouse' },
-        { id: 'outdoor', label: 'Outdoor' }
-      ]
-    },
-    {
-      id: 'artists',
-      question: 'Any specific artists you want to see?',
-      options: [
-        { id: 'local', label: 'Local DJs' },
-        { id: 'international', label: 'International Acts' },
-        { id: 'emerging', label: 'Emerging Artists' },
-        { id: 'headliners', label: 'Headliners' }
-      ]
-    }
+  
+  const genreOptions = [
+    'House', 'Techno', 'Trance', 'Drum & Bass', 'Dubstep', 
+    'Ambient', 'Hardstyle', 'Garage', 'Electro', 'Progressive'
   ];
-
-  const handleSelect = (questionId, optionId) => {
-    setSelections(prev => {
-      const current = [...prev[questionId]];
-      const index = current.indexOf(optionId);
-      
-      if (index === -1) {
-        current.push(optionId);
-      } else {
-        current.splice(index, 1);
-      }
-      
-      return {
-        ...prev,
-        [questionId]: current
-      };
-    });
-  };
-
-  const handleNext = () => {
-    if (step < questions.length - 1) {
-      setStep(step + 1);
+  
+  const moodOptions = ['energetic', 'chill', 'dark', 'euphoric', 'experimental'];
+  const tempoOptions = ['slow', 'medium', 'fast', 'varied'];
+  const discoveryOptions = ['mainstream', 'balanced', 'underground'];
+  const venueOptions = ['clubs', 'festivals', 'warehouses', 'outdoor', 'intimate venues'];
+  
+  const handleGenreToggle = (genre) => {
+    if (preferences.genres.includes(genre)) {
+      setPreferences({
+        ...preferences,
+        genres: preferences.genres.filter(g => g !== genre)
+      });
     } else {
-      handleSubmit();
+      if (preferences.genres.length < 5) {
+        setPreferences({
+          ...preferences,
+          genres: [...preferences.genres, genre]
+        });
+      }
     }
   };
-
-  const handleBack = () => {
-    if (step > 0) {
-      setStep(step - 1);
+  
+  const handleVenueToggle = (venue) => {
+    if (preferences.venues.includes(venue)) {
+      setPreferences({
+        ...preferences,
+        venues: preferences.venues.filter(v => v !== venue)
+      });
+    } else {
+      setPreferences({
+        ...preferences,
+        venues: [...preferences.venues, venue]
+      });
     }
   };
-
+  
   const handleSubmit = () => {
-    if (typeof onSubmit === 'function') {
-      onSubmit(selections);
-    }
+    onSubmit(preferences);
   };
-
-  const currentQuestion = questions[step];
-
-  return (
-    <div className={styles.vibeQuizCard}>
-      <div className={styles.progressBar}>
-        {questions.map((_, index) => (
-          <div 
-            key={index} 
-            className={`${styles.progressStep} ${index <= step ? styles.activeStep : ''}`}
-          ></div>
-        ))}
-      </div>
-      
-      <h3 className={styles.question}>{currentQuestion.question}</h3>
-      
-      <div className={styles.optionsGrid}>
-        {currentQuestion.options.map(option => (
-          <div 
-            key={option.id}
-            className={`${styles.optionCard} ${selections[currentQuestion.id].includes(option.id) ? styles.selectedOption : ''}`}
-            onClick={() => handleSelect(currentQuestion.id, option.id)}
-          >
-            {option.label}
+  
+  const renderStep = () => {
+    switch(step) {
+      case 1:
+        return (
+          <div className={styles.quizStep}>
+            <h3>Select your favorite genres (max 5)</h3>
+            <div className={styles.optionsGrid}>
+              {genreOptions.map(genre => (
+                <button
+                  key={genre}
+                  className={`${styles.optionButton} ${preferences.genres.includes(genre) ? styles.selected : ''}`}
+                  onClick={() => handleGenreToggle(genre)}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
-      
-      <div className={styles.navigationButtons}>
-        <button 
-          className={styles.backButton}
-          onClick={handleBack}
-          disabled={step === 0}
-        >
-          Back
-        </button>
-        
-        <button 
-          className={styles.nextButton}
-          onClick={handleNext}
-        >
-          {step === questions.length - 1 ? 'Submit' : 'Next'}
-        </button>
-      </div>
-      
-      <div className={styles.quizInfo}>
-        <p>Your quiz responses influence 30% of your recommendations, while your listening data accounts for 70%.</p>
-      </div>
-    </div>
-  );
-};
-
-export default VibeQuizCard;
+        );
+      case 2:
+        return (
+          <div className={styles.quizStep}>
+            <h3>What's your preferred mood?</h3>
+            <div className={styles.optionsGrid}>
+              {moodOptions.map(mood => (
+                <button
+                  key={mood}
+                  className={`${styles.optionButton} ${preferences.mood === mood ? styles.selected : ''}`}
+                  onClick={() => setPreferences({...preferences, mood})}
+                >
+                  {mood.charAt(0).toUpperCase() + mood.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      case 3:
+        return (
+          <div className={styles.quizStep}>
+            <h3>What tempo do you prefer?</h3>
+            <div className={styles.optionsGrid}>
+              {tempoOptions.map(tempo => (
+                <button
+                  key={tempo}
+                  className={`${styles.optionButton} ${preferences.tempo === tempo ? styles.selected : ''}`}
+                  onClick={() => setPreferences({...preferences, tempo})}
+                >
+                  {tempo.charAt(0).toUpperCase() + tempo.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      case 4:
+(Content truncated due to size limit. Use line ranges to read in chunks)

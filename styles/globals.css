@@ -3,87 +3,60 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 10, 0, 20;
-  --background-end-rgb: 0, 0, 0;
+  --neon-pink: #ff00ff;
+  --neon-blue: #00ffff;
+  --neon-purple: #9900ff;
+  --dark-bg: #0a0014;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
+html,
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  background-color: var(--dark-bg);
+  color: white;
 }
 
-/* Custom component styles */
-.artist-card {
-  @apply bg-gray-800 bg-opacity-30 rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-1 border border-gray-700;
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
-.event-card {
-  @apply bg-gray-800 bg-opacity-30 rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-1 border border-gray-700;
+* {
+  box-sizing: border-box;
 }
 
-.card-image {
-  @apply w-full h-48 object-cover;
+/* Performance optimizations */
+@layer components {
+  .lazy-load-image-background {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+  }
 }
 
-.card-body {
-  @apply p-4;
+/* Skeleton loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
-.card-title {
-  @apply font-bold text-lg mb-2 truncate;
-}
-
-.badge-primary {
-  @apply bg-neon-blue text-white text-xs px-2 py-1 rounded-full mr-1 mb-1 shadow-neon-blue;
-}
-
-.badge-secondary {
-  @apply bg-neon-pink text-white text-xs px-2 py-1 rounded-full mr-1 mb-1 shadow-neon-pink;
-}
-
-.btn-primary {
-  @apply text-neon-blue hover:text-white hover:bg-neon-blue px-3 py-1 rounded-md transition-colors duration-200 inline-block mt-2 text-sm font-bold;
-}
-
-.btn-secondary {
-  @apply text-neon-pink hover:text-white hover:bg-neon-pink px-3 py-1 rounded-md transition-colors duration-200 inline-block mt-2 text-sm font-bold;
-}
-
-.loading-spinner {
-  @apply flex flex-col items-center justify-center py-12;
-}
-
-.spinner {
-  @apply w-12 h-12 border-4 border-neon-blue border-t-transparent rounded-full animate-spin;
-}
-
-.error-container {
-  @apply p-4 rounded-md bg-red-900 bg-opacity-20 border-l-4 border-red-600 my-4;
-}
-
-.page-container {
-  @apply container mx-auto px-4 py-8 max-w-6xl;
-}
-
-.page-title {
-  @apply text-3xl font-bold mb-6 text-white;
-}
-
-.section-title {
-  @apply text-2xl font-bold mb-4 text-neon-blue;
-}
-
-.grid-layout {
-  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6;
+.skeleton-loading {
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.05) 25%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
 }

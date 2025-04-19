@@ -1,124 +1,87 @@
 import React from 'react';
 import styles from '../styles/SeasonalMoodCard.module.css';
+import { FaSnowflake, FaLeaf, FaSun, FaCanadianMapleLeaf } from 'react-icons/fa';
 
 const SeasonalMoodCard = ({ seasonalMood }) => {
-  // Error handling: Check if seasonalMood is valid
-  if (!seasonalMood || typeof seasonalMood !== 'object') {
-    return (
-      <div className={styles.seasonalMoodCard}>
-        <div className={styles.errorMessage}>
-          <p>Unable to display seasonal mood information. Invalid data.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Get current season
-  const currentSeason = seasonalMood.currentSeason || {};
-  const currentSeasonName = currentSeason.name || seasonalMood.current || 'Current Season';
+  const { currentSeason, previousSeason, seasonalShift } = seasonalMood;
   
-  // Get all seasons
-  const seasons = Array.isArray(seasonalMood.seasons) ? seasonalMood.seasons : [];
-  
-  // Generate insights based on seasonal data
-  const generateInsights = () => {
-    if (seasons.length < 2) {
-      return "Your taste evolves throughout the year. Keep listening to see your seasonal patterns.";
+  const getSeasonIcon = (season) => {
+    switch(season.toLowerCase()) {
+      case 'winter':
+        return <FaSnowflake className={styles.winterIcon} />;
+      case 'spring':
+        return <FaLeaf className={styles.springIcon} />;
+      case 'summer':
+        return <FaSun className={styles.summerIcon} />;
+      case 'fall':
+      case 'autumn':
+        return <FaCanadianMapleLeaf className={styles.fallIcon} />;
+      default:
+        return <FaSun className={styles.defaultIcon} />;
     }
-    
-    // Find previous season
-    const seasonOrder = ['winter', 'spring', 'summer', 'fall'];
-    const currentIndex = seasonOrder.findIndex(s => 
-      s.toLowerCase() === currentSeasonName.toLowerCase()
-    );
-    
-    if (currentIndex === -1) return "Your taste evolves throughout the year.";
-    
-    const prevIndex = (currentIndex - 1 + 4) % 4;
-    const prevSeasonName = seasonOrder[prevIndex];
-    const prevSeason = seasons.find(s => 
-      s.name.toLowerCase() === prevSeasonName.toLowerCase()
-    );
-    
-    if (!prevSeason) return "Your taste evolves throughout the year.";
-    
-    // Compare current and previous season
-    const currentGenres = currentSeason.topGenres || [];
-    const prevGenres = prevSeason.topGenres || [];
-    
-    if (currentGenres.length === 0 || prevGenres.length === 0) {
-      return "Your taste evolves throughout the year.";
-    }
-    
-    // Find unique genres in current season
-    const uniqueCurrentGenres = currentGenres.filter(g => 
-      !prevGenres.includes(g)
-    );
-    
-    if (uniqueCurrentGenres.length > 0) {
-      return `Your taste has shifted from ${prevGenres[0]} in ${prevSeason.name} to include ${uniqueCurrentGenres[0]} in ${currentSeason.name}.`;
-    }
-    
-    return `In ${currentSeason.name}, you're gravitating toward ${currentSeason.primaryMood.toLowerCase()} sounds like ${currentGenres[0]}.`;
   };
   
-  const insight = generateInsights();
+  const getShiftDescription = () => {
+    if (seasonalShift.intensity < 20) {
+      return "Your music taste has been very consistent across seasons.";
+    } else if (seasonalShift.intensity < 50) {
+      return "Your music taste shows moderate seasonal variation.";
+    } else {
+      return "Your music taste changes significantly with the seasons.";
+    }
+  };
   
   return (
     <div className={styles.seasonalMoodCard}>
-      <div className={styles.seasonalVisual}>
-        <div className={styles.seasonCircle}>
-          {seasons.map((season, index) => {
-            const isCurrentSeason = season.name.toLowerCase() === currentSeasonName.toLowerCase();
-            const angle = (index * 90) - 90; // -90, 0, 90, 180 degrees
-            
-            return (
+      <div className={styles.currentSeason}>
+        <div className={styles.seasonHeader}>
+          <h3>Current Season</h3>
+          {getSeasonIcon(currentSeason.name)}
+        </div>
+        <div className={styles.seasonContent}>
+          <p className={styles.seasonName}>{currentSeason.name}</p>
+          <div className={styles.genreList}>
+            <p>Top Genres:</p>
+            <ul>
+              {currentSeason.topGenres.map((genre, index) => (
+                <li key={index}>{genre}</li>
+              ))}
+            </ul>
+          </div>
+          <div className={styles.moodIndicator}>
+            <p>Mood: {currentSeason.mood}</p>
+            <div className={styles.moodBar}>
               <div 
-                key={season.name}
-                className={`${styles.seasonSegment} ${isCurrentSeason ? styles.currentSeason : ''}`}
-                style={{ 
-                  transform: `rotate(${angle}deg)`,
+                className={styles.moodFill} 
+                style={{
+                  width: `${currentSeason.energy}%`,
+                  background: currentSeason.energy > 70 ? 'var(--neon-pink)' : 
+                              currentSeason.energy > 40 ? 'var(--neon-blue)' : 'var(--neon-purple)'
                 }}
-              >
-                <div className={styles.seasonContent}>
-                  <span className={styles.seasonName}>{season.name}</span>
-                  {season.topGenres && season.topGenres.length > 0 && (
-                    <span className={styles.seasonGenre}>{season.topGenres[0]}</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-          
-          <div className={styles.centerCircle}>
-            <span className={styles.yearText}>Year-Round</span>
+              ></div>
+            </div>
           </div>
         </div>
       </div>
       
-      <div className={styles.seasonalInsights}>
-        <h3 className={styles.insightsTitle}>Your Seasonal Patterns</h3>
-        <p className={styles.insightsText}>{insight}</p>
-        
-        <div className={styles.currentSeasonHighlight}>
-          <h4 className={styles.currentSeasonTitle}>
-            {currentSeasonName} Vibe
-          </h4>
-          
-          {currentSeason.primaryMood && (
-            <div className={styles.moodTag}>
-              <span className={styles.moodLabel}>Mood:</span>
-              <span className={styles.moodValue}>{currentSeason.primaryMood}</span>
-            </div>
-          )}
-          
-          {currentSeason.topGenres && currentSeason.topGenres.length > 0 && (
-            <div className={styles.genreTags}>
-              {currentSeason.topGenres.map((genre, index) => (
-                <span key={index} className={styles.genreTag}>{genre}</span>
-              ))}
-            </div>
-          )}
+      <div className={styles.seasonalShift}>
+        <h3>Seasonal Shift</h3>
+        <div className={styles.shiftIndicator}>
+          <div className={styles.shiftBar}>
+            <div 
+              className={styles.shiftFill} 
+              style={{width: `${seasonalShift.intensity}%`}}
+            ></div>
+          </div>
+          <p>{getShiftDescription()}</p>
+        </div>
+        <div className={styles.shiftDetails}>
+          <p>From {previousSeason.name} to {currentSeason.name}:</p>
+          <ul>
+            {seasonalShift.changes.map((change, index) => (
+              <li key={index}>{change}</li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>
