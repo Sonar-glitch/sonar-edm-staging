@@ -55,7 +55,7 @@ heroku config:set DEPLOY_TIMESTAMP=$(date +%s) --app $app_name
 # Commit changes
 echo -e "${YELLOW}Committing changes...${NC}"
 git add .
-git commit -m "Add mongodb, chart.js, react-chartjs-2, and axios dependencies"
+git commit -m "Add all missing dependencies: mongodb, chart.js, react-chartjs-2, axios, and react-icons"
 
 # Deploy to Heroku with force push
 echo -e "${YELLOW}Deploying to Heroku...${NC}"
