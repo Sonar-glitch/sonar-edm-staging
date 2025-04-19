@@ -21,8 +21,13 @@ const MusicTaste = () => {
       fetch('/api/spotify/user-taste')
         .then(res => res.json())
         .then(data => {
-          console.log('userTaste', data);
+          console.log('Fetched taste data:', data);
           setUserTaste(data);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Taste fetch failed:', err);
+          setUserTaste(null);
           setLoading(false);
         });
     } else if (status === 'unauthenticated') {
@@ -43,7 +48,11 @@ const MusicTaste = () => {
       <h1 className={styles.pageTitle}>Your Sonic Signature</h1>
 
       <div className={styles.chartWrapper}>
-        {userTaste.genres && <SpiderChart data={userTaste.genres} />}
+        {userTaste.topGenres?.length > 0 ? (
+          <SpiderChart data={userTaste.topGenres} />
+        ) : (
+          <p className={styles.placeholder}>No genre data available.</p>
+        )}
       </div>
 
       <div className={styles.moodSection}>
@@ -63,8 +72,8 @@ const MusicTaste = () => {
         </div>
         <div>
           <p className={styles.sectionLabel}>Repeat Track</p>
-          {userTaste.repeatTrack ? (
-            <TrackCard track={userTaste.repeatTrack} />
+          {userTaste.topTrack ? (
+            <TrackCard track={userTaste.topTrack} />
           ) : (
             <p className={styles.placeholder}>No track data</p>
           )}
@@ -77,8 +86,8 @@ const MusicTaste = () => {
 
       <div className={styles.eventsHeader}>Events You’ll Like</div>
       <div className={styles.eventList}>
-        {Array.isArray(userTaste.recommendedEvents) && userTaste.recommendedEvents.length > 0 ? (
-          userTaste.recommendedEvents.map(event => (
+        {Array.isArray(userTaste.matchedEvents) && userTaste.matchedEvents.length > 0 ? (
+          userTaste.matchedEvents.map(event => (
             <EventCard key={event.id} event={event} />
           ))
         ) : (
