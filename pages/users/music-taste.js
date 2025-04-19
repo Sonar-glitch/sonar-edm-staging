@@ -3,25 +3,14 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useInView } from 'react-intersection-observer';
-import dynamic from 'next/dynamic';
 import LoadingSkeleton from '../../components/music-taste/LoadingSkeleton';
 import ArtistSection from '../../components/music-taste/ArtistSection';
 import EventSection from '../../components/music-taste/EventSection';
 import Navigation from '../../components/Navigation';
-import { SkeletonCard, SkeletonSpiderChart } from '../../components/SkeletonLoaders';
+import SpiderChart from '../../components/SpiderChart';
+import SeasonalMoodCard from '../../components/SeasonalMoodCard';
 
-// Dynamic imports with loading fallbacks
-const SpiderChart = dynamic(() => import('../../components/SpiderChart'), { 
-  ssr: false,
-  loading: () => <SkeletonSpiderChart />
-});
-
-const SeasonalMoodCard = dynamic(() => import('../../components/SeasonalMoodCard'), { 
-  ssr: false,
-  loading: () => <SkeletonCard height="300px" />
-});
-
-// Safe localStorage access
+// Safe localStorage access with caching
 const safeStorage = {
   get: (key) => {
     try { return JSON.parse(localStorage.getItem(key)); } 
@@ -56,27 +45,25 @@ const MusicTaste = () => {
     try {
       setLoading(true);
       
-      // Cache configuration
-      const cacheKey = 'userTasteData';
-      const cacheExpiry = 3600000; // 1 hour in milliseconds
-      
-      // Try to get from cache first
-      const cachedData = safeStorage.get(cacheKey);
-      const cacheTimestamp = safeStorage.get(cacheKey + '_timestamp');
+      // Try cache first
+      const cached = safeStorage.get('userTasteData');
+      const cacheTime = safeStorage.get('userTasteData_timestamp');
       const now = Date.now();
       
-      // Use cache if valid and not expired
-      if (cachedData && cacheTimestamp && (now - cacheTimestamp < cacheExpiry)) {
+      // Use cache if less than 1 hour old
+      if (cached && cacheTime && (now - cacheTime < 3600000)) {
         console.log('Using cached data');
-        setUserTaste(cachedData);
+        setUserTaste(cached);
         setLoading(false);
         
-        // Fetch in background to update cache silently
-        setTimeout(() => fetchAndUpdateCache(), 100);
+        // Refresh cache in background after 5 seconds
+        setTimeout(() => {
+          refreshCacheInBackground();
+        }, 5000);
+        
         return;
       }
       
-      // No valid cache, fetch from API
       const response = await fetch('/api/spotify/user-taste');
       
       if (!response.ok) {
@@ -85,13 +72,14 @@ const MusicTaste = () => {
       
       const data = await response.json();
       
-      // Validate and process data
+      // Validate data
       const validData = {
         topArtists: Array.isArray(data.topArtists) ? data.topArtists : [],
         topTracks: Array.isArray(data.topTracks) ? data.topTracks : [],
         events: Array.isArray(data.events) ? data.events : [],
         location: data.location || { city: 'Unknown', country: 'Unknown' },
         genres: Array.isArray(data.genres) ? data.genres : [],
+        // Add seasonal mood data with defaults if not present
         seasonalMood: data.seasonalMood || {
           currentSeason: {
             name: 'Spring',
@@ -114,34 +102,36 @@ const MusicTaste = () => {
         }
       };
       
-      // Update state and cache
       setUserTaste(validData);
-      safeStorage.set(cacheKey, validData);
-      safeStorage.set(cacheKey + '_timestamp', now);
+      
+      // Cache the result
+      safeStorage.set('userTasteData', validData);
+      safeStorage.set('userTasteData_timestamp', now);
       
     } catch (err) {
       console.error('Error:', err);
       setError(err.message);
       
-      // Try cached data as fallback
+      // Try cached data
       const cached = safeStorage.get('userTasteData');
       if (cached) {
         setUserTaste(cached);
-        console.log('Using cached data due to error');
+        alert('Using cached data due to error.');
       }
     } finally {
       setLoading(false);
     }
   };
-
-  // Helper function to update cache in background
-  const fetchAndUpdateCache = async () => {
+  
+  // Background refresh function to update cache without affecting UI
+  const refreshCacheInBackground = async () => {
     try {
       const response = await fetch('/api/spotify/user-taste');
+      
       if (response.ok) {
         const data = await response.json();
         
-        // Validate and process data
+        // Validate data
         const validData = {
           topArtists: Array.isArray(data.topArtists) ? data.topArtists : [],
           topTracks: Array.isArray(data.topTracks) ? data.topTracks : [],
@@ -170,13 +160,13 @@ const MusicTaste = () => {
           }
         };
         
-        // Update cache silently
+        // Update cache only, don't affect UI
         safeStorage.set('userTasteData', validData);
         safeStorage.set('userTasteData_timestamp', Date.now());
         console.log('Cache updated in background');
       }
     } catch (err) {
-      console.error('Background fetch error:', err);
+      console.error('Background refresh error:', err);
     }
   };
   
@@ -187,8 +177,6 @@ const MusicTaste = () => {
           <title>Your Sound | Sonar</title>
           <link rel="preconnect" href="https://i.scdn.co" />
           <link rel="preconnect" href="https://mosaic.scdn.co" />
-          <link rel="dns-prefetch" href="https://i.scdn.co" />
-          <link rel="dns-prefetch" href="https://mosaic.scdn.co" />
         </Head>
         <Navigation />
         <div className="page-container">
@@ -205,11 +193,7 @@ const MusicTaste = () => {
   if (error && !userTaste) {
     return (
       <>
-        <Head>
-          <title>Your Sound | Sonar</title>
-          <link rel="preconnect" href="https://i.scdn.co" />
-          <link rel="preconnect" href="https://mosaic.scdn.co" />
-        </Head>
+        <Head><title>Your Sound | Sonar</title></Head>
         <Navigation />
         <div className="page-container">
           <h1 className="page-title">Your Sound | Sonar</h1>
@@ -225,35 +209,25 @@ const MusicTaste = () => {
           </div>
         </div>
       </>
-    ) ;
+    );
   }
   
   if (!userTaste) {
     return (
       <>
-        <Head>
-          <title>Your Sound | Sonar</title>
-          <link rel="preconnect" href="https://i.scdn.co" />
-          <link rel="preconnect" href="https://mosaic.scdn.co" />
-        </Head>
+        <Head><title>Your Sound | Sonar</title></Head>
         <Navigation />
         <div className="page-container">
           <h1 className="page-title">Your Sound | Sonar</h1>
           <p>No data available. Please connect your Spotify account.</p>
         </div>
       </>
-    ) ;
+    );
   }
   
   return (
     <>
-      <Head>
-        <title>Your Sound | Sonar</title>
-        <link rel="preconnect" href="https://i.scdn.co" />
-        <link rel="preconnect" href="https://mosaic.scdn.co" />
-        <link rel="dns-prefetch" href="https://i.scdn.co" />
-        <link rel="dns-prefetch" href="https://mosaic.scdn.co" />
-      </Head>
+      <Head><title>Your Sound | Sonar</title></Head>
       <Navigation />
       <div className="page-container">
         <h1 className="page-title">Your Sound | Sonar</h1>
@@ -271,7 +245,7 @@ const MusicTaste = () => {
           {genreInView && userTaste.genres.length > 0 && (
             <SpiderChart genres={userTaste.genres.map(genre => ({
               name: genre,
-              score: Math.floor(Math.random()  * 40) + 60 // Generate random scores between 60-100 if real scores not available
+              score: Math.floor(Math.random() * 40) + 60 // Generate random scores between 60-100 if real scores not available
             }))} />
           )}
         </div>
