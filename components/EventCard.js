@@ -1,92 +1,51 @@
 import React from 'react';
-import { Box, Image, Heading, Text, Link, Badge, Flex } from '@chakra-ui/react';
-import SafeContent from './common/SafeContent';
 
 const EventCard = ({ event }) => {
-  // Ensure event is an object
-  if (!event || typeof event !== 'object') {
-    return null;
-  }
+  if (!event) return null;
   
-  // Extract properties with fallbacks
-  const {
-    name = 'Unknown Event',
-    images = [],
-    date = '',
-    venue = {},
-    ticketUrl = '#',
-    artists = []
-  } = event;
-  
-  // Safely get image URL
-  const imageUrl = images && images.length > 0 && images[0].url 
-    ? images[0].url 
-    : 'https://via.placeholder.com/300?text=No+Image';
-  
-  // Format date safely
-  const formattedDate = date ? new Date(date).toLocaleDateString() : 'Date TBA';
-  
-  // Safely get venue info
-  const venueName = venue && venue.name ? venue.name : 'Venue TBA';
-  const venueLocation = venue && venue.location ? venue.location : 'Location TBA';
+  const name = event.name || 'Unknown Event';
+  const imageUrl = event.images && event.images[0] ? event.images[0].url : 'https://via.placeholder.com/300?text=No+Image';
+  const date = event.date ? new Date(event.date).toLocaleDateString() : 'Date TBA';
+  const venueName = event.venue && event.venue.name ? event.venue.name : 'Venue TBA';
+  const location = event.venue && event.venue.location ? event.venue.location : 'Location TBA';
+  const artists = event.artists || [];
+  const ticketUrl = event.ticketUrl || '#';
   
   return (
-    <Box 
-      borderWidth="1px" 
-      borderRadius="lg" 
-      overflow="hidden" 
-      bg="rgba(0, 0, 0, 0.3)"
-      transition="transform 0.3s"
-      _hover={{ transform: 'translateY(-5px)' }}
-    >
-      <Image 
-        src={imageUrl} 
-        alt={`${name} event image`}
-        fallbackSrc="https://via.placeholder.com/300?text=Loading..."
-        width="100%"
-        height="200px"
-        objectFit="cover"
-        loading="lazy"
-      />
-      
-      <Box p={4}>
-        <Heading as="h3" size="md" mb={2} isTruncated>
-          {name}
-        </Heading>
-        
-        <Text fontSize="sm" mb={2}>
-          <strong>Date:</strong> {formattedDate}
-        </Text>
-        
-        <Text fontSize="sm" mb={2}>
-          <strong>Venue:</strong> {venueName}
-        </Text>
-        
-        <Text fontSize="sm" mb={3}>
-          <strong>Location:</strong> {venueLocation}
-        </Text>
-        
-        {artists && artists.length > 0 && (
-          <Flex flexWrap="wrap" mb={3}>
-            {artists.slice(0, 3).map((artist, index) => (
-              <Badge key={index} colorScheme="purple" mr={1} mb={1}>
-                {typeof artist === 'string' ? artist : (artist.name || 'Unknown Artist')}
-              </Badge>
+    <div className="bg-gray-800 bg-opacity-30 rounded-lg overflow-hidden">
+      <div className="h-40 overflow-hidden">
+        <img 
+          src={imageUrl} 
+          alt={name} 
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={(e) => {e.target.src = 'https://via.placeholder.com/300?text=No+Image'}}
+        />
+      </div>
+      <div className="p-4">
+        <h3 className="font-bold text-lg mb-2 truncate">{name}</h3>
+        <p className="text-sm mb-2"><strong>Date:</strong> {date}</p>
+        <p className="text-sm mb-2"><strong>Venue:</strong> {venueName}</p>
+        <p className="text-sm mb-3"><strong>Location:</strong> {location}</p>
+        {artists.length > 0 && (
+          <div className="flex flex-wrap mb-3">
+            {artists.slice(0, 2).map((artist, i) => (
+              <span key={i} className="bg-purple-600 text-xs px-2 py-1 rounded-full mr-1 mb-1">
+                {typeof artist === 'string' ? artist : (artist.name || 'Unknown')}
+              </span>
             ))}
-          </Flex>
+          </div>
         )}
-        
-        <Link 
+        <a 
           href={ticketUrl}
-          isExternal
-          color="cyan.400"
-          fontWeight="bold"
-          fontSize="sm"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-purple-400 hover:text-purple-300 text-sm font-bold"
         >
           Get Tickets
-        </Link>
-      </Box>
-    </Box>
+        </a>
+      </div>
+    </div>
   );
 };
 

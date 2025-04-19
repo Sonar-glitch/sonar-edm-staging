@@ -9,7 +9,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}=== TIKO - Simplified Deployment Script ===${NC}"
-echo -e "${BLUE}This script will deploy your TIKO platform with simplified configuration to Heroku${NC}\n"
+echo -e "${BLUE}This script will deploy your TIKO platform with simplified components to Heroku${NC}\n"
 
 # Check if heroku CLI is installed
 if ! command -v heroku &> /dev/null; then
@@ -55,7 +55,7 @@ heroku config:set DEPLOY_TIMESTAMP=$(date +%s) --app $app_name
 # Commit changes
 echo -e "${YELLOW}Committing changes...${NC}"
 git add .
-git commit -m "Fix next.config.js with simplified configuration"
+git commit -m "Implement simplified components to avoid truncation issues"
 
 # Deploy to Heroku with force push
 echo -e "${YELLOW}Deploying to Heroku...${NC}"

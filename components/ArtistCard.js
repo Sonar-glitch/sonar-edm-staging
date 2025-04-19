@@ -1,84 +1,45 @@
 import React from 'react';
-import { Box, Image, Heading, Text, Link, Badge, Flex } from '@chakra-ui/react';
-import NextLink from 'next/link';
-import SafeContent from './common/SafeContent';
 
 const ArtistCard = ({ artist }) => {
-  // Ensure artist is an object
-  if (!artist || typeof artist !== 'object') {
-    return null;
-  }
+  if (!artist) return null;
   
-  // Extract properties with fallbacks
-  const {
-    name = 'Unknown Artist',
-    images = [],
-    genres = [],
-    popularity = 0,
-    external_urls = {},
-    id = ''
-  } = artist;
-  
-  // Safely get image URL
-  const imageUrl = images && images.length > 0 && images[0].url 
-    ? images[0].url 
-    : 'https://via.placeholder.com/300?text=No+Image';
-  
-  // Safely get Spotify URL
-  const spotifyUrl = external_urls && external_urls.spotify 
-    ? external_urls.spotify 
-    : '#';
+  const name = artist.name || 'Unknown Artist';
+  const imageUrl = artist.images && artist.images[0] ? artist.images[0].url : 'https://via.placeholder.com/300?text=No+Image';
+  const genres = artist.genres || [];
+  const popularity = artist.popularity || 0;
+  const spotifyUrl = artist.external_urls && artist.external_urls.spotify ? artist.external_urls.spotify : '#';
   
   return (
-    <Box 
-      borderWidth="1px" 
-      borderRadius="lg" 
-      overflow="hidden" 
-      bg="rgba(0, 0, 0, 0.3)"
-      transition="transform 0.3s"
-      _hover={{ transform: 'translateY(-5px)' }}
-    >
-      <Image 
-        src={imageUrl} 
-        alt={`${name} image`}
-        fallbackSrc="https://via.placeholder.com/300?text=Loading..."
-        width="100%"
-        height="200px"
-        objectFit="cover"
-        loading="lazy"
-      />
-      
-      <Box p={4}>
-        <Heading as="h3" size="md" mb={2} isTruncated>
-          {name}
-        </Heading>
-        
-        {genres && genres.length > 0 && (
-          <Flex flexWrap="wrap" mb={2}>
-            {genres.slice(0, 3).map((genre, index) => (
-              <Badge key={index} colorScheme="purple" mr={1} mb={1}>
-                {genre}
-              </Badge>
+    <div className="bg-gray-800 bg-opacity-30 rounded-lg overflow-hidden">
+      <div className="h-40 overflow-hidden">
+        <img 
+          src={imageUrl} 
+          alt={name} 
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={(e) => {e.target.src = 'https://via.placeholder.com/300?text=No+Image'}}
+        />
+      </div>
+      <div className="p-4">
+        <h3 className="font-bold text-lg mb-2 truncate">{name}</h3>
+        {genres.length > 0 && (
+          <div className="flex flex-wrap mb-2">
+            {genres.slice(0, 2).map((genre, i) => (
+              <span key={i} className="bg-blue-600 text-xs px-2 py-1 rounded-full mr-1 mb-1">{genre}</span>
             ))}
-          </Flex>
+          </div>
         )}
-        
-        <Text fontSize="sm" mb={3}>
-          Popularity: {popularity}/100
-        </Text>
-        
-        <Link 
-          as={NextLink}
+        <p className="text-sm mb-3">Popularity: {popularity}/100</p>
+        <a 
           href={spotifyUrl}
-          isExternal
-          color="green.400"
-          fontWeight="bold"
-          fontSize="sm"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300 text-sm font-bold"
         >
           View on Spotify
-        </Link>
-      </Box>
-    </Box>
+        </a>
+      </div>
+    </div>
   );
 };
 

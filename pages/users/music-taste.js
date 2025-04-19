@@ -1,86 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import ErrorBoundary from '../../components/common/ErrorBoundary';
 import LoadingSkeleton from '../../components/music-taste/LoadingSkeleton';
-import ErrorDisplay from '../../components/music-taste/ErrorDisplay';
 import ArtistSection from '../../components/music-taste/ArtistSection';
 import EventSection from '../../components/music-taste/EventSection';
-import LoadingSpinner from '../../components/music-taste/LoadingSpinner';
 
-// Safely access localStorage with try/catch
-const safeLocalStorage = {
-  getItem: (key) => {
-    try {
-      return localStorage.getItem(key);
-    } catch (e) {
-      console.error('Error accessing localStorage:', e);
-      return null;
-    }
+// Safe localStorage access
+const safeStorage = {
+  get: (key) => {
+    try { return JSON.parse(localStorage.getItem(key)); } 
+    catch (e) { return null; }
   },
-  setItem: (key, value) => {
-    try {
-      localStorage.setItem(key, value);
-    } catch (e) {
-      console.error('Error setting localStorage:', e);
-    }
+  set: (key, value) => {
+    try { localStorage.setItem(key, JSON.stringify(value)); } 
+    catch (e) { console.error('Storage error:', e); }
   }
 };
 
 const MusicTaste = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
   const [userTaste, setUserTaste] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Add timeout state to handle API timeouts
-  const [isTimedOut, setIsTimedOut] = useState(false);
-  
   useEffect(() => {
-    // Set a timeout for API calls
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        setIsTimedOut(true);
-        // Try to use cached data if available
-        const cachedData = safeLocalStorage.getItem('userTasteData');
-        if (cachedData) {
-          try {
-            setUserTaste(JSON.parse(cachedData));
-            setLoading(false);
-          } catch (e) {
-            console.error('Error parsing cached data:', e);
-          }
-        }
-      }
-    }, 15000); // 15 second timeout
-    
-    return () => clearTimeout(timeoutId);
-  }, [loading]);
-  
-  useEffect(() => {
-    // Only fetch if authenticated
     if (status === 'authenticated') {
       fetchUserTaste();
     } else if (status === 'unauthenticated') {
-      // Redirect to home if not authenticated
       router.push('/');
     }
-    
-    // Cleanup function
-    return () => {
-      // Any cleanup needed
-    };
   }, [status]);
   
   const fetchUserTaste = async () => {
     try {
       setLoading(true);
-      setError(null);
-      
       const response = await fetch('/api/spotify/user-taste');
       
       if (!response.ok) {
@@ -89,13 +44,8 @@ const MusicTaste = () => {
       
       const data = await response.json();
       
-      // Validate data structure to prevent null reference errors
-      if (!data || typeof data !== 'object') {
-        throw new Error('Invalid data format received');
-      }
-      
-      // Ensure required properties exist
-      const validatedData = {
+      // Validate data
+      const validData = {
         topArtists: Array.isArray(data.topArtists) ? data.topArtists : [],
         topTracks: Array.isArray(data.topTracks) ? data.topTracks : [],
         events: Array.isArray(data.events) ? data.events : [],
@@ -103,78 +53,67 @@ const MusicTaste = () => {
         genres: Array.isArray(data.genres) ? data.genres : []
       };
       
-      setUserTaste(validatedData);
-      
-      // Cache the validated data
-      safeLocalStorage.setItem('userTasteData', JSON.stringify(validatedData));
+      setUserTaste(validData);
+      safeStorage.set('userTasteData', validData);
       
     } catch (err) {
-      console.error('Error fetching user taste:', err);
-      setError(err.message || 'Failed to load your music taste data');
+      console.error('Error:', err);
+      setError(err.message);
       
-      // Try to use cached data if available
-      const cachedData = safeLocalStorage.getItem('userTasteData');
-      if (cachedData) {
-        try {
-          setUserTaste(JSON.parse(cachedData));
-          // Show toast notification
-          alert('Using cached data. We encountered an error but loaded your previous data.');
-        } catch (e) {
-          console.error('Error parsing cached data:', e);
-        }
+      // Try cached data
+      const cached = safeStorage.get('userTasteData');
+      if (cached) {
+        setUserTaste(cached);
+        alert('Using cached data due to error.');
       }
     } finally {
       setLoading(false);
     }
   };
   
-  // Render loading state
   if (loading) {
     return (
       <>
-        <Head>
-          <title>Your Sound | Sonar</title>
-        </Head>
-        <div className="container-xl py-8">
+        <Head><title>Your Sound | Sonar</title></Head>
+        <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
-          {isTimedOut ? (
-            <ErrorDisplay 
-              message="Taking longer than expected. Please wait or refresh the page." 
-              retry={fetchUserTaste} 
-            />
-          ) : (
-            <LoadingSpinner message="Loading your vibe..." />
-          )}
+          <div className="text-center py-10">
+            <div className="inline-block animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+            <p className="text-xl">Loading your vibe...</p>
+          </div>
         </div>
       </>
     );
   }
   
-  // Render error state
   if (error && !userTaste) {
     return (
       <>
-        <Head>
-          <title>Your Sound | Sonar</title>
-        </Head>
-        <div className="container-xl py-8">
+        <Head><title>Your Sound | Sonar</title></Head>
+        <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
-          <ErrorDisplay message={error} retry={fetchUserTaste} />
+          <div className="bg-red-900 bg-opacity-20 border-l-4 border-red-600 p-4 rounded">
+            <h3 className="font-bold">Error</h3>
+            <p>{error}</p>
+            <button 
+              onClick={fetchUserTaste}
+              className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </>
     );
   }
   
-  // Safely check if userTaste exists before rendering
   if (!userTaste) {
     return (
       <>
-        <Head>
-          <title>Your Sound | Sonar</title>
-        </Head>
-        <div className="container-xl py-8">
+        <Head><title>Your Sound | Sonar</title></Head>
+        <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
-          <p>No music taste data available. Please connect your Spotify account.</p>
+          <p>No data available. Please connect your Spotify account.</p>
         </div>
       </>
     );
@@ -182,32 +121,19 @@ const MusicTaste = () => {
   
   return (
     <>
-      <Head>
-        <title>Your Sound | Sonar</title>
-      </Head>
-      <div className="container-xl py-8">
+      <Head><title>Your Sound | Sonar</title></Head>
+      <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
         
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">
-            Your Location
-          </h2>
+          <h2 className="text-2xl font-bold mb-4">Your Location</h2>
           <p className="text-xl">
-            {userTaste.location && (
-              <>
-                {userTaste.location.city || 'Unknown City'}, {userTaste.location.country || 'Unknown Country'}
-              </>
-            )}
+            {userTaste.location.city || 'Unknown'}, {userTaste.location.country || 'Unknown'}
           </p>
         </div>
         
-        <ErrorBoundary>
-          <ArtistSection artists={userTaste.topArtists || []} />
-        </ErrorBoundary>
-        
-        <ErrorBoundary>
-          <EventSection events={userTaste.events || []} />
-        </ErrorBoundary>
+        <ArtistSection artists={userTaste.topArtists} />
+        <EventSection events={userTaste.events} />
       </div>
     </>
   );
