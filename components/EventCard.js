@@ -34,5 +34,60 @@ const EventCard = ({ event }) => {
     <Box 
       borderWidth="1px" 
       borderRadius="lg" 
-      overflow="hidden
-(Content truncated due to size limit. Use line ranges to read in chunks)
+      overflow="hidden" 
+      bg="rgba(0, 0, 0, 0.3)"
+      transition="transform 0.3s"
+      _hover={{ transform: 'translateY(-5px)' }}
+    >
+      <Image 
+        src={imageUrl} 
+        alt={`${name} event image`}
+        fallbackSrc="https://via.placeholder.com/300?text=Loading..."
+        width="100%"
+        height="200px"
+        objectFit="cover"
+        loading="lazy"
+      />
+      
+      <Box p={4}>
+        <Heading as="h3" size="md" mb={2} isTruncated>
+          {name}
+        </Heading>
+        
+        <Text fontSize="sm" mb={2}>
+          <strong>Date:</strong> {formattedDate}
+        </Text>
+        
+        <Text fontSize="sm" mb={2}>
+          <strong>Venue:</strong> {venueName}
+        </Text>
+        
+        <Text fontSize="sm" mb={3}>
+          <strong>Location:</strong> {venueLocation}
+        </Text>
+        
+        {artists && artists.length > 0 && (
+          <Flex flexWrap="wrap" mb={3}>
+            {artists.slice(0, 3).map((artist, index) => (
+              <Badge key={index} colorScheme="purple" mr={1} mb={1}>
+                {typeof artist === 'string' ? artist : (artist.name || 'Unknown Artist')}
+              </Badge>
+            ))}
+          </Flex>
+        )}
+        
+        <Link 
+          href={ticketUrl}
+          isExternal
+          color="cyan.400"
+          fontWeight="bold"
+          fontSize="sm"
+        >
+          Get Tickets
+        </Link>
+      </Box>
+    </Box>
+  );
+};
+
+export default EventCard;
