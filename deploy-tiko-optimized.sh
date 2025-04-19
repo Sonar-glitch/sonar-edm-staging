@@ -1,5 +1,5 @@
 #!/bin/bash
-# TIKO React Icons Style Deployment Script
+# TIKO Performance Optimization Deployment Script
 
 # Set colors for better readability
 GREEN='\033[0;32m'
@@ -8,8 +8,8 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}=== TIKO - React Icons Style Deployment Script ===${NC}"
-echo -e "${BLUE}This script will deploy your TIKO design with React Icons to Heroku${NC}\n"
+echo -e "${BLUE}=== TIKO - Performance Optimization Deployment Script ===${NC}"
+echo -e "${BLUE}This script will deploy your TIKO platform with performance optimizations to Heroku${NC}\n"
 
 # Check if heroku CLI is installed
 if ! command -v heroku &> /dev/null; then
@@ -47,21 +47,20 @@ fi
 echo -e "${YELLOW}Setting environment variables...${NC}"
 heroku config:set NEXTAUTH_URL=https://sonar-edm-user-50e4fb038f6e.herokuapp.com --app $app_name
 heroku config:set NODE_ENV=production --app $app_name
-heroku config:set DEPLOY_TIMESTAMP=$(date +%s) --app $app_name
 
-# Clear Heroku build cache
-echo -e "${YELLOW}Clearing Heroku build cache...${NC}"
-heroku builds:cache:purge --app $app_name --confirm $app_name
+# Set a timestamp environment variable to force a clean build
+echo -e "${YELLOW}Setting timestamp to force a clean build...${NC}"
+heroku config:set DEPLOY_TIMESTAMP=$(date +%s)  --app $app_name
 
 # Commit changes
 echo -e "${YELLOW}Committing changes...${NC}"
 git add .
-git commit -m "Implement React Icons style while preserving authentication"
+git commit -m "Implement performance optimizations"
 
 # Deploy to Heroku with force push
 echo -e "${YELLOW}Deploying to Heroku...${NC}"
 git push heroku main:master --force
 
 echo -e "${GREEN}Deployment complete!${NC}"
-echo -e "${GREEN}Your TIKO design with React Icons is now available at: https://sonar-edm-user-50e4fb038f6e.herokuapp.com${NC}"
+echo -e "${GREEN}Your optimized TIKO platform is now available at: https://sonar-edm-user-50e4fb038f6e.herokuapp.com${NC}"
 echo -e "\n${BLUE}=======================================${NC}"

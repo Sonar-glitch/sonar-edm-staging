@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { signIn } from 'next-auth/react';
+import dynamic from 'next/dynamic';
 import styles from '../styles/Home.module.css';
-import { FaSpotify } from 'react-icons/fa';
+
+// Dynamically import the Spotify icon to reduce initial bundle size
+const FaSpotify = dynamic(() => 
+  import('react-icons/fa').then(mod => mod.FaSpotify),
+  { ssr: false, loading: () => <span className={styles.iconPlaceholder} /> }
+);
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -19,10 +25,20 @@ export default function Home() {
       document.head.appendChild(link);
     };
     
-    // Delay prefetch to prioritize current page rendering
-    const timer = setTimeout(prefetchMusicTaste, 2000);
+    // Use requestIdleCallback for non-critical operations
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(prefetchMusicTaste);
+    } else {
+      // Fallback for browsers that don't support requestIdleCallback
+      setTimeout(prefetchMusicTaste, 2000);
+    }
     
-    return () => clearTimeout(timer);
+    return () => {
+      // Clean up if component unmounts
+      if ('cancelIdleCallback' in window && window._prefetchCallback) {
+        cancelIdleCallback(window._prefetchCallback);
+      }
+    };
   }, []);
 
   const handleSpotifyConnect = (e) => {
@@ -38,10 +54,38 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         <link rel="icon" href="/favicon.ico" />
         
+        {/* Preload critical fonts */}
+        <link 
+          rel="preload" 
+          href="/fonts/Inter-Regular.woff2" 
+          as="font" 
+          type="font/woff2" 
+          crossOrigin="anonymous" 
+        />
+        
+        {/* Preconnect to domains */}
+        <link rel="preconnect" href="https://accounts.spotify.com" />
+        
         {/* Cache busting meta tags */}
         <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
+        
+        {/* Critical CSS inline */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          .${styles.container} {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #0a0014;
+            color: #fff;
+          }
+          .${styles.logo} {
+            font-size: 8rem;
+            color: #ff00ff;
+            text-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
+          }
+        `}} />
       </Head>
 
       <main className={styles.main}>
