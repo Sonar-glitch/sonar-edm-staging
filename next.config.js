@@ -6,7 +6,7 @@ const withPWA = require('next-pwa')({
   skipWaiting: true
 });
 
-// Simplified configuration without next-optimized-images
+// Configuration with CSS optimization maintained
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true, // Use SWC minifier for better performance
@@ -16,9 +16,10 @@ const nextConfig = {
     minimumCacheTTL: 86400, // 24 hours
   },
   experimental: {
+    // Keep CSS optimization for better performance
+    optimizeCss: true,
+    scrollRestoration: true,
     // Removed unsupported features: optimizeServerReact
-    optimizeCss: true, // Keep this as it's supported
-    scrollRestoration: true, // Keep this as it's supported
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production', // Remove console logs in production
@@ -58,5 +59,5 @@ const nextConfig = {
   },
 };
 
-// Apply PWA optimization only - removed next-optimized-images
+// Apply PWA optimization
 module.exports = withPWA(nextConfig);

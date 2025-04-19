@@ -1,5 +1,5 @@
 #!/bin/bash
-# TIKO Final Landing Page Deployment Script
+# TIKO Final Deployment Script
 
 # Set colors for better readability
 GREEN='\033[0;32m'
@@ -8,8 +8,8 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}=== TIKO - Final Landing Page Deployment Script ===${NC}"
-echo -e "${BLUE}This script will deploy your complete TIKO landing page to Heroku${NC}\n"
+echo -e "${BLUE}=== TIKO - Final Deployment Script ===${NC}"
+echo -e "${BLUE}This script will deploy your TIKO platform with all fixes to Heroku${NC}\n"
 
 # Check if heroku CLI is installed
 if ! command -v heroku &> /dev/null; then
@@ -47,21 +47,20 @@ fi
 echo -e "${YELLOW}Setting environment variables...${NC}"
 heroku config:set NEXTAUTH_URL=https://sonar-edm-user-50e4fb038f6e.herokuapp.com --app $app_name
 heroku config:set NODE_ENV=production --app $app_name
-heroku config:set DEPLOY_TIMESTAMP=$(date +%s) --app $app_name
 
-# Clear Heroku build cache
-echo -e "${YELLOW}Clearing Heroku build cache...${NC}"
-heroku builds:cache:purge --app $app_name --confirm $app_name
+# Set a timestamp environment variable to force a clean build
+echo -e "${YELLOW}Setting timestamp to force a clean build...${NC}"
+heroku config:set DEPLOY_TIMESTAMP=$(date +%s) --app $app_name
 
 # Commit changes
 echo -e "${YELLOW}Committing changes...${NC}"
 git add .
-git commit -m "Deploy final TIKO landing page with yellow theme"
+git commit -m "Fix critters module and cache import issues while maintaining CSS optimization"
 
 # Deploy to Heroku with force push
 echo -e "${YELLOW}Deploying to Heroku...${NC}"
 git push heroku main:master --force
 
 echo -e "${GREEN}Deployment complete!${NC}"
-echo -e "${GREEN}Your TIKO landing page is now available at: https://sonar-edm-user-50e4fb038f6e.herokuapp.com${NC}"
+echo -e "${GREEN}Your TIKO platform is now available at: https://sonar-edm-user-50e4fb038f6e.herokuapp.com${NC}"
 echo -e "\n${BLUE}=======================================${NC}"
