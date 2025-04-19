@@ -9,7 +9,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}=== TIKO - Final Deployment Script ===${NC}"
-echo -e "${BLUE}This script will deploy your TIKO platform with all fixes to Heroku${NC}\n"
+echo -e "${BLUE}This script will deploy your TIKO platform to Heroku${NC}\n"
 
 # Check if heroku CLI is installed
 if ! command -v heroku &> /dev/null; then
@@ -55,7 +55,7 @@ heroku config:set DEPLOY_TIMESTAMP=$(date +%s) --app $app_name
 # Commit changes
 echo -e "${YELLOW}Committing changes...${NC}"
 git add .
-git commit -m "Fix critters module and cache import issues while maintaining CSS optimization"
+git commit -m "Fix Tailwind CSS PostCSS plugin configuration"
 
 # Deploy to Heroku with force push
 echo -e "${YELLOW}Deploying to Heroku...${NC}"
