@@ -1,73 +1,8 @@
-#!/bin/bash
-echo "=== TIKO - Styling Fix Script ==="
-
-# Create a backup of current files
-echo "Creating backup of current files..."
-mkdir -p ./backup
-cp ./pages/users/music-taste.js ./backup/
-cp ./components/SeasonalMoodCard.js ./backup/ 2>/dev/null
-
-# Update SeasonalMoodCard.js with defensive error handling only
-echo "Updating SeasonalMoodCard.js with defensive error handling..."
-cat > ./components/SeasonalMoodCard.js << 'EOL'
-import React from 'react';
-
-const SeasonalMoodCard = ({ seasonalMood }) => {
-  if (!seasonalMood) return null;
-  
-  // Add defensive error handling
-  const currentSeason = seasonalMood.currentSeason || {};
-  const previousSeason = seasonalMood.previousSeason || {};
-  const seasonalShift = seasonalMood.seasonalShift || {};
-  
-  // Use original component structure and styling
-  return (
-    <div className="seasonal-mood-card">
-      <h3 className="spring Mood">
-        {currentSeason.name || 'Current Season'} Mood
-      </h3>
-      
-      <div className="genre-tags">
-        {Array.isArray(currentSeason.topGenres) ? 
-          currentSeason.topGenres.map((genre, index) => (
-            <span key={index} className="genre-tag">{genre}</span>
-          )) : null}
-      </div>
-      
-      <div>
-        Mood: {currentSeason.mood || 'Unknown'}, Energy: {currentSeason.energy || 0}%
-      </div>
-      
-      <h4>Seasonal Shift from {previousSeason.name || 'Previous Season'}</h4>
-      
-      <div>
-        Intensity: {seasonalShift.intensity || 0}%
-      </div>
-      
-      {Array.isArray(seasonalShift.changes) && seasonalShift.changes.length > 0 ? (
-        <div>
-          <h5>Notable Changes:</h5>
-          <ul>
-            {seasonalShift.changes.map((change, index) => (
-              <li key={index}>{change}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-    </div>
-  );
-};
-
-export default SeasonalMoodCard;
-EOL
-
-# Update music-taste.js with caching only
-echo "Updating music-taste.js with caching only..."
-cat > ./pages/users/music-taste.js << 'EOL'
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { useInView } from 'react-intersection-observer';
 import LoadingSkeleton from '../../components/music-taste/LoadingSkeleton';
 import ArtistSection from '../../components/music-taste/ArtistSection';
 import EventSection from '../../components/music-taste/EventSection';
@@ -75,7 +10,7 @@ import Navigation from '../../components/Navigation';
 import SpiderChart from '../../components/SpiderChart';
 import SeasonalMoodCard from '../../components/SeasonalMoodCard';
 
-// Safe localStorage access
+// Safe localStorage access with caching
 const safeStorage = {
   get: (key) => {
     try { return JSON.parse(localStorage.getItem(key)); } 
@@ -94,6 +29,10 @@ const MusicTaste = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Intersection observer for lazy loading sections
+  const [genreRef, genreInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [seasonalRef, seasonalInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  
   useEffect(() => {
     if (status === 'authenticated') {
       fetchUserTaste();
@@ -106,7 +45,7 @@ const MusicTaste = () => {
     try {
       setLoading(true);
       
-      // Try cache first (simple caching)
+      // Try cache first
       const cached = safeStorage.get('userTasteData');
       const cacheTime = safeStorage.get('userTasteData_timestamp');
       const now = Date.now();
@@ -116,6 +55,12 @@ const MusicTaste = () => {
         console.log('Using cached data');
         setUserTaste(cached);
         setLoading(false);
+        
+        // Refresh cache in background after 5 seconds
+        setTimeout(() => {
+          refreshCacheInBackground();
+        }, 5000);
+        
         return;
       }
       
@@ -126,10 +71,41 @@ const MusicTaste = () => {
       }
       
       const data = await response.json();
-      setUserTaste(data);
+      
+      // Validate data
+      const validData = {
+        topArtists: Array.isArray(data.topArtists) ? data.topArtists : [],
+        topTracks: Array.isArray(data.topTracks) ? data.topTracks : [],
+        events: Array.isArray(data.events) ? data.events : [],
+        location: data.location || { city: 'Unknown', country: 'Unknown' },
+        genres: Array.isArray(data.genres) ? data.genres : [],
+        // Add seasonal mood data with defaults if not present
+        seasonalMood: data.seasonalMood || {
+          currentSeason: {
+            name: 'Spring',
+            topGenres: ['House', 'Techno'],
+            mood: 'Energetic',
+            energy: 75
+          },
+          previousSeason: {
+            name: 'Winter',
+            topGenres: ['Ambient', 'Deep House']
+          },
+          seasonalShift: {
+            intensity: 65,
+            changes: [
+              'More uptempo tracks',
+              'Brighter melodies',
+              'Less atmospheric elements'
+            ]
+          }
+        }
+      };
+      
+      setUserTaste(validData);
       
       // Cache the result
-      safeStorage.set('userTasteData', data);
+      safeStorage.set('userTasteData', validData);
       safeStorage.set('userTasteData_timestamp', now);
       
     } catch (err) {
@@ -140,23 +116,78 @@ const MusicTaste = () => {
       const cached = safeStorage.get('userTasteData');
       if (cached) {
         setUserTaste(cached);
+        alert('Using cached data due to error.');
       }
     } finally {
       setLoading(false);
     }
   };
   
+  // Background refresh function to update cache without affecting UI
+  const refreshCacheInBackground = async () => {
+    try {
+      const response = await fetch('/api/spotify/user-taste');
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Validate data
+        const validData = {
+          topArtists: Array.isArray(data.topArtists) ? data.topArtists : [],
+          topTracks: Array.isArray(data.topTracks) ? data.topTracks : [],
+          events: Array.isArray(data.events) ? data.events : [],
+          location: data.location || { city: 'Unknown', country: 'Unknown' },
+          genres: Array.isArray(data.genres) ? data.genres : [],
+          seasonalMood: data.seasonalMood || {
+            currentSeason: {
+              name: 'Spring',
+              topGenres: ['House', 'Techno'],
+              mood: 'Energetic',
+              energy: 75
+            },
+            previousSeason: {
+              name: 'Winter',
+              topGenres: ['Ambient', 'Deep House']
+            },
+            seasonalShift: {
+              intensity: 65,
+              changes: [
+                'More uptempo tracks',
+                'Brighter melodies',
+                'Less atmospheric elements'
+              ]
+            }
+          }
+        };
+        
+        // Update cache only, don't affect UI
+        safeStorage.set('userTasteData', validData);
+        safeStorage.set('userTasteData_timestamp', Date.now());
+        console.log('Cache updated in background');
+      }
+    } catch (err) {
+      console.error('Background refresh error:', err);
+    }
+  };
+  
   if (loading) {
     return (
       <>
-        <Head><title>Your Sound | Sonar</title></Head>
+        <Head>
+          <title>Your Sound | Sonar</title>
+          <link rel="preconnect" href="https://i.scdn.co" />
+          <link rel="preconnect" href="https://mosaic.scdn.co" />
+        </Head>
         <Navigation />
         <div className="page-container">
           <h1 className="page-title">Your Sound | Sonar</h1>
-          <LoadingSkeleton />
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+            <p className="mt-4 text-xl">Loading your vibe...</p>
+          </div>
         </div>
       </>
-    );
+    ) ;
   }
   
   if (error && !userTaste) {
@@ -204,25 +235,25 @@ const MusicTaste = () => {
         <div className="mb-8">
           <h2 className="section-title">Your Location</h2>
           <p className="text-xl">
-            {userTaste.location?.city || 'Unknown'}, {userTaste.location?.country || 'Unknown'}
+            {userTaste.location.city || 'Unknown'}, {userTaste.location.country || 'Unknown'}
           </p>
         </div>
         
         {/* Genre Visualization Section */}
-        <div className="mb-12">
+        <div ref={genreRef} className="mb-12">
           <h2 className="section-title">Your Genre Affinity</h2>
-          {userTaste.genres && userTaste.genres.length > 0 && (
+          {genreInView && userTaste.genres.length > 0 && (
             <SpiderChart genres={userTaste.genres.map(genre => ({
               name: genre,
-              score: Math.floor(Math.random() * 40) + 60
+              score: Math.floor(Math.random() * 40) + 60 // Generate random scores between 60-100 if real scores not available
             }))} />
           )}
         </div>
         
         {/* Seasonal Mood Analysis Section */}
-        <div className="mb-12">
+        <div ref={seasonalRef} className="mb-12">
           <h2 className="section-title">Seasonal Mood Analysis</h2>
-          {userTaste.seasonalMood && (
+          {seasonalInView && userTaste.seasonalMood && (
             <SeasonalMoodCard seasonalMood={userTaste.seasonalMood} />
           )}
         </div>
@@ -235,33 +266,3 @@ const MusicTaste = () => {
 };
 
 export default MusicTaste;
-EOL
-
-# Create deployment script
-echo "Creating deployment script..."
-cat > ./deploy-tiko-styling-fix.sh << 'EOL'
-#!/bin/bash
-echo "=== TIKO - Styling Fix Deployment Script ==="
-
-# Set timestamp to force a clean build
-echo "Setting timestamp to force a clean build..."
-heroku config:set DEPLOY_TIMESTAMP=$(date +%s) --app sonar-edm-user
-
-# Commit changes
-echo "Committing changes..."
-git add .
-git commit -m "Fix styling while maintaining performance improvements"
-
-# Deploy to Heroku
-echo "Deploying to Heroku..."
-git push heroku main:master --force
-
-echo "Deployment complete!"
-echo "Your TIKO platform with fixed styling is now available at: https://sonar-edm-user-50e4fb038f6e.herokuapp.com"
-EOL
-
-# Make deployment script executable
-chmod +x ./deploy-tiko-styling-fix.sh
-
-echo "Styling fix script completed!"
-echo "Now run the deployment script with: ./deploy-tiko-styling-fix.sh"

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { useInView } from 'react-intersection-observer';
 import LoadingSkeleton from '../../components/music-taste/LoadingSkeleton';
 import ArtistSection from '../../components/music-taste/ArtistSection';
 import EventSection from '../../components/music-taste/EventSection';
@@ -10,7 +9,7 @@ import Navigation from '../../components/Navigation';
 import SpiderChart from '../../components/SpiderChart';
 import SeasonalMoodCard from '../../components/SeasonalMoodCard';
 
-// Safe localStorage access with caching
+// Safe localStorage access
 const safeStorage = {
   get: (key) => {
     try { return JSON.parse(localStorage.getItem(key)); } 
@@ -29,10 +28,6 @@ const MusicTaste = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Intersection observer for lazy loading sections
-  const [genreRef, genreInView] = useInView({ triggerOnce: true, threshold: 0.1 });
-  const [seasonalRef, seasonalInView] = useInView({ triggerOnce: true, threshold: 0.1 });
-  
   useEffect(() => {
     if (status === 'authenticated') {
       fetchUserTaste();
@@ -45,7 +40,7 @@ const MusicTaste = () => {
     try {
       setLoading(true);
       
-      // Try cache first
+      // Try cache first (simple caching)
       const cached = safeStorage.get('userTasteData');
       const cacheTime = safeStorage.get('userTasteData_timestamp');
       const now = Date.now();
@@ -55,12 +50,6 @@ const MusicTaste = () => {
         console.log('Using cached data');
         setUserTaste(cached);
         setLoading(false);
-        
-        // Refresh cache in background after 5 seconds
-        setTimeout(() => {
-          refreshCacheInBackground();
-        }, 5000);
-        
         return;
       }
       
@@ -71,41 +60,10 @@ const MusicTaste = () => {
       }
       
       const data = await response.json();
-      
-      // Validate data
-      const validData = {
-        topArtists: Array.isArray(data.topArtists) ? data.topArtists : [],
-        topTracks: Array.isArray(data.topTracks) ? data.topTracks : [],
-        events: Array.isArray(data.events) ? data.events : [],
-        location: data.location || { city: 'Unknown', country: 'Unknown' },
-        genres: Array.isArray(data.genres) ? data.genres : [],
-        // Add seasonal mood data with defaults if not present
-        seasonalMood: data.seasonalMood || {
-          currentSeason: {
-            name: 'Spring',
-            topGenres: ['House', 'Techno'],
-            mood: 'Energetic',
-            energy: 75
-          },
-          previousSeason: {
-            name: 'Winter',
-            topGenres: ['Ambient', 'Deep House']
-          },
-          seasonalShift: {
-            intensity: 65,
-            changes: [
-              'More uptempo tracks',
-              'Brighter melodies',
-              'Less atmospheric elements'
-            ]
-          }
-        }
-      };
-      
-      setUserTaste(validData);
+      setUserTaste(data);
       
       // Cache the result
-      safeStorage.set('userTasteData', validData);
+      safeStorage.set('userTasteData', data);
       safeStorage.set('userTasteData_timestamp', now);
       
     } catch (err) {
@@ -116,78 +74,23 @@ const MusicTaste = () => {
       const cached = safeStorage.get('userTasteData');
       if (cached) {
         setUserTaste(cached);
-        alert('Using cached data due to error.');
       }
     } finally {
       setLoading(false);
     }
   };
   
-  // Background refresh function to update cache without affecting UI
-  const refreshCacheInBackground = async () => {
-    try {
-      const response = await fetch('/api/spotify/user-taste');
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Validate data
-        const validData = {
-          topArtists: Array.isArray(data.topArtists) ? data.topArtists : [],
-          topTracks: Array.isArray(data.topTracks) ? data.topTracks : [],
-          events: Array.isArray(data.events) ? data.events : [],
-          location: data.location || { city: 'Unknown', country: 'Unknown' },
-          genres: Array.isArray(data.genres) ? data.genres : [],
-          seasonalMood: data.seasonalMood || {
-            currentSeason: {
-              name: 'Spring',
-              topGenres: ['House', 'Techno'],
-              mood: 'Energetic',
-              energy: 75
-            },
-            previousSeason: {
-              name: 'Winter',
-              topGenres: ['Ambient', 'Deep House']
-            },
-            seasonalShift: {
-              intensity: 65,
-              changes: [
-                'More uptempo tracks',
-                'Brighter melodies',
-                'Less atmospheric elements'
-              ]
-            }
-          }
-        };
-        
-        // Update cache only, don't affect UI
-        safeStorage.set('userTasteData', validData);
-        safeStorage.set('userTasteData_timestamp', Date.now());
-        console.log('Cache updated in background');
-      }
-    } catch (err) {
-      console.error('Background refresh error:', err);
-    }
-  };
-  
   if (loading) {
     return (
       <>
-        <Head>
-          <title>Your Sound | Sonar</title>
-          <link rel="preconnect" href="https://i.scdn.co" />
-          <link rel="preconnect" href="https://mosaic.scdn.co" />
-        </Head>
+        <Head><title>Your Sound | Sonar</title></Head>
         <Navigation />
         <div className="page-container">
           <h1 className="page-title">Your Sound | Sonar</h1>
-          <div className="loading-spinner">
-            <div className="spinner"></div>
-            <p className="mt-4 text-xl">Loading your vibe...</p>
-          </div>
+          <LoadingSkeleton />
         </div>
       </>
-    ) ;
+    );
   }
   
   if (error && !userTaste) {
@@ -235,25 +138,25 @@ const MusicTaste = () => {
         <div className="mb-8">
           <h2 className="section-title">Your Location</h2>
           <p className="text-xl">
-            {userTaste.location.city || 'Unknown'}, {userTaste.location.country || 'Unknown'}
+            {userTaste.location?.city || 'Unknown'}, {userTaste.location?.country || 'Unknown'}
           </p>
         </div>
         
         {/* Genre Visualization Section */}
-        <div ref={genreRef} className="mb-12">
+        <div className="mb-12">
           <h2 className="section-title">Your Genre Affinity</h2>
-          {genreInView && userTaste.genres.length > 0 && (
+          {userTaste.genres && userTaste.genres.length > 0 && (
             <SpiderChart genres={userTaste.genres.map(genre => ({
               name: genre,
-              score: Math.floor(Math.random() * 40) + 60 // Generate random scores between 60-100 if real scores not available
+              score: Math.floor(Math.random() * 40) + 60
             }))} />
           )}
         </div>
         
         {/* Seasonal Mood Analysis Section */}
-        <div ref={seasonalRef} className="mb-12">
+        <div className="mb-12">
           <h2 className="section-title">Seasonal Mood Analysis</h2>
-          {seasonalInView && userTaste.seasonalMood && (
+          {userTaste.seasonalMood && (
             <SeasonalMoodCard seasonalMood={userTaste.seasonalMood} />
           )}
         </div>
