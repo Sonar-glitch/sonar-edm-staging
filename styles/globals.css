@@ -8,6 +8,10 @@
   --background-end-rgb: 0, 0, 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
@@ -19,52 +23,67 @@ body {
   min-height: 100vh;
 }
 
-@layer components {
-  .card {
-    @apply bg-opacity-30 bg-black border border-gray-800 rounded-lg overflow-hidden transition-transform duration-300 hover:-translate-y-1;
-  }
-  
-  .card-body {
-    @apply p-4;
-  }
-  
-  .card-title {
-    @apply text-lg font-bold mb-2 truncate;
-  }
-  
-  .badge {
-    @apply px-2 py-1 text-xs rounded-full mr-1 mb-1;
-  }
-  
-  .badge-primary {
-    @apply bg-primary-600 text-white;
-  }
-  
-  .badge-secondary {
-    @apply bg-secondary-600 text-white;
-  }
-  
-  .btn {
-    @apply px-4 py-2 rounded-md font-medium transition-colors duration-200;
-  }
-  
-  .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white;
-  }
-  
-  .btn-secondary {
-    @apply bg-secondary-600 hover:bg-secondary-700 text-white;
-  }
-  
-  .container-xl {
-    @apply container mx-auto px-4 max-w-7xl;
-  }
-  
-  .loading-spinner {
-    @apply flex flex-col items-center justify-center py-12;
-  }
-  
-  .error-container {
-    @apply p-4 rounded-md bg-red-900 bg-opacity-20 border-l-4 border-red-600 my-4;
-  }
+/* Custom component styles */
+.artist-card {
+  @apply bg-gray-800 bg-opacity-30 rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-1 border border-gray-700;
+}
+
+.event-card {
+  @apply bg-gray-800 bg-opacity-30 rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-1 border border-gray-700;
+}
+
+.card-image {
+  @apply w-full h-48 object-cover;
+}
+
+.card-body {
+  @apply p-4;
+}
+
+.card-title {
+  @apply font-bold text-lg mb-2 truncate;
+}
+
+.badge-primary {
+  @apply bg-neon-blue text-white text-xs px-2 py-1 rounded-full mr-1 mb-1 shadow-neon-blue;
+}
+
+.badge-secondary {
+  @apply bg-neon-pink text-white text-xs px-2 py-1 rounded-full mr-1 mb-1 shadow-neon-pink;
+}
+
+.btn-primary {
+  @apply text-neon-blue hover:text-white hover:bg-neon-blue px-3 py-1 rounded-md transition-colors duration-200 inline-block mt-2 text-sm font-bold;
+}
+
+.btn-secondary {
+  @apply text-neon-pink hover:text-white hover:bg-neon-pink px-3 py-1 rounded-md transition-colors duration-200 inline-block mt-2 text-sm font-bold;
+}
+
+.loading-spinner {
+  @apply flex flex-col items-center justify-center py-12;
+}
+
+.spinner {
+  @apply w-12 h-12 border-4 border-neon-blue border-t-transparent rounded-full animate-spin;
+}
+
+.error-container {
+  @apply p-4 rounded-md bg-red-900 bg-opacity-20 border-l-4 border-red-600 my-4;
+}
+
+.page-container {
+  @apply container mx-auto px-4 py-8 max-w-6xl;
+}
+
+.page-title {
+  @apply text-3xl font-bold mb-6 text-white;
+}
+
+.section-title {
+  @apply text-2xl font-bold mb-4 text-neon-blue;
+}
+
+.grid-layout {
+  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6;
 }

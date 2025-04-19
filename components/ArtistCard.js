@@ -10,22 +10,24 @@ const ArtistCard = ({ artist }) => {
   const spotifyUrl = artist.external_urls && artist.external_urls.spotify ? artist.external_urls.spotify : '#';
   
   return (
-    <div className="bg-gray-800 bg-opacity-30 rounded-lg overflow-hidden">
-      <div className="h-40 overflow-hidden">
+    <div className="artist-card">
+      <div className="relative overflow-hidden h-48">
         <img 
           src={imageUrl} 
           alt={name} 
-          className="w-full h-full object-cover"
+          className="card-image"
           loading="lazy"
           onError={(e) => {e.target.src = 'https://via.placeholder.com/300?text=No+Image'}}
         />
       </div>
-      <div className="p-4">
-        <h3 className="font-bold text-lg mb-2 truncate">{name}</h3>
+      <div className="card-body">
+        <h3 className="card-title">{name}</h3>
         {genres.length > 0 && (
           <div className="flex flex-wrap mb-2">
             {genres.slice(0, 2).map((genre, i) => (
-              <span key={i} className="bg-blue-600 text-xs px-2 py-1 rounded-full mr-1 mb-1">{genre}</span>
+              <span key={i} className="badge-primary">
+                {genre}
+              </span>
             ))}
           </div>
         )}
@@ -34,7 +36,7 @@ const ArtistCard = ({ artist }) => {
           href={spotifyUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-400 hover:text-blue-300 text-sm font-bold"
+          className="btn-primary"
         >
           View on Spotify
         </a>

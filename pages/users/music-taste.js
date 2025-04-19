@@ -75,11 +75,11 @@ const MusicTaste = () => {
     return (
       <>
         <Head><title>Your Sound | Sonar</title></Head>
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
-          <div className="text-center py-10">
-            <div className="inline-block animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
-            <p className="text-xl">Loading your vibe...</p>
+        <div className="page-container">
+          <h1 className="page-title">Your Sound | Sonar</h1>
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+            <p className="mt-4 text-xl">Loading your vibe...</p>
           </div>
         </div>
       </>
@@ -90,14 +90,14 @@ const MusicTaste = () => {
     return (
       <>
         <Head><title>Your Sound | Sonar</title></Head>
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
-          <div className="bg-red-900 bg-opacity-20 border-l-4 border-red-600 p-4 rounded">
+        <div className="page-container">
+          <h1 className="page-title">Your Sound | Sonar</h1>
+          <div className="error-container">
             <h3 className="font-bold">Error</h3>
             <p>{error}</p>
             <button 
               onClick={fetchUserTaste}
-              className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              className="btn-primary mt-2"
             >
               Try Again
             </button>
@@ -111,8 +111,8 @@ const MusicTaste = () => {
     return (
       <>
         <Head><title>Your Sound | Sonar</title></Head>
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
+        <div className="page-container">
+          <h1 className="page-title">Your Sound | Sonar</h1>
           <p>No data available. Please connect your Spotify account.</p>
         </div>
       </>
@@ -122,11 +122,11 @@ const MusicTaste = () => {
   return (
     <>
       <Head><title>Your Sound | Sonar</title></Head>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
+      <div className="page-container">
+        <h1 className="page-title">Your Sound | Sonar</h1>
         
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Your Location</h2>
+          <h2 className="section-title">Your Location</h2>
           <p className="text-xl">
             {userTaste.location.city || 'Unknown'}, {userTaste.location.country || 'Unknown'}
           </p>
