@@ -6,8 +6,7 @@ const withPWA = require('next-pwa')({
   skipWaiting: true
 });
 
-const withOptimizedImages = require('next-optimized-images');
-
+// Simplified configuration without next-optimized-images
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true, // Use SWC minifier for better performance
@@ -59,27 +58,5 @@ const nextConfig = {
   },
 };
 
-// Configure image optimization
-const optimizedImagesConfig = {
-  optimizeImages: true,
-  optimizeImagesInDev: false,
-  mozjpeg: {
-    quality: 80,
-  },
-  optipng: {
-    optimizationLevel: 3,
-  },
-  pngquant: false,
-  gifsicle: {
-    interlaced: true,
-    optimizationLevel: 3,
-  },
-  svgo: {
-    plugins: [
-      { name: 'preset-default' }
-    ]
-  },
-};
-
-// Apply optimizations in sequence
-module.exports = withPWA(withOptimizedImages(optimizedImagesConfig)(nextConfig));
+// Apply PWA optimization only - removed next-optimized-images
+module.exports = withPWA(nextConfig);
