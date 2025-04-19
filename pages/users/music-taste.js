@@ -64,7 +64,7 @@ const MusicTaste = () => {
 
       <div className={styles.eventsHeader}>Events You’ll Like</div>
       <div className={styles.eventList}>
-        {userTaste.recommendedEvents.map(event => (
+        {Array.isArray(userTaste.recommendedEvents) && userTaste.recommendedEvents.map(event => (
           <EventCard key={event.id} event={event} />
         ))}
       </div>
