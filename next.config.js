@@ -17,9 +17,9 @@ const nextConfig = {
     minimumCacheTTL: 86400, // 24 hours
   },
   experimental: {
-    optimizeCss: true, // Enable CSS optimization
-    optimizeServerReact: true, // Optimize server-side React rendering
-    scrollRestoration: true, // Restore scroll position on navigation
+    // Removed unsupported features: optimizeServerReact
+    optimizeCss: true, // Keep this as it's supported
+    scrollRestoration: true, // Keep this as it's supported
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production', // Remove console logs in production
@@ -59,5 +59,27 @@ const nextConfig = {
   },
 };
 
+// Configure image optimization
+const optimizedImagesConfig = {
+  optimizeImages: true,
+  optimizeImagesInDev: false,
+  mozjpeg: {
+    quality: 80,
+  },
+  optipng: {
+    optimizationLevel: 3,
+  },
+  pngquant: false,
+  gifsicle: {
+    interlaced: true,
+    optimizationLevel: 3,
+  },
+  svgo: {
+    plugins: [
+      { name: 'preset-default' }
+    ]
+  },
+};
+
 // Apply optimizations in sequence
-module.exports = withPWA(withOptimizedImages(nextConfig));
+module.exports = withPWA(withOptimizedImages(optimizedImagesConfig)(nextConfig));
