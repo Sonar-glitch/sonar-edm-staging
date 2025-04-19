@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
@@ -7,19 +7,8 @@ import LoadingSkeleton from '../../components/music-taste/LoadingSkeleton';
 import ArtistSection from '../../components/music-taste/ArtistSection';
 import EventSection from '../../components/music-taste/EventSection';
 import Navigation from '../../components/Navigation';
-
-// Lazy load visualization components
-const SpiderChart = lazy(() => import('../../components/SpiderChart'));
-const SeasonalMoodCard = lazy(() => import('../../components/SeasonalMoodCard'));
-
-// Skeleton loading components
-const SkeletonSpiderChart = () => (
-  <div className="skeleton-loading" style={{ width: '100%', height: '400px', borderRadius: '12px', margin: '20px 0' }}></div>
-);
-
-const SkeletonCard = () => (
-  <div className="skeleton-loading" style={{ width: '100%', height: '300px', borderRadius: '12px', margin: '20px 0' }}></div>
-);
+import SpiderChart from '../../components/SpiderChart';
+import SeasonalMoodCard from '../../components/SeasonalMoodCard';
 
 // Safe localStorage access
 const safeStorage = {
@@ -179,24 +168,20 @@ const MusicTaste = () => {
         {/* Genre Visualization Section */}
         <div ref={genreRef} className="mb-12">
           <h2 className="section-title">Your Genre Affinity</h2>
-          <Suspense fallback={<SkeletonSpiderChart />}>
-            {genreInView && userTaste.genres.length > 0 && (
-              <SpiderChart genres={userTaste.genres.map(genre => ({
-                name: genre,
-                score: Math.floor(Math.random() * 40) + 60 // Generate random scores between 60-100 if real scores not available
-              }))} />
-            )}
-          </Suspense>
+          {genreInView && userTaste.genres.length > 0 && (
+            <SpiderChart genres={userTaste.genres.map(genre => ({
+              name: genre,
+              score: Math.floor(Math.random() * 40) + 60 // Generate random scores between 60-100 if real scores not available
+            }))} />
+          )}
         </div>
         
         {/* Seasonal Mood Analysis Section */}
         <div ref={seasonalRef} className="mb-12">
           <h2 className="section-title">Seasonal Mood Analysis</h2>
-          <Suspense fallback={<SkeletonCard />}>
-            {seasonalInView && userTaste.seasonalMood && (
-              <SeasonalMoodCard seasonalMood={userTaste.seasonalMood} />
-            )}
-          </Suspense>
+          {seasonalInView && userTaste.seasonalMood && (
+            <SeasonalMoodCard seasonalMood={userTaste.seasonalMood} />
+          )}
         </div>
         
         <ArtistSection artists={userTaste.topArtists} />

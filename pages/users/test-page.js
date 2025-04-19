@@ -1,8 +1,9 @@
 import React from 'react';
-import SpiderChart from '../components/SpiderChart';
-import Navigation from '../components/Navigation';
-import SeasonalMoodCard from '../components/SeasonalMoodCard';
-import EventCorrelationIndicator from '../components/EventCorrelationIndicator';
+import SpiderChart from '../../components/SpiderChart';
+import Navigation from '../../components/Navigation';
+import SeasonalMoodCard from '../../components/SeasonalMoodCard';
+import EventCorrelationIndicator from '../../components/EventCorrelationIndicator';
+
 
 export default function Test() {
   // Sample data for SpiderChart
