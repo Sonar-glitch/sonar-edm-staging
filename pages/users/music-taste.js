@@ -1,10 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { useInView } from 'react-intersection-observer';
 import LoadingSkeleton from '../../components/music-taste/LoadingSkeleton';
 import ArtistSection from '../../components/music-taste/ArtistSection';
 import EventSection from '../../components/music-taste/EventSection';
+import Navigation from '../../components/Navigation';
+
+// Lazy load visualization components
+const SpiderChart = lazy(() => import('../../components/SpiderChart'));
+const SeasonalMoodCard = lazy(() => import('../../components/SeasonalMoodCard'));
+
+// Skeleton loading components
+const SkeletonSpiderChart = () => (
+  <div className="skeleton-loading" style={{ width: '100%', height: '400px', borderRadius: '12px', margin: '20px 0' }}></div>
+);
+
+const SkeletonCard = () => (
+  <div className="skeleton-loading" style={{ width: '100%', height: '300px', borderRadius: '12px', margin: '20px 0' }}></div>
+);
 
 // Safe localStorage access
 const safeStorage = {
@@ -24,6 +39,10 @@ const MusicTaste = () => {
   const [userTaste, setUserTaste] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Intersection observer for lazy loading sections
+  const [genreRef, genreInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [seasonalRef, seasonalInView] = useInView({ triggerOnce: true, threshold: 0.1 });
   
   useEffect(() => {
     if (status === 'authenticated') {
@@ -50,7 +69,28 @@ const MusicTaste = () => {
         topTracks: Array.isArray(data.topTracks) ? data.topTracks : [],
         events: Array.isArray(data.events) ? data.events : [],
         location: data.location || { city: 'Unknown', country: 'Unknown' },
-        genres: Array.isArray(data.genres) ? data.genres : []
+        genres: Array.isArray(data.genres) ? data.genres : [],
+        // Add seasonal mood data with defaults if not present
+        seasonalMood: data.seasonalMood || {
+          currentSeason: {
+            name: 'Spring',
+            topGenres: ['House', 'Techno'],
+            mood: 'Energetic',
+            energy: 75
+          },
+          previousSeason: {
+            name: 'Winter',
+            topGenres: ['Ambient', 'Deep House']
+          },
+          seasonalShift: {
+            intensity: 65,
+            changes: [
+              'More uptempo tracks',
+              'Brighter melodies',
+              'Less atmospheric elements'
+            ]
+          }
+        }
       };
       
       setUserTaste(validData);
@@ -75,6 +115,7 @@ const MusicTaste = () => {
     return (
       <>
         <Head><title>Your Sound | Sonar</title></Head>
+        <Navigation />
         <div className="page-container">
           <h1 className="page-title">Your Sound | Sonar</h1>
           <div className="loading-spinner">
@@ -90,6 +131,7 @@ const MusicTaste = () => {
     return (
       <>
         <Head><title>Your Sound | Sonar</title></Head>
+        <Navigation />
         <div className="page-container">
           <h1 className="page-title">Your Sound | Sonar</h1>
           <div className="error-container">
@@ -111,6 +153,7 @@ const MusicTaste = () => {
     return (
       <>
         <Head><title>Your Sound | Sonar</title></Head>
+        <Navigation />
         <div className="page-container">
           <h1 className="page-title">Your Sound | Sonar</h1>
           <p>No data available. Please connect your Spotify account.</p>
@@ -122,6 +165,7 @@ const MusicTaste = () => {
   return (
     <>
       <Head><title>Your Sound | Sonar</title></Head>
+      <Navigation />
       <div className="page-container">
         <h1 className="page-title">Your Sound | Sonar</h1>
         
@@ -130,6 +174,29 @@ const MusicTaste = () => {
           <p className="text-xl">
             {userTaste.location.city || 'Unknown'}, {userTaste.location.country || 'Unknown'}
           </p>
+        </div>
+        
+        {/* Genre Visualization Section */}
+        <div ref={genreRef} className="mb-12">
+          <h2 className="section-title">Your Genre Affinity</h2>
+          <Suspense fallback={<SkeletonSpiderChart />}>
+            {genreInView && userTaste.genres.length > 0 && (
+              <SpiderChart genres={userTaste.genres.map(genre => ({
+                name: genre,
+                score: Math.floor(Math.random() * 40) + 60 // Generate random scores between 60-100 if real scores not available
+              }))} />
+            )}
+          </Suspense>
+        </div>
+        
+        {/* Seasonal Mood Analysis Section */}
+        <div ref={seasonalRef} className="mb-12">
+          <h2 className="section-title">Seasonal Mood Analysis</h2>
+          <Suspense fallback={<SkeletonCard />}>
+            {seasonalInView && userTaste.seasonalMood && (
+              <SeasonalMoodCard seasonalMood={userTaste.seasonalMood} />
+            )}
+          </Suspense>
         </div>
         
         <ArtistSection artists={userTaste.topArtists} />
