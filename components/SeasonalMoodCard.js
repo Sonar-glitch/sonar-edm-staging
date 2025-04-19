@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from '../styles/SeasonalMoodCard.module.css';
 
 const SeasonalMoodCard = ({ seasonalMood }) => {
   if (!seasonalMood) return null;
@@ -8,40 +9,59 @@ const SeasonalMoodCard = ({ seasonalMood }) => {
   const previousSeason = seasonalMood.previousSeason || {};
   const seasonalShift = seasonalMood.seasonalShift || {};
   
-  // Use original component structure and styling
   return (
-    <div className="seasonal-mood-card">
-      <h3 className="spring Mood">
-        {currentSeason.name || 'Current Season'} Mood
-      </h3>
-      
-      <div className="genre-tags">
-        {Array.isArray(currentSeason.topGenres) ? 
-          currentSeason.topGenres.map((genre, index) => (
-            <span key={index} className="genre-tag">{genre}</span>
-          )) : null}
-      </div>
-      
-      <div>
-        Mood: {currentSeason.mood || 'Unknown'}, Energy: {currentSeason.energy || 0}%
-      </div>
-      
-      <h4>Seasonal Shift from {previousSeason.name || 'Previous Season'}</h4>
-      
-      <div>
-        Intensity: {seasonalShift.intensity || 0}%
-      </div>
-      
-      {Array.isArray(seasonalShift.changes) && seasonalShift.changes.length > 0 ? (
-        <div>
-          <h5>Notable Changes:</h5>
+    <div className={styles.seasonalMoodCard}>
+      <div className={styles.currentSeason}>
+        <div className={styles.seasonHeader}>
+          <h3>{currentSeason.name || 'Current Season'} Mood</h3>
+        </div>
+        
+        <div className={styles.genreList}>
+          <p>Top Genres:</p>
           <ul>
-            {seasonalShift.changes.map((change, index) => (
-              <li key={index}>{change}</li>
-            ))}
+            {Array.isArray(currentSeason.topGenres) ? 
+              currentSeason.topGenres.map((genre, index) => (
+                <li key={index}>{genre}</li>
+              )) : null}
           </ul>
         </div>
-      ) : null}
+        
+        <div className={styles.moodIndicator}>
+          <p>Mood: {currentSeason.mood || 'Unknown'}</p>
+          <p>Energy: {currentSeason.energy || 0}%</p>
+          <div className={styles.moodBar}>
+            <div 
+              className={styles.moodFill} 
+              style={{ width: `${currentSeason.energy || 0}%` }}
+            ></div>
+          </div>
+        </div>
+      </div>
+      
+      <div className={styles.seasonalShift}>
+        <h3>Seasonal Shift from {previousSeason.name || 'Previous Season'}</h3>
+        
+        <div className={styles.moodIndicator}>
+          <p>Intensity: {seasonalShift.intensity || 0}%</p>
+          <div className={styles.shiftBar}>
+            <div 
+              className={styles.shiftFill} 
+              style={{ width: `${seasonalShift.intensity || 0}%` }}
+            ></div>
+          </div>
+        </div>
+        
+        {Array.isArray(seasonalShift.changes) && seasonalShift.changes.length > 0 ? (
+          <div className={styles.shiftDetails}>
+            <p>Notable Changes:</p>
+            <ul>
+              {seasonalShift.changes.map((change, index) => (
+                <li key={index}>{change}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 };

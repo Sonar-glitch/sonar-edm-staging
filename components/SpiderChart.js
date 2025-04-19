@@ -35,7 +35,7 @@ const SpiderChart = ({ genres }) => {
     
     // Create circular grid lines
     const gridLevels = 5;
-    const gridCircles = svg.selectAll(".gridCircle")
+    svg.selectAll(".gridCircle")
       .data(d3.range(1, gridLevels + 1).reverse())
       .enter()
       .append("circle")
@@ -73,15 +73,13 @@ const SpiderChart = ({ genres }) => {
     
     // Create the radar chart path
     const radarLine = d3.lineRadial()
-      .radius(d => radialScale(d.value))
+      .radius(d => radialScale(d.score))
       .angle((d, i) => i * angleSlice)
       .curve(d3.curveLinearClosed);
     
     // Draw the radar chart path
-    const dataPoints = genres.map(genre => ({ value: genre.score }));
-    
     svg.append("path")
-      .datum(dataPoints)
+      .datum(genres)
       .attr("class", styles.radarArea)
       .attr("d", radarLine)
       .style("fill", "rgba(255, 0, 255, 0.2)")
@@ -90,14 +88,14 @@ const SpiderChart = ({ genres }) => {
     
     // Add data points
     svg.selectAll(".dataPoint")
-      .data(dataPoints)
+      .data(genres)
       .enter()
       .append("circle")
       .attr("class", styles.dataPoint)
-      .attr("cx", (d, i) => radialScale(d.value) * Math.cos(angleSlice * i - Math.PI/2))
-      .attr("cy", (d, i) => radialScale(d.value) * Math.sin(angleSlice * i - Math.PI/2))
+      .attr("cx", (d, i) => radialScale(d.score) * Math.cos(angleSlice * i - Math.PI/2))
+      .attr("cy", (d, i) => radialScale(d.score) * Math.sin(angleSlice * i - Math.PI/2))
       .attr("r", 4)
-      .style("fill", "#ff00ff");
+      .style("fill", "#00ffff");
       
   }, [genres]);
   
