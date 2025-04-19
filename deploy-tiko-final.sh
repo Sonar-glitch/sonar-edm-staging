@@ -9,7 +9,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}=== TIKO - Final Deployment Script ===${NC}"
-echo -e "${BLUE}This script will deploy your TIKO platform with all dependencies to Heroku${NC}\n"
+echo -e "${BLUE}This script will deploy your TIKO platform with ALL dependencies to Heroku${NC}\n"
 
 # Check if heroku CLI is installed
 if ! command -v heroku &> /dev/null; then
@@ -55,7 +55,7 @@ heroku config:set DEPLOY_TIMESTAMP=$(date +%s) --app $app_name
 # Commit changes
 echo -e "${YELLOW}Committing changes...${NC}"
 git add .
-git commit -m "Add all missing dependencies: mongodb, chart.js, react-chartjs-2, axios, and react-icons"
+git commit -m "Add ALL missing dependencies: mongodb, chart.js, react-chartjs-2, axios, react-icons, and critters"
 
 # Deploy to Heroku with force push
 echo -e "${YELLOW}Deploying to Heroku...${NC}"
