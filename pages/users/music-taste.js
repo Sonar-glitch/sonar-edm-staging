@@ -21,6 +21,7 @@ const MusicTaste = () => {
       fetch('/api/spotify/user-taste')
         .then(res => res.json())
         .then(data => {
+          console.log('userTaste', data);
           setUserTaste(data);
           setLoading(false);
         });
@@ -29,7 +30,9 @@ const MusicTaste = () => {
     }
   }, [status]);
 
-  if (loading || !userTaste) return <div className={styles.loader}>Loading...</div>;
+  if (loading || !userTaste) {
+    return <div className={styles.loader}>Loading your vibe...</div>;
+  }
 
   return (
     <div className={styles.container}>
@@ -40,21 +43,31 @@ const MusicTaste = () => {
       <h1 className={styles.pageTitle}>Your Sonic Signature</h1>
 
       <div className={styles.chartWrapper}>
-        <SpiderChart data={userTaste.genres} />
+        {userTaste.genres && <SpiderChart data={userTaste.genres} />}
       </div>
 
       <div className={styles.moodSection}>
-        <SeasonalMoodCard mood={userTaste.seasonalMood} />
+        {userTaste.seasonalMood && (
+          <SeasonalMoodCard mood={userTaste.seasonalMood} />
+        )}
       </div>
 
       <div className={styles.highlightRow}>
         <div>
           <p className={styles.sectionLabel}>Top Artist</p>
-          <ArtistCard artist={userTaste.topArtist} />
+          {userTaste.topArtist ? (
+            <ArtistCard artist={userTaste.topArtist} />
+          ) : (
+            <p className={styles.placeholder}>No artist data</p>
+          )}
         </div>
         <div>
           <p className={styles.sectionLabel}>Repeat Track</p>
-          <TrackCard track={userTaste.repeatTrack} />
+          {userTaste.repeatTrack ? (
+            <TrackCard track={userTaste.repeatTrack} />
+          ) : (
+            <p className={styles.placeholder}>No track data</p>
+          )}
         </div>
       </div>
 
@@ -64,9 +77,13 @@ const MusicTaste = () => {
 
       <div className={styles.eventsHeader}>Events You’ll Like</div>
       <div className={styles.eventList}>
-        {Array.isArray(userTaste.recommendedEvents) && userTaste.recommendedEvents.map(event => (
-          <EventCard key={event.id} event={event} />
-        ))}
+        {Array.isArray(userTaste.recommendedEvents) && userTaste.recommendedEvents.length > 0 ? (
+          userTaste.recommendedEvents.map(event => (
+            <EventCard key={event.id} event={event} />
+          ))
+        ) : (
+          <p className={styles.placeholder}>No events matched your vibe yet.</p>
+        )}
       </div>
     </div>
   );
