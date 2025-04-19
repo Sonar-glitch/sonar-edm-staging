@@ -3,7 +3,6 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { Box, Container, Heading, Text, useToast } from '@chakra-ui/react';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import LoadingSkeleton from '../../components/music-taste/LoadingSkeleton';
 import ErrorDisplay from '../../components/music-taste/ErrorDisplay';
@@ -33,7 +32,6 @@ const safeLocalStorage = {
 const MusicTaste = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const toast = useToast();
   
   const [userTaste, setUserTaste] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -119,13 +117,8 @@ const MusicTaste = () => {
       if (cachedData) {
         try {
           setUserTaste(JSON.parse(cachedData));
-          toast({
-            title: 'Using cached data',
-            description: 'We encountered an error but loaded your previous data.',
-            status: 'warning',
-            duration: 5000,
-            isClosable: true,
-          });
+          // Show toast notification
+          alert('Using cached data. We encountered an error but loaded your previous data.');
         } catch (e) {
           console.error('Error parsing cached data:', e);
         }
@@ -142,8 +135,8 @@ const MusicTaste = () => {
         <Head>
           <title>Your Sound | Sonar</title>
         </Head>
-        <Container maxW="container.xl" py={8}>
-          <Heading as="h1" mb={6}>Your Sound | Sonar</Heading>
+        <div className="container-xl py-8">
+          <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
           {isTimedOut ? (
             <ErrorDisplay 
               message="Taking longer than expected. Please wait or refresh the page." 
@@ -152,7 +145,7 @@ const MusicTaste = () => {
           ) : (
             <LoadingSpinner message="Loading your vibe..." />
           )}
-        </Container>
+        </div>
       </>
     );
   }
@@ -164,10 +157,10 @@ const MusicTaste = () => {
         <Head>
           <title>Your Sound | Sonar</title>
         </Head>
-        <Container maxW="container.xl" py={8}>
-          <Heading as="h1" mb={6}>Your Sound | Sonar</Heading>
+        <div className="container-xl py-8">
+          <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
           <ErrorDisplay message={error} retry={fetchUserTaste} />
-        </Container>
+        </div>
       </>
     );
   }
@@ -179,10 +172,10 @@ const MusicTaste = () => {
         <Head>
           <title>Your Sound | Sonar</title>
         </Head>
-        <Container maxW="container.xl" py={8}>
-          <Heading as="h1" mb={6}>Your Sound | Sonar</Heading>
-          <Text>No music taste data available. Please connect your Spotify account.</Text>
-        </Container>
+        <div className="container-xl py-8">
+          <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
+          <p>No music taste data available. Please connect your Spotify account.</p>
+        </div>
       </>
     );
   }
@@ -192,21 +185,21 @@ const MusicTaste = () => {
       <Head>
         <title>Your Sound | Sonar</title>
       </Head>
-      <Container maxW="container.xl" py={8}>
-        <Heading as="h1" mb={6}>Your Sound | Sonar</Heading>
+      <div className="container-xl py-8">
+        <h1 className="text-3xl font-bold mb-6">Your Sound | Sonar</h1>
         
-        <Box mb={8}>
-          <Heading as="h2" size="lg" mb={4}>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">
             Your Location
-          </Heading>
-          <Text fontSize="xl">
+          </h2>
+          <p className="text-xl">
             {userTaste.location && (
               <>
                 {userTaste.location.city || 'Unknown City'}, {userTaste.location.country || 'Unknown Country'}
               </>
             )}
-          </Text>
-        </Box>
+          </p>
+        </div>
         
         <ErrorBoundary>
           <ArtistSection artists={userTaste.topArtists || []} />
@@ -215,7 +208,7 @@ const MusicTaste = () => {
         <ErrorBoundary>
           <EventSection events={userTaste.events || []} />
         </ErrorBoundary>
-      </Container>
+      </div>
     </>
   );
 };

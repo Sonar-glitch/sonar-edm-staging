@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box, Text, Button } from '@chakra-ui/react';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -22,25 +21,18 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       // Fallback UI when an error occurs
       return (
-        <Box 
-          p={4} 
-          borderRadius="md" 
-          bg="rgba(255, 0, 0, 0.1)" 
-          borderLeft="4px solid red"
-          my={4}
-        >
-          <Text fontWeight="bold" mb={2}>Something went wrong</Text>
-          <Text fontSize="sm" mb={3}>
+        <div className="error-container">
+          <h3 className="font-bold mb-2">Something went wrong</h3>
+          <p className="text-sm mb-3">
             {this.state.error && this.state.error.toString()}
-          </Text>
-          <Button 
-            size="sm" 
-            colorScheme="red" 
+          </p>
+          <button 
+            className="btn btn-primary text-sm"
             onClick={() => window.location.reload()}
           >
             Reload Page
-          </Button>
-        </Box>
+          </button>
+        </div>
       );
     }
 

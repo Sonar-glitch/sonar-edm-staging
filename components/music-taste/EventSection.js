@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box, Heading, SimpleGrid, Text } from '@chakra-ui/react';
 import EventCard from '../EventCard';
 import ErrorBoundary from '../common/ErrorBoundary';
 
@@ -9,28 +8,28 @@ const EventSection = ({ events = [] }) => {
   
   if (safeEvents.length === 0) {
     return (
-      <Box mb={8}>
-        <Heading as="h2" size="lg" mb={4}>
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-4">
           Recommended Events
-        </Heading>
-        <Text>No event recommendations available for your area.</Text>
-      </Box>
+        </h2>
+        <p>No event recommendations available for your area.</p>
+      </div>
     );
   }
   
   return (
-    <Box mb={8}>
-      <Heading as="h2" size="lg" mb={4}>
+    <div className="mb-8">
+      <h2 className="text-2xl font-bold mb-4">
         Recommended Events
-      </Heading>
-      <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={6}>
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {safeEvents.map((event, index) => (
           <ErrorBoundary key={event.id || index}>
             <EventCard event={event} />
           </ErrorBoundary>
         ))}
-      </SimpleGrid>
-    </Box>
+      </div>
+    </div>
   );
 };
 
