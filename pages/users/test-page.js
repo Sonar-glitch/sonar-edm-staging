@@ -4,7 +4,6 @@ import Navigation from '../../components/Navigation';
 import SeasonalMoodCard from '../../components/SeasonalMoodCard';
 import EventCorrelationIndicator from '../../components/EventCorrelationIndicator';
 
-
 export default function Test() {
   // Sample data for SpiderChart
   const sampleGenres = [

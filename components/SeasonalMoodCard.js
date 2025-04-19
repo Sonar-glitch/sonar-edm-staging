@@ -1,4 +1,3 @@
-// Updated SeasonalMoodCard.js with better error handling
 import React from 'react';
 
 const SeasonalMoodCard = ({ seasonalMood }) => {
