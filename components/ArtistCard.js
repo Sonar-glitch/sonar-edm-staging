@@ -1,127 +1,84 @@
 import React from 'react';
-import styles from '../styles/ArtistCard.module.css';
+import { Box, Image, Heading, Text, Link, Badge, Flex } from '@chakra-ui/react';
+import NextLink from 'next/link';
+import SafeContent from './common/SafeContent';
 
-const ArtistCard = ({ artist, correlation, similarArtists }) => {
-  // Error handling: Check if artist is valid
+const ArtistCard = ({ artist }) => {
+  // Ensure artist is an object
   if (!artist || typeof artist !== 'object') {
-    return (
-      <div className={styles.artistCard}>
-        <div className={styles.errorMessage}>
-          <p>Unable to display artist information. Invalid artist data.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Ensure correlation is a valid number
-  const validCorrelation = typeof correlation === 'number' && !isNaN(correlation) ? correlation : 0;
-  const correlationPercent = Math.round(validCorrelation * 100);
-  
-  // Validate similarArtists array
-  const validSimilarArtists = Array.isArray(similarArtists) ? similarArtists : [];
-  
-  // Ensure popularity is a valid number
-  const popularity = typeof artist.popularity === 'number' && !isNaN(artist.popularity) ? artist.popularity : 50;
-  
-  // Get artist image with fallbacks
-  const getArtistImage = () => {
-    // Check for Spotify-style images array
-    if (artist.images && artist.images.length > 0) {
-      return artist.images[0].url;
-    }
-    
-    // Check for direct image property
-    if (artist.image) {
-      return artist.image;
-    }
-    
-    // No image available
     return null;
-  };
+  }
   
-  const artistImage = getArtistImage();
+  // Extract properties with fallbacks
+  const {
+    name = 'Unknown Artist',
+    images = [],
+    genres = [],
+    popularity = 0,
+    external_urls = {},
+    id = ''
+  } = artist;
   
-  // Extract genres with fallbacks
-  const genres = Array.isArray(artist.genres) ? artist.genres : [];
+  // Safely get image URL
+  const imageUrl = images && images.length > 0 && images[0].url 
+    ? images[0].url 
+    : 'https://via.placeholder.com/300?text=No+Image';
+  
+  // Safely get Spotify URL
+  const spotifyUrl = external_urls && external_urls.spotify 
+    ? external_urls.spotify 
+    : '#';
   
   return (
-    <div className={styles.artistCard}>
-      <div className={styles.artistHeader}>
-        <div className={styles.artistImageContainer}>
-          {artistImage ? (
-            <div 
-              className={styles.artistImage}
-              style={{ backgroundImage: `url(${artistImage})` }}
-            />
-          ) : (
-            <div className={styles.artistImagePlaceholder}>
-              <span>{artist.name ? artist.name.charAt(0) : '?'}</span>
-            </div>
-          )}
-        </div>
+    <Box 
+      borderWidth="1px" 
+      borderRadius="lg" 
+      overflow="hidden" 
+      bg="rgba(0, 0, 0, 0.3)"
+      transition="transform 0.3s"
+      _hover={{ transform: 'translateY(-5px)' }}
+    >
+      <Image 
+        src={imageUrl} 
+        alt={`${name} image`}
+        fallbackSrc="https://via.placeholder.com/300?text=Loading..."
+        width="100%"
+        height="200px"
+        objectFit="cover"
+        loading="lazy"
+      />
+      
+      <Box p={4}>
+        <Heading as="h3" size="md" mb={2} isTruncated>
+          {name}
+        </Heading>
         
-        <div className={styles.artistNameContainer}>
-          <h3 className={styles.artistName}>{artist.name || 'Unknown Artist'}</h3>
-          
-          <div className={styles.genreTags}>
+        {genres && genres.length > 0 && (
+          <Flex flexWrap="wrap" mb={2}>
             {genres.slice(0, 3).map((genre, index) => (
-              <span key={index} className={styles.genreTag}>{genre}</span>
+              <Badge key={index} colorScheme="purple" mr={1} mb={1}>
+                {genre}
+              </Badge>
             ))}
-          </div>
-        </div>
-      </div>
-      
-      <div className={styles.artistMetrics}>
-        <div className={styles.metricItem}>
-          <div className={styles.metricHeader}>
-            <span className={styles.metricLabel}>Popularity</span>
-            <span className={styles.metricValue}>{popularity}%</span>
-          </div>
-          <div className={styles.metricBar}>
-            <div 
-              className={styles.metricFill} 
-              style={{ width: `${popularity}%` }}
-            ></div>
-          </div>
-        </div>
+          </Flex>
+        )}
         
-        <div className={styles.metricItem}>
-          <div className={styles.metricHeader}>
-            <span className={styles.metricLabel}>Taste Match</span>
-            <span className={styles.metricValue}>{correlationPercent}%</span>
-          </div>
-          <div className={styles.metricBar}>
-            <div 
-              className={styles.metricFill} 
-              style={{ width: `${correlationPercent}%` }}
-            ></div>
-          </div>
-        </div>
-      </div>
-      
-      {validSimilarArtists.length > 0 && (
-        <div className={styles.similarArtistsSection}>
-          <h4 className={styles.similarArtistsTitle}>Similar Artists</h4>
-          <div className={styles.similarArtistsList}>
-            {validSimilarArtists.slice(0, 3).map((similar, index) => (
-              <div key={index} className={styles.similarArtist}>
-                {similar.image ? (
-                  <div 
-                    className={styles.similarArtistImage}
-                    style={{ backgroundImage: `url(${similar.image})` }}
-                  />
-                ) : (
-                  <div className={styles.similarArtistImagePlaceholder}>
-                    <span>{similar.name ? similar.name.charAt(0) : '?'}</span>
-                  </div>
-                )}
-                <span className={styles.similarArtistName}>{similar.name || 'Unknown Artist'}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+        <Text fontSize="sm" mb={3}>
+          Popularity: {popularity}/100
+        </Text>
+        
+        <Link 
+          as={NextLink}
+          href={spotifyUrl}
+          isExternal
+          color="green.400"
+          fontWeight="bold"
+          fontSize="sm"
+        >
+          View on Spotify
+        </Link>
+      </Box>
+    </Box>
   );
 };
 

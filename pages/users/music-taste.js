@@ -1,104 +1,131 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import Head from 'next/head';
 import { useRouter } from 'next/router';
-import styles from '../../styles/MusicTaste.module.css';
-
-// Import smaller components
-import LoadingSpinner from '../../components/music-taste/LoadingSpinner';
-import ErrorDisplay from '../../components/music-taste/ErrorDisplay';
+import dynamic from 'next/dynamic';
+import Head from 'next/head';
+import { Box, Container, Heading, Text, useToast } from '@chakra-ui/react';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
 import LoadingSkeleton from '../../components/music-taste/LoadingSkeleton';
+import ErrorDisplay from '../../components/music-taste/ErrorDisplay';
 import ArtistSection from '../../components/music-taste/ArtistSection';
 import EventSection from '../../components/music-taste/EventSection';
+import LoadingSpinner from '../../components/music-taste/LoadingSpinner';
 
-export default function MusicTaste() {
+// Safely access localStorage with try/catch
+const safeLocalStorage = {
+  getItem: (key) => {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.error('Error accessing localStorage:', e);
+      return null;
+    }
+  },
+  setItem: (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      console.error('Error setting localStorage:', e);
+    }
+  }
+};
+
+const MusicTaste = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
+  
   const [userTaste, setUserTaste] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Add a state for incremental loading
-  const [visibleArtists, setVisibleArtists] = useState(6);
-  const [visibleEvents, setVisibleEvents] = useState(4);
+  // Add timeout state to handle API timeouts
+  const [isTimedOut, setIsTimedOut] = useState(false);
   
   useEffect(() => {
-    // Redirect if not authenticated
-    if (status === 'unauthenticated') {
+    // Set a timeout for API calls
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        setIsTimedOut(true);
+        // Try to use cached data if available
+        const cachedData = safeLocalStorage.getItem('userTasteData');
+        if (cachedData) {
+          try {
+            setUserTaste(JSON.parse(cachedData));
+            setLoading(false);
+          } catch (e) {
+            console.error('Error parsing cached data:', e);
+          }
+        }
+      }
+    }, 15000); // 15 second timeout
+    
+    return () => clearTimeout(timeoutId);
+  }, [loading]);
+  
+  useEffect(() => {
+    // Only fetch if authenticated
+    if (status === 'authenticated') {
+      fetchUserTaste();
+    } else if (status === 'unauthenticated') {
+      // Redirect to home if not authenticated
       router.push('/');
     }
     
-    if (status === 'authenticated') {
-      fetchUserTaste();
-    }
-    
-    // Implement intersection observer for infinite scrolling
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && userTaste) {
-          // Load more items when user scrolls to the bottom
-          if (entry.target.id === 'artists-end') {
-            setVisibleArtists(prev => Math.min(prev + 6, userTaste.topArtists?.length || 0));
-          } else if (entry.target.id === 'events-end') {
-            setVisibleEvents(prev => Math.min(prev + 4, userTaste.suggestedEvents?.length || 0));
-          }
-        }
-      });
-    }, { threshold: 0.1 });
-    
-    // Observe end markers
-    const artistsEnd = document.getElementById('artists-end');
-    const eventsEnd = document.getElementById('events-end');
-    
-    if (artistsEnd) observer.observe(artistsEnd);
-    if (eventsEnd) observer.observe(eventsEnd);
-    
+    // Cleanup function
     return () => {
-      if (artistsEnd) observer.unobserve(artistsEnd);
-      if (eventsEnd) observer.unobserve(eventsEnd);
+      // Any cleanup needed
     };
-  }, [status, router, userTaste]);
+  }, [status]);
   
   const fetchUserTaste = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Use AbortController for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      
-      const response = await fetch('/api/spotify/user-taste', {
-        signal: controller.signal,
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      
-      clearTimeout(timeoutId);
+      const response = await fetch('/api/spotify/user-taste');
       
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
       
       const data = await response.json();
-      setUserTaste(data);
       
-      // Cache successful responses in localStorage
-      try {
-        localStorage.setItem('userTasteData', JSON.stringify(data));
-      } catch (e) {
-        console.error('Error caching user taste data:', e);
+      // Validate data structure to prevent null reference errors
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid data format received');
       }
+      
+      // Ensure required properties exist
+      const validatedData = {
+        topArtists: Array.isArray(data.topArtists) ? data.topArtists : [],
+        topTracks: Array.isArray(data.topTracks) ? data.topTracks : [],
+        events: Array.isArray(data.events) ? data.events : [],
+        location: data.location || { city: 'Unknown', country: 'Unknown' },
+        genres: Array.isArray(data.genres) ? data.genres : []
+      };
+      
+      setUserTaste(validatedData);
+      
+      // Cache the validated data
+      safeLocalStorage.setItem('userTasteData', JSON.stringify(validatedData));
+      
     } catch (err) {
       console.error('Error fetching user taste:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to load your music taste data');
       
-      // Provide fallback data if available in localStorage
-      const cachedData = localStorage.getItem('userTasteData');
+      // Try to use cached data if available
+      const cachedData = safeLocalStorage.getItem('userTasteData');
       if (cachedData) {
         try {
           setUserTaste(JSON.parse(cachedData));
+          toast({
+            title: 'Using cached data',
+            description: 'We encountered an error but loaded your previous data.',
+            status: 'warning',
+            duration: 5000,
+            isClosable: true,
+          });
         } catch (e) {
           console.error('Error parsing cached data:', e);
         }
@@ -108,67 +135,89 @@ export default function MusicTaste() {
     }
   };
   
-  if (status === 'loading' || loading) {
+  // Render loading state
+  if (loading) {
     return (
-      <div className={styles.container}>
+      <>
         <Head>
           <title>Your Sound | Sonar</title>
         </Head>
-        <LoadingSpinner />
-      </div>
+        <Container maxW="container.xl" py={8}>
+          <Heading as="h1" mb={6}>Your Sound | Sonar</Heading>
+          {isTimedOut ? (
+            <ErrorDisplay 
+              message="Taking longer than expected. Please wait or refresh the page." 
+              retry={fetchUserTaste} 
+            />
+          ) : (
+            <LoadingSpinner message="Loading your vibe..." />
+          )}
+        </Container>
+      </>
     );
   }
   
+  // Render error state
   if (error && !userTaste) {
     return (
-      <div className={styles.container}>
+      <>
         <Head>
           <title>Your Sound | Sonar</title>
         </Head>
-        <ErrorDisplay error={error} onRetry={fetchUserTaste} />
-      </div>
+        <Container maxW="container.xl" py={8}>
+          <Heading as="h1" mb={6}>Your Sound | Sonar</Heading>
+          <ErrorDisplay message={error} retry={fetchUserTaste} />
+        </Container>
+      </>
+    );
+  }
+  
+  // Safely check if userTaste exists before rendering
+  if (!userTaste) {
+    return (
+      <>
+        <Head>
+          <title>Your Sound | Sonar</title>
+        </Head>
+        <Container maxW="container.xl" py={8}>
+          <Heading as="h1" mb={6}>Your Sound | Sonar</Heading>
+          <Text>No music taste data available. Please connect your Spotify account.</Text>
+        </Container>
+      </>
     );
   }
   
   return (
-    <div className={styles.container}>
+    <>
       <Head>
         <title>Your Sound | Sonar</title>
-        <meta name="description" content="Your personalized music taste profile" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        
-        {/* Preload critical resources */}
-        <link rel="preload" href="/api/spotify/user-taste" as="fetch" crossOrigin="anonymous" />
       </Head>
-      
-      <main className={styles.main}>
-        <h1 className={styles.title}>Your Sound</h1>
+      <Container maxW="container.xl" py={8}>
+        <Heading as="h1" mb={6}>Your Sound | Sonar</Heading>
         
-        {userTaste ? (
-          <>
-            <ArtistSection 
-              artists={userTaste.topArtists} 
-              visibleArtists={visibleArtists} 
-            />
-            
-            <EventSection 
-              events={userTaste.suggestedEvents} 
-              visibleEvents={visibleEvents} 
-            />
-          </>
-        ) : (
-          <LoadingSkeleton />
-        )}
-      </main>
-    </div>
+        <Box mb={8}>
+          <Heading as="h2" size="lg" mb={4}>
+            Your Location
+          </Heading>
+          <Text fontSize="xl">
+            {userTaste.location && (
+              <>
+                {userTaste.location.city || 'Unknown City'}, {userTaste.location.country || 'Unknown Country'}
+              </>
+            )}
+          </Text>
+        </Box>
+        
+        <ErrorBoundary>
+          <ArtistSection artists={userTaste.topArtists || []} />
+        </ErrorBoundary>
+        
+        <ErrorBoundary>
+          <EventSection events={userTaste.events || []} />
+        </ErrorBoundary>
+      </Container>
+    </>
   );
-}
+};
 
-// Use getServerSideProps to check authentication server-side
-export async function getServerSideProps(context) {
-  // This is a minimal implementation to check auth status
-  // The actual data fetching happens client-side for better UX
-  return {
-    props: {}
-  };
-}
+export default MusicTaste;

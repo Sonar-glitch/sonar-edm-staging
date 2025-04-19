@@ -1,25 +1,37 @@
-import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
-import styles from '../../styles/MusicTaste.module.css';
-import LoadingSkeleton from './LoadingSkeleton';
+import React from 'react';
+import { Box, Heading, SimpleGrid, Text } from '@chakra-ui/react';
+import EventCard from '../EventCard';
+import ErrorBoundary from '../common/ErrorBoundary';
 
-// Dynamically import EventCard
-const EventCard = dynamic(() => import('../EventCard'), {
-  loading: () => <div className={styles.cardSkeleton} />
-});
-
-const EventSection = ({ events, visibleEvents }) => (
-  <section className={styles.sectionContainer}>
-    <h2 className={styles.sectionTitle}>Suggested Events</h2>
-    <div className={styles.eventsGrid}>
-      <Suspense fallback={<LoadingSkeleton />}>
-        {events?.slice(0, visibleEvents).map((event, index) => (
-          <EventCard key={event.id || index} event={event} />
+const EventSection = ({ events = [] }) => {
+  // Ensure events is always an array
+  const safeEvents = Array.isArray(events) ? events : [];
+  
+  if (safeEvents.length === 0) {
+    return (
+      <Box mb={8}>
+        <Heading as="h2" size="lg" mb={4}>
+          Recommended Events
+        </Heading>
+        <Text>No event recommendations available for your area.</Text>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box mb={8}>
+      <Heading as="h2" size="lg" mb={4}>
+        Recommended Events
+      </Heading>
+      <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={6}>
+        {safeEvents.map((event, index) => (
+          <ErrorBoundary key={event.id || index}>
+            <EventCard event={event} />
+          </ErrorBoundary>
         ))}
-      </Suspense>
-    </div>
-    <div id="events-end" className={styles.loadMoreTrigger}></div>
-  </section>
-);
+      </SimpleGrid>
+    </Box>
+  );
+};
 
 export default EventSection;
