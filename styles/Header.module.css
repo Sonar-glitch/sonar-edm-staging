@@ -2,287 +2,110 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: var(--bg-secondary);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.logoContainer {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: var(--text-primary);
-  font-family: 'Audiowide', sans-serif;
-  font-size: 1.5rem;
-  transition: all 0.3s ease;
-}
-
-.logo:hover {
-  transform: scale(1.05);
-}
-
-.logoIcon {
-  margin-right: 0.5rem;
-  font-size: 1.8rem;
-}
-
-.logoText {
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.navContainer {
-  display: flex;
-  align-items: center;
-}
-
-.navList {
-  display: flex;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.navItem {
-  margin: 0 1rem;
-}
-
-.navLink {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  padding: 0.5rem 0;
-  position: relative;
-}
-
-.navLink:hover {
-  color: var(--text-primary);
-}
-
-.navLink:after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-  transition: width 0.3s ease;
-}
-
-.navLink:hover:after {
+  padding: 1rem;
   width: 100%;
 }
 
-.authContainer {
-  margin-left: 2rem;
+.logo {
+  text-decoration: none;
   display: flex;
   align-items: center;
 }
 
-.userMenu {
+.logoText {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: linear-gradient(90deg, #00ffff, #6610f2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-fill-color: transparent;
+  filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.5));
+}
+
+.nav {
   display: flex;
   align-items: center;
-  position: relative;
 }
 
-.userAvatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--accent-secondary);
-  margin-right: 0.75rem;
-}
-
-.userName {
-  color: var(--text-primary);
-  font-weight: 500;
-  margin-right: 1rem;
-}
-
-.signOutButton {
-  display: flex;
-  align-items: center;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.5rem 0.75rem;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.signOutButton:hover {
-  background-color: rgba(255, 42, 112, 0.1);
-  color: var(--accent-primary);
-}
-
-.signOutIcon {
-  margin-right: 0.5rem;
-  font-size: 1.2rem;
-}
-
-.signInButton {
+.profileLink {
   display: flex;
   align-items: center;
   padding: 0.5rem 1rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 255, 0.3);
   border-radius: 50px;
-  border: none;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.profileLink:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-color: rgba(0, 255, 255, 0.5);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.avatarContainer {
+  margin-right: 0.5rem;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarFallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00ffff, #6610f2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.profileName {
+  color: white;
+  font-size: 0.9rem;
+}
+
+.signInButton {
+  padding: 0.5rem 1.25rem;
+  background: linear-gradient(90deg, #00ffff, #6610f2);
+  border-radius: 50px;
+  color: white;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
 }
 
 .signInButton:hover {
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
-.spotifyButton {
-  background-color: #1DB954;
-  color: white;
-}
-
-.googleButton {
-  background-color: #4285F4;
-  color: white;
-}
-
-.signInIcon {
-  margin-right: 0.75rem;
-  font-size: 1.2rem;
-}
-
-.loadingDot {
-  width: 12px;
-  height: 12px;
-  background-color: var(--accent-secondary);
-  border-radius: 50%;
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(0.8);
-    opacity: 0.5;
-  }
-}
-
-.menuToggle {
-  display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  width: 30px;
-  height: 30px;
-  position: relative;
-}
-
-.menuIcon,
-.menuIcon:before,
-.menuIcon:after {
-  width: 30px;
-  height: 3px;
-  background-color: var(--text-primary);
-  position: absolute;
-  transition: all 0.3s ease;
-}
-
-.menuIcon {
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.menuIcon:before,
-.menuIcon:after {
-  content: '';
-  left: 0;
-}
-
-.menuIcon:before {
-  top: -8px;
-}
-
-.menuIcon:after {
-  bottom: -8px;
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-  .menuToggle {
-    display: block;
-    z-index: 110;
+/* Mobile optimizations */
+@media (max-width: 576px) {
+  .header {
+    padding: 0.75rem;
   }
   
-  .navContainer {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    width: 80%;
-    max-width: 300px;
-    height: 100vh;
-    background-color: var(--bg-secondary);
-    flex-direction: column;
-    justify-content: flex-start;
-    padding: 5rem 2rem 2rem;
-    transition: right 0.3s ease;
-    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
+  .logoText {
+    font-size: 1.5rem;
   }
   
-  .menuOpen {
-    right: 0;
+  .profileName {
+    display: none;
   }
   
-  .navList {
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .navItem {
-    margin: 0.75rem 0;
-    width: 100%;
-  }
-  
-  .navLink {
-    display: block;
-    padding: 0.75rem 0;
-  }
-  
-  .authContainer {
-    margin: 2rem 0 0;
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .userMenu {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .userName {
-    margin: 0.5rem 0;
-  }
-  
-  .signOutButton {
-    margin-top: 0.5rem;
+  .profileLink {
+    padding: 0.4rem;
   }
 }
