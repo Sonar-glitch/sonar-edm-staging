@@ -1,21 +1,6 @@
-.container {
+.taste-wrapper {
   padding: 2rem;
   color: white;
-  background: #0e0b1f;
-  min-height: 100vh;
-}
-.card {
-  background: #1f1b3a;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-.image {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-.loading, .error {
-  color: #bbb;
+  background-color: #121212;
+  font-family: sans-serif;
 }

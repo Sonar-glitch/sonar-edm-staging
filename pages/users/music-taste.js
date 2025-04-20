@@ -1,44 +1,29 @@
-import { useEffect, useState } from "react";
-import styles from "@/styles/MusicTaste.module.css";
+import { useEffect, useState } from 'react';
 
 export default function MusicTaste() {
-  const [data, setData] = useState(null);
+  const [taste, setTaste] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetch("/api/spotify/user-taste")
-      .then((res) => res.json())
-      .then(setData)
-      .catch(setError);
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        setTaste(data);
+      })
+      .catch(err => setError(err.message));
   }, []);
 
-  if (error) return <div className={styles.error}>Error: {error.message}</div>;
-  if (!data) return <div className={styles.loading}>Loading...</div>;
-
-  const artist = data.artists?.items?.[0];
-  const track = data.tracks?.items?.[0];
+  if (error) return <div>Error: {error}</div>;
+  if (!taste) return <div>Loading...</div>;
 
   return (
-    <div className={styles.container}>
-      <h1>Your Sonic Snapshot</h1>
-      {artist && (
-        <div className={styles.card}>
-          <img src={artist.images?.[0]?.url} alt="Artist" className={styles.image} />
-          <h2>{artist.name}</h2>
-          <p>Popularity: {artist.popularity}</p>
-        </div>
-      )}
-      {track && (
-        <div className={styles.card}>
-          <img src={track.album?.images?.[0]?.url} alt="Track" className={styles.image} />
-          <h2>{track.name}</h2>
-          <p>{track.artists.map((a) => a.name).join(", ")}</p>
-        </div>
-      )}
-      <details>
-        <summary>Full Data</summary>
-        <pre>{JSON.stringify(data, null, 2)}</pre>
-      </details>
+    <div className="taste-wrapper">
+      <h1>Top Artist: {taste.topArtists?.items?.[0]?.name}</h1>
+      <img src={taste.topArtists?.items?.[0]?.images?.[0]?.url} width="200" alt="Top Artist" />
+      <h2>Top Track: {taste.topTracks?.items?.[0]?.name}</h2>
+      <img src={taste.topTracks?.items?.[0]?.album?.images?.[0]?.url} width="200" alt="Top Track" />
+      <p>Logged in as: {taste.profile?.display_name}</p>
     </div>
   );
 }
