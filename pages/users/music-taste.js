@@ -1,56 +1,44 @@
-
-import { useEffect, useState } from 'react';
-import styles from '../../styles/MusicTaste.module.css';
+import React, { useEffect, useState } from "react";
 
 export default function MusicTastePage() {
   const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
   useEffect(() => {
     async function fetchTaste() {
       try {
-        const res = await fetch('/api/spotify/user-taste');
-        if (!res.ok) throw new Error('Network response was not ok');
-        const result = await res.json();
-        setData(result);
+        const res = await fetch("/api/spotify/user-taste");
+        if (!res.ok) throw new Error("Failed to fetch");
+        const json = await res.json();
+        setData(json);
       } catch (err) {
-        console.error('Failed to fetch user taste:', err);
-        setError(true);
+        console.error(err);
+        setError("Could not load your music taste. Try reconnecting your Spotify.");
       } finally {
         setLoading(false);
       }
     }
+
     fetchTaste();
   }, []);
 
-  if (loading) return <div className={styles.container}><h2>Loading your vibe...</h2></div>;
-  if (error || !data)
-    return (
-      <div className={styles.container}>
-        <h1>Your Sonic Signature</h1>
-        <p className={styles.error}>Could not load your music taste. Try reconnecting your Spotify.</p>
-      </div>
-    );
-
-  const { topArtist, repeatTrack, matchedEvents } = data;
-
   return (
-    <div className={styles.container}>
+    <div style={{ color: "white", padding: "2rem", fontFamily: "sans-serif", backgroundColor: "#0b0014" }}>
       <h1>Your Sonic Signature</h1>
-      <div className={styles.summary}>
-        <div><strong>Top Artist</strong><p>{topArtist || 'No artist data'}</p></div>
-        <div><strong>Repeat Track</strong><p>{repeatTrack || 'No track data'}</p></div>
-      </div>
-      <div className={styles.events}>
-        <h2>Events You’ll Like</h2>
-        {matchedEvents && matchedEvents.length > 0 ? (
-          <ul>{matchedEvents.map((event, idx) => <li key={idx}>{event}</li>)}</ul>
-        ) : (
-          <p>No events matched your vibe yet.</p>
-        )}
-      </div>
-      <p>Did we get it right? <strong>yes / no</strong></p>
+      {loading && <p>Loading your vibe...</p>}
+      {error && <p>{error}</p>}
+      {!loading && !error && data && (
+        <div>
+          <h2>Top Artist</h2>
+          <p>{data.topArtist || "No artist data"}</p>
+          <h2>Repeat Track</h2>
+          <p>{data.repeatTrack || "No track data"}</p>
+          <h3>Events You’ll Like</h3>
+          <p>{data.events?.length ? data.events.join(", ") : "No events matched your vibe yet."}</p>
+          <p>Did we get it right? <strong>yes</strong> / <strong>no</strong></p>
+        </div>
+      )}
     </div>
   );
 }
