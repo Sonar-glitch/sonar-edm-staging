@@ -1,29 +1,35 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+import GenreRadarChart from "@/components/GenreRadarChart";
+import SeasonalMood from "@/components/SeasonalMood";
+import "@/styles/MusicTaste.module.css";
 
-export default function MusicTaste() {
-  const [taste, setTaste] = useState(null);
+export default function MusicTastePage() {
+  const [tasteData, setTasteData] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("/api/spotify/user-taste")
-      .then(res => res.json())
-      .then(data => {
-        if (data.error) throw new Error(data.error);
-        setTaste(data);
-      })
-      .catch(err => setError(err.message));
+    async function fetchTaste() {
+      try {
+        const res = await fetch("/api/spotify/user-taste");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load");
+        setTasteData(data);
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      }
+    }
+    fetchTaste();
   }, []);
 
   if (error) return <div>Error: {error}</div>;
-  if (!taste) return <div>Loading...</div>;
+  if (!tasteData) return <div>Loading...</div>;
 
   return (
-    <div className="taste-wrapper">
-      <h1>Top Artist: {taste.topArtists?.items?.[0]?.name}</h1>
-      <img src={taste.topArtists?.items?.[0]?.images?.[0]?.url} width="200" alt="Top Artist" />
-      <h2>Top Track: {taste.topTracks?.items?.[0]?.name}</h2>
-      <img src={taste.topTracks?.items?.[0]?.album?.images?.[0]?.url} width="200" alt="Top Track" />
-      <p>Logged in as: {taste.profile?.display_name}</p>
+    <div className="taste-page">
+      <h1>Your Sonic Signature</h1>
+      <SeasonalMood mood={tasteData.mood} />
+      <GenreRadarChart genres={tasteData.genreWeights} />
     </div>
   );
 }
