@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]";
+import { authOptions } from '../auth/[...nextauth]';
 import { getTopArtists, getTopTracks, getAudioFeaturesForTracks } from "../../../lib/spotify";
 import { getTopGenres, getSeasonalMood } from "../../../lib/moodUtils";
 
