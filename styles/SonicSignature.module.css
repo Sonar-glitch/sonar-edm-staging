@@ -1,117 +1,324 @@
 .container {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.3);
   border-radius: 16px;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
-  width: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .title {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-align: center;
   color: #00ffff;
+  text-align: center;
+  margin: 0 0 1.5rem 0;
   text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.chartSection {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
 }
 
 .chart {
   width: 100%;
-  max-width: 300px;
+  max-width: 500px;
   height: 300px;
-  margin-bottom: 1.5rem;
-  position: relative;
 }
 
-.levelCircle {
-  stroke-dasharray: 4 2;
-}
-
-.axisLine {
-  opacity: 0.5;
-}
-
-.axisLabel {
-  font-size: 12px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.axisLabel:hover {
-  font-size: 14px;
-  fill: #ff00ff;
-  text-shadow: 0 0 5px rgba(255, 0, 255, 0.7);
-}
-
-.radarArea {
-  transition: all 0.3s ease;
-}
-
-.radarArea:hover {
-  fill: rgba(0, 255, 255, 0.3);
-}
-
-.dataPoint {
-  transition: all 0.2s ease;
-}
-
-.dataPoint:hover {
-  r: 6;
-}
-
-.moodContainer {
-  margin-top: 1rem;
-  width: 100%;
-}
-
-.moodBadge {
-  background: linear-gradient(90deg, #570AB8, #FF007F);
+.moodBanner {
+  background: linear-gradient(90deg, #330066, #8a2be2);
   color: white;
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 2rem;
   border-radius: 50px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 1.25rem;
-  box-shadow: 0 4px 15px rgba(255, 0, 127, 0.4);
-  margin: 0 auto;
-  display: flex;
+  margin: 0 auto 2rem;
+  max-width: 500px;
+  box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
 }
 
 .moodIcon {
-  margin-right: 0.5rem;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  margin-right: 0.75rem;
 }
 
 .moodText {
-  background: linear-gradient(90deg, #FFFFFF, #F0F0F0);
-  background-clip: text;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
   -webkit-background-clip: text;
-  color: transparent;
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 10px rgba(255, 0, 255, 0.5);
 }
 
-/* Animation for the chart */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.artistTrackSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
 
-.chart svg {
-  animation: fadeIn 1s ease-out;
+.infoColumn {
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes pulseGlow {
-  0% { filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.7)); }
-  50% { filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.9)); }
-  100% { filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.7)); }
+.columnHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-.radarArea {
-  animation: pulseGlow 3s infinite;
+.columnTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+}
+
+.popularityIndicator {
+  width: 80px;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.popularityFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #ff00ff, #ff8800);
+  border-radius: 4px;
+}
+
+.popularityText {
+  position: absolute;
+  top: -18px;
+  right: 0;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.artistCard {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.artistImage {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.artistImagePlaceholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #330066, #ff00ff);
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.artistName {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #FFDD00;
+  text-shadow: 0 0 8px rgba(255, 221, 0, 0.4);
+}
+
+.trackCard {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+  height: 92px; /* Match height of artistCard */
+  border: 1px solid rgba(255, 0, 127, 0.3);
+}
+
+.trackName {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ff007f;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
+  margin-bottom: 0.25rem;
+}
+
+.trackArtist {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.recommendationsToggle {
+  background: none;
+  border: none;
+  color: #00ffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  text-decoration: underline;
+  align-self: center;
+}
+
+.recommendationsToggle:hover {
+  color: #ff00ff;
+}
+
+.recommendationsList {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.recommendationItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.recommendationItem:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.recommendationName {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: white;
+}
+
+.recommendationTrackInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.recommendationArtist {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.recommendationMatch {
+  width: 70px;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.matchFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #00ffff, #6610f2);
+  border-radius: 3px;
+}
+
+.matchScore {
+  position: absolute;
+  top: -18px;
+  right: 0;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.feedbackContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.feedbackQuestion {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 0.5rem;
+}
+
+.noButton {
+  background: none;
+  border: none;
+  color: #00ffff;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.noButton:hover {
+  color: #ff00ff;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .moodBanner {
+    padding: 0.75rem 1.5rem;
+  }
+  
+  .moodIcon {
+    font-size: 1.25rem;
+  }
+  
+  .moodText {
+    font-size: 1.25rem;
+  }
+  
+  .artistTrackSection {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .chart {
+    height: 250px;
+  }
+  
+  .moodBanner {
+    padding: 0.5rem 1rem;
+  }
+  
+  .moodIcon {
+    font-size: 1rem;
+  }
+  
+  .moodText {
+    font-size: 1rem;
+  }
 }

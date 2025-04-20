@@ -1,78 +1,179 @@
-import React from 'react';
-import styles from '../styles/EventFilters.module.css';
+import React, { useState, useEffect } from 'react';
+import styles from '@/styles/EventFilters.module.css';
 
-const EventFilters = ({ onFilterChange, currentFilters }) => {
-  const handleFilterChange = (filterType, value) => {
-    onFilterChange({ [filterType]: value });
+export default function EventFilters({ onFilterChange, initialFilters }) {
+  const [filters, setFilters] = useState({
+    genre: initialFilters?.genre || 'all',
+    venue: initialFilters?.venue || 'all',
+    event: initialFilters?.event || 'all',
+    price: initialFilters?.price || 'all',
+    vibeMatch: initialFilters?.vibeMatch || 50,
+  });
+
+  // Available filter options - these could come from your API
+  const genreOptions = [
+    { value: 'all', label: 'All Genres' },
+    { value: 'techno', label: 'Techno' },
+    { value: 'house', label: 'House' },
+    { value: 'trance', label: 'Trance' },
+    { value: 'bass', label: 'Bass' },
+    { value: 'drum-and-bass', label: 'Drum & Bass' },
+    { value: 'melodic-techno', label: 'Melodic Techno' },
+    { value: 'progressive-house', label: 'Progressive House' },
+  ];
+
+  const venueOptions = [
+    { value: 'all', label: 'All Venues' },
+    { value: 'club', label: 'Clubs' },
+    { value: 'warehouse', label: 'Warehouses' },
+    { value: 'festival', label: 'Festivals' },
+    { value: 'outdoor', label: 'Outdoor' },
+  ];
+
+  const eventOptions = [
+    { value: 'all', label: 'All Events' },
+    { value: 'upcoming', label: 'Upcoming' },
+    { value: 'weekend', label: 'This Weekend' },
+    { value: 'month', label: 'This Month' },
+  ];
+
+  const priceOptions = [
+    { value: 'all', label: 'Any Price' },
+    { value: 'free', label: 'Free' },
+    { value: 'under50', label: 'Under $50' },
+    { value: 'under100', label: 'Under $100' },
+    { value: 'over100', label: 'Over $100' },
+  ];
+
+  // Send filter changes up to parent component
+  useEffect(() => {
+    if (onFilterChange) {
+      onFilterChange(filters);
+    }
+  }, [filters, onFilterChange]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleVibeMatchChange = (e) => {
+    const value = parseInt(e.target.value);
+    setFilters(prev => ({
+      ...prev,
+      vibeMatch: value
+    }));
   };
 
   return (
-    <div className={styles.filtersContainer}>
-      <div className={styles.filterGroup}>
-        <label className={styles.filterLabel}>Genre</label>
+    <div className={styles.filterContainer}>
+      <div className={styles.filterLabels}>
+        <span>Music</span>
+        <span>Venue</span>
+        <span>Event</span>
+        <span>Price</span>
+        <span>Vibe</span>
+      </div>
+      
+      <div className={styles.filterControls}>
         <select 
+          name="genre" 
+          value={filters.genre}
+          onChange={handleChange}
           className={styles.filterSelect}
-          value={currentFilters.genre}
-          onChange={(e) => handleFilterChange('genre', e.target.value)}
         >
-          <option value="all">All Genres</option>
-          <option value="house">House</option>
-          <option value="techno">Techno</option>
-          <option value="trance">Trance</option>
-          <option value="dubstep">Dubstep</option>
-          <option value="drum">Drum & Bass</option>
-          <option value="melodic">Melodic</option>
-          <option value="progressive">Progressive</option>
-          <option value="deep">Deep House</option>
-          <option value="tech">Tech House</option>
+          {genreOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
+        
+        <select 
+          name="venue" 
+          value={filters.venue}
+          onChange={handleChange}
+          className={styles.filterSelect}
+        >
+          {venueOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        
+        <select 
+          name="event" 
+          value={filters.event}
+          onChange={handleChange}
+          className={styles.filterSelect}
+        >
+          {eventOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        
+        <select 
+          name="price" 
+          value={filters.price}
+          onChange={handleChange}
+          className={styles.filterSelect}
+        >
+          {priceOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        
+        <div className={styles.vibeSliderContainer}>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={filters.vibeMatch}
+            onChange={handleVibeMatchChange}
+            className={styles.vibeSlider}
+          />
+          <div 
+            className={styles.vibeSliderFill} 
+            style={{ width: `${filters.vibeMatch}%` }}
+          ></div>
+        </div>
       </div>
 
-      <div className={styles.filterGroup}>
-        <label className={styles.filterLabel}>When</label>
-        <select 
-          className={styles.filterSelect}
-          value={currentFilters.date}
-          onChange={(e) => handleFilterChange('date', e.target.value)}
-        >
-          <option value="upcoming">All Upcoming</option>
-          <option value="today">Today</option>
-          <option value="this-week">This Week</option>
-          <option value="this-month">This Month</option>
-        </select>
-      </div>
-
-      <div className={styles.filterGroup}>
-        <label className={styles.filterLabel}>Distance</label>
-        <select 
-          className={styles.filterSelect}
-          value={currentFilters.distance}
-          onChange={(e) => handleFilterChange('distance', e.target.value)}
-        >
-          <option value="10">Within 10 miles</option>
-          <option value="25">Within 25 miles</option>
-          <option value="50">Within 50 miles</option>
-          <option value="100">Within 100 miles</option>
-          <option value="all">Any Distance</option>
-        </select>
-      </div>
-
-      <div className={styles.filterGroup}>
-        <label className={styles.filterLabel}>Price</label>
-        <select 
-          className={styles.filterSelect}
-          value={currentFilters.price}
-          onChange={(e) => handleFilterChange('price', e.target.value)}
-        >
-          <option value="all">Any Price</option>
-          <option value="0-25">Under $25</option>
-          <option value="25-50">$25 - $50</option>
-          <option value="50-100">$50 - $100</option>
-          <option value="100-">$100+</option>
-        </select>
+      <div className={styles.activeFilters}>
+        {Object.entries(filters)
+          .filter(([key, value]) => value !== 'all' && key !== 'vibeMatch')
+          .map(([key, value]) => (
+            <span key={key} className={styles.activeFilterTag}>
+              {value}
+              <button 
+                className={styles.removeFilter} 
+                onClick={() => setFilters(prev => ({ ...prev, [key]: 'all' }))}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          
+        {filters.vibeMatch > 0 && (
+          <span className={styles.activeFilterTag}>
+            {filters.vibeMatch}%+ Vibe Match
+            <button 
+              className={styles.removeFilter} 
+              onClick={() => setFilters(prev => ({ ...prev, vibeMatch: 0 }))}
+            >
+              ×
+            </button>
+          </span>
+        )}
       </div>
     </div>
   );
-};
-
-export default EventFilters;
+}

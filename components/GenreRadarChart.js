@@ -1,9 +1,33 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import styles from '@/styles/GenreRadarChart.module.css';
 
 export default function GenreRadarChart({ genreData }) {
   const chartRef = useRef(null);
+  const [chartDimensions, setChartDimensions] = useState({ width: 300, height: 300 });
+  
+  // Handle window resize to make chart responsive
+  useEffect(() => {
+    const handleResize = () => {
+      if (chartRef.current) {
+        const containerWidth = chartRef.current.offsetWidth;
+        // Make chart square but not larger than container or too small on mobile
+        const size = Math.min(Math.max(containerWidth, 250), 500);
+        setChartDimensions({ width: size, height: size });
+      }
+    };
+    
+    // Set initial dimensions
+    handleResize();
+    
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
   
   useEffect(() => {
     if (genreData && Object.keys(genreData).length > 0 && chartRef.current) {
@@ -11,18 +35,26 @@ export default function GenreRadarChart({ genreData }) {
       d3.select(chartRef.current).selectAll('*').remove();
       
       // Set up dimensions
-      const margin = { top: 20, right: 20, bottom: 20, left: 20 };
-      const width = 500 - margin.left - margin.right;
-      const height = 500 - margin.top - margin.bottom;
-      const radius = Math.min(width, height) / 2;
+      const { width, height } = chartDimensions;
+      const margin = { 
+        top: Math.max(20, height * 0.07), 
+        right: Math.max(20, width * 0.07), 
+        bottom: Math.max(20, height * 0.07), 
+        left: Math.max(20, width * 0.07) 
+      };
+      const chartWidth = width - margin.left - margin.right;
+      const chartHeight = height - margin.top - margin.bottom;
+      const radius = Math.min(chartWidth, chartHeight) / 2;
       
       // Create SVG
       const svg = d3.select(chartRef.current)
         .append('svg')
-        .attr('width', width + margin.left + margin.right)
-        .attr('height', height + margin.top + margin.bottom)
+        .attr('width', width)
+        .attr('height', height)
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet')
         .append('g')
-        .attr('transform', `translate(${width/2 + margin.left}, ${height/2 + margin.top})`);
+        .attr('transform', `translate(${width/2}, ${height/2})`);
       
       // Extract data
       const genres = Object.keys(genreData);
@@ -63,14 +95,17 @@ export default function GenreRadarChart({ genreData }) {
         .attr('stroke', 'rgba(255, 255, 255, 0.2)')
         .attr('stroke-width', 1);
       
-      // Draw labels
+      // Adjust label positioning based on screen size
+      const labelRadius = radius * 1.15;
+      
+      // Draw labels with better positioning
       svg.selectAll('.axis-label')
         .data(genres)
         .enter()
         .append('text')
         .attr('class', styles.axisLabel)
-        .attr('x', (d, i) => radiusScale(115) * Math.cos(angleScale(i) - Math.PI/2))
-        .attr('y', (d, i) => radiusScale(115) * Math.sin(angleScale(i) - Math.PI/2))
+        .attr('x', (d, i) => labelRadius * Math.cos(angleScale(i) - Math.PI/2))
+        .attr('y', (d, i) => labelRadius * Math.sin(angleScale(i) - Math.PI/2))
         .attr('text-anchor', (d, i) => {
           const angle = angleScale(i);
           if (angle < Math.PI * 0.25 || angle > Math.PI * 1.75) return 'start';
@@ -82,9 +117,16 @@ export default function GenreRadarChart({ genreData }) {
           if (angle <= Math.PI * 0.5 || angle >= Math.PI * 1.5) return 'auto';
           return 'hanging';
         })
+        .attr('dy', (d, i) => {
+          const angle = angleScale(i);
+          // Fine-tune vertical alignment
+          if (angle > Math.PI * 0.25 && angle < Math.PI * 0.75) return '-0.5em';
+          if (angle > Math.PI * 1.25 && angle < Math.PI * 1.75) return '1em';
+          return '0.3em';
+        })
         .text(d => d)
         .attr('fill', '#00ffff')
-        .attr('font-size', '12px');
+        .attr('font-size', width < 350 ? '10px' : '12px');
       
       // Create data points
       const points = genres.map((genre, i) => {
@@ -134,12 +176,12 @@ export default function GenreRadarChart({ genreData }) {
         .attr('class', styles.dataPoint)
         .attr('cx', d => d.x)
         .attr('cy', d => d.y)
-        .attr('r', 4)
+        .attr('r', width < 350 ? 3 : 4)
         .attr('fill', '#00ffff')
         .attr('stroke', '#fff')
         .attr('stroke-width', 1);
     }
-  }, [genreData]);
+  }, [genreData, chartDimensions]);
   
   return (
     <div ref={chartRef} className={styles.chart}></div>
