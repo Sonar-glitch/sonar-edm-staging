@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
-import GenreRadarChart from '@/components/GenreRadarChart';
-import SeasonalMood from '@/components/SeasonalMood';
-import styles from '@/styles/MusicTaste.module.css';
+import GenreRadarChart from '../../components/GenreRadarChart';
+import SeasonalMood from '../../components/SeasonalMood';
+import styles from '../../styles/MusicTaste.module.css';
 
 export default function MusicTastePage() {
   const [tasteData, setTasteData] = useState(null);
