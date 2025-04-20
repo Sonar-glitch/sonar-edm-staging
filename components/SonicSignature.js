@@ -286,8 +286,8 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
       
       <div className={styles.feedbackContainer}>
         <span className={styles.feedbackQuestion}>Did we get it right?</span>
-        <Link href="/feedback" className={styles.noButton}>
-          no
+        <Link href="/feedback" legacyBehavior>
+          <a className={styles.noButton}>no</a>
         </Link>
       </div>
     </div>

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import Link from 'next/link';
 import Header from '@/components/Header';
 import SonicSignature from '@/components/SonicSignature';
 import SeasonalVibes from '@/components/SeasonalVibes';
@@ -200,10 +199,6 @@ export default function Dashboard() {
   
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-  };
-  
-  const handleFeedback = () => {
-    router.push('/feedback');
   };
   
   // Generate seasonal vibes data based on user's taste

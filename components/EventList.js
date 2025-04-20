@@ -102,8 +102,8 @@ export default function EventList({ events, loading, error }) {
               ${event.price}
             </div>
             
-            <Link href={`/events/${event.id}`} className={styles.viewButton}>
-              View
+            <Link href={`/events/${event.id}`} legacyBehavior>
+              <a className={styles.viewButton}>View</a>
             </Link>
           </div>
         </div>
@@ -111,8 +111,8 @@ export default function EventList({ events, loading, error }) {
       
       {events.length > 3 && (
         <div className={styles.viewAllContainer}>
-          <Link href="/events" className={styles.viewAllLink}>
-            View All Events
+          <Link href="/events" legacyBehavior>
+            <a className={styles.viewAllLink}>View All Events</a>
           </Link>
         </div>
       )}

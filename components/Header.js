@@ -9,35 +9,41 @@ export default function Header() {
   
   return (
     <header className={styles.header}>
-      <Link href="/" className={styles.logo}>
-        <span className={styles.logoText}>TIKO</span>
+      <Link href="/" legacyBehavior>
+        <a className={styles.logo}>
+          <span className={styles.logoText}>TIKO</span>
+        </a>
       </Link>
       
       <div className={styles.nav}>
         {session ? (
-          <Link href="/users/profile" className={styles.profileLink}>
-            <div className={styles.avatarContainer}>
-              {session.user?.image ? (
-                <Image 
-                  src={session.user.image}
-                  alt="Profile"
-                  width={32}
-                  height={32}
-                  className={styles.avatar}
-                />
-              ) : (
-                <div className={styles.avatarFallback}>
-                  {session.user?.name?.charAt(0) || 'U'}
-                </div>
-              )}
-            </div>
-            <span className={styles.profileName}>
-              {session.user?.name?.split(' ')[0] || 'Profile'}
-            </span>
+          <Link href="/users/profile" legacyBehavior>
+            <a className={styles.profileLink}>
+              <div className={styles.avatarContainer}>
+                {session.user?.image ? (
+                  <Image 
+                    src={session.user.image}
+                    alt="Profile"
+                    width={32}
+                    height={32}
+                    className={styles.avatar}
+                  />
+                ) : (
+                  <div className={styles.avatarFallback}>
+                    {session.user?.name?.charAt(0) || 'U'}
+                  </div>
+                )}
+              </div>
+              <span className={styles.profileName}>
+                {session.user?.name?.split(' ')[0] || 'Profile'}
+              </span>
+            </a>
           </Link>
         ) : (
-          <Link href="/auth/signin" className={styles.signInButton}>
-            Sign In
+          <Link href="/auth/signin" legacyBehavior>
+            <a className={styles.signInButton}>
+              Sign In
+            </a>
           </Link>
         )}
       </div>
