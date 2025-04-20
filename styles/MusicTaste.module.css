@@ -1,6 +1,19 @@
-.taste-wrapper {
+.container {
   padding: 2rem;
+  background-color: #0e0b1f;
   color: white;
-  background-color: #121212;
-  font-family: sans-serif;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
+
+.header {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.warning {
+  color: #ff5c5c;
+  text-align: center;
+  margin-bottom: 1rem;
 }

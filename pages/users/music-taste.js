@@ -1,35 +1,26 @@
-import React, { useEffect, useState } from "react";
-import GenreRadarChart from "@/components/GenreRadarChart";
-import SeasonalMood from "@/components/SeasonalMood";
-import "@/styles/MusicTaste.module.css";
+import { useEffect, useState } from "react";
+import GenreRadarChart from "../../components/GenreRadarChart";
+import SeasonalMood from "../../components/SeasonalMood";
+import styles from "../../styles/MusicTaste.module.css";
 
-export default function MusicTastePage() {
-  const [tasteData, setTasteData] = useState(null);
-  const [error, setError] = useState(null);
+export default function MusicTaste() {
+  const [data, setData] = useState(null);
 
   useEffect(() => {
-    async function fetchTaste() {
-      try {
-        const res = await fetch("/api/spotify/user-taste");
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to load");
-        setTasteData(data);
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      }
-    }
-    fetchTaste();
+    fetch("/api/spotify/user-taste")
+      .then(res => res.json())
+      .then(setData)
+      .catch(() => setData({ fallback: true }));
   }, []);
 
-  if (error) return <div>Error: {error}</div>;
-  if (!tasteData) return <div>Loading...</div>;
+  if (!data) return <div>Loading your vibe...</div>;
 
   return (
-    <div className="taste-page">
-      <h1>Your Sonic Signature</h1>
-      <SeasonalMood mood={tasteData.mood} />
-      <GenreRadarChart genres={tasteData.genreWeights} />
+    <div className={styles.container}>
+      <h1 className={styles.header}>Your Sonic Signature</h1>
+      {data.fallback && <div className={styles.warning}>Using backup taste data</div>}
+      <SeasonalMood mood={data.mood} />
+      <GenreRadarChart genreData={data.genreData || {}} />
     </div>
   );
 }

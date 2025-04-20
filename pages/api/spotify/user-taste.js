@@ -1,30 +1,35 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { getTopArtistsWithGenres, getTopTracks, getAudioFeaturesForTracks } from "@/lib/spotify";
-import { detectMoodFromAudio } from "@/lib/moodUtils";
+import { authOptions } from "../../auth/[...nextauth]";
+import { getTopArtists, getTopTracks, getAudioFeaturesForTracks } from "../../../lib/spotify";
+import { getTopGenres, getSeasonalMood } from "../../../lib/moodUtils";
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
-  if (!session) return res.status(401).json({ error: "Not authenticated" });
 
-  const token = session.accessToken;
+  if (!session || !session.accessToken) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
   try {
-    const [artistData, trackData] = await Promise.all([
-      getTopArtistsWithGenres(token),
-      getTopTracks(token)
+    const token = session.accessToken;
+
+    const [artists, tracks] = await Promise.all([
+      getTopArtists(token),
+      getTopTracks(token),
     ]);
 
-    const trackIds = trackData.tracks.items.map(t => t.id).slice(0, 10);
-    const audioData = await getAudioFeaturesForTracks(token, trackIds);
-    const mood = detectMoodFromAudio(audioData.averages);
+    const features = await getAudioFeaturesForTracks(token, tracks.map(t => t.id));
+    const genreData = getTopGenres(artists);
+    const mood = getSeasonalMood(features);
 
-    return res.status(200).json({
-      genreWeights: artistData.genreWeights,
+    res.status(200).json({
+      artists,
+      tracks,
+      genreData,
       mood,
-      topArtist: artistData.artists[0],
-      topTrack: trackData.tracks.items[0]
     });
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("API Failure:", err);
+    res.status(500).json({ error: "Failed to fetch taste data", fallback: true });
   }
 }
