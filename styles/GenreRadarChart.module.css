@@ -1,4 +1,57 @@
-.chartContainer {
-  max-width: 500px;
-  margin: 0 auto;
+.chart {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.levelCircle {
+  stroke-dasharray: 4 2;
+}
+
+.axisLine {
+  opacity: 0.5;
+}
+
+.axisLabel {
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.axisLabel:hover {
+  font-size: 14px;
+  fill: #ff00ff;
+  text-shadow: 0 0 5px rgba(255, 0, 255, 0.7);
+}
+
+.radarArea {
+  transition: all 0.3s ease;
+  animation: pulse 4s infinite;
+}
+
+.radarArea:hover {
+  fill: rgba(0, 255, 255, 0.3);
+}
+
+.dataPoint {
+  transition: all 0.2s ease;
+}
+
+.dataPoint:hover {
+  r: 6;
+  fill: #ff00ff;
+}
+
+@keyframes pulse {
+  0% {
+    stroke-opacity: 0.8;
+  }
+  50% {
+    stroke-opacity: 1;
+  }
+  100% {
+    stroke-opacity: 0.8;
+  }
 }

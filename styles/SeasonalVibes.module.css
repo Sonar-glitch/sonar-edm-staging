@@ -1,0 +1,121 @@
+.container {
+  margin-bottom: 3rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  color: #00ffff;
+  margin: 0;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+}
+
+.dataButton {
+  background-color: rgba(102, 16, 242, 0.2);
+  border: 1px solid #6610f2;
+  color: #ffcc00;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dataButton:hover {
+  background-color: rgba(102, 16, 242, 0.4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.seasonCard {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.seasonCard:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+  transform: translateY(-3px);
+}
+
+.currentSeason {
+  background-color: rgba(102, 16, 242, 0.15);
+  border: 1px solid rgba(102, 16, 242, 0.3);
+  box-shadow: 0 0 15px rgba(102, 16, 242, 0.2);
+}
+
+.seasonEmoji {
+  font-size: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.seasonTitle {
+  font-size: 1.25rem;
+  color: #00ffff;
+  margin: 0 0 0.5rem 0;
+}
+
+.seasonGenres {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 0.5rem 0;
+  flex-grow: 1;
+}
+
+.seasonMessage {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  font-style: italic;
+}
+
+.yearRound {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.description {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+  margin: 0.5rem 0 1rem 0;
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .title {
+    margin-bottom: 0.5rem;
+  }
+}

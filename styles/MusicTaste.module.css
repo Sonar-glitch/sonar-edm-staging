@@ -1,10 +1,128 @@
-
-.seasonalMoodBanner {
-  background: linear-gradient(to right, #4b0082, #8a2be2);
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
   color: white;
-  padding: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  color: #00ffff;
+  margin: 0;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+}
+
+.dataButton {
+  background-color: rgba(102, 16, 242, 0.2);
+  border: 1px solid #6610f2;
+  color: #ffcc00;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
   border-radius: 1rem;
-  margin-bottom: 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dataButton:hover {
+  background-color: rgba(102, 16, 242, 0.4);
+}
+
+.genreSection, .seasonalSection {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  height: 100%;
+}
+
+.chartContainer {
+  height: 400px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eventsSection {
+  margin-top: 2rem;
+}
+
+.filterContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: white;
+}
+
+.loadingAnimation {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(0, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #00ffff;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.errorContainer {
   text-align: center;
-  font-size: 1.2rem;
+  padding: 2rem;
+  color: white;
+}
+
+.retryButton {
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+}
+
+.retryButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .genreSection, .seasonalSection {
+    padding: 1rem;
+  }
+  
+  .chartContainer {
+    height: 300px;
+  }
 }
