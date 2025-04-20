@@ -1,33 +1,31 @@
-
-import { getSession } from "next-auth/react";
-import axios from "axios";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
+import { getTopArtists, getTopTracks } from "@/lib/spotify";
 
 export default async function handler(req, res) {
-  const session = await getSession({ req });
+  const session = await getServerSession(req, res, authOptions);
 
-  if (!session || !session.accessToken) {
-    return res.status(401).json({ error: "Unauthorized: No valid session" });
+  console.log("SESSION DATA:", session);
+
+  if (!session) {
+    return res.status(401).json({ error: "Not authenticated" });
   }
 
+  const token = session.accessToken;
+  console.log("SPOTIFY TOKEN:", token);
+
   try {
-    const topArtists = await axios.get("https://api.spotify.com/v1/me/top/artists", {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    });
+    const [topArtists, topTracks] = await Promise.all([
+      getTopArtists(token),
+      getTopTracks(token),
+    ]);
 
-    const topTracks = await axios.get("https://api.spotify.com/v1/me/top/tracks", {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    });
+    console.log("ARTIST RESULT:", topArtists);
+    console.log("TRACK RESULT:", topTracks);
 
-    res.status(200).json({
-      topArtists: topArtists.data.items,
-      topTracks: topTracks.data.items,
-    });
+    return res.status(200).json({ artists: topArtists, tracks: topTracks });
   } catch (error) {
-    console.error("Spotify API Error:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to fetch music taste from Spotify." });
+    console.error("SPOTIFY API ERROR:", error);
+    return res.status(500).json({ error: "Failed to fetch user taste", details: error.message });
   }
 }
