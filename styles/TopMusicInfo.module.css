@@ -1,0 +1,97 @@
+.container {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.infoCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.infoLabel {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.artistCard {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  height: 70px;
+  transition: transform 0.2s ease;
+}
+
+.artistCard:hover {
+  transform: translateY(-3px);
+}
+
+.artistImageContainer {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.artistImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.artistName {
+  font-size: 1.1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 8px rgba(255, 221, 0, 0.5);
+}
+
+.trackCard {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 70px;
+  border: 1px solid;
+  border-color: rgba(255, 0, 127, 0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.trackCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(255, 0, 127, 0.2);
+}
+
+.trackName {
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(255, 0, 127, 0.5);
+}
+
+/* Responsive styles */
+@media (max-width: 640px) {
+  .infoRow {
+    flex-direction: column;
+  }
+  
+  .infoCol {
+    margin-bottom: 1.5rem;
+  }
+}

@@ -1,5 +1,16 @@
-import NextAuth from 'next-auth';
-import SpotifyProvider from 'next-auth/providers/spotify';
+import NextAuth from "next-auth";
+import SpotifyProvider from "next-auth/providers/spotify";
+import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
+import { connectToDatabase } from "@/lib/mongodb";
+
+// Spotify scopes for API access
+const scopes = [
+  "user-read-email",
+  "user-top-read",
+  "user-read-recently-played",
+  "user-follow-read",
+  "user-library-read",
+].join(" ");
 
 export const authOptions = {
   providers: [
@@ -7,58 +18,77 @@ export const authOptions = {
       clientId: process.env.SPOTIFY_CLIENT_ID,
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
       authorization: {
-        params: {
-          scope: 'user-read-email user-top-read user-read-recently-played user-read-private user-library-read'
-        }
-      }
+        params: { scope: scopes }
+      },
     }),
   ],
+  adapter: MongoDBAdapter({
+    db: (async () => {
+      const { db } = await connectToDatabase();
+      return db;
+    })()
+  }),
   callbacks: {
-    async jwt({ token, account }) {
+    async jwt({ token, account, profile }) {
       // Initial sign in
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at;
+        
+        if (profile) {
+          token.spotifyProfile = profile;
+        }
       }
       
-      // Return previous token if the access token has not expired yet
+      // Check if the access token has expired
       if (Date.now() < token.expiresAt * 1000) {
         return token;
       }
       
-      // Access token has expired, try to update it
+      // Access token has expired, try to refresh it
       return refreshAccessToken(token);
     },
     async session({ session, token }) {
+      // Send properties to the client
       session.accessToken = token.accessToken;
       session.error = token.error;
+      
       return session;
     },
-    async redirect({ url, baseUrl }) {
-      // Always redirect to music-taste page after sign in
-      return `${baseUrl}/users/music-taste`;
-    }
   },
-  // Remove the custom signin page to use the default flow
-  // This prevents the intermediate page from showing
-  debug: process.env.NODE_ENV === 'development',
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/",
+    error: "/error",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
+/**
+ * Refreshes the Spotify access token
+ * @param {Object} token - Current token
+ * @returns {Object} - Updated token
+ */
 async function refreshAccessToken(token) {
   try {
-    const url = 'https://accounts.spotify.com/api/token';
-    const params = new URLSearchParams();
-    params.append('grant_type', 'refresh_token');
-    params.append('refresh_token', token.refreshToken);
+    const url = "https://accounts.spotify.com/api/token";
+    const basicAuth = Buffer.from(
+      `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+    ).toString("base64");
     
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64')}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        "Authorization": `Basic ${basicAuth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: params
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: token.refreshToken,
+      }),
     });
     
     const refreshedTokens = await response.json();
@@ -74,10 +104,11 @@ async function refreshAccessToken(token) {
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
-    console.error('Error refreshing access token', error);
+    console.error("Error refreshing access token", error);
+    
     return {
       ...token,
-      error: 'RefreshAccessTokenError',
+      error: "RefreshAccessTokenError",
     };
   }
 }
