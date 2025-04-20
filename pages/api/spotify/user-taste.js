@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-import { getTopArtists, getTopTrack } from '../../../lib/spotify';
+import { getTopArtists, getTopTracks } from '../../../lib/spotify';
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
