@@ -1,30 +1,50 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import GenreRadarChart from '@/components/GenreRadarChart';
 import styles from '@/styles/SonicSignature.module.css';
 
 export default function SonicSignature({ genreData, mood, topArtist, topTrack, recommendations }) {
-  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentPreview, setCurrentPreview] = useState(null);
+  const [audioElement, setAudioElement] = useState(null);
+  const [showArtists, setShowArtists] = useState(false);
+  const [showTracks, setShowTracks] = useState(false);
   
-  // Default recommendations if none provided
-  const defaultRecommendations = {
-    artists: [
-      { name: 'Tale Of Us', matchScore: 92 },
-      { name: 'Stephan Bodzin', matchScore: 87 },
-      { name: 'Adriatique', matchScore: 85 }
-    ],
-    tracks: [
-      { name: 'Purple Noise', artist: 'Boris Brejcha', matchScore: 94 },
-      { name: 'Space Diver', artist: 'Boris Brejcha', matchScore: 91 },
-      { name: 'Gravity', artist: 'Boris Brejcha', matchScore: 88 }
-    ]
+  // Handle audio playback
+  const togglePlay = (previewUrl) => {
+    if (!previewUrl) return;
+    
+    // If we already have an audio element playing, stop it
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+      
+      // If we're clicking the same track, just stop it
+      if (currentPreview === previewUrl) {
+        setIsPlaying(false);
+        setCurrentPreview(null);
+        setAudioElement(null);
+        return;
+      }
+    }
+    
+    // Create new audio element
+    const audio = new Audio(previewUrl);
+    audio.addEventListener('ended', () => {
+      setIsPlaying(false);
+      setCurrentPreview(null);
+    });
+    
+    audio.play().then(() => {
+      setIsPlaying(true);
+      setCurrentPreview(previewUrl);
+      setAudioElement(audio);
+    }).catch(err => {
+      console.error('Failed to play track preview:', err);
+      setIsPlaying(false);
+    });
   };
   
-  const recs = recommendations || defaultRecommendations;
-  
-  const toggleRecommendations = () => {
-    setShowRecommendations(!showRecommendations);
-  };
-
   return (
     <div className={styles.container}>
       <h2 className={styles.title}>Your Sonic Signature</h2>
@@ -37,100 +57,155 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
       
       <div className={styles.moodBanner}>
         <span className={styles.moodIcon}>🌙</span>
-        <span className={styles.moodText}>{mood || 'Late-Night Melodic Wave'}</span>
+        <span className={styles.moodText}>{mood || 'Chillwave Flow'}</span>
       </div>
       
       <div className={styles.artistTrackSection}>
-        <div className={styles.infoColumn}>
-          <div className={styles.columnHeader}>
-            <h3 className={styles.columnTitle}>Top Artist</h3>
-            {topArtist?.popularity && (
-              <div className={styles.popularityIndicator}>
-                <div className={styles.popularityFill} style={{ width: `${topArtist.popularity}%` }}></div>
-                <span className={styles.popularityText}>{topArtist.popularity}%</span>
-              </div>
-            )}
-          </div>
-          
-          <div className={styles.artistCard}>
-            {topArtist?.images && topArtist.images.length > 0 ? (
-              <div className={styles.artistImage} 
-                   style={{backgroundImage: `url(${topArtist.images[0].url})`}}>
-              </div>
-            ) : (
-              <div className={styles.artistImagePlaceholder}></div>
-            )}
-            <span className={styles.artistName}>
-              {topArtist?.name || 'Unknown Artist'}
-            </span>
-          </div>
-          
-          <button 
-            className={styles.recommendationsToggle} 
-            onClick={toggleRecommendations}
-          >
-            {showRecommendations ? 'Hide Similar Artists' : 'Show Similar Artists'}
-          </button>
-          
-          {showRecommendations && (
-            <div className={styles.recommendationsList}>
-              {recs.artists.map((artist, index) => (
-                <div key={index} className={styles.recommendationItem}>
-                  <span className={styles.recommendationName}>{artist.name}</span>
-                  <div className={styles.recommendationMatch}>
-                    <div className={styles.matchFill} style={{ width: `${artist.matchScore}%` }}></div>
-                    <span className={styles.matchScore}>{artist.matchScore}%</span>
+        <div className={styles.column}>
+          <h3 className={styles.sectionTitle}>Top Artist</h3>
+          {topArtist ? (
+            <div className={styles.mediaCard}>
+              <div className={styles.mediaImage}>
+                {topArtist.images && topArtist.images.length > 0 ? (
+                  <Image 
+                    src={topArtist.images[0].url} 
+                    alt={topArtist.name}
+                    width={120}
+                    height={120}
+                    className={styles.artistImage}
+                  />
+                ) : (
+                  <div className={styles.imagePlaceholder}>
+                    {topArtist.name.charAt(0)}
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
+              <div className={styles.mediaInfo}>
+                <h4 className={styles.mediaName}>{topArtist.name}</h4>
+                {topArtist.popularity && (
+                  <div className={styles.popularityBadge}>
+                    {topArtist.popularity}% popularity
+                  </div>
+                )}
+              </div>
             </div>
+          ) : (
+            <div className={styles.placeholderCard}>
+              <div className={styles.imagePlaceholder}>?</div>
+              <p>No top artist data</p>
+            </div>
+          )}
+          
+          {recommendations?.artists && recommendations.artists.length > 0 && (
+            <>
+              <button 
+                className={styles.similarButton}
+                onClick={() => setShowArtists(!showArtists)}
+              >
+                {showArtists ? 'Hide Similar Artists' : 'Show Similar Artists'}
+              </button>
+              
+              {showArtists && (
+                <div className={styles.similarList}>
+                  {recommendations.artists.slice(0, 3).map((artist) => (
+                    <div key={artist.id} className={styles.similarItem}>
+                      <div className={styles.itemName}>{artist.name}</div>
+                      <div className={styles.itemScores}>
+                        <span className={styles.matchScore}>{artist.matchScore}% match</span>
+                        <span className={styles.popularity}>{artist.popularity}% popularity</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
         
-        <div className={styles.infoColumn}>
-          <div className={styles.columnHeader}>
-            <h3 className={styles.columnTitle}>Repeat Track</h3>
-            {topTrack?.popularity && (
-              <div className={styles.popularityIndicator}>
-                <div className={styles.popularityFill} style={{ width: `${topTrack.popularity}%` }}></div>
-                <span className={styles.popularityText}>{topTrack.popularity}%</span>
-              </div>
-            )}
-          </div>
-          
-          <div className={styles.trackCard}>
-            <span className={styles.trackName}>
-              {topTrack?.name || 'Unknown Track'}
-            </span>
-            {topTrack?.artist && (
-              <span className={styles.trackArtist}>by {topTrack.artist}</span>
-            )}
-          </div>
-          
-          <button 
-            className={styles.recommendationsToggle} 
-            onClick={toggleRecommendations}
-          >
-            {showRecommendations ? 'Hide Similar Tracks' : 'Show Similar Tracks'}
-          </button>
-          
-          {showRecommendations && (
-            <div className={styles.recommendationsList}>
-              {recs.tracks.map((track, index) => (
-                <div key={index} className={styles.recommendationItem}>
-                  <div className={styles.recommendationTrackInfo}>
-                    <span className={styles.recommendationName}>{track.name}</span>
-                    {track.artist && (
-                      <span className={styles.recommendationArtist}>by {track.artist}</span>
+        <div className={styles.column}>
+          <h3 className={styles.sectionTitle}>Repeat Track</h3>
+          {topTrack ? (
+            <div className={styles.mediaCard}>
+              <div className={styles.mediaImage}>
+                {topTrack.album?.images && topTrack.album.images.length > 0 ? (
+                  <div className={styles.trackImageContainer}>
+                    <Image 
+                      src={topTrack.album.images[0].url} 
+                      alt={topTrack.name}
+                      width={120}
+                      height={120}
+                      className={styles.trackImage}
+                    />
+                    {topTrack.preview_url && (
+                      <button 
+                        className={`${styles.playButton} ${currentPreview === topTrack.preview_url && isPlaying ? styles.playing : ''}`}
+                        onClick={() => togglePlay(topTrack.preview_url)}
+                      >
+                        {currentPreview === topTrack.preview_url && isPlaying ? '■' : '▶'}
+                      </button>
                     )}
                   </div>
-                  <div className={styles.recommendationMatch}>
-                    <div className={styles.matchFill} style={{ width: `${track.matchScore}%` }}></div>
-                    <span className={styles.matchScore}>{track.matchScore}%</span>
+                ) : (
+                  <div className={styles.imagePlaceholder}>
+                    ♪
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
+              <div className={styles.mediaInfo}>
+                <h4 className={styles.mediaName}>{topTrack.name}</h4>
+                <p className={styles.mediaSubtitle}>
+                  {topTrack.artists && topTrack.artists.length > 0 
+                    ? topTrack.artists[0].name 
+                    : 'Unknown Artist'}
+                </p>
+                {topTrack.popularity && (
+                  <div className={styles.popularityBadge}>
+                    {topTrack.popularity}% popularity
+                  </div>
+                )}
+              </div>
             </div>
+          ) : (
+            <div className={styles.placeholderCard}>
+              <div className={styles.imagePlaceholder}>♪</div>
+              <p>No top track data</p>
+            </div>
+          )}
+          
+          {recommendations?.tracks && recommendations.tracks.length > 0 && (
+            <>
+              <button 
+                className={styles.similarButton}
+                onClick={() => setShowTracks(!showTracks)}
+              >
+                {showTracks ? 'Hide Similar Tracks' : 'Show Similar Tracks'}
+              </button>
+              
+              {showTracks && (
+                <div className={styles.similarList}>
+                  {recommendations.tracks.slice(0, 3).map((track) => (
+                    <div key={track.id} className={styles.similarItem}>
+                      <div className={styles.itemNameContainer}>
+                        <div className={styles.itemName}>{track.name}</div>
+                        <div className={styles.itemArtist}>{track.artist}</div>
+                      </div>
+                      <div className={styles.itemScores}>
+                        <span className={styles.matchScore}>{track.matchScore}% match</span>
+                        <span className={styles.popularity}>{track.popularity}% popularity</span>
+                      </div>
+                      {track.preview_url && (
+                        <button 
+                          className={`${styles.smallPlayButton} ${currentPreview === track.preview_url && isPlaying ? styles.playing : ''}`}
+                          onClick={() => togglePlay(track.preview_url)}
+                        >
+                          {currentPreview === track.preview_url && isPlaying ? '■' : '▶'}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
