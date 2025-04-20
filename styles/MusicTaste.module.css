@@ -1,19 +1,10 @@
-.container {
-  padding: 2rem;
-  background-color: #0e0b1f;
+
+.seasonalMoodBanner {
+  background: linear-gradient(to right, #4b0082, #8a2be2);
   color: white;
-  min-height: 100vh;
-  font-family: 'Inter', sans-serif;
-}
-
-.header {
-  font-size: 2rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  margin-bottom: 2rem;
   text-align: center;
-  margin-bottom: 1rem;
-}
-
-.warning {
-  color: #ff5c5c;
-  text-align: center;
-  margin-bottom: 1rem;
+  font-size: 1.2rem;
 }
