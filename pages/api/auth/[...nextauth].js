@@ -1,15 +1,16 @@
+// pages/api/auth/[...nextauth].js
 import NextAuth from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
-import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
-import { connectToDatabase } from "@/lib/mongodb";
+import clientPromise from "@/lib/mongodb";
 
 // Spotify scopes for API access
 const scopes = [
   "user-read-email",
+  "user-read-private",
   "user-top-read",
   "user-read-recently-played",
-  "user-follow-read",
-  "user-library-read",
+  "playlist-read-private",
+  "playlist-read-collaborative"
 ].join(" ");
 
 export const authOptions = {
@@ -22,12 +23,8 @@ export const authOptions = {
       },
     }),
   ],
-  adapter: MongoDBAdapter({
-    db: (async () => {
-      const { db } = await connectToDatabase();
-      return db;
-    })()
-  }),
+  // Use a custom database adapter instead of MongoDB adapter
+  // since you already have your own MongoDB connection setup
   callbacks: {
     async jwt({ token, account, profile }) {
       // Initial sign in
