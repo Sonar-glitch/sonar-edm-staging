@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Link from 'next/link';
+import Header from '@/components/Header';
 import GenreRadarChart from '@/components/GenreRadarChart';
 import VibeSummary from '@/components/VibeSummary';
 import SeasonalVibes from '@/components/SeasonalVibes';
@@ -55,7 +57,7 @@ export default function MusicTastePage() {
       const response = await fetch('/api/events/count');
       if (response.ok) {
         const data = await response.json();
-        setEventCount(data.count);
+        setEventCount(data.count || 0);
       }
     } catch (err) {
       console.error('Error fetching event count:', err);
@@ -66,45 +68,41 @@ export default function MusicTastePage() {
   const generateSeasonalVibes = () => {
     if (!tasteData || !tasteData.genreProfile) return null;
     
-    // For a real implementation, you'd use historical data or more sophisticated analysis
-    // This is a simplified example
-    const genres = Object.keys(tasteData.genreProfile);
+    // Extract top genres
+    const sortedGenres = Object.entries(tasteData.genreProfile)
+      .sort(([, a], [, b]) => b - a)
+      .map(([genre]) => genre);
     
     return {
       spring: {
         emoji: '🌸',
         title: 'Spring',
-        genres: genres.length >= 2 ? `${genres[0]}, ${genres[1]}` : 'Progressive House, Melodic House',
-        message: 'Keep listening!'
+        genres: sortedGenres.length >= 2 
+          ? `${sortedGenres[0]}, Progressive`
+          : 'Progressive House, Melodic House',
+        message: 'Fresh beats & uplifting vibes'
       },
       summer: {
         emoji: '☀️',
         title: 'Summer',
-        genres: genres.length >= 4 ? `${genres[2]}, ${genres[3]}` : 'Tech House, House',
-        message: 'Keep listening!'
+        genres: sortedGenres.length >= 3 
+          ? `${sortedGenres[1]}, Tech House`
+          : 'Tech House, House',
+        message: 'High energy open-air sounds'
       },
       fall: {
         emoji: '🍂',
         title: 'Fall',
         genres: 'Organic House, Downtempo',
-        message: 'Keep listening!'
+        message: 'Mellow grooves & deep beats'
       },
       winter: {
         emoji: '❄️',
         title: 'Winter',
         genres: 'Deep House, Ambient Techno',
-        message: 'Keep listening!'
+        message: 'Hypnotic journeys & warm basslines'
       }
     };
-  };
-
-  // Get the current season
-  const getCurrentSeason = () => {
-    const month = new Date().getMonth();
-    if (month >= 2 && month <= 4) return 'spring';
-    if (month >= 5 && month <= 7) return 'summer';
-    if (month >= 8 && month <= 10) return 'fall';
-    return 'winter';
   };
 
   if (loading) {
@@ -143,19 +141,35 @@ export default function MusicTastePage() {
   const vibeShift = tasteData?.vibeShift || 'fresh sounds';
   const seasonalVibes = generateSeasonalVibes();
   
+  // Format primary genres for summary display
+  const getPrimaryGenres = () => {
+    if (!genreProfile || Object.keys(genreProfile).length === 0) return '';
+    
+    // Sort genres by value (highest first) and take top 2
+    const sortedGenres = Object.entries(genreProfile)
+      .sort(([, a], [, b]) => b - a)
+      .map(([genre]) => genre)
+      .slice(0, 2);
+      
+    return sortedGenres.join(' + ').toLowerCase();
+  };
+  
   return (
     <>
       <Head>
-        <title>Your Music Taste | SONAR</title>
+        <title>Your Music Taste | TIKO</title>
         <meta name="description" content="Explore your music taste profile" />
       </Head>
       
+      <Header />
+      
       <div className={styles.container}>
-        <VibeSummary 
-          primaryGenres={genreProfile}
-          vibeShift={vibeShift}
-          eventCount={eventCount}
-        />
+        {/* Summary Banner */}
+        <div className={styles.summaryBanner}>
+          <p className={styles.summaryText}>
+            You're all about <span className={styles.highlight}>{getPrimaryGenres()}</span> with a vibe shift toward <span className={styles.highlight}>{vibeShift}</span>. Found <span className={styles.highlight}>{eventCount}</span> events that match your sound.
+          </p>
+        </div>
         
         <div className={styles.grid}>
           <div className={styles.genreSection}>
@@ -178,11 +192,12 @@ export default function MusicTastePage() {
           </div>
         </div>
         
-        <div className={styles.eventsSection}>
-          <h2 className={styles.sectionTitle}>Events That Match Your Vibe</h2>
-          <div className={styles.filterContainer}>
-            {/* Event filters go here */}
-          </div>
+        <div className={styles.actionContainer}>
+          <Link href="/dashboard" legacyBehavior>
+            <a className={styles.backButton}>
+              Back to Dashboard
+            </a>
+          </Link>
         </div>
       </div>
     </>

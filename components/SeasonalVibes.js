@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import styles from '@/styles/SeasonalVibes.module.css';
 
 export default function SeasonalVibes({ seasonalData, isLoading }) {
@@ -17,7 +18,7 @@ export default function SeasonalVibes({ seasonalData, isLoading }) {
   if (isLoading || !seasonalData) {
     return (
       <div className={styles.container}>
-        <h2 className={styles.title}>Seasonal Vibes</h2>
+        <h2 className={styles.title}>Your Seasonal Vibes</h2>
         <div className={styles.loadingState}>
           <div className={styles.spinner}></div>
           <p>Analyzing your seasonal taste...</p>
@@ -28,8 +29,22 @@ export default function SeasonalVibes({ seasonalData, isLoading }) {
   
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>Seasonal Mood Shifts</h2>
+      <h2 className={styles.title}>Your Seasonal Vibes</h2>
       
+      {/* Year-Round Signature - Now positioned at the top */}
+      <div className={styles.yearRoundContainer}>
+        <div className={styles.yearRoundTitle}>
+          <span className={styles.yearRoundEmoji}>✨</span>
+          <span>Your Year-Round Vibes</span>
+        </div>
+        <p className={styles.yearRoundText}>
+          Your taste evolves from <span className={styles.highlight}>deep house vibes</span> in winter 
+          to <span className={styles.highlight}>high-energy techno</span> in summer, with a consistent 
+          appreciation for <span className={styles.highlight}>melodic elements</span> year-round.
+        </p>
+      </div>
+      
+      {/* Seasonal Grid */}
       <div className={styles.seasonGrid}>
         {Object.entries(seasonalData).map(([season, data]) => (
           <div 
@@ -56,16 +71,12 @@ export default function SeasonalVibes({ seasonalData, isLoading }) {
         ))}
       </div>
       
-      <div className={styles.yearRoundContainer}>
-        <div className={styles.yearRoundTitle}>
-          <span className={styles.yearRoundEmoji}>✨</span>
-          <span>Year-Round Signature</span>
-        </div>
-        <p className={styles.yearRoundText}>
-          Your taste evolves from <span className={styles.highlight}>deep house vibes</span> in winter 
-          to <span className={styles.highlight}>high-energy techno</span> in summer, with a consistent 
-          appreciation for <span className={styles.highlight}>melodic elements</span> year-round.
-        </p>
+      {/* Feedback section moved below seasonal vibes as requested */}
+      <div className={styles.feedbackContainer}>
+        <span className={styles.feedbackQuestion}>Did we get it right?</span>
+        <Link href="/feedback" legacyBehavior>
+          <a className={styles.noButton}>no</a>
+        </Link>
       </div>
     </div>
   );

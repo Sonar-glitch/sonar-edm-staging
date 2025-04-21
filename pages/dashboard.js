@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import SonicSignature from '@/components/SonicSignature';
 import SeasonalVibes from '@/components/SeasonalVibes';
@@ -116,7 +117,8 @@ export default function Dashboard() {
       };
       
       if (recommendationsResponse.ok) {
-        recommendations = await recommendationsResponse.json();
+        const recData = await recommendationsResponse.json();
+        recommendations = recData.recommendations || recommendations;
       }
       
       // Set the initial user profile
@@ -306,7 +308,7 @@ export default function Dashboard() {
           
           {/* Events section */}
           <div className={styles.eventsSection}>
-            <h2 className={styles.sectionTitle}>Events You'll Like</h2>
+            <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
             
             {/* Filters */}
             <CompactEventFilters 

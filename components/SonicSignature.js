@@ -11,6 +11,19 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
   const [showArtists, setShowArtists] = useState(false);
   const [showTracks, setShowTracks] = useState(false);
   
+  // Get primary genres for summary display
+  const getPrimaryGenres = () => {
+    if (!genreData || Object.keys(genreData).length === 0) return '';
+    
+    // Sort genres by value (highest first) and take top 2
+    const sortedGenres = Object.entries(genreData)
+      .sort(([, a], [, b]) => b - a)
+      .map(([genre]) => genre)
+      .slice(0, 2);
+      
+    return sortedGenres.join(' + ').toLowerCase();
+  };
+  
   // Handle audio playback
   const togglePlay = (previewUrl) => {
     if (!previewUrl) return;
@@ -62,9 +75,22 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
     window.open(url, '_blank');
   };
   
+  // Format the "You're all about..." text
+  const getSummaryText = () => {
+    const primaryGenres = getPrimaryGenres();
+    return (
+      <div className={styles.summaryContainer}>
+        <p className={styles.summaryText}>
+          You're all about <span className={styles.highlight}>{primaryGenres}</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
+        </p>
+      </div>
+    );
+  };
+  
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>Your Sonic Signature</h2>
+      {/* Summary text instead of title */}
+      {getSummaryText()}
       
       <div className={styles.chartSection}>
         <div className={styles.chart}>
@@ -282,13 +308,6 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
             </div>
           )}
         </div>
-      </div>
-      
-      <div className={styles.feedbackContainer}>
-        <span className={styles.feedbackQuestion}>Did we get it right?</span>
-        <Link href="/feedback" legacyBehavior>
-          <a className={styles.noButton}>no</a>
-        </Link>
       </div>
     </div>
   );

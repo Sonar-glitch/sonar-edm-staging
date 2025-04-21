@@ -11,8 +11,8 @@ export default function GenreRadarChart({ genreData }) {
     const handleResize = () => {
       if (chartRef.current) {
         const containerWidth = chartRef.current.parentElement.clientWidth;
-        // Determine size based on container width
-        const chartSize = Math.min(300, containerWidth);
+        // Determine size based on container width, but maintain a reasonable maximum size
+        const chartSize = Math.min(400, Math.max(250, containerWidth * 0.9));
         setSize({ width: chartSize, height: chartSize });
       }
     };
@@ -38,7 +38,7 @@ export default function GenreRadarChart({ genreData }) {
     
     // Set dimensions
     const { width, height } = size;
-    const margin = 30; // Buffer around the chart
+    const margin = 40; // Increase buffer around the chart for better visibility of labels
     const radius = Math.min(width, height) / 2 - margin;
     
     // Create SVG container with viewBox for responsiveness
@@ -91,7 +91,6 @@ export default function GenreRadarChart({ genreData }) {
     
     // Process data
     const genres = Object.keys(genreData);
-    const valueArray = Object.values(genreData);
     const angleSlice = (Math.PI * 2) / genres.length;
     
     // Scale for data
@@ -149,7 +148,7 @@ export default function GenreRadarChart({ genreData }) {
         .attr('dy', '0.35em') // Vertical centering
         .attr('text-anchor', textAnchor)
         .attr('fill', '#00ffff')
-        .style('font-size', '10px')
+        .style('font-size', '12px')
         .text(genre);
     });
     
@@ -163,20 +162,6 @@ export default function GenreRadarChart({ genreData }) {
         y: rScale(value) * Math.sin(angle - Math.PI / 2),
         value: value,
         genre: genre
-      };
-    });
-    
-    // Create line generator
-    const radarLine = d3.lineRadial()
-      .radius(d => d.value)
-      .angle((d, i) => i * angleSlice)
-      .curve(d3.curveLinearClosed);
-    
-    // Convert points for D3 radial line generator
-    const radialPoints = genres.map((genre, i) => {
-      return {
-        value: rScale(genreData[genre]),
-        angle: i * angleSlice
       };
     });
     
@@ -202,13 +187,28 @@ export default function GenreRadarChart({ genreData }) {
       .data(radarPoints)
       .enter()
       .append('circle')
-      .attr('class', styles.radarPoint)
+      .attr('class', styles.dataPoint)
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
       .attr('r', 4)
       .attr('fill', '#00ffff')
       .attr('stroke', '#fff')
       .attr('stroke-width', 1);
+      
+    // Add value labels for each data point (optional, can be commented out if too crowded)
+    /*
+    svg.selectAll('.dataLabel')
+      .data(radarPoints)
+      .enter()
+      .append('text')
+      .attr('class', styles.dataLabel)
+      .attr('x', d => d.x * 0.85)
+      .attr('y', d => d.y * 0.85)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'white')
+      .style('font-size', '10px')
+      .text(d => d.value);
+    */
   }, [genreData, size]);
   
   return (
