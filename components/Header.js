@@ -16,6 +16,20 @@ export default function Header() {
     signOut({ callbackUrl: '/' });
   };
   
+  // Handle image error by hiding the image and showing the fallback
+  const handleImageError = (e) => {
+    // Hide the image
+    if (e.target) {
+      e.target.style.display = 'none';
+    }
+    
+    // Show the fallback
+    const fallbackElement = e.currentTarget.parentNode.querySelector(`.${styles.avatarFallback}`);
+    if (fallbackElement) {
+      fallbackElement.style.display = 'flex';
+    }
+  };
+  
   return (
     <header className={styles.header}>
       <Link href="/dashboard" legacyBehavior>
@@ -52,11 +66,7 @@ export default function Header() {
                     width={36}
                     height={36}
                     className={styles.avatar}
-                    onError={(e) => {
-                      // Fallback to initial if image fails to load
-                      e.target.style.display = 'none';
-                      e.currentTarget.parentNode.querySelector(`.${styles.avatarFallback}`)?.style.display = 'flex';
-                    }}
+                    onError={handleImageError}
                   />
                 ) : null}
                 <div className={styles.avatarFallback} style={{ display: session.user?.image ? 'none' : 'flex' }}>
