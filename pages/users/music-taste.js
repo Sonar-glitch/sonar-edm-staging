@@ -5,7 +5,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import GenreRadarChart from '@/components/GenreRadarChart';
-import VibeSummary from '@/components/VibeSummary';
 import SeasonalVibes from '@/components/SeasonalVibes';
 import styles from '@/styles/MusicTaste.module.css';
 
@@ -174,7 +173,7 @@ export default function MusicTastePage() {
         <div className={styles.grid}>
           <div className={styles.genreSection}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Your Genre Mix</h2>
+              <h2 className={styles.sectionTitle}>Your Sonic Signature</h2>
               <button className={styles.dataButton}>
                 {tasteData ? 'Real Data' : 'Sample Data'}
               </button>

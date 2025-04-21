@@ -1,7 +1,6 @@
 .container {
   width: 100%;
   height: 100%;
-  position: relative;
 }
 
 .chart {
@@ -13,65 +12,67 @@
 }
 
 .levelCircle {
-  opacity: 0.6;
+  stroke-dasharray: 4 2;
 }
 
 .axisLine {
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
 .axisLabel {
-  opacity: 0.8;
+  font-size: 12px;
+  font-weight: 500;
   transition: all 0.2s ease;
-  pointer-events: none;
+  fill: #ff00ff;
+  text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
 }
 
 .axisLabel:hover {
-  opacity: 1;
+  font-size: 14px;
   fill: #ff00ff;
-  text-shadow: 0 0 4px rgba(255, 0, 255, 0.7);
+  text-shadow: 0 0 8px rgba(255, 0, 255, 0.7);
 }
 
 .radarArea {
   transition: all 0.3s ease;
-  animation: pulse 4s infinite ease-in-out;
+  animation: pulse 4s infinite;
 }
 
-.radarPoint {
+.radarArea:hover {
+  fill: rgba(255, 0, 255, 0.4);
+}
+
+.dataPoint {
   transition: all 0.2s ease;
+  fill: #ff00ff;
 }
 
-.radarPoint:hover {
+.dataPoint:hover {
   r: 6;
+  fill: #ff00ff;
+  filter: drop-shadow(0 0 5px rgba(255, 0, 255, 0.7));
+}
+
+.dataLabel {
+  font-size: 10px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+}
+
+.dataLabel:hover {
+  font-size: 12px;
   fill: #ff00ff;
 }
 
 @keyframes pulse {
   0% {
     stroke-opacity: 0.8;
-    fill-opacity: 0.2;
   }
   50% {
     stroke-opacity: 1;
-    fill-opacity: 0.4;
   }
   100% {
     stroke-opacity: 0.8;
-    fill-opacity: 0.2;
-  }
-}
-
-/* Mobile optimizations */
-@media (max-width: 480px) {
-  .axisLabel {
-    font-size: 9px !important;
-  }
-  
-  .radarPoint {
-    r: 3;
-  }
-  
-  .radarPoint:hover {
-    r: 5;
   }
 }

@@ -1,52 +1,87 @@
 .container {
   width: 100%;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  background-color: rgba(0, 0, 0, 0.3);
+  max-width: 900px;
+  margin: 0 auto 2rem;
+  padding: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.2);
   border-radius: 16px;
-  border: 1px solid rgba(102, 16, 242, 0.2);
 }
 
 .title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 1.25rem;
-  color: #00ffff;
-  text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ff00ff;
+  margin: 0 0 1.5rem 0;
   text-align: center;
+  text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+.yearRoundContainer {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-left: 3px solid #ff00ff;
+}
+
+.yearRoundTitle {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ff00ff;
+}
+
+.yearRoundEmoji {
+  margin-right: 0.5rem;
+}
+
+.yearRoundText {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.highlight {
+  color: #ff00ff;
+  font-weight: 600;
+  text-shadow: 0 0 3px rgba(255, 0, 255, 0.5);
 }
 
 .seasonGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .seasonCard {
-  padding: 0.75rem;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.3);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem;
   transition: all 0.2s ease;
+  position: relative;
+  border: 1px solid rgba(255, 0, 255, 0.1);
 }
 
 .seasonCard:hover {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 0, 255, 0.3);
 }
 
 .currentSeason {
-  background-color: rgba(102, 16, 242, 0.15);
-  border-color: rgba(102, 16, 242, 0.3);
-  box-shadow: 0 0 15px rgba(102, 16, 242, 0.2);
+  background-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.2);
+  border-color: rgba(255, 0, 255, 0.3);
 }
 
 .seasonHeader {
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
   position: relative;
 }
 
@@ -56,72 +91,42 @@
 }
 
 .seasonName {
+  font-size: 1rem;
   font-weight: 600;
   color: white;
 }
 
 .currentBadge {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  background: linear-gradient(90deg, #00ffff, #ff00ff);
-  color: white;
-  font-size: 0.6rem;
-  font-weight: 700;
-  padding: 0.15rem 0.4rem;
+  top: 0;
+  right: 0;
+  background-color: rgba(255, 0, 255, 0.3);
+  color: #ff00ff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
   border-radius: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .seasonGenres {
-  margin-bottom: 0.5rem;
-  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
 }
 
 .genreLabel {
+  font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.6);
-  margin-right: 0.25rem;
-}
-
-.genreList {
-  color: #00ffff;
-  font-weight: 500;
-}
-
-.seasonMessage {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-style: italic;
-}
-
-.yearRoundContainer {
-  padding: 0.75rem;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.yearRoundTitle {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.yearRoundEmoji {
-  font-size: 1rem;
   margin-right: 0.5rem;
 }
 
-.yearRoundText {
+.genreList {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.8);
-  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.highlight {
-  color: #ff00ff;
-  font-weight: 500;
+.seasonMessage {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
 }
 
 .loadingState {
@@ -135,37 +140,60 @@
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(0, 255, 255, 0.2);
-  border-top-color: #00ffff;
+  border: 3px solid rgba(255, 0, 255, 0.3);
+  border-top-color: #ff00ff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-/* Mobile optimizations */
+.feedbackContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.feedbackQuestion {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 0.75rem;
+}
+
+.noButton {
+  background: none;
+  border: 1px solid rgba(255, 0, 255, 0.4);
+  color: #ff00ff;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.noButton:hover {
+  background-color: rgba(255, 0, 255, 0.2);
+  color: white;
+  box-shadow: 0 0 8px rgba(255, 0, 255, 0.4);
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .seasonGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .seasonGrid {
     grid-template-columns: 1fr;
-  }
-  
-  .seasonCard {
-    padding: 0.5rem;
-  }
-  
-  .title {
-    font-size: 1.1rem;
   }
 }

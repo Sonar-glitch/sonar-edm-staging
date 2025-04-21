@@ -1,73 +1,64 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .eventCard {
   display: flex;
+  align-items: center;
+  padding: 1.25rem;
   background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   transition: all 0.2s ease;
+  border: 1px solid rgba(255, 0, 255, 0.1);
 }
 
 .eventCard:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  border-color: rgba(0, 255, 255, 0.2);
+  background-color: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 0, 255, 0.3);
 }
 
-/* Date section */
-.dateSection {
+.matchScore {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem;
-  min-width: 80px;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  width: 70px;
+  margin-right: 1.5rem;
+  flex-shrink: 0;
 }
 
-.dateBox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.month {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: #00ffff;
-  margin-bottom: 2px;
-}
-
-.day {
-  font-size: 1.4rem;
+.scoreValue {
+  font-size: 1.75rem;
   font-weight: 700;
-  color: white;
+  color: #ff00ff;
+  text-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
   line-height: 1;
+  margin-bottom: 4px;
 }
 
-.weekday {
-  font-size: 0.7rem;
+.scoreLabel {
+  font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.7);
-  margin-top: 4px;
+  text-align: center;
+  line-height: 1.2;
 }
 
-/* Event info section */
 .eventInfo {
   flex: 1;
-  padding: 0.75rem;
-  min-width: 0; /* Ensures text truncation works */
+  min-width: 0; /* Allows text to properly truncate */
+}
+
+.eventHeader {
+  margin-bottom: 0.5rem;
 }
 
 .eventName {
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: white;
   margin: 0 0 0.25rem 0;
@@ -76,136 +67,64 @@
   text-overflow: ellipsis;
 }
 
-.eventDetails {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
+.eventVenue {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
 }
 
-.venueName {
-  font-weight: 500;
+.eventDetails {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .divider {
-  margin: 0 0.35rem;
+  margin: 0 0.5rem;
   color: rgba(255, 255, 255, 0.4);
 }
 
-.location {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tagSection {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.genreTag {
-  display: inline-block;
-  font-size: 0.7rem;
-  padding: 0.15rem 0.5rem;
-  background-color: rgba(0, 255, 255, 0.15);
-  border-radius: 20px;
-  color: #00ffff;
-  font-weight: 500;
-}
-
-.trendingTag {
-  display: inline-block;
-  font-size: 0.7rem;
-  padding: 0.15rem 0.5rem;
-  background-color: rgba(255, 0, 255, 0.15);
-  border-radius: 20px;
+.eventGenre {
+  background-color: rgba(255, 0, 255, 0.2);
   color: #ff00ff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
   font-weight: 500;
 }
 
-/* Price and match section */
-.priceSection {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem;
-  background-color: rgba(0, 0, 0, 0.15);
-  min-width: 80px;
-}
-
-.matchScoreContainer {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 0.5rem;
-}
-
-.matchScoreCircle {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  border: 2px solid var(--match-color, #00ffff);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
-}
-
-.matchScore {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--match-color, #00ffff);
-  line-height: 1;
-}
-
-.matchLabel {
-  font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.price {
-  font-size: 1.1rem;
+.eventPrice {
+  font-size: 1.5rem;
   font-weight: 700;
   color: white;
-  margin: auto 0;
-}
-
-.viewButton {
-  font-size: 0.75rem;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  background-color: rgba(0, 255, 255, 0.2);
-  border-radius: 4px;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.viewButton:hover {
-  background-color: rgba(0, 255, 255, 0.3);
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+  margin-left: 1.5rem;
+  flex-shrink: 0;
 }
 
 .viewAllContainer {
   display: flex;
   justify-content: center;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 .viewAllLink {
-  font-size: 0.85rem;
-  color: #00ffff;
+  background: linear-gradient(90deg, rgba(255, 0, 255, 0.2), rgba(255, 0, 255, 0.2));
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 500;
   text-decoration: none;
-  padding: 0.5rem 1.25rem;
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 20px;
   transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .viewAllLink:hover {
-  background-color: rgba(0, 255, 255, 0.1);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+  background: linear-gradient(90deg, rgba(255, 0, 255, 0.3), rgba(255, 0, 255, 0.3));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Loading state */
@@ -220,7 +139,7 @@
 .pulseLoader {
   width: 50px;
   height: 50px;
-  background-color: rgba(0, 255, 255, 0.3);
+  background-color: rgba(255, 0, 255, 0.3);
   border-radius: 50%;
   margin-bottom: 1rem;
   animation: pulse 1.5s infinite ease-in-out;
@@ -229,15 +148,15 @@
 @keyframes pulse {
   0% {
     transform: scale(0.8);
-    box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.7);
+    box-shadow: 0 0 0 0 rgba(255, 0, 255, 0.7);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 15px rgba(0, 255, 255, 0);
+    box-shadow: 0 0 0 15px rgba(255, 0, 255, 0);
   }
   100% {
     transform: scale(0.8);
-    box-shadow: 0 0 0 0 rgba(0, 255, 255, 0);
+    box-shadow: 0 0 0 0 rgba(255, 0, 255, 0);
   }
 }
 
@@ -245,9 +164,9 @@
 .errorContainer {
   background-color: rgba(255, 0, 0, 0.1);
   border-left: 4px solid rgba(255, 0, 0, 0.5);
-  padding: 1.25rem;
+  padding: 1.5rem;
   border-radius: 8px;
-  margin: 1.5rem 0;
+  margin: 2rem 0;
 }
 
 .errorContainer p {
@@ -261,91 +180,48 @@
   padding: 2rem;
   border-radius: 12px;
   text-align: center;
-  margin: 1.5rem 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  margin: 2rem 0;
+  border: 1px dashed rgba(255, 0, 255, 0.2);
 }
 
-.emptyIcon {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
-}
-
-.emptyTitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: white;
-  margin: 0 0 0.5rem 0;
-}
-
-.emptyMessage {
+.emptyContainer p {
   color: rgba(255, 255, 255, 0.7);
-  margin: 0;
+  margin: 0 0 0.75rem 0;
+}
+
+.emptyContainer p:last-child {
+  margin-bottom: 0;
   font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-/* Mobile optimizations */
+/* Responsive styles */
 @media (max-width: 768px) {
-  .dateSection {
-    padding: 0.5rem;
-    min-width: 70px;
-  }
-  
-  .eventInfo {
-    padding: 0.5rem;
-  }
-  
-  .priceSection {
-    padding: 0.5rem;
-    min-width: 70px;
-  }
-}
-
-@media (max-width: 480px) {
   .eventCard {
     flex-direction: column;
+    align-items: flex-start;
   }
   
-  .dateSection {
+  .matchScore {
     flex-direction: row;
-    padding: 0.5rem;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 1rem;
+    justify-content: flex-start;
   }
   
-  .dateBox {
-    flex-direction: row;
-    align-items: center;
+  .scoreValue {
+    margin-bottom: 0;
     margin-right: 0.5rem;
   }
   
-  .month {
-    margin-bottom: 0;
-    margin-right: 0.25rem;
+  .eventInfo {
+    width: 100%;
+    margin-bottom: 1rem;
   }
   
-  .weekday {
-    margin-top: 0;
-  }
-  
-  .priceSection {
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 0.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  
-  .matchScoreContainer {
-    margin-bottom: 0;
-  }
-  
-  .matchScoreCircle {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .tagSection {
-    margin-bottom: 0.5rem;
+  .eventPrice {
+    margin-left: 0;
+    align-self: flex-end;
   }
 }

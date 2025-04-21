@@ -1,7 +1,11 @@
 import { getSession } from 'next-auth/react';
 import axios from 'axios';
 import { getCachedData, cacheData } from '../../../lib/cache';
-
+export const config = {
+  api: {
+    responseLimit: false,
+  },
+};
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });

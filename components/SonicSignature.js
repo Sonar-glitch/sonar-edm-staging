@@ -92,6 +92,8 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
       {/* Summary text instead of title */}
       {getSummaryText()}
       
+      <h2 className={styles.title}>Your Sonic Signature</h2>
+      
       <div className={styles.chartSection}>
         <div className={styles.chart}>
           <GenreRadarChart genreData={genreData} />
@@ -130,12 +132,12 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
                   </div>
                 ) : (
                   <div className={styles.placeholderImage}>
-                    {topArtist.name.charAt(0)}
+                    {topArtist.name ? topArtist.name.charAt(0) : 'A'}
                   </div>
                 )}
                 
                 <div className={styles.mediaInfo}>
-                  <h4 className={styles.mediaName}>{topArtist.name}</h4>
+                  <h4 className={styles.mediaName}>{topArtist.name || 'Unknown Artist'}</h4>
                   {topArtist.genres && topArtist.genres.length > 0 && (
                     <div className={styles.genreTags}>
                       {topArtist.genres.slice(0, 2).map(genre => (
@@ -165,12 +167,12 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
                   {showArtists && (
                     <div className={styles.similarList}>
                       {recommendations.artists.slice(0, 3).map((artist) => (
-                        <div key={artist.id} className={styles.similarItem}>
+                        <div key={artist.id || `artist-${Math.random()}`} className={styles.similarItem}>
                           <div className={styles.similarInfo}>
                             <span className={styles.similarName}>{artist.name}</span>
                             <div className={styles.scoreContainer}>
-                              <span className={styles.matchScore}>{artist.matchScore}% match</span>
-                              <span className={styles.popularityScore}>{artist.popularity}% popularity</span>
+                              <span className={styles.matchScore}>{artist.matchScore || artist.correlationScore || 75}% match</span>
+                              <span className={styles.popularityScore}>{artist.popularity || 80}% popularity</span>
                             </div>
                           </div>
                           <button
@@ -191,7 +193,7 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
             </div>
           ) : (
             <div className={styles.placeholderContent}>
-              <div className={styles.placeholderImage}>?</div>
+              <div className={styles.placeholderImage}>A</div>
               <p>No top artist data available</p>
             </div>
           )}
@@ -239,7 +241,7 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
                 )}
                 
                 <div className={styles.mediaInfo}>
-                  <h4 className={styles.mediaName}>{topTrack.name}</h4>
+                  <h4 className={styles.mediaName}>{topTrack.name || 'Unknown Track'}</h4>
                   <p className={styles.artistName}>
                     {topTrack.artists && topTrack.artists.length > 0 
                       ? topTrack.artists[0].name 
@@ -265,13 +267,13 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
                   {showTracks && (
                     <div className={styles.similarList}>
                       {recommendations.tracks.slice(0, 3).map((track) => (
-                        <div key={track.id} className={styles.similarItem}>
+                        <div key={track.id || `track-${Math.random()}`} className={styles.similarItem}>
                           <div className={styles.similarInfo}>
                             <span className={styles.similarName}>{track.name}</span>
-                            <span className={styles.similarArtist}>{track.artist}</span>
+                            <span className={styles.similarArtist}>{track.artist || track.artists?.[0]?.name || 'Unknown Artist'}</span>
                             <div className={styles.scoreContainer}>
-                              <span className={styles.matchScore}>{track.matchScore}% match</span>
-                              <span className={styles.popularityScore}>{track.popularity}% popularity</span>
+                              <span className={styles.matchScore}>{track.matchScore || track.correlationScore || 75}% match</span>
+                              <span className={styles.popularityScore}>{track.popularity || 80}% popularity</span>
                             </div>
                           </div>
                           <div className={styles.trackControls}>

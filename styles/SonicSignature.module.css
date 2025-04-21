@@ -1,4 +1,3 @@
-/* SonicSignature.module.css updates */
 .container {
   width: 100%;
   max-width: 900px;
@@ -10,18 +9,33 @@
 
 .summaryContainer {
   margin-bottom: 1.5rem;
+  background: linear-gradient(90deg, rgba(255, 0, 255, 0.1), rgba(0, 255, 255, 0.1));
+  padding: 1rem;
+  border-radius: 12px;
+  border-left: 3px solid #ff00ff;
 }
 
 .summaryText {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.5;
   margin: 0;
+  text-align: center;
 }
 
 .highlight {
-  color: #00ffff;
+  color: #ff00ff;
   font-weight: 600;
+  text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ff00ff;
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
 }
 
 .chartSection {
@@ -41,7 +55,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(90deg, rgba(102, 16, 242, 0.3), rgba(0, 255, 255, 0.3));
+  background: linear-gradient(90deg, rgba(255, 0, 255, 0.3), rgba(0, 255, 255, 0.3));
   padding: 0.75rem;
   border-radius: 12px;
   margin-bottom: 2rem;
@@ -64,6 +78,9 @@
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   margin-bottom: 1rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .mediaCard {
@@ -73,12 +90,13 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  border: 1px solid rgba(255, 0, 255, 0.2);
 }
 
 .cardTitle {
   font-size: 1.1rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
+  color: #ff00ff;
   margin: 0 0 1rem 0;
 }
 
@@ -104,6 +122,7 @@
 .artistImage, .trackImage {
   border-radius: 8px;
   object-fit: cover;
+  border: 1px solid rgba(255, 0, 255, 0.3);
 }
 
 .buttonOverlay {
@@ -184,8 +203,8 @@
   display: inline-block;
   padding: 0.2rem 0.5rem;
   font-size: 0.75rem;
-  color: #00ffff;
-  background-color: rgba(0, 255, 255, 0.1);
+  color: #ff00ff;
+  background-color: rgba(255, 0, 255, 0.1);
   border-radius: 10px;
 }
 
@@ -201,12 +220,13 @@
 .similarSection {
   margin-top: auto;
   padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .toggleButton {
   background: none;
   border: none;
-  color: #00ffff;
+  color: #ff00ff;
   font-size: 0.85rem;
   cursor: pointer;
   padding: 0;
@@ -216,6 +236,7 @@
 
 .toggleButton:hover {
   color: #fff;
+  text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
 }
 
 .similarList {
@@ -230,6 +251,7 @@
   padding: 0.5rem;
   background-color: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
+  border-left: 2px solid rgba(255, 0, 255, 0.3);
 }
 
 .similarInfo {
@@ -265,7 +287,7 @@
 }
 
 .matchScore {
-  color: #00ffff;
+  color: #ff00ff;
 }
 
 .popularityScore {
@@ -306,13 +328,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  height: 150px;
 }
 
 .placeholderImage {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(102, 16, 242, 0.3));
+  background: linear-gradient(135deg, rgba(255, 0, 255, 0.3), rgba(255, 0, 255, 0.1));
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -320,148 +342,6 @@
   font-size: 2rem;
   color: white;
   margin-bottom: 1rem;
-}
-
-/* SeasonalVibes.module.css updates */
-.container {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto 2rem;
-  padding: 1.5rem;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 16px;
-}
-
-.title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: white;
-  margin: 0 0 1.5rem 0;
-}
-
-.yearRoundContainer {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.yearRoundTitle {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #00ffff;
-}
-
-.yearRoundEmoji {
-  margin-right: 0.5rem;
-}
-
-.yearRoundText {
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.highlight {
-  color: #00ffff;
-  font-weight: 600;
-}
-
-.seasonGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.seasonCard {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
-  padding: 1rem;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.currentSeason {
-  background-color: rgba(0, 0, 0, 0.5);
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-}
-
-.seasonHeader {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  position: relative;
-}
-
-.seasonEmoji {
-  font-size: 1.25rem;
-  margin-right: 0.5rem;
-}
-
-.seasonName {
-  font-size: 1rem;
-  font-weight: 600;
-  color: white;
-}
-
-.currentBadge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background-color: rgba(0, 255, 255, 0.3);
-  color: #00ffff;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.15rem 0.5rem;
-  border-radius: 10px;
-}
-
-.seasonGenres {
-  margin-bottom: 0.75rem;
-}
-
-.genreLabel {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-right: 0.5rem;
-}
-
-.genreList {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.seasonMessage {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-style: italic;
-}
-
-.loadingState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 0;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(0, 255, 255, 0.3);
-  border-top-color: #00ffff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .feedbackContainer {
@@ -479,212 +359,24 @@
 
 .noButton {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 0, 255, 0.4);
+  color: #ff00ff;
   font-size: 0.8rem;
   padding: 0.25rem 0.75rem;
   border-radius: 50px;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-decoration: none;
 }
 
 .noButton:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 0, 255, 0.2);
   color: white;
 }
 
-/* CompactEventFilters.module.css */
-.container {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.vibeSection {
-  margin-bottom: 1rem;
-}
-
-.sectionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.vibeValue {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #00ffff;
-}
-
-.sliderContainer {
-  position: relative;
-  height: 10px;
-  margin-bottom: 0.5rem;
-}
-
-.slider {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 2;
-}
-
-.sliderFill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 6px;
-  background: linear-gradient(to right, #00ffff, #ff00ff);
-  border-radius: 3px;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.sliderContainer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 6px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.toggleButton {
-  display: block;
-  width: 100%;
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.8);
-  padding: 0.5rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-bottom: 1rem;
-}
-
-.toggleButton:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.toggleIcon {
-  display: inline-block;
-  margin-left: 0.5rem;
-  transition: transform 0.2s ease;
-}
-
-.toggleIcon.expanded {
-  transform: rotate(180deg);
-}
-
-.expandedFilters {
-  padding-top: 0.5rem;
-}
-
-.filterGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.filterGroup {
-  display: flex;
-  flex-direction: column;
-}
-
-.filterLabel {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 0.5rem;
-}
-
-.filterSelect {
-  background-color: rgba(0, 0, 0, 0.4);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 0.5rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 12px;
-  padding-right: 2rem;
-}
-
-.filterSelect:hover, .filterSelect:focus {
-  border-color: rgba(0, 255, 255, 0.5);
-  outline: none;
-}
-
-.activeFiltersSection {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.activeFilters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  max-width: 85%;
-}
-
-.activeFilter {
-  display: flex;
-  align-items: center;
-  background-color: rgba(0, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 0.25rem 0.5rem;
-}
-
-.filterValue {
-  font-size: 0.8rem;
-  color: #00ffff;
-}
-
-.removeFilter {
-  background: none;
-  border: none;
-  color: #00ffff;
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0;
-  margin-left: 0.25rem;
-  cursor: pointer;
-}
-
-.removeFilter:hover {
-  color: white;
-}
-
-.resetButton {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.8rem;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.resetButton:hover {
-  color: white;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .artistTrackSection {
+    grid-template-columns: 1fr;
+  }
 }

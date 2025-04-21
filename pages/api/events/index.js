@@ -1,6 +1,10 @@
 import axios from 'axios';
 import { getCachedData, cacheData } from '../../../lib/cache';
-
+export const config = {
+  api: {
+    responseLimit: false,
+  },
+};
 // Helper function to calculate distance between two coordinates using Haversine formula
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 3958.8; // Earth's radius in miles
