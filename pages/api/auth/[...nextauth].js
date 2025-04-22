@@ -53,13 +53,31 @@ export const authOptions = {
       
       return session;
     },
+    // Add this redirect callback to override the default behavior
+    async redirect({ url, baseUrl }) {
+      // If the URL is a relative URL, the previous screens url is available as the referer
+      if (url.startsWith('/')) {
+        // Override to always redirect to dashboard after sign in
+        if (url.includes('/api/auth/callback') || url.includes('/users/music-taste')) {
+          return `${baseUrl}/dashboard`;
+        }
+        return `${baseUrl}${url}`;
+      }
+      // Handle absolute URLs that start with the same origin
+      else if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      return baseUrl;
+    }
   },
   session: {
     strategy: "jwt",
   },
   pages: {
     signIn: "/",
-    error: "/error",
+    error: "/auth/error",
+    // Explicitly set where users should go after sign in
+    newUser: "/dashboard"
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
