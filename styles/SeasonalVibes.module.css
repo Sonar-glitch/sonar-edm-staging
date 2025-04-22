@@ -10,10 +10,10 @@
 .title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #ff00ff;
+  color: #00e5ff;
   margin: 0 0 1.5rem 0;
   text-align: center;
-  text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
 }
 
 .yearRoundContainer {
@@ -21,7 +21,7 @@
   border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 1.5rem;
-  border-left: 3px solid #ff00ff;
+  border-left: 3px solid #00e5ff;
 }
 
 .yearRoundTitle {
@@ -30,11 +30,14 @@
   margin-bottom: 0.75rem;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #ff00ff;
 }
 
 .yearRoundEmoji {
   margin-right: 0.5rem;
+}
+
+.yearRoundTitleText {
+  color: #00e5ff;
 }
 
 .yearRoundText {
@@ -45,9 +48,9 @@
 }
 
 .highlight {
-  color: #ff00ff;
+  color: #00e5ff;
   font-weight: 600;
-  text-shadow: 0 0 3px rgba(255, 0, 255, 0.5);
+  text-shadow: 0 0 3px rgba(0, 229, 255, 0.5);
 }
 
 .seasonGrid {
@@ -63,26 +66,31 @@
   padding: 1rem;
   transition: all 0.2s ease;
   position: relative;
-  border: 1px solid rgba(255, 0, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.1);
 }
 
 .seasonCard:hover {
   transform: translateY(-3px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  border-color: rgba(255, 0, 255, 0.3);
+  border-color: rgba(0, 229, 255, 0.3);
 }
 
 .currentSeason {
   background-color: rgba(0, 0, 0, 0.5);
-  box-shadow: 0 0 15px rgba(255, 0, 255, 0.2);
-  border-color: rgba(255, 0, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+  border-color: rgba(0, 229, 255, 0.3);
 }
 
 .seasonHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 0.75rem;
-  position: relative;
+}
+
+.seasonInfo {
+  display: flex;
+  align-items: center;
 }
 
 .seasonEmoji {
@@ -97,14 +105,11 @@
 }
 
 .currentBadge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background-color: rgba(255, 0, 255, 0.3);
-  color: #ff00ff;
+  padding: 0.2rem 0.5rem;
+  background-color: rgba(0, 229, 255, 0.2);
+  color: #00e5ff;
   font-size: 0.7rem;
   font-weight: 600;
-  padding: 0.15rem 0.5rem;
   border-radius: 10px;
 }
 
@@ -140,8 +145,8 @@
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 0, 255, 0.3);
-  border-top-color: #ff00ff;
+  border: 3px solid rgba(0, 229, 255, 0.3);
+  border-top-color: #00e5ff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -166,23 +171,19 @@
   margin-right: 0.75rem;
 }
 
-.noButton {
+.feedbackButton {
   background: none;
-  border: 1px solid rgba(255, 0, 255, 0.4);
-  color: #ff00ff;
-  font-size: 0.8rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 50px;
+  border: none;
+  padding: 0;
+  color: #00e5ff;
+  font-weight: bold;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: inline-block;
+  transition: color 0.2s ease;
 }
 
-.noButton:hover {
-  background-color: rgba(255, 0, 255, 0.2);
-  color: white;
-  box-shadow: 0 0 8px rgba(255, 0, 255, 0.4);
+.feedbackButton:hover {
+  color: #7affff;
 }
 
 /* Responsive adjustments */

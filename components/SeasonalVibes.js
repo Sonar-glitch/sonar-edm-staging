@@ -31,11 +31,11 @@ export default function SeasonalVibes({ seasonalData, isLoading }) {
     <div className={styles.container}>
       <h2 className={styles.title}>Your Seasonal Vibes</h2>
       
-      {/* Year-Round Signature - Now positioned at the top */}
+      {/* Year-Round Signature */}
       <div className={styles.yearRoundContainer}>
         <div className={styles.yearRoundTitle}>
           <span className={styles.yearRoundEmoji}>✨</span>
-          <span>Your Year-Round Vibes</span>
+          <span className={styles.yearRoundTitleText}>Your Year-Round Vibes</span>
         </div>
         <p className={styles.yearRoundText}>
           Your taste evolves from <span className={styles.highlight}>deep house vibes</span> in winter 
@@ -52,8 +52,10 @@ export default function SeasonalVibes({ seasonalData, isLoading }) {
             className={`${styles.seasonCard} ${season === currentSeason ? styles.currentSeason : ''}`}
           >
             <div className={styles.seasonHeader}>
-              <span className={styles.seasonEmoji}>{data.emoji}</span>
-              <span className={styles.seasonName}>{data.title}</span>
+              <div className={styles.seasonInfo}>
+                <span className={styles.seasonEmoji}>{data.emoji}</span>
+                <span className={styles.seasonName}>{data.title}</span>
+              </div>
               {season === currentSeason && (
                 <span className={styles.currentBadge}>Now</span>
               )}
@@ -71,12 +73,12 @@ export default function SeasonalVibes({ seasonalData, isLoading }) {
         ))}
       </div>
       
-      {/* Feedback section moved below seasonal vibes as requested */}
+      {/* Feedback section with updated "No" presentation */}
       <div className={styles.feedbackContainer}>
         <span className={styles.feedbackQuestion}>Did we get it right?</span>
-        <Link href="/feedback" legacyBehavior>
-          <a className={styles.noButton}>no</a>
-        </Link>
+        <button className={styles.feedbackButton}>
+          No
+        </button>
       </div>
     </div>
   );

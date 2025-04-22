@@ -18,10 +18,10 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
     // Sort genres by value (highest first) and take top 2
     const sortedGenres = Object.entries(genreData)
       .sort(([, a], [, b]) => b - a)
-      .map(([genre]) => genre)
+      .map(([genre]) => genre.toLowerCase())
       .slice(0, 2);
       
-    return sortedGenres.join(' + ').toLowerCase();
+    return sortedGenres.join(' + ');
   };
   
   // Handle audio playback
@@ -75,34 +75,20 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
     window.open(url, '_blank');
   };
   
-  // Format the "You're all about..." text
-  const getSummaryText = () => {
-    const primaryGenres = getPrimaryGenres();
-    return (
-      <div className={styles.summaryContainer}>
-        <p className={styles.summaryText}>
-          You're all about <span className={styles.highlight}>{primaryGenres}</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
-        </p>
-      </div>
-    );
-  };
-  
   return (
     <div className={styles.container}>
       {/* Summary text instead of title */}
-      {getSummaryText()}
-      
-      <h2 className={styles.title}>Your Sonic Signature</h2>
+      <div className={styles.summaryContainer}>
+        <p className={styles.summaryText}>
+          You're all about <span className={styles.highlight}>{getPrimaryGenres()}</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
+        </p>
+      </div>
       
       <div className={styles.chartSection}>
+        <h2 className={styles.title}>Your Sonic Vibe</h2>
         <div className={styles.chart}>
           <GenreRadarChart genreData={genreData} />
         </div>
-      </div>
-      
-      <div className={styles.moodBanner}>
-        <span className={styles.moodIcon}>🌙</span>
-        <span className={styles.moodText}>{mood || 'Chillwave Flow'}</span>
       </div>
       
       <div className={styles.artistTrackSection}>

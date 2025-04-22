@@ -52,32 +52,38 @@ export default async function handler(req, res) {
     
     // Get the response data
     const data = await response.json();
+    console.log("API response structure:", Object.keys(data));
     
     // Check if the response has the correct event structure
     let events = [];
     
-    if (data.events) {
-      // If the API directly returns events array
+    if (data.events && Array.isArray(data.events)) {
+      // If the API directly returns events array (from correlated-events.js)
+      console.log(`Found ${data.events.length} events in data.events`);
       events = data.events;
     } else if (data.success && Array.isArray(data.events)) {
       // Format from index.js
+      console.log(`Found ${data.events.length} events in data.success.events`);
       events = data.events;
     } else if (Array.isArray(data)) {
       // If the API returns just an array of events
+      console.log(`Found ${data.length} events in direct array`);
       events = data;
+    } else {
+      console.log("Could not find events array in response:", data);
     }
     
     // Normalize event structure for frontend compatibility
     const normalizedEvents = events.map(event => {
       // Extract basic event details
       const baseEvent = {
-        id: event.id,
-        name: event.name || 'Unnamed Event',
+        id: event.id || `event-${Math.random().toString(36).substr(2, 9)}`,
+        name: event.name || event.title || 'Unnamed Event',
         venue: event.venue?.name || event.venue || 'Unknown Venue',
         location: event.venue?.location || event.location || 'Unknown Location',
-        date: event.date || event.dates?.start?.dateTime || null,
+        date: event.date || event.dates?.start?.dateTime || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         price: event.price || (event.priceRanges ? event.priceRanges[0]?.min : 0) || 0,
-        primaryGenre: event.primaryGenre || event.genres?.[0] || 'Electronic',
+        primaryGenre: event.primaryGenre || (event.genres && event.genres.length > 0 ? event.genres[0] : 'Electronic'),
         matchScore: event.matchScore || event.match || event.correlationScore || 75,
         url: event.url || event.ticketLink || ''
       };
@@ -85,8 +91,11 @@ export default async function handler(req, res) {
       return baseEvent;
     });
     
+    console.log(`Normalized ${normalizedEvents.length} events`);
+    
     // If no events after normalization, provide fallbacks
     if (normalizedEvents.length === 0) {
+      console.log("No events found after normalization, using fallbacks");
       // Create fallback events
       const fallbackEvents = [
         {

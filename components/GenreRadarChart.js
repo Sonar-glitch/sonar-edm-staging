@@ -11,8 +11,8 @@ export default function GenreRadarChart({ genreData }) {
     const handleResize = () => {
       if (chartRef.current) {
         const containerWidth = chartRef.current.parentElement.clientWidth;
-        // Determine size based on container width, but maintain a reasonable size
-        const chartSize = Math.min(400, Math.max(250, containerWidth * 0.9));
+        // Determine size based on container width
+        const chartSize = Math.min(300, containerWidth);
         setSize({ width: chartSize, height: chartSize });
       }
     };
@@ -38,7 +38,7 @@ export default function GenreRadarChart({ genreData }) {
     
     // Set dimensions
     const { width, height } = size;
-    const margin = 40; // Increase buffer around the chart for better visibility of labels
+    const margin = 30; // Buffer around the chart
     const radius = Math.min(width, height) / 2 - margin;
     
     // Create SVG container with viewBox for responsiveness
@@ -81,26 +81,17 @@ export default function GenreRadarChart({ genreData }) {
       
     gradient.append('stop')
       .attr('offset', '0%')
-      .attr('stop-color', '#ff00ff')
+      .attr('stop-color', '#00e5ff')
       .attr('stop-opacity', 0.8);
       
     gradient.append('stop')
       .attr('offset', '100%')
-      .attr('stop-color', '#00ffff')
+      .attr('stop-color', '#0099cc')
       .attr('stop-opacity', 0.8);
     
-    // Normalize the data - make sure maximum value is 100
-    const normalizedData = {};
-    const maxValue = Math.max(...Object.values(genreData));
-    
-    Object.entries(genreData).forEach(([genre, value]) => {
-      // Normalize to 100 scale
-      normalizedData[genre] = Math.round((value / maxValue) * 100);
-    });
-    
-    // Process data - limit to 5 genres maximum for better readability
-    const genres = Object.keys(normalizedData).slice(0, 5);
-    const values = genres.map(genre => normalizedData[genre]);
+    // Process data
+    const genres = Object.keys(genreData);
+    const valueArray = Object.values(genreData);
     const angleSlice = (Math.PI * 2) / genres.length;
     
     // Scale for data
@@ -117,7 +108,7 @@ export default function GenreRadarChart({ genreData }) {
         .attr('r', rScale(level))
         .attr('class', styles.levelCircle)
         .attr('fill', 'none')
-        .attr('stroke', 'rgba(255, 0, 255, 0.1)')
+        .attr('stroke', 'rgba(0, 255, 255, 0.1)')
         .attr('stroke-dasharray', '3,3');
     });
     
@@ -157,15 +148,15 @@ export default function GenreRadarChart({ genreData }) {
         .attr('y', labelCoords.y)
         .attr('dy', '0.35em') // Vertical centering
         .attr('text-anchor', textAnchor)
-        .attr('fill', '#ff00ff')
-        .style('font-size', '12px')
+        .attr('fill', '#00e5ff')
+        .style('font-size', '10px')
         .text(genre);
     });
     
     // Draw the radar chart
     // Map data points to coordinates
     const radarPoints = genres.map((genre, i) => {
-      const value = normalizedData[genre];
+      const value = genreData[genre];
       const angle = i * angleSlice;
       return {
         x: rScale(value) * Math.cos(angle - Math.PI / 2),
@@ -175,20 +166,20 @@ export default function GenreRadarChart({ genreData }) {
       };
     });
     
+    // Create line generator for the path
+    const lineGenerator = d3.line()
+      .x(d => d.x)
+      .y(d => d.y)
+      .curve(d3.curveCardinalClosed.tension(0.7));
+    
     // Draw the radar area
     svg.append('path')
       .datum(radarPoints)
       .attr('class', styles.radarArea)
-      .attr('d', d => {
-        // Create a line path from the points
-        return d3.line()
-          .x(p => p.x)
-          .y(p => p.y)
-          .curve(d3.curveCardinalClosed.tension(0.7))(d) + 'Z';
-      })
+      .attr('d', d => lineGenerator(d) + 'Z')
       .attr('fill', 'url(#areaGradient)')
       .attr('fill-opacity', 0.3)
-      .attr('stroke', 'url(#areaGradient)')
+      .attr('stroke', '#00e5ff')
       .attr('stroke-width', 2)
       .attr('filter', 'url(#glow)');
     
@@ -201,22 +192,12 @@ export default function GenreRadarChart({ genreData }) {
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
       .attr('r', 4)
-      .attr('fill', '#ff00ff')
+      .attr('fill', '#00e5ff')
       .attr('stroke', '#fff')
       .attr('stroke-width', 1);
-      
-    // Add value labels for each data point
-    svg.selectAll('.dataLabel')
-      .data(radarPoints)
-      .enter()
-      .append('text')
-      .attr('class', styles.dataLabel)
-      .attr('x', d => d.x * 0.85)
-      .attr('y', d => d.y * 0.85)
-      .attr('text-anchor', 'middle')
-      .attr('fill', 'white')
-      .attr('font-size', '10px')
-      .text(d => d.value + '%');
+    
+    // We hide the percentage values by not rendering them at all
+    // This is different from the original which showed values on the axes
   }, [genreData, size]);
   
   return (
