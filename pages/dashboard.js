@@ -1,3 +1,5 @@
+// VERSION: Updated dashboard - April 22, 2025
+
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
