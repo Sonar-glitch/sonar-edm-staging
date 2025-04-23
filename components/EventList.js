@@ -23,74 +23,7 @@ export default function EventList({ events, loading, error }) {
     }
   };
   
-  // If loading
-  if (loading) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.pulseLoader}></div>
-        <p>Finding your perfect events...</p>
-      </div>
-    );
-  }
-  
-  // If error
-  if (error) {
-    return (
-      <div className={styles.errorContainer}>
-        <p>Sorry, we couldn't load events for you. Please try again later.</p>
-      </div>
-    );
-  }
-  
-  // If no events, provide fallback events
-  if (!events || events.length === 0) {
-    const fallbackEvents = [
-      {
-        id: 'fb-1',
-        name: 'Techno Dreamscape',
-        venue: 'Warehouse 23',
-        location: 'New York',
-        date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        price: 45,
-        primaryGenre: 'Techno',
-        matchScore: 92
-      },
-      {
-        id: 'fb-2',
-        name: 'Deep House Journey',
-        venue: 'Club Echo',
-        location: 'Brooklyn',
-        date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        price: 35,
-        primaryGenre: 'Deep House',
-        matchScore: 85
-      },
-      {
-        id: 'fb-3',
-        name: 'Melodic Techno Night',
-        venue: 'The Sound Bar',
-        location: 'Manhattan',
-        date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-        price: 55,
-        primaryGenre: 'Melodic Techno',
-        matchScore: 88
-      }
-    ];
-    
-    return (
-      <div className={styles.container}>
-        <div className={styles.emptyContainer}>
-          <p>No events match your current filters.</p>
-          <p>Try adjusting your filters or check out our featured events below:</p>
-        </div>
-        
-        {/* Display fallback events */}
-        {fallbackEvents.map(event => renderEventCard(event))}
-      </div>
-    );
-  }
-  
-  // Render each event card
+  // Define renderEventCard function before using it
   const renderEventCard = (event) => (
     <div key={event.id} className={styles.eventCard}>
       {/* Match Score */}
@@ -129,6 +62,71 @@ export default function EventList({ events, loading, error }) {
       </div>
     </div>
   );
+  
+  // If loading
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.pulseLoader}></div>
+        <p>Finding your perfect events...</p>
+      </div>
+    );
+  }
+  
+  // If error
+  if (error) {
+    return (
+      <div className={styles.errorContainer}>
+        <p>Sorry, we couldn't load events for you. Please try again later.</p>
+      </div>
+    );
+  }
+  
+  // If no events, provide fallback events
+  if (!events || events.length === 0) {
+    // Create now + days date helper
+    const daysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    
+    const fallbackEvents = [
+      {
+        id: 'fb-1',
+        name: 'Techno Dreamscape',
+        venue: 'Warehouse 23',
+        location: 'New York',
+        date: daysFromNow(7),
+        price: 45,
+        primaryGenre: 'Techno',
+        matchScore: 92
+      },
+      {
+        id: 'fb-2',
+        name: 'Deep House Journey',
+        venue: 'Club Echo',
+        location: 'Brooklyn',
+        date: daysFromNow(14),
+        price: 35,
+        primaryGenre: 'Deep House',
+        matchScore: 85
+      },
+      {
+        id: 'fb-3',
+        name: 'Melodic Techno Night',
+        venue: 'The Sound Bar',
+        location: 'Manhattan',
+        date: daysFromNow(3),
+        price: 55,
+        primaryGenre: 'Melodic Techno',
+        matchScore: 88
+      }
+    ];
+    
+    // Skip the "No events" message if we're showing fallbacks
+    return (
+      <div className={styles.container}>
+        {fallbackEvents.map(event => renderEventCard(event))}
+      </div>
+    );
+  }
   
   return (
     <div className={styles.container}>

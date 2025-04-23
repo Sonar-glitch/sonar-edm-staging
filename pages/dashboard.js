@@ -1,5 +1,3 @@
-// VERSION: Updated dashboard - April 22, 2025
-
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
@@ -12,6 +10,8 @@ import CompactEventFilters from '@/components/CompactEventFilters';
 import EventList from '@/components/EventList';
 import styles from '@/styles/Dashboard.module.css';
 
+// VERSION: Updated dashboard - April 22, 2025
+
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsError, setEventsError] = useState(null);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     genre: 'all',
@@ -142,6 +143,7 @@ export default function Dashboard() {
   const fetchFilteredEvents = async () => {
     try {
       setEventsLoading(true);
+      setEventsError(null);
       
       // Prepare query parameters
       const queryParams = new URLSearchParams();
@@ -151,12 +153,16 @@ export default function Dashboard() {
       if (filters.price !== 'all') queryParams.append('price', filters.price);
       queryParams.append('minMatch', filters.vibeMatch);
       
+      console.log("Events API request:", queryParams.toString());
+      
       // Fetch events with filters
       const eventsResponse = await fetch(`/api/events/recommendations?${queryParams.toString()}`)
         .catch(err => {
           console.error('Network error fetching events:', err);
           return { ok: false };
         });
+      
+      console.log("Events API response status:", eventsResponse.status);
       
       // Use mock data if API fails
       let eventsData = [
@@ -183,10 +189,19 @@ export default function Dashboard() {
       ];
       
       if (eventsResponse.ok) {
-        const response = await eventsResponse.json();
-        if (response.events && response.events.length > 0) {
-          eventsData = response.events;
+        try {
+          const response = await eventsResponse.json();
+          console.log("Events API response data:", response);
+          if (response.events && response.events.length > 0) {
+            eventsData = response.events;
+          }
+        } catch (jsonError) {
+          console.error("Error parsing events response:", jsonError);
+          setEventsError("Error parsing event data");
         }
+      } else {
+        console.log("Using fallback event data due to API error");
+        setEventsError("Events API returned an error");
       }
       
       // Update events in user profile
@@ -194,8 +209,52 @@ export default function Dashboard() {
         ...prev,
         events: eventsData
       }));
+      
+      console.log("Events loaded:", eventsData.length);
     } catch (error) {
       console.error('Error fetching events:', error);
+      setEventsError("Failed to fetch events");
+      
+      // Still update with fallback events
+      const daysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+      
+      const fallbackEvents = [
+        {
+          id: 'fb-1',
+          name: 'Techno Dreamscape',
+          venue: 'Warehouse 23',
+          location: 'New York',
+          date: daysFromNow(7),
+          price: 45,
+          primaryGenre: 'Techno',
+          matchScore: 92
+        },
+        {
+          id: 'fb-2',
+          name: 'Deep House Journey',
+          venue: 'Club Echo',
+          location: 'Brooklyn',
+          date: daysFromNow(14),
+          price: 35,
+          primaryGenre: 'Deep House',
+          matchScore: 85
+        },
+        {
+          id: 'fb-3',
+          name: 'Melodic Techno Night',
+          venue: 'The Sound Bar',
+          location: 'Manhattan',
+          date: daysFromNow(3),
+          price: 55,
+          primaryGenre: 'Melodic Techno',
+          matchScore: 88
+        }
+      ];
+      
+      setUserProfile(prev => ({
+        ...prev,
+        events: fallbackEvents
+      }));
     } finally {
       setEventsLoading(false);
     }
@@ -246,90 +305,12 @@ export default function Dashboard() {
     };
   };
 
-  if (status === 'loading' || loading) {
+  // Debug component to show when there are issues
+  const renderDebugInfo = () => {
+    // Only show in development
+    if (process.env.NODE_ENV !== 'development') return null;
+    
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingPulse}></div>
-        <p>Analyzing your sonic signature...</p>
-      </div>
-    );
-  }
-  
-  if (error && !userProfile) {
-    return (
-      <div className={styles.errorContainer}>
-        <h2>Oops!</h2>
-        <p>{error}</p>
-        <button 
-          className={styles.retryButton}
-          onClick={fetchUserData}
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
-  // Ensure we have data to render
-  const profile = userProfile || {
-    taste: {
-      genreProfile: {},
-      mood: '',
-      topArtists: [],
-      topTracks: []
-    },
-    seasonalVibes: null,
-    events: []
-  };
-  
-  return (
-    <>
-      <Head>
-        <title>TIKO | Your Music Dashboard</title>
-        <meta name="description" content="Your personalized EDM dashboard" />
-      </Head>
-      
-      <div className={styles.container}>
-        <Header />
-        
-        <main className={styles.main}>
-          {/* Sonic Signature - the radar chart visualization */}
-          <SonicSignature 
-            genreData={profile.taste.genreProfile} 
-            mood={profile.taste.mood}
-            topArtist={profile.taste.topArtists[0]}
-            topTrack={profile.taste.topTracks[0]}
-            recommendations={profile.recommendations}
-          />
-          
-          {/* Seasonal Vibes */}
-          <SeasonalVibes 
-            seasonalData={profile.seasonalVibes}
-            isLoading={loading}
-          />
-          
-          {/* Events section */}
-          <div className={styles.eventsSection}>
-            <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
-            
-            {/* Filters */}
-            <CompactEventFilters 
-              onFilterChange={handleFilterChange}
-              initialFilters={filters}
-            />
-            
-            {/* Events list */}
-            <EventList 
-              events={profile.events} 
-              loading={eventsLoading}
-            />
-          </div>
-        </main>
-        
-        <footer className={styles.footer}>
-          <p>TIKO by Sonar • Your EDM Companion</p>
-        </footer>
-      </div>
-    </>
-  );
-}
+      <div className={styles.debugSection}>
+        <details>
+          <summary>Debug Info (Click to expand)

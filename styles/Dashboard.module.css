@@ -15,7 +15,9 @@
 }
 
 .eventsSection {
-  margin-top: 3rem;
+  margin-top: 4rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sectionTitle {
@@ -23,6 +25,7 @@
   font-weight: 600;
   margin-bottom: 1.5rem;
   color: #ff00ff; /* Changed to fuchsia for "Events Matching Your Vibe" */
+  text-align: center; /* Center-align like in mockup */
 }
 
 .footer {
@@ -103,6 +106,16 @@
 .retryButton:hover {
   background-color: rgba(0, 255, 255, 0.3);
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+/* Debug section for development */
+.debugSection {
+  margin: 20px 0;
+  padding: 10px;
+  border: 1px dashed rgba(255, 0, 255, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Responsive styles */
