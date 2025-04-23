@@ -11,19 +11,6 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
   const [showArtists, setShowArtists] = useState(false);
   const [showTracks, setShowTracks] = useState(false);
   
-  // Get primary genres for summary display
-  const getPrimaryGenres = () => {
-    if (!genreData || Object.keys(genreData).length === 0) return '';
-    
-    // Sort genres by value (highest first) and take top 2
-    const sortedGenres = Object.entries(genreData)
-      .sort(([, a], [, b]) => b - a)
-      .map(([genre]) => genre.toLowerCase())
-      .slice(0, 2);
-      
-    return sortedGenres.join(' + ');
-  };
-  
   // Handle audio playback
   const togglePlay = (previewUrl) => {
     if (!previewUrl) return;
@@ -77,18 +64,16 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
   
   return (
     <div className={styles.container}>
-      {/* Summary text instead of title */}
-      <div className={styles.summaryContainer}>
-        <p className={styles.summaryText}>
-          You're all about <span className={styles.highlight}>{getPrimaryGenres()}</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
-        </p>
-      </div>
-      
       <div className={styles.chartSection}>
         <h2 className={styles.title}>Your Sonic Vibe</h2>
         <div className={styles.chart}>
           <GenreRadarChart genreData={genreData} />
         </div>
+      </div>
+      
+      <div className={styles.moodBanner}>
+        <span className={styles.moodIcon}>🌙</span>
+        <span className={styles.moodText}>{mood || 'Chillwave Flow'}</span>
       </div>
       
       <div className={styles.artistTrackSection}>
@@ -105,6 +90,7 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
                       width={80}
                       height={80}
                       className={styles.artistImage}
+                      unoptimized={true}
                     />
                     <button 
                       className={styles.spotifyButton}
@@ -198,6 +184,7 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
                       width={80}
                       height={80}
                       className={styles.trackImage}
+                      unoptimized={true}
                     />
                     <div className={styles.buttonOverlay}>
                       {topTrack.preview_url && (

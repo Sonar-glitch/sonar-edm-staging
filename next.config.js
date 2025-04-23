@@ -1,3 +1,4 @@
+// next.config.js
 const path = require('path');
 
 module.exports = {
@@ -7,5 +8,8 @@ module.exports = {
   },
   experimental: {
     optimizeCss: true,
+  },
+  images: {
+    domains: ['i.scdn.co'], // Allow Spotify image domains
   },
 };

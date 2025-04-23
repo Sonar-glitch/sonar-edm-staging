@@ -81,12 +81,12 @@ export default function GenreRadarChart({ genreData }) {
       
     gradient.append('stop')
       .attr('offset', '0%')
-      .attr('stop-color', '#00e5ff')
+      .attr('stop-color', '#ff00ff')  // Changed to magenta
       .attr('stop-opacity', 0.8);
       
     gradient.append('stop')
       .attr('offset', '100%')
-      .attr('stop-color', '#0099cc')
+      .attr('stop-color', '#cc00cc')  // Changed to darker magenta
       .attr('stop-opacity', 0.8);
     
     // Process data
@@ -108,7 +108,7 @@ export default function GenreRadarChart({ genreData }) {
         .attr('r', rScale(level))
         .attr('class', styles.levelCircle)
         .attr('fill', 'none')
-        .attr('stroke', 'rgba(0, 255, 255, 0.1)')
+        .attr('stroke', 'rgba(255, 0, 255, 0.1)')  // Changed to magenta
         .attr('stroke-dasharray', '3,3');
     });
     
@@ -148,7 +148,7 @@ export default function GenreRadarChart({ genreData }) {
         .attr('y', labelCoords.y)
         .attr('dy', '0.35em') // Vertical centering
         .attr('text-anchor', textAnchor)
-        .attr('fill', '#00e5ff')
+        .attr('fill', '#ff00ff')  // Changed to magenta
         .style('font-size', '10px')
         .text(genre);
     });
@@ -179,7 +179,7 @@ export default function GenreRadarChart({ genreData }) {
       .attr('d', d => lineGenerator(d) + 'Z')
       .attr('fill', 'url(#areaGradient)')
       .attr('fill-opacity', 0.3)
-      .attr('stroke', '#00e5ff')
+      .attr('stroke', '#ff00ff')  // Changed to magenta
       .attr('stroke-width', 2)
       .attr('filter', 'url(#glow)');
     
@@ -192,12 +192,10 @@ export default function GenreRadarChart({ genreData }) {
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
       .attr('r', 4)
-      .attr('fill', '#00e5ff')
+      .attr('fill', '#ff00ff')  // Changed to magenta
       .attr('stroke', '#fff')
       .attr('stroke-width', 1);
     
-    // We hide the percentage values by not rendering them at all
-    // This is different from the original which showed values on the axes
   }, [genreData, size]);
   
   return (

@@ -10,7 +10,7 @@ import CompactEventFilters from '@/components/CompactEventFilters';
 import EventList from '@/components/EventList';
 import styles from '@/styles/Dashboard.module.css';
 
-// VERSION: Updated dashboard - April 22, 2025
+// VERSION: Updated dashboard - April 23, 2025
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -151,8 +151,15 @@ export default function Dashboard() {
       };
       
       if (recommendationsResponse.ok) {
-        const recData = await recommendationsResponse.json();
-        recommendations = recData.recommendations || recommendations;
+        try {
+          const recData = await recommendationsResponse.json();
+          // Fix for recommendations format - directly use the response data structure
+          recommendations.artists = recData.artists || [];
+          recommendations.tracks = recData.tracks || [];
+          console.log("Loaded recommendations successfully:", recommendations);
+        } catch (recError) {
+          console.error("Error parsing recommendations:", recError);
+        }
       }
       
       // Set the initial user profile with fallback events
@@ -369,8 +376,6 @@ export default function Dashboard() {
           <div className={styles.summaryBanner}>
             <p>You're all about <span className={styles.highlight}>{primaryGenres}</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.</p>
           </div>
-          
-          <h2 className={styles.vibeTitle}>Your Sonic Vibe</h2>
           
           {/* Sonic Signature - the radar chart visualization */}
           <SonicSignature 
