@@ -18,7 +18,7 @@ export default function Dashboard() {
   
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsLoading, setEventsLoading] = useState(false); // Start with false to show fallback events
   const [eventsError, setEventsError] = useState(null);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -43,12 +43,43 @@ export default function Dashboard() {
     }
   }, [status]);
   
-  // Fetch filtered events when filters change
-  useEffect(() => {
-    if (userProfile) {
-      fetchFilteredEvents();
-    }
-  }, [filters, userProfile]);
+  // Define fallback events to use when API fails
+  const getFallbackEvents = () => {
+    const daysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    
+    return [
+      {
+        id: 'fb-1',
+        name: 'Tale of Us',
+        venue: 'Output',
+        location: 'New York',
+        date: daysFromNow(7),
+        price: 85,
+        primaryGenre: 'Melodic Techno',
+        matchScore: 92
+      },
+      {
+        id: 'fb-2',
+        name: 'Mathame',
+        venue: 'Afterlife',
+        location: 'Brooklyn',
+        date: daysFromNow(14),
+        price: 35,
+        primaryGenre: 'Deep House',
+        matchScore: 85
+      },
+      {
+        id: 'fb-3',
+        name: 'Boris Brejcha',
+        venue: 'Avant Gardner',
+        location: 'Manhattan',
+        date: daysFromNow(3),
+        price: 75,
+        primaryGenre: 'Minimal Techno',
+        matchScore: 95
+      }
+    ];
+  };
   
   const fetchUserData = async () => {
     try {
@@ -69,7 +100,7 @@ export default function Dashboard() {
           'Techno': 65,
           'Progressive House': 60,
           'Trance': 45,
-          'Melodic': 55
+          'Indie dance': 55
         },
         mood: 'Chillwave Flow',
         topArtists: [{ 
@@ -124,15 +155,18 @@ export default function Dashboard() {
         recommendations = recData.recommendations || recommendations;
       }
       
-      // Set the initial user profile
+      // Set the initial user profile with fallback events
       setUserProfile({
         taste: tasteData,
         seasonalVibes,
         recommendations,
-        events: []
+        events: getFallbackEvents() // Use fallback events initially
       });
       
       setLoading(false);
+      
+      // After setting initial data, fetch real events
+      fetchFilteredEvents();
     } catch (err) {
       console.error('Error fetching user data:', err);
       setError('Failed to load your profile. Please try again later.');
@@ -140,7 +174,17 @@ export default function Dashboard() {
     }
   };
   
+  // Fetch filtered events when filters change
+  useEffect(() => {
+    if (userProfile && !loading) {
+      fetchFilteredEvents();
+    }
+  }, [filters, userProfile, loading]);
+  
   const fetchFilteredEvents = async () => {
+    // Skip if we don't need to fetch
+    if (!userProfile) return;
+    
     try {
       setEventsLoading(true);
       setEventsError(null);
@@ -164,29 +208,8 @@ export default function Dashboard() {
       
       console.log("Events API response status:", eventsResponse.status);
       
-      // Use mock data if API fails
-      let eventsData = [
-        {
-          id: 'event1',
-          name: 'Tale of Us',
-          venue: 'Output',
-          location: 'New York',
-          date: '2025-04-25T22:00:00',
-          price: 85,
-          primaryGenre: 'Melodic Techno',
-          matchScore: 92
-        },
-        {
-          id: 'event2',
-          name: 'Mathame',
-          venue: 'Afterlife',
-          location: 'Brooklyn',
-          date: '2025-04-28T20:00:00',
-          price: 100,
-          primaryGenre: 'Techno',
-          matchScore: 79
-        }
-      ];
+      // Fall back to predefined events if API call fails
+      let eventsData = getFallbackEvents();
       
       if (eventsResponse.ok) {
         try {
@@ -201,7 +224,6 @@ export default function Dashboard() {
         }
       } else {
         console.log("Using fallback event data due to API error");
-        setEventsError("Events API returned an error");
       }
       
       // Update events in user profile
@@ -213,47 +235,10 @@ export default function Dashboard() {
       console.log("Events loaded:", eventsData.length);
     } catch (error) {
       console.error('Error fetching events:', error);
-      setEventsError("Failed to fetch events");
-      
-      // Still update with fallback events
-      const daysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-      
-      const fallbackEvents = [
-        {
-          id: 'fb-1',
-          name: 'Techno Dreamscape',
-          venue: 'Warehouse 23',
-          location: 'New York',
-          date: daysFromNow(7),
-          price: 45,
-          primaryGenre: 'Techno',
-          matchScore: 92
-        },
-        {
-          id: 'fb-2',
-          name: 'Deep House Journey',
-          venue: 'Club Echo',
-          location: 'Brooklyn',
-          date: daysFromNow(14),
-          price: 35,
-          primaryGenre: 'Deep House',
-          matchScore: 85
-        },
-        {
-          id: 'fb-3',
-          name: 'Melodic Techno Night',
-          venue: 'The Sound Bar',
-          location: 'Manhattan',
-          date: daysFromNow(3),
-          price: 55,
-          primaryGenre: 'Melodic Techno',
-          matchScore: 88
-        }
-      ];
-      
+      // Use fallback events on error
       setUserProfile(prev => ({
         ...prev,
-        events: fallbackEvents
+        events: getFallbackEvents()
       }));
     } finally {
       setEventsLoading(false);
@@ -362,12 +347,12 @@ export default function Dashboard() {
     events: []
   };
   
-  console.log("Dashboard rendering with profile data:", {
-    genreData: profile.taste.genreProfile,
-    mood: profile.taste.mood,
-    topArtist: profile.taste.topArtists[0],
-    topTrack: profile.taste.topTracks[0]
-  });
+  // Get primary genres for display
+  const primaryGenres = Object.entries(profile.taste.genreProfile)
+    .sort(([, a], [, b]) => b - a)
+    .map(([genre]) => genre.toLowerCase())
+    .slice(0, 2)
+    .join(' + ');
   
   return (
     <>
@@ -380,6 +365,13 @@ export default function Dashboard() {
         <Header />
         
         <main className={styles.main}>
+          {/* Summary Banner */}
+          <div className={styles.summaryBanner}>
+            <p>You're all about <span className={styles.highlight}>{primaryGenres}</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.</p>
+          </div>
+          
+          <h2 className={styles.vibeTitle}>Your Sonic Vibe</h2>
+          
           {/* Sonic Signature - the radar chart visualization */}
           <SonicSignature 
             genreData={profile.taste.genreProfile} 
