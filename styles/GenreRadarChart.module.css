@@ -23,14 +23,14 @@
   font-size: 12px;
   font-weight: 500;
   transition: all 0.2s ease;
-  fill: #00e5ff;
-  text-shadow: 0 0 5px rgba(0, 229, 255, 0.5);
+  fill: #ff00ff;
+  text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
 }
 
 .axisLabel:hover {
   font-size: 14px;
-  fill: #00e5ff;
-  text-shadow: 0 0 8px rgba(0, 229, 255, 0.7);
+  fill: #ff00ff;
+  text-shadow: 0 0 8px rgba(255, 0, 255, 0.7);
 }
 
 .radarArea {
@@ -39,18 +39,18 @@
 }
 
 .radarArea:hover {
-  fill: rgba(0, 229, 255, 0.4);
+  fill: rgba(255, 0, 255, 0.4);
 }
 
 .dataPoint {
   transition: all 0.2s ease;
-  fill: #00e5ff;
+  fill: #ff00ff;
 }
 
 .dataPoint:hover {
   r: 6;
-  fill: #00e5ff;
-  filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.7));
+  fill: #ff00ff;
+  filter: drop-shadow(0 0 5px rgba(255, 0, 255, 0.7));
 }
 
 @keyframes pulse {

@@ -23,46 +23,6 @@ export default function EventList({ events, loading, error }) {
     }
   };
   
-  // Define renderEventCard function before using it
-  const renderEventCard = (event) => (
-    <div key={event.id} className={styles.eventCard}>
-      {/* Match Score */}
-      <div className={styles.matchScore}>
-        <div className={styles.scoreValue}>
-          {event.matchScore || event.correlationScore || 75}%
-        </div>
-        <div className={styles.scoreLabel}>Vibe Match</div>
-      </div>
-      
-      {/* Event Details */}
-      <div className={styles.eventInfo}>
-        <div className={styles.eventHeader}>
-          <h3 className={styles.eventName}>{event.name}</h3>
-          <p className={styles.eventVenue}>{event.venue}</p>
-        </div>
-        
-        <div className={styles.eventDetails}>
-          <span className={styles.eventLocation}>
-            {event.location || 'Location TBA'}
-          </span>
-          <span className={styles.divider}>•</span>
-          <span className={styles.eventDate}>
-            {formatEventDate(event.date)}
-          </span>
-          <span className={styles.divider}>•</span>
-          <span className={styles.eventGenre}>
-            {event.primaryGenre || event.genres?.[0] || 'Electronic'}
-          </span>
-        </div>
-      </div>
-      
-      {/* Price */}
-      <div className={styles.eventPrice}>
-        ${event.price || '??'}
-      </div>
-    </div>
-  );
-  
   // If loading
   if (loading) {
     return (
@@ -82,57 +42,58 @@ export default function EventList({ events, loading, error }) {
     );
   }
   
-  // If no events, provide fallback events
+  // If no events
   if (!events || events.length === 0) {
-    // Create now + days date helper
-    const daysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-    
-    const fallbackEvents = [
-      {
-        id: 'fb-1',
-        name: 'Techno Dreamscape',
-        venue: 'Warehouse 23',
-        location: 'New York',
-        date: daysFromNow(7),
-        price: 45,
-        primaryGenre: 'Techno',
-        matchScore: 92
-      },
-      {
-        id: 'fb-2',
-        name: 'Deep House Journey',
-        venue: 'Club Echo',
-        location: 'Brooklyn',
-        date: daysFromNow(14),
-        price: 35,
-        primaryGenre: 'Deep House',
-        matchScore: 85
-      },
-      {
-        id: 'fb-3',
-        name: 'Melodic Techno Night',
-        venue: 'The Sound Bar',
-        location: 'Manhattan',
-        date: daysFromNow(3),
-        price: 55,
-        primaryGenre: 'Melodic Techno',
-        matchScore: 88
-      }
-    ];
-    
-    // Skip the "No events" message if we're showing fallbacks
     return (
-      <div className={styles.container}>
-        {fallbackEvents.map(event => renderEventCard(event))}
+      <div className={styles.emptyContainer}>
+        <p>No events match your current filters.</p>
+        <p>Try adjusting your filters or expanding your search radius.</p>
       </div>
     );
   }
   
   return (
     <div className={styles.container}>
-      {events.map(event => renderEventCard(event))}
+      {events.map(event => (
+        <div key={event.id} className={styles.eventCard}>
+          {/* Match Score */}
+          <div className={styles.matchScore}>
+            <div className={styles.scoreValue}>
+              {event.matchScore || event.correlationScore || 75}%
+            </div>
+            <div className={styles.scoreLabel}>Vibe Match</div>
+          </div>
+          
+          {/* Event Details */}
+          <div className={styles.eventInfo}>
+            <div className={styles.eventHeader}>
+              <h3 className={styles.eventName}>{event.name}</h3>
+              <p className={styles.eventVenue}>{event.venue}</p>
+            </div>
+            
+            <div className={styles.eventDetails}>
+              <span className={styles.eventLocation}>
+                {event.location || 'Location TBA'}
+              </span>
+              <span className={styles.divider}>•</span>
+              <span className={styles.eventDate}>
+                {formatEventDate(event.date)}
+              </span>
+              <span className={styles.divider}>•</span>
+              <span className={styles.eventGenre}>
+                {event.primaryGenre || event.genres?.[0] || 'Electronic'}
+              </span>
+            </div>
+          </div>
+          
+          {/* Price */}
+          <div className={styles.eventPrice}>
+            ${event.price || '??'}
+          </div>
+        </div>
+      ))}
       
-      {events.length > 0 && (
+      {events.length > 3 && (
         <div className={styles.viewAllContainer}>
           <Link href="/events" legacyBehavior>
             <a className={styles.viewAllLink}>

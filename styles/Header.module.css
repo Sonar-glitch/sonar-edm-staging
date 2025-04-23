@@ -4,6 +4,8 @@
   align-items: center;
   padding: 1rem;
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .logo {
@@ -16,7 +18,7 @@
   font-size: 1.75rem;
   font-weight: 800;
   letter-spacing: 1px;
-  background: linear-gradient(90deg, #ff00ff, #ff00ff);
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -31,20 +33,36 @@
 
 .navLinks {
   display: flex;
-  margin-right: 1.5rem;
+  margin-right: 1rem;
 }
 
 .navLink {
-  color: white;
-  margin-right: 1.5rem;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
-  font-size: 0.95rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .navLink:hover {
-  color: #ff00ff;
-  text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+  color: white;
+}
+
+.navLink::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  transition: width 0.2s ease;
+}
+
+.navLink:hover::after {
+  width: 80%;
 }
 
 .userMenu {
@@ -70,9 +88,9 @@
 
 .avatarContainer {
   position: relative;
-  margin-right: 0.5rem;
   width: 36px;
   height: 36px;
+  margin-right: 8px;
 }
 
 .avatar {
@@ -85,29 +103,26 @@
 .avatarFallback {
   width: 36px;
   height: 36px;
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff00ff, rgba(255, 0, 255, 0.3));
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: bold;
-  font-size: 16px;
-  position: absolute;
-  top: 0;
-  left: 0;
+  font-size: 18px;
 }
 
 .profileName {
   color: white;
   font-size: 0.9rem;
-  margin-right: 0.5rem;
+  margin-right: 8px;
 }
 
 .chevron {
   color: rgba(255, 255, 255, 0.6);
-  font-size: 0.7rem;
   transition: transform 0.2s ease;
+  font-size: 0.7rem;
 }
 
 .chevronUp {
@@ -191,7 +206,7 @@
 
 .signInButton {
   padding: 0.5rem 1.25rem;
-  background: linear-gradient(90deg, #ff00ff, #ff00ff);
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
   border-radius: 50px;
   color: white;
   font-weight: 600;
@@ -210,9 +225,7 @@
   .navLinks {
     display: none;
   }
-}
-
-@media (max-width: 576px) {
+  
   .header {
     padding: 0.75rem;
   }
@@ -220,7 +233,9 @@
   .logoText {
     font-size: 1.5rem;
   }
-  
+}
+
+@media (max-width: 576px) {
   .profileName {
     display: none;
   }
