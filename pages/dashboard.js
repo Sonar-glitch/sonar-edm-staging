@@ -313,4 +313,114 @@ export default function Dashboard() {
     return (
       <div className={styles.debugSection}>
         <details>
-          <summary>Debug Info (Click to expand)
+          <summary>Debug Info (Click to expand)</summary>
+          <div>
+            <p>Status: {status}</p>
+            <p>Events Loading: {String(eventsLoading)}</p>
+            <p>Events Error: {eventsError}</p>
+            <p>Event Count: {userProfile?.events?.length || 0}</p>
+            <p>Filters: {JSON.stringify(filters)}</p>
+          </div>
+        </details>
+      </div>
+    );
+  };
+
+  if (status === 'loading' || loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingPulse}></div>
+        <p>Analyzing your sonic signature...</p>
+      </div>
+    );
+  }
+  
+  if (error && !userProfile) {
+    return (
+      <div className={styles.errorContainer}>
+        <h2>Oops!</h2>
+        <p>{error}</p>
+        <button 
+          className={styles.retryButton}
+          onClick={fetchUserData}
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  // Ensure we have data to render
+  const profile = userProfile || {
+    taste: {
+      genreProfile: {},
+      mood: '',
+      topArtists: [],
+      topTracks: []
+    },
+    seasonalVibes: null,
+    events: []
+  };
+  
+  console.log("Dashboard rendering with profile data:", {
+    genreData: profile.taste.genreProfile,
+    mood: profile.taste.mood,
+    topArtist: profile.taste.topArtists[0],
+    topTrack: profile.taste.topTracks[0]
+  });
+  
+  return (
+    <>
+      <Head>
+        <title>TIKO | Your Music Dashboard</title>
+        <meta name="description" content="Your personalized EDM dashboard" />
+      </Head>
+      
+      <div className={styles.container}>
+        <Header />
+        
+        <main className={styles.main}>
+          {/* Sonic Signature - the radar chart visualization */}
+          <SonicSignature 
+            genreData={profile.taste.genreProfile} 
+            mood={profile.taste.mood}
+            topArtist={profile.taste.topArtists[0]}
+            topTrack={profile.taste.topTracks[0]}
+            recommendations={profile.recommendations}
+          />
+          
+          {/* Seasonal Vibes */}
+          <SeasonalVibes 
+            seasonalData={profile.seasonalVibes}
+            isLoading={loading}
+          />
+          
+          {/* Events section */}
+          <div className={styles.eventsSection}>
+            <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
+            
+            {/* Filters */}
+            <CompactEventFilters 
+              onFilterChange={handleFilterChange}
+              initialFilters={filters}
+            />
+            
+            {/* Events list */}
+            <EventList 
+              events={profile.events} 
+              loading={eventsLoading}
+              error={eventsError}
+            />
+            
+            {/* Debug info in development */}
+            {renderDebugInfo()}
+          </div>
+        </main>
+        
+        <footer className={styles.footer}>
+          <p>TIKO by Sonar • Your EDM Companion</p>
+        </footer>
+      </div>
+    </>
+  );
+}
