@@ -1,76 +1,59 @@
-import React, { useEffect } from 'react';
-import { getProviders, signIn, useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
-import Head from 'next/head';
-import styles from '../../styles/signin.module.css';
-import Navigation from '../../components/Navigation';
+import { getProviders, signIn, getCsrfToken } from "next-auth/react";
+import { useRouter } from "next/router";
+import Head from "next/head";
+import styles from "@/styles/Signin.module.css";
 
-export default function SignIn({ providers }) {
-  const { data: session, status } = useSession();
+export default function SignIn({ providers, csrfToken }) {
   const router = useRouter();
-  const { callbackUrl } = router.query;
-  
-  // Redirect authenticated users to dashboard page instead of music-taste
-  useEffect(() => {
-    if (status === 'authenticated') {
-      router.push(callbackUrl || '/dashboard');
-    }
-  }, [status, router, callbackUrl]);
+  const { error } = router.query;
 
   return (
-    <div className={styles.container}>
+    <>
       <Head>
         <title>Sign In | Sonar</title>
       </Head>
-      
-      <Navigation />
-      
-      <main className={styles.main}>
-        <div className={styles.signinCard}>
-          <h1 className={styles.title}>Connect with Sonar</h1>
-          <p className={styles.subtitle}>Unlock your sonic DNA and discover your music taste</p>
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <div className={styles.logo}>TIKO</div>
+          <h1 className={styles.title}>Sign in to your account</h1>
           
-          {status === 'loading' ? (
-            <div className={styles.loadingContainer}>
-              <div className={styles.loadingSpinner}></div>
-              <p>Loading...</p>
-            </div>
-          ) : status === 'authenticated' ? (
-            <div className={styles.alreadySignedIn}>
-              <p>You're already signed in!</p>
-              <button 
-                className={styles.redirectButton}
-                onClick={() => router.push('/dashboard')}
-              >
-                Go to Dashboard
-              </button>
-            </div>
-          ) : (
-            <div className={styles.providersContainer}>
-              {Object.values(providers || {}).map((provider) => (
-                <div key={provider.name} className={styles.providerItem}>
-                  <button 
-                    className={styles.providerButton}
-                    onClick={() => signIn(provider.id, { callbackUrl: '/dashboard' })}
-                  >
-                    <span className={styles.providerIcon}>
-                      {provider.name === 'Spotify' && '🎵'}
-                    </span>
-                    Connect with {provider.name}
-                  </button>
-                </div>
-              ))}
+          {error && (
+            <div className={styles.error}>
+              {error === "CredentialsSignin" 
+                ? "Sign in failed. Check the details you provided are correct." 
+                : "An error occurred while signing in. Please try again."}
             </div>
           )}
+          
+          <div className={styles.providers}>
+            {Object.values(providers).map((provider) => (
+              <div key={provider.name}>
+                <button
+                  className={styles.providerButton}
+                  onClick={() => signIn(provider.id, { callbackUrl: '/dashboard' })}
+                >
+                  <span className={styles.providerIcon}>
+                    {provider.name === "Spotify" ? "🎵" : "👤"}
+                  </span>
+                  <span>Sign in with {provider.name}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+          
+          <p className={styles.terms}>
+            By signing in, you agree to our Terms of Service and Privacy Policy.
+          </p>
         </div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context) {
   const providers = await getProviders();
+  const csrfToken = await getCsrfToken(context);
   return {
-    props: { providers },
+    props: { providers, csrfToken },
   };
 }

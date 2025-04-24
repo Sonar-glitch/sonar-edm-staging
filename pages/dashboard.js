@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import SoundCharacteristicsChart from '@/components/SoundCharacteristicsChart';
+import ReorganizedSeasonalVibes from '@/components/ReorganizedSeasonalVibes';
+import EnhancedEventFilters from '@/components/EnhancedEventFilters';
+import ImprovedEventList from '@/components/ImprovedEventList';
 import styles from '@/styles/Dashboard.module.css';
 
 export default function Dashboard() {
@@ -11,6 +14,12 @@ export default function Dashboard() {
   const router = useRouter();
   
   const [userProfile, setUserProfile] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [filters, setFilters] = useState({
+    vibeMatch: 50,
+    eventType: 'all',
+    distance: 'all'
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -31,12 +40,81 @@ export default function Dashboard() {
   // Define fallback sound characteristics
   const getFallbackSoundCharacteristics = () => {
     return {
-      'Danceability': 78,
       'Melody': 85,
+      'Danceability': 78,
       'Energy': 72,
-      'Obscurity': 63,
-      'Tempo': 68
+      'Tempo': 68,
+      'Obscurity': 63
     };
+  };
+  
+  // Define fallback seasonal data
+  const getFallbackSeasonalData = () => {
+    return {
+      spring: {
+        title: 'Spring',
+        emoji: '🌸',
+        genres: 'House, Progressive',
+        message: 'Fresh beats & uplifting vibes'
+      },
+      summer: {
+        title: 'Summer',
+        emoji: '☀️',
+        genres: 'Techno, Tech House',
+        message: 'High energy open air sounds'
+      },
+      fall: {
+        title: 'Fall',
+        emoji: '🍂',
+        genres: 'Organic House, Downtempo',
+        message: 'Mellow grooves & deep beats'
+      },
+      winter: {
+        title: 'Winter',
+        emoji: '❄️',
+        genres: 'Deep House, Ambient Techno',
+        message: 'Hypnotic journeys & warm basslines'
+      }
+    };
+  };
+  
+  // Define fallback events
+  const getFallbackEvents = () => {
+    return [
+      {
+        id: 1,
+        name: 'Techno Dreamscape',
+        venue: 'Warehouse 23',
+        venueType: 'Warehouse',
+        artists: ['Charlotte de Witte', 'Amelie Lens'],
+        genre: 'Techno',
+        price: 45,
+        date: 'Thu, May 1',
+        match: 92
+      },
+      {
+        id: 2,
+        name: 'Deep House Journey',
+        venue: 'Club Echo',
+        venueType: 'Club',
+        artists: ['Lane 8', 'Yotto'],
+        genre: 'Deep House',
+        price: 35,
+        date: 'Thu, May 8',
+        match: 85
+      },
+      {
+        id: 3,
+        name: 'Melodic Techno Night',
+        venue: 'The Sound Bar',
+        venueType: 'Club',
+        artists: ['Tale Of Us', 'Mind Against'],
+        genre: 'Melodic Techno',
+        price: 55,
+        date: 'Sun, Apr 27',
+        match: 88
+      }
+    ];
   };
   
   const fetchUserData = async () => {
@@ -61,6 +139,7 @@ export default function Dashboard() {
           'Indie dance': 55
         },
         soundCharacteristics: getFallbackSoundCharacteristics(),
+        seasonalVibes: getFallbackSeasonalData(),
         mood: 'Chillwave Flow',
         topArtists: [{ 
           name: 'Boris Brejcha', 
@@ -89,11 +168,15 @@ export default function Dashboard() {
           // Ensure we have fallbacks if API returns incomplete data
           genreProfile: fetchedData.genreProfile || tasteData.genreProfile,
           soundCharacteristics: fetchedData.soundCharacteristics || getFallbackSoundCharacteristics(),
+          seasonalVibes: fetchedData.seasonalVibes || getFallbackSeasonalData(),
           mood: fetchedData.mood || tasteData.mood,
           topArtists: fetchedData.topArtists?.items || tasteData.topArtists,
           topTracks: fetchedData.topTracks?.items || tasteData.topTracks
         };
       }
+      
+      // Set events data (using fallback for now)
+      setEvents(getFallbackEvents());
       
       // Set the user profile
       setUserProfile({
@@ -107,11 +190,45 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+  
+  // Handle filter changes
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    
+    // Filter events based on vibe match
+    const filteredEvents = getFallbackEvents().filter(event => {
+      // Filter by vibe match
+      if (event.match < newFilters.vibeMatch) {
+        return false;
+      }
+      
+      // Filter by event type
+      if (newFilters.eventType !== 'all') {
+        const eventType = event.venueType.toLowerCase();
+        if (eventType !== newFilters.eventType) {
+          return false;
+        }
+      }
+      
+      // For distance, we would need real data with location info
+      // This is just a placeholder for the concept
+      
+      return true;
+    });
+    
+    setEvents(filteredEvents);
+  };
+  
+  // Handle event click
+  const handleEventClick = (event) => {
+    console.log('Event clicked:', event);
+    // Here you would navigate to event details or show a modal
+  };
 
   if (status === 'loading' || loading) {
     return (
-      <div className={styles.loadingContainer || "loadingContainer"}>
-        <div className={styles.loadingPulse || "loadingPulse"}></div>
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingPulse}></div>
         <p>Analyzing your sonic signature...</p>
       </div>
     );
@@ -119,11 +236,11 @@ export default function Dashboard() {
   
   if (error && !userProfile) {
     return (
-      <div className={styles.errorContainer || "errorContainer"}>
+      <div className={styles.errorContainer}>
         <h2>Oops!</h2>
         <p>{error}</p>
         <button 
-          className={styles.retryButton || "retryButton"}
+          className={styles.retryButton}
           onClick={fetchUserData}
         >
           Try Again
@@ -137,6 +254,7 @@ export default function Dashboard() {
     taste: {
       genreProfile: {},
       soundCharacteristics: {},
+      seasonalVibes: {},
       mood: '',
       topArtists: [],
       topTracks: []
@@ -153,24 +271,25 @@ export default function Dashboard() {
   return (
     <>
       <Head>
-        <title>TIKO | Your Music Dashboard</title>
+        <title>Dashboard | Sonar</title>
         <meta name="description" content="Your personalized EDM dashboard" />
       </Head>
       
-      <div className={styles.container || "container"}>
-        <header className={styles.header || "header"}>
+      <div className={styles.container}>
+        <header className={styles.header}>
           <h1>TIKO</h1>
           <nav>
+            <Link href="/dashboard">Dashboard</Link>
             <Link href="/users/music-taste">Music Taste</Link>
             <Link href="/users/events">Events</Link>
             <Link href="/users/profile">Profile</Link>
           </nav>
         </header>
         
-        <main className={styles.main || "main"}>
+        <main className={styles.main}>
           {/* Summary Banner */}
-          <div className={styles.summaryBanner || "summaryBanner"}>
-            <p>You're all about <span className={styles.highlight || "highlight"}>{primaryGenres}</span> with a vibe shift toward <span className={styles.highlight || "highlight"}>fresh sounds</span>.</p>
+          <div className={styles.summaryBanner}>
+            <p>You're all about <span className={styles.highlight}>{primaryGenres}</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.</p>
           </div>
           
           {/* Sound Characteristics Chart */}
@@ -178,15 +297,31 @@ export default function Dashboard() {
             soundData={profile.taste.soundCharacteristics} 
           />
           
-          {/* Link to full music taste page */}
-          <div className={styles.linkContainer || "linkContainer"}>
-            <Link href="/users/music-taste" className={styles.viewMoreLink || "viewMoreLink"}>
-              View Your Full Music Taste
-            </Link>
-          </div>
+          {/* Seasonal Vibes Section */}
+          <ReorganizedSeasonalVibes 
+            seasonalData={profile.taste.seasonalVibes}
+            isLoading={loading}
+          />
+          
+          {/* Events Section */}
+          <section className={styles.eventsSection}>
+            <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
+            
+            {/* Event Filters */}
+            <EnhancedEventFilters 
+              onFilterChange={handleFilterChange}
+              initialFilters={filters}
+            />
+            
+            {/* Event List */}
+            <ImprovedEventList 
+              events={events}
+              onEventClick={handleEventClick}
+            />
+          </section>
         </main>
         
-        <footer className={styles.footer || "footer"}>
+        <footer className={styles.footer}>
           <p>TIKO by Sonar • Your EDM Companion</p>
         </footer>
       </div>
