@@ -3,6 +3,19 @@ import Link from 'next/link';
 import styles from '@/styles/EventList.module.css';
 
 export default function EventList({ events, loading, error }) {
+  // Debug logging to track events data
+  console.log("EventList received:", { 
+    hasEvents: !!events, 
+    eventsCount: events?.length || 0,
+    isArray: Array.isArray(events),
+    loading, 
+    error
+  });
+  
+  if (events && events.length > 0) {
+    console.log("First event sample:", events[0]);
+  }
+  
   // Format date for display
   const formatEventDate = (dateString) => {
     if (!dateString) return 'Upcoming';
@@ -38,12 +51,14 @@ export default function EventList({ events, loading, error }) {
     return (
       <div className={styles.errorContainer}>
         <p>Sorry, we couldn't load events for you. Please try again later.</p>
+        <p>Error: {error}</p>
       </div>
     );
   }
   
   // If no events
-  if (!events || events.length === 0) {
+  if (!events || !Array.isArray(events) || events.length === 0) {
+    console.log("No events to display, showing empty state");
     return (
       <div className={styles.emptyContainer}>
         <p>No events match your current filters.</p>
@@ -55,7 +70,7 @@ export default function EventList({ events, loading, error }) {
   return (
     <div className={styles.container}>
       {events.map(event => (
-        <div key={event.id} className={styles.eventCard}>
+        <div key={event.id || `event-${Math.random()}`} className={styles.eventCard}>
           {/* Match Score */}
           <div className={styles.matchScore}>
             <div className={styles.scoreValue}>

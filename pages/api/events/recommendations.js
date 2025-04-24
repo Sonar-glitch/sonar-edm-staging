@@ -130,15 +130,21 @@ export default async function handler(req, res) {
         }
       ];
       
+      console.log("Returning fallback events:", fallbackEvents.length);
+      
       return res.status(200).json({
         events: fallbackEvents,
+        count: fallbackEvents.length,
         source: 'fallback'
       });
     }
     
-    // Return the normalized events
+    // Return the normalized events with better debug info
+    console.log(`API returning ${normalizedEvents.length} normalized events`);
+    
     return res.status(200).json({
       events: normalizedEvents,
+      count: normalizedEvents.length,
       source: data.source || apiEndpoint
     });
     
@@ -171,6 +177,7 @@ export default async function handler(req, res) {
     
     return res.status(200).json({
       events: fallbackEvents,
+      count: fallbackEvents.length,
       source: 'error-fallback',
       error: error.message
     });

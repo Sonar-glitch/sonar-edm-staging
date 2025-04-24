@@ -222,8 +222,17 @@ export default function Dashboard() {
         try {
           const response = await eventsResponse.json();
           console.log("Events API response data:", response);
-          if (response.events && response.events.length > 0) {
-            eventsData = response.events;
+          
+          // Ensure we have an array of events, even if API returns an empty array
+          if (response && response.events && Array.isArray(response.events)) {
+            if (response.events.length > 0) {
+              console.log("Using events from API:", response.events.length);
+              eventsData = response.events;
+            } else {
+              console.log("API returned empty events array, using fallbacks");
+            }
+          } else {
+            console.log("Invalid events format from API, using fallbacks:", response);
           }
         } catch (jsonError) {
           console.error("Error parsing events response:", jsonError);
@@ -233,13 +242,24 @@ export default function Dashboard() {
         console.log("Using fallback event data due to API error");
       }
       
-      // Update events in user profile
-      setUserProfile(prev => ({
-        ...prev,
-        events: eventsData
-      }));
+      // Force array type and handle nulls
+      if (!Array.isArray(eventsData)) {
+        console.log("eventsData is not an array, fixing:", eventsData);
+        eventsData = Array.isArray(eventsData?.events) ? eventsData.events : getFallbackEvents();
+      }
       
-      console.log("Events loaded:", eventsData.length);
+      console.log("Final events data to set:", eventsData.length);
+      
+      // Update events in user profile
+      setUserProfile(prev => {
+        const updated = {
+          ...prev,
+          events: eventsData
+        };
+        console.log("Updated profile with events:", updated.events.length);
+        return updated;
+      });
+      
     } catch (error) {
       console.error('Error fetching events:', error);
       // Use fallback events on error
@@ -401,6 +421,13 @@ export default function Dashboard() {
               onFilterChange={handleFilterChange}
               initialFilters={filters}
             />
+            
+            {/* Debug display for events */}
+            {process.env.NODE_ENV === 'development' && (
+              <div style={{background: 'rgba(0,0,0,0.1)', padding: '10px', marginBottom: '10px'}}>
+                <p>Debug: Events count: {profile.events?.length || 0}</p>
+              </div>
+            )}
             
             {/* Events list */}
             <EventList 
