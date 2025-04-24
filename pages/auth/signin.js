@@ -10,10 +10,10 @@ export default function SignIn({ providers }) {
   const router = useRouter();
   const { callbackUrl } = router.query;
   
-  // Redirect authenticated users to music-taste page
+  // Redirect authenticated users to dashboard page instead of music-taste
   useEffect(() => {
     if (status === 'authenticated') {
-      router.push(callbackUrl || '/users/music-taste');
+      router.push(callbackUrl || '/dashboard');
     }
   }, [status, router, callbackUrl]);
 
@@ -40,9 +40,9 @@ export default function SignIn({ providers }) {
               <p>You're already signed in!</p>
               <button 
                 className={styles.redirectButton}
-                onClick={() => router.push('/users/music-taste')}
+                onClick={() => router.push('/dashboard')}
               >
-                Go to Music Taste
+                Go to Dashboard
               </button>
             </div>
           ) : (
@@ -51,7 +51,7 @@ export default function SignIn({ providers }) {
                 <div key={provider.name} className={styles.providerItem}>
                   <button 
                     className={styles.providerButton}
-                    onClick={() => signIn(provider.id, { callbackUrl: '/users/music-taste' })}
+                    onClick={() => signIn(provider.id, { callbackUrl: '/dashboard' })}
                   >
                     <span className={styles.providerIcon}>
                       {provider.name === 'Spotify' && '🎵'}
