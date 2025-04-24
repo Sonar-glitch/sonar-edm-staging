@@ -1,203 +1,201 @@
-import React, { useEffect, useState } from 'react';
+// /c/sonar/users/sonar-edm-user/pages/users/music-taste.js
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import Link from 'next/link';
-import Header from '@/components/Header';
-import GenreRadarChart from '@/components/GenreRadarChart';
-import SeasonalVibes from '@/components/SeasonalVibes';
-import styles from '@/styles/MusicTaste.module.css';
+import Navigation from '@/components/Navigation';
+import OverviewTab from '@/components/music-taste/OverviewTab';
+import ArtistsTab from '@/components/music-taste/ArtistsTab';
+import TracksTab from '@/components/music-taste/TracksTab';
+import TrendsTab from '@/components/music-taste/TrendsTab';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { getFallbackDetailedTasteData } from '@/lib/fallbackData';
 
-export default function MusicTastePage() {
+export default function MusicTaste() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [tasteData, setTasteData] = useState(null);
+  
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
   const [eventCount, setEventCount] = useState(0);
-
+  
   // Redirect to login if not authenticated
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auth/signin');
+      router.push('/');
     }
   }, [status, router]);
   
-  // Fetch user taste data
+  // Fetch user data on initial load
   useEffect(() => {
     if (status === 'authenticated') {
-      fetchUserTaste();
-      fetchEventCount();
+      fetchDetailedMusicTaste();
     }
   }, [status]);
   
-  const fetchUserTaste = async () => {
+  // Fetch detailed music taste data
+  const fetchDetailedMusicTaste = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/spotify/user-taste');
-      if (!response.ok) {
-        throw new Error('Failed to fetch user taste data');
+      // Fetch from API with robust error handling
+      const response = await fetch('/api/spotify/detailed-taste')
+        .catch(err => {
+          console.error('Network error:', err);
+          return { ok: false };
+        });
+      
+      // Process data with validation
+      let tasteData = getFallbackDetailedTasteData();
+      
+      if (response.ok) {
+        try {
+          const data = await response.json();
+          if (data && (data.genreProfile || data.artistProfile)) {
+            tasteData = {
+              ...tasteData,
+              ...data
+            };
+          }
+        } catch (jsonError) {
+          console.error('Error parsing taste data:', jsonError);
+        }
       }
       
-      const data = await response.json();
-      setTasteData(data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error fetching user taste:', err);
+      // Fetch event count
+      const eventsResponse = await fetch('/api/events/count')
+        .catch(err => {
+          console.error('Network error fetching event count:', err);
+          return { ok: false };
+        });
+      
+      if (eventsResponse.ok) {
+        try {
+          const data = await eventsResponse.json();
+          if (data && data.count) {
+            setEventCount(data.count);
+          } else {
+            setEventCount(42); // Fallback count
+          }
+        } catch (jsonError) {
+          console.error('Error parsing event count:', jsonError);
+          setEventCount(42); // Fallback count
+        }
+      } else {
+        setEventCount(42); // Fallback count
+      }
+      
+      // Set user profile
+      setUserProfile(tasteData);
+      
+    } catch (error) {
+      console.error('Error fetching detailed music taste:', error);
       setError('Failed to load your music taste profile.');
+      setUserProfile(getFallbackDetailedTasteData());
+    } finally {
       setLoading(false);
     }
   };
   
-  const fetchEventCount = async () => {
-    try {
-      const response = await fetch('/api/events/count');
-      if (response.ok) {
-        const data = await response.json();
-        setEventCount(data.count || 0);
-      }
-    } catch (err) {
-      console.error('Error fetching event count:', err);
-    }
-  };
-
-  // Generate seasonal vibes data based on user's taste
-  const generateSeasonalVibes = () => {
-    if (!tasteData || !tasteData.genreProfile) return null;
+  // Get primary genres for summary display
+  const getPrimaryGenres = () => {
+    const genreProfile = userProfile?.genreProfile;
+    if (!genreProfile || Object.keys(genreProfile).length === 0) return '';
     
-    // Extract top genres
-    const sortedGenres = Object.entries(tasteData.genreProfile)
+    // Sort genres by value and take top 2
+    const sortedGenres = Object.entries(genreProfile)
       .sort(([, a], [, b]) => b - a)
-      .map(([genre]) => genre);
-    
-    return {
-      spring: {
-        emoji: '🌸',
-        title: 'Spring',
-        genres: sortedGenres.length >= 2 
-          ? `${sortedGenres[0]}, Progressive`
-          : 'Progressive House, Melodic House',
-        message: 'Fresh beats & uplifting vibes'
-      },
-      summer: {
-        emoji: '☀️',
-        title: 'Summer',
-        genres: sortedGenres.length >= 3 
-          ? `${sortedGenres[1]}, Tech House`
-          : 'Tech House, House',
-        message: 'High energy open-air sounds'
-      },
-      fall: {
-        emoji: '🍂',
-        title: 'Fall',
-        genres: 'Organic House, Downtempo',
-        message: 'Mellow grooves & deep beats'
-      },
-      winter: {
-        emoji: '❄️',
-        title: 'Winter',
-        genres: 'Deep House, Ambient Techno',
-        message: 'Hypnotic journeys & warm basslines'
-      }
-    };
+      .map(([genre]) => genre.toLowerCase())
+      .slice(0, 2);
+      
+    return sortedGenres.join(' + ');
   };
-
-  if (loading) {
+  
+  if (status === 'loading' || loading) {
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingAnimation}></div>
-        <p>Analyzing your sonic profile...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black">
+        <LoadingSpinner size="large" text="Analyzing your music taste..." />
       </div>
     );
   }
-
-  if (error && !tasteData) {
+  
+  if (error && !userProfile) {
     return (
-      <div className={styles.errorContainer}>
-        <h2>Couldn't load your music taste</h2>
-        <p>{error}</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
+        <h2 className="text-2xl text-fuchsia-500 mb-4">Oops!</h2>
+        <p className="mb-6">{error}</p>
         <button 
-          className={styles.retryButton}
-          onClick={fetchUserTaste}
+          className="px-4 py-2 bg-black/30 border border-cyan-500 rounded-full text-cyan-400 hover:bg-cyan-500/20 transition"
+          onClick={fetchDetailedMusicTaste}
         >
           Try Again
         </button>
       </div>
     );
   }
-
-  // Use real data or fallbacks
-  const genreProfile = tasteData?.genreProfile || {
-    'Melodic House': 85,
-    'Techno': 72,
-    'Progressive House': 65,
-    'Trance': 45,
-    'Deep House': 58
-  };
-  
-  const vibeShift = tasteData?.vibeShift || 'fresh sounds';
-  const seasonalVibes = generateSeasonalVibes();
-  
-  // Format primary genres for summary display
-  const getPrimaryGenres = () => {
-    if (!genreProfile || Object.keys(genreProfile).length === 0) return '';
-    
-    // Sort genres by value (highest first) and take top 2
-    const sortedGenres = Object.entries(genreProfile)
-      .sort(([, a], [, b]) => b - a)
-      .map(([genre]) => genre)
-      .slice(0, 2);
-      
-    return sortedGenres.join(' + ').toLowerCase();
-  };
   
   return (
     <>
       <Head>
-        <title>Your Music Taste | TIKO</title>
-        <meta name="description" content="Explore your music taste profile" />
+        <title>TIKO | Your Music Taste</title>
+        <meta name="description" content="Your personalized music taste analysis" />
       </Head>
       
-      <Header />
-      
-      <div className={styles.container}>
-        {/* Summary Banner */}
-        <div className={styles.summaryBanner}>
-          <p className={styles.summaryText}>
-            You're all about <span className={styles.highlight}>{getPrimaryGenres()}</span> with a vibe shift toward <span className={styles.highlight}>{vibeShift}</span>. Found <span className={styles.highlight}>{eventCount}</span> events that match your sound.
-          </p>
-        </div>
+      <div className="min-h-screen bg-black text-white">
+        <Navigation />
         
-        <div className={styles.grid}>
-          <div className={styles.genreSection}>
-            <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Your Sonic Signature</h2>
-              <button className={styles.dataButton}>
-                {tasteData ? 'Real Data' : 'Sample Data'}
-              </button>
-            </div>
-            <div className={styles.chartContainer}>
-              <GenreRadarChart genreData={genreProfile} />
-            </div>
+        <main className="max-w-5xl mx-auto px-4 pb-12">
+          {/* User Summary Banner */}
+          <div className="mb-8 mt-4 p-4 rounded-xl bg-gradient-to-r from-cyan-900/50 to-teal-900/50">
+            <p className="text-center text-lg">
+              Your music taste evolves around <span className="text-cyan-400 font-medium">{getPrimaryGenres()}</span> with 
+              <span className="text-teal-400 font-medium"> {userProfile?.mood?.melodic || 85}% melodic</span> and
+              <span className="text-teal-400 font-medium"> {userProfile?.mood?.energetic || 72}% energetic</span> tendencies.
+              Found <span className="text-cyan-400 font-medium">{eventCount}</span> events that match your taste.
+            </p>
           </div>
           
-          <div className={styles.seasonalSection}>
-            <SeasonalVibes 
-              seasonalData={seasonalVibes} 
-              isLoading={loading} 
-            />
+          {/* Tabs Navigation */}
+          <div className="flex border-b border-gray-800 mb-6 overflow-x-auto">
+            <button 
+              className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'overview' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('overview')}
+            >
+              Overview
+            </button>
+            <button 
+              className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'artists' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('artists')}
+            >
+              Top Artists
+            </button>
+            <button 
+              className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'tracks' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('tracks')}
+            >
+              Top Tracks
+            </button>
+            <button 
+              className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'trends' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('trends')}
+            >
+              Listening Trends
+            </button>
           </div>
-        </div>
+          
+          {/* Content based on active tab */}
+          {activeTab === 'overview' && <OverviewTab userProfile={userProfile} />}
+          {activeTab === 'artists' && <ArtistsTab userProfile={userProfile} />}
+          {activeTab === 'tracks' && <TracksTab userProfile={userProfile} />}
+          {activeTab === 'trends' && <TrendsTab userProfile={userProfile} />}
+        </main>
         
-        <div className={styles.actionContainer}>
-          <Link href="/dashboard" legacyBehavior>
-            <a className={styles.backButton}>
-              Back to Dashboard
-            </a>
-          </Link>
-        </div>
+        <footer className="p-4 text-center text-gray-500 border-t border-gray-800">
+          <p>TIKO by Sonar • Your EDM Companion</p>
+        </footer>
       </div>
     </>
   );

@@ -2,39 +2,32 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 
-const SpotifyImage = ({ 
-  src, 
-  alt, 
-  width = 80, 
-  height = 80, 
-  className = '', 
-  fallbackText = '♪' 
-}) => {
-  const [imgError, setImgError] = useState(false);
+const SpotifyImage = ({ src, alt, width, height, className }) => {
+  const [error, setError] = useState(false);
   
-  // Handle case where no src is provided or error occurred
-  if (!src || imgError) {
-    return (
-      <div 
-        className={`bg-gradient-to-r from-cyan-900 to-fuchsia-900 flex items-center justify-center rounded-lg ${className}`}
-        style={{ width, height }}
-      >
-        <span className="text-2xl">{fallbackText}</span>
-      </div>
-    );
-  }
+  // Fallback image when Spotify image fails to load
+  const fallbackSrc = '/images/fallback-album-art.png';
   
   return (
-    <div className="relative" style={{ width, height }}>
-      <Image
-        src={src}
-        alt={alt || "Music artwork"}
-        width={width}
-        height={height}
-        className={`rounded-lg ${className}`}
-        unoptimized={true}
-        onError={() => setImgError(true)}
-      />
+    <div className={`relative overflow-hidden ${className}`} style={{ width, height }}>
+      {!error ? (
+        <Image
+          src={src}
+          alt={alt || 'Spotify image'}
+          width={width}
+          height={height}
+          layout="responsive"
+          objectFit="cover"
+          onError={() => setError(true)}
+        />
+      ) : (
+        <div 
+          className="w-full h-full bg-gradient-to-r from-cyan-900 to-fuchsia-900 flex items-center justify-center"
+          style={{ width, height }}
+        >
+          <span className="text-white">♪</span>
+        </div>
+      )}
     </div>
   );
 };
