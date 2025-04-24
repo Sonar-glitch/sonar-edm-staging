@@ -1,4 +1,7 @@
 /* Global styles for TIKO EDM platform */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   /* Color palette */
