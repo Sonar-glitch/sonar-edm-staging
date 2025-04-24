@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
-import clientPromise from "@/lib/mongodb";
+import clientPromise from "@/lib/mongoPromise"; // <-- Updated import!
 
 // Export the auth options so they can be imported by other files
 export const authOptions = {
