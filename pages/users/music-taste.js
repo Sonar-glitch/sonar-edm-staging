@@ -1,25 +1,27 @@
-// /c/sonar/users/sonar-edm-user/pages/users/music-taste.js
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import Navigation from '@/components/Navigation';
-import OverviewTab from '@/components/music-taste/OverviewTab';
-import ArtistsTab from '@/components/music-taste/ArtistsTab';
-import TracksTab from '@/components/music-taste/TracksTab';
-import TrendsTab from '@/components/music-taste/TrendsTab';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { getFallbackDetailedTasteData } from '@/lib/fallbackData';
+import Link from 'next/link';
+import SoundCharacteristicsChart from '@/components/SoundCharacteristicsChart';
+import ReorganizedSeasonalVibes from '@/components/ReorganizedSeasonalVibes';
+import EnhancedEventFilters from '@/components/EnhancedEventFilters';
+import ImprovedEventList from '@/components/ImprovedEventList';
+import styles from '@/styles/MusicTaste.module.css';
 
 export default function MusicTaste() {
   const { data: session, status } = useSession();
   const router = useRouter();
   
   const [userProfile, setUserProfile] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [filters, setFilters] = useState({
+    vibeMatch: 50,
+    eventType: 'all',
+    distance: 'all'
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [eventCount, setEventCount] = useState(0);
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -28,172 +30,297 @@ export default function MusicTaste() {
     }
   }, [status, router]);
   
-  // Fetch user data on initial load
+  // Fetch user profile data
   useEffect(() => {
     if (status === 'authenticated') {
-      fetchDetailedMusicTaste();
+      fetchUserData();
     }
   }, [status]);
   
-  // Fetch detailed music taste data
-  const fetchDetailedMusicTaste = async () => {
+  // Define fallback sound characteristics
+  const getFallbackSoundCharacteristics = () => {
+    return {
+      'Melody': 85,
+      'Danceability': 78,
+      'Energy': 72,
+      'Tempo': 68,
+      'Obscurity': 63
+    };
+  };
+  
+  // Define fallback seasonal data
+  const getFallbackSeasonalData = () => {
+    return {
+      spring: {
+        title: 'Spring',
+        emoji: '🌸',
+        genres: 'House, Progressive',
+        message: 'Fresh beats & uplifting vibes'
+      },
+      summer: {
+        title: 'Summer',
+        emoji: '☀️',
+        genres: 'Techno, Tech House',
+        message: 'High energy open air sounds'
+      },
+      fall: {
+        title: 'Fall',
+        emoji: '🍂',
+        genres: 'Organic House, Downtempo',
+        message: 'Mellow grooves & deep beats'
+      },
+      winter: {
+        title: 'Winter',
+        emoji: '❄️',
+        genres: 'Deep House, Ambient Techno',
+        message: 'Hypnotic journeys & warm basslines'
+      }
+    };
+  };
+  
+  // Define fallback events
+  const getFallbackEvents = () => {
+    return [
+      {
+        id: 1,
+        name: 'Techno Dreamscape',
+        venue: 'Warehouse 23',
+        venueType: 'Warehouse',
+        artists: ['Charlotte de Witte', 'Amelie Lens'],
+        genre: 'Techno',
+        price: 45,
+        date: 'Thu, May 1',
+        match: 92
+      },
+      {
+        id: 2,
+        name: 'Deep House Journey',
+        venue: 'Club Echo',
+        venueType: 'Club',
+        artists: ['Lane 8', 'Yotto'],
+        genre: 'Deep House',
+        price: 35,
+        date: 'Thu, May 8',
+        match: 85
+      },
+      {
+        id: 3,
+        name: 'Melodic Techno Night',
+        venue: 'The Sound Bar',
+        venueType: 'Club',
+        artists: ['Tale Of Us', 'Mind Against'],
+        genre: 'Melodic Techno',
+        price: 55,
+        date: 'Sun, Apr 27',
+        match: 88
+      }
+    ];
+  };
+  
+  const fetchUserData = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Fetch from API with robust error handling
-      const response = await fetch('/api/spotify/detailed-taste')
+      // Fetch music taste data
+      const tasteResponse = await fetch('/api/spotify/user-taste')
         .catch(err => {
-          console.error('Network error:', err);
+          console.error('Network error fetching taste data:', err);
           return { ok: false };
         });
       
-      // Process data with validation
-      let tasteData = getFallbackDetailedTasteData();
+      // Use fallback data if API call fails
+      let tasteData = {
+        genreProfile: {
+          'House': 75,
+          'Techno': 65,
+          'Progressive House': 60,
+          'Trance': 45,
+          'Indie dance': 55
+        },
+        soundCharacteristics: getFallbackSoundCharacteristics(),
+        seasonalVibes: getFallbackSeasonalData(),
+        mood: 'Chillwave Flow',
+        topArtists: [{ 
+          name: 'Boris Brejcha', 
+          id: '6bDWAcdtVR39rjZS5A3SoD',
+          images: [{ url: 'https://i.scdn.co/image/ab6761610000e5eb8ae72ad1d3e564e2b883afb5' }],
+          popularity: 85,
+          genres: ['melodic techno', 'minimal techno']
+        }],
+        topTracks: [{ 
+          name: 'Realm of Consciousness', 
+          id: '2pXJ3zJ9smoG8SQqlMBvoF',
+          artists: [{ name: 'Tale Of Us' }],
+          album: { 
+            name: 'Realm of Consciousness', 
+            images: [{ url: 'https://i.scdn.co/image/ab67616d0000b273c3a84c67544c46c7df9529c5' }] 
+          },
+          popularity: 80,
+          preview_url: 'https://p.scdn.co/mp3-preview/5a6aa5ef7516e6771c964c3d44b77156c5330b7e'
+        }]
+      };
       
-      if (response.ok) {
-        try {
-          const data = await response.json();
-          if (data && (data.genreProfile || data.artistProfile)) {
-            tasteData = {
-              ...tasteData,
-              ...data
-            };
-          }
-        } catch (jsonError) {
-          console.error('Error parsing taste data:', jsonError);
-        }
+      if (tasteResponse.ok) {
+        const fetchedData = await tasteResponse.json();
+        tasteData = {
+          ...fetchedData,
+          // Ensure we have fallbacks if API returns incomplete data
+          genreProfile: fetchedData.genreProfile || tasteData.genreProfile,
+          soundCharacteristics: fetchedData.soundCharacteristics || getFallbackSoundCharacteristics(),
+          seasonalVibes: fetchedData.seasonalVibes || getFallbackSeasonalData(),
+          mood: fetchedData.mood || tasteData.mood,
+          topArtists: fetchedData.topArtists?.items || tasteData.topArtists,
+          topTracks: fetchedData.topTracks?.items || tasteData.topTracks
+        };
       }
       
-      // Fetch event count
-      const eventsResponse = await fetch('/api/events/count')
-        .catch(err => {
-          console.error('Network error fetching event count:', err);
-          return { ok: false };
-        });
+      // Set events data (using fallback for now)
+      setEvents(getFallbackEvents());
       
-      if (eventsResponse.ok) {
-        try {
-          const data = await eventsResponse.json();
-          if (data && data.count) {
-            setEventCount(data.count);
-          } else {
-            setEventCount(42); // Fallback count
-          }
-        } catch (jsonError) {
-          console.error('Error parsing event count:', jsonError);
-          setEventCount(42); // Fallback count
-        }
-      } else {
-        setEventCount(42); // Fallback count
-      }
+      // Set the user profile
+      setUserProfile({
+        taste: tasteData
+      });
       
-      // Set user profile
-      setUserProfile(tasteData);
-      
-    } catch (error) {
-      console.error('Error fetching detailed music taste:', error);
-      setError('Failed to load your music taste profile.');
-      setUserProfile(getFallbackDetailedTasteData());
-    } finally {
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      setError('Failed to load your profile. Please try again later.');
       setLoading(false);
     }
   };
   
-  // Get primary genres for summary display
-  const getPrimaryGenres = () => {
-    const genreProfile = userProfile?.genreProfile;
-    if (!genreProfile || Object.keys(genreProfile).length === 0) return '';
+  // Handle filter changes
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
     
-    // Sort genres by value and take top 2
-    const sortedGenres = Object.entries(genreProfile)
-      .sort(([, a], [, b]) => b - a)
-      .map(([genre]) => genre.toLowerCase())
-      .slice(0, 2);
+    // Filter events based on vibe match
+    const filteredEvents = getFallbackEvents().filter(event => {
+      // Filter by vibe match
+      if (event.match < newFilters.vibeMatch) {
+        return false;
+      }
       
-    return sortedGenres.join(' + ');
+      // Filter by event type
+      if (newFilters.eventType !== 'all') {
+        const eventType = event.venueType.toLowerCase();
+        if (eventType !== newFilters.eventType) {
+          return false;
+        }
+      }
+      
+      // For distance, we would need real data with location info
+      // This is just a placeholder for the concept
+      
+      return true;
+    });
+    
+    setEvents(filteredEvents);
   };
   
+  // Handle event click
+  const handleEventClick = (event) => {
+    console.log('Event clicked:', event);
+    // Here you would navigate to event details or show a modal
+  };
+
   if (status === 'loading' || loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black">
-        <LoadingSpinner size="large" text="Analyzing your music taste..." />
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingPulse}></div>
+        <p>Analyzing your sonic signature...</p>
       </div>
     );
   }
   
   if (error && !userProfile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
-        <h2 className="text-2xl text-fuchsia-500 mb-4">Oops!</h2>
-        <p className="mb-6">{error}</p>
+      <div className={styles.errorContainer}>
+        <h2>Oops!</h2>
+        <p>{error}</p>
         <button 
-          className="px-4 py-2 bg-black/30 border border-cyan-500 rounded-full text-cyan-400 hover:bg-cyan-500/20 transition"
-          onClick={fetchDetailedMusicTaste}
+          className={styles.retryButton}
+          onClick={fetchUserData}
         >
           Try Again
         </button>
       </div>
     );
   }
+
+  // Ensure we have data to render
+  const profile = userProfile || {
+    taste: {
+      genreProfile: {},
+      soundCharacteristics: {},
+      seasonalVibes: {},
+      mood: '',
+      topArtists: [],
+      topTracks: []
+    }
+  };
+  
+  // Get primary genres for display
+  const primaryGenres = Object.entries(profile.taste.genreProfile)
+    .sort(([, a], [, b]) => b - a)
+    .map(([genre]) => genre.toLowerCase())
+    .slice(0, 2)
+    .join(' + ');
   
   return (
     <>
       <Head>
-        <title>TIKO | Your Music Taste</title>
-        <meta name="description" content="Your personalized music taste analysis" />
+        <title>Your Music Taste | Sonar</title>
+        <meta name="description" content="Discover your unique music taste profile" />
       </Head>
       
-      <div className="min-h-screen bg-black text-white">
-        <Navigation />
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <h1>TIKO</h1>
+          <nav>
+            <Link href="/dashboard">Dashboard</Link>
+            <Link href="/users/events">Events</Link>
+            <Link href="/users/profile">Profile</Link>
+          </nav>
+        </header>
         
-        <main className="max-w-5xl mx-auto px-4 pb-12">
-          {/* User Summary Banner */}
-          <div className="mb-8 mt-4 p-4 rounded-xl bg-gradient-to-r from-cyan-900/50 to-teal-900/50">
-            <p className="text-center text-lg">
-              Your music taste evolves around <span className="text-cyan-400 font-medium">{getPrimaryGenres()}</span> with 
-              <span className="text-teal-400 font-medium"> {userProfile?.mood?.melodic || 85}% melodic</span> and
-              <span className="text-teal-400 font-medium"> {userProfile?.mood?.energetic || 72}% energetic</span> tendencies.
-              Found <span className="text-cyan-400 font-medium">{eventCount}</span> events that match your taste.
-            </p>
+        <main className={styles.main}>
+          {/* Summary Banner */}
+          <div className={styles.summaryBanner}>
+            <p>You're all about <span className={styles.highlight}>{primaryGenres}</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.</p>
           </div>
           
-          {/* Tabs Navigation */}
-          <div className="flex border-b border-gray-800 mb-6 overflow-x-auto">
-            <button 
-              className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'overview' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('overview')}
-            >
-              Overview
-            </button>
-            <button 
-              className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'artists' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('artists')}
-            >
-              Top Artists
-            </button>
-            <button 
-              className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'tracks' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('tracks')}
-            >
-              Top Tracks
-            </button>
-            <button 
-              className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'trends' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('trends')}
-            >
-              Listening Trends
-            </button>
-          </div>
+          {/* Sound Characteristics Chart */}
+          <SoundCharacteristicsChart 
+            soundData={profile.taste.soundCharacteristics} 
+          />
           
-          {/* Content based on active tab */}
-          {activeTab === 'overview' && <OverviewTab userProfile={userProfile} />}
-          {activeTab === 'artists' && <ArtistsTab userProfile={userProfile} />}
-          {activeTab === 'tracks' && <TracksTab userProfile={userProfile} />}
-          {activeTab === 'trends' && <TrendsTab userProfile={userProfile} />}
+          {/* Seasonal Vibes Section */}
+          <ReorganizedSeasonalVibes 
+            seasonalData={profile.taste.seasonalVibes}
+            isLoading={loading}
+          />
+          
+          {/* Events Section */}
+          <section className={styles.eventsSection}>
+            <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
+            
+            {/* Event Filters */}
+            <EnhancedEventFilters 
+              onFilterChange={handleFilterChange}
+              initialFilters={filters}
+            />
+            
+            {/* Event List */}
+            <ImprovedEventList 
+              events={events}
+              onEventClick={handleEventClick}
+            />
+          </section>
         </main>
         
-        <footer className="p-4 text-center text-gray-500 border-t border-gray-800">
+        <footer className={styles.footer}>
           <p>TIKO by Sonar • Your EDM Companion</p>
         </footer>
       </div>
