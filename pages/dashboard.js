@@ -3,11 +3,14 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import SideBySideLayout from '@/components/SideBySideLayout';
-import CompactSoundCharacteristics from '@/components/CompactSoundCharacteristics';
-import CompactSeasonalVibes from '@/components/CompactSeasonalVibes';
 import EnhancedEventList from '@/components/EnhancedEventList';
 import MobileOptimizedVibeQuiz from '@/components/MobileOptimizedVibeQuiz';
 import styles from '@/styles/Dashboard.module.css';
+
+// Import your existing components
+// Note: These imports should match your actual component names
+import SoundCharacteristics from '@/components/SoundCharacteristics';
+import SeasonalVibes from '@/components/SeasonalVibes';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -32,7 +35,7 @@ export default function Dashboard() {
     }
   }, [session, status, router]);
 
-  // Mock function to fetch user profile
+  // Your existing fetchUserProfile function
   const fetchUserProfile = async () => {
     try {
       // In a real app, this would be an API call
@@ -97,7 +100,7 @@ export default function Dashboard() {
     }
   };
 
-  // Mock function to fetch events
+  // Your existing fetchEvents function with enhanced mock data
   const fetchEvents = async () => {
     setLoading(true);
     try {
@@ -229,8 +232,11 @@ export default function Dashboard() {
         
         {/* Side-by-side layout for sound characteristics and seasonal vibes */}
         <SideBySideLayout>
-          <CompactSoundCharacteristics data={userProfile.soundCharacteristics} />
-          <CompactSeasonalVibes 
+          {/* Use your existing SoundCharacteristics component */}
+          <SoundCharacteristics data={userProfile.soundCharacteristics} />
+          
+          {/* Use your existing SeasonalVibes component */}
+          <SeasonalVibes 
             data={userProfile.seasonalVibes} 
             onFeedbackClick={() => setShowVibeQuiz(true)}
           />
