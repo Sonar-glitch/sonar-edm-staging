@@ -9,7 +9,7 @@ import SeasonalVibes from '@/components/SeasonalVibes';
 import EventFilters from '@/components/EventFilters';
 import EventList from '@/components/EventList';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { getFallbackEvents, getFallbackTasteData } from '@/lib/fallbackData';
+import { getFallbackEvents, getFallbackDetailedTasteData } from '@/lib/fallbackData';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -56,7 +56,7 @@ export default function Dashboard() {
         });
       
       // Process taste data with validation
-      let tasteData = getFallbackTasteData();
+      let tasteData = getFallbackDetailedTasteData();
       
       if (tasteResponse.ok) {
         try {
