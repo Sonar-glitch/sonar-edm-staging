@@ -1,0 +1,179 @@
+/* /c/sonar/users/sonar-edm-user/styles/ReorganizedSeasonalVibes.module.css */
+.container {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.title {
+  color: #fff;
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Year-Round Container - Now at the top as a summary */
+.yearRoundContainer {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+.yearRoundTitle {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.yearRoundEmoji {
+  font-size: 1.5rem;
+  margin-right: 10px;
+}
+
+.yearRoundTitleText {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #00e5ff;
+}
+
+.yearRoundText {
+  color: #fff;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.highlight {
+  color: #ff00ff;
+  font-weight: 600;
+}
+
+/* Seasonal Grid */
+.seasonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.seasonCard {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.currentSeason {
+  border: 1px solid rgba(255, 0, 255, 0.5);
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
+}
+
+.seasonHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.seasonInfo {
+  display: flex;
+  align-items: center;
+}
+
+.seasonEmoji {
+  font-size: 1.2rem;
+  margin-right: 8px;
+}
+
+.seasonName {
+  font-weight: 600;
+  color: #fff;
+}
+
+.currentBadge {
+  background-color: rgba(255, 0, 255, 0.2);
+  color: #ff00ff;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 0, 255, 0.5);
+}
+
+.seasonGenres {
+  margin-bottom: 10px;
+}
+
+.genreLabel {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-right: 5px;
+}
+
+.genreList {
+  color: #00e5ff;
+  font-weight: 500;
+}
+
+.seasonMessage {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Feedback Section */
+.feedbackContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.feedbackQuestion {
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 15px;
+}
+
+.feedbackButton {
+  background-color: rgba(255, 0, 255, 0.1);
+  color: #ff00ff;
+  border: 1px solid rgba(255, 0, 255, 0.5);
+  padding: 5px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feedbackButton:hover {
+  background-color: rgba(255, 0, 255, 0.2);
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+}
+
+/* Loading State */
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 229, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #00e5ff;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
