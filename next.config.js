@@ -1,4 +1,4 @@
-// next.config.js
+// /c/sonar/users/sonar-edm-user/next.config.js
 const path = require('path');
 
 module.exports = {
@@ -10,6 +10,7 @@ module.exports = {
     optimizeCss: true,
   },
   images: {
-    domains: ['i.scdn.co'], // Allow Spotify image domains
+    domains: ['i.scdn.co', 'mosaic.scdn.co', 'platform-lookaside.fbsbx.com', 'image-cdn-fa.spotifycdn.com'],
+    minimumCacheTTL: 1800,
   },
 };

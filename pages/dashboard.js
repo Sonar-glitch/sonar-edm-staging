@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from 'react';
+// /c/sonar/users/sonar-edm-user/pages/dashboard.js
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import Link from 'next/link';
-import Header from '@/components/Header';
-import SonicSignature from '@/components/SonicSignature';
+import Navigation from '@/components/Navigation';
+import GenreRadarChart from '@/components/GenreRadarChart';
 import SeasonalVibes from '@/components/SeasonalVibes';
-import CompactEventFilters from '@/components/CompactEventFilters';
+import EventFilters from '@/components/EventFilters';
 import EventList from '@/components/EventList';
-import styles from '@/styles/Dashboard.module.css';
-
-// VERSION: Updated dashboard - April 23, 2025
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { getFallbackEvents, getFallbackTasteData } from '@/lib/fallbackData';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -18,7 +17,7 @@ export default function Dashboard() {
   
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [eventsLoading, setEventsLoading] = useState(false); // Start with false to show fallback events
+  const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsError, setEventsError] = useState(null);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -36,51 +35,14 @@ export default function Dashboard() {
     }
   }, [status, router]);
   
-  // Fetch user profile data
+  // Fetch user data on initial load
   useEffect(() => {
     if (status === 'authenticated') {
       fetchUserData();
     }
   }, [status]);
   
-  // Define fallback events to use when API fails
-  const getFallbackEvents = () => {
-    const daysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-    
-    return [
-      {
-        id: 'fb-1',
-        name: 'Tale of Us',
-        venue: 'Output',
-        location: 'New York',
-        date: daysFromNow(7),
-        price: 85,
-        primaryGenre: 'Melodic Techno',
-        matchScore: 92
-      },
-      {
-        id: 'fb-2',
-        name: 'Mathame',
-        venue: 'Afterlife',
-        location: 'Brooklyn',
-        date: daysFromNow(14),
-        price: 35,
-        primaryGenre: 'Deep House',
-        matchScore: 85
-      },
-      {
-        id: 'fb-3',
-        name: 'Boris Brejcha',
-        venue: 'Avant Gardner',
-        location: 'Manhattan',
-        date: daysFromNow(3),
-        price: 75,
-        primaryGenre: 'Minimal Techno',
-        matchScore: 95
-      }
-    ];
-  };
-  
+  // Fetch user data with robust error handling
   const fetchUserData = async () => {
     try {
       setLoading(true);
@@ -93,187 +55,45 @@ export default function Dashboard() {
           return { ok: false };
         });
       
-      // Use fallback data if API call fails
-      let tasteData = {
-        genreProfile: {
-          'House': 75,
-          'Techno': 65,
-          'Progressive House': 60,
-          'Trance': 45,
-          'Indie dance': 55
-        },
-        mood: 'Chillwave Flow',
-        topArtists: [{ 
-          name: 'Boris Brejcha', 
-          id: '6bDWAcdtVR39rjZS5A3SoD',
-          images: [{ url: 'https://i.scdn.co/image/ab6761610000e5eb8ae72ad1d3e564e2b883afb5' }],
-          popularity: 85,
-          genres: ['melodic techno', 'minimal techno']
-        }],
-        topTracks: [{ 
-          name: 'Realm of Consciousness', 
-          id: '2pXJ3zJ9smoG8SQqlMBvoF',
-          artists: [{ name: 'Tale Of Us' }],
-          album: { 
-            name: 'Realm of Consciousness', 
-            images: [{ url: 'https://i.scdn.co/image/ab67616d0000b273c3a84c67544c46c7df9529c5' }] 
-          },
-          popularity: 80,
-          preview_url: 'https://p.scdn.co/mp3-preview/5a6aa5ef7516e6771c964c3d44b77156c5330b7e'
-        }]
-      };
+      // Process taste data with validation
+      let tasteData = getFallbackTasteData();
       
       if (tasteResponse.ok) {
-        const fetchedData = await tasteResponse.json();
-        tasteData = {
-          ...fetchedData,
-          // Ensure we have fallbacks if API returns incomplete data
-          genreProfile: fetchedData.genreProfile || tasteData.genreProfile,
-          mood: fetchedData.mood || tasteData.mood,
-          topArtists: fetchedData.topArtists?.items || tasteData.topArtists,
-          topTracks: fetchedData.topTracks?.items || tasteData.topTracks
-        };
-      }
-      
-      // Generate seasonal vibes data
-      const seasonalVibes = generateSeasonalVibes(tasteData.genreProfile);
-      
-      // Get recommendations
-      const recommendationsResponse = await fetch('/api/spotify/recommendations')
-        .catch(err => {
-          console.error('Network error fetching recommendations:', err);
-          return { ok: false };
-        });
-      
-      let recommendations = {
-        artists: [],
-        tracks: []
-      };
-      
-      if (recommendationsResponse.ok) {
         try {
-          const recData = await recommendationsResponse.json();
-          // Fix for recommendations format - directly use the response data structure
-          recommendations.artists = recData.artists || [];
-          recommendations.tracks = recData.tracks || [];
-          console.log("Loaded recommendations successfully:", recommendations);
-        } catch (recError) {
-          console.error("Error parsing recommendations:", recError);
+          const data = await tasteResponse.json();
+          if (data && data.genreProfile) {
+            tasteData = {
+              genreProfile: data.genreProfile || tasteData.genreProfile,
+              mood: data.mood || tasteData.mood,
+              topArtists: data.artists?.items || tasteData.topArtists,
+              topTracks: data.tracks?.items || tasteData.topTracks
+            };
+          }
+        } catch (jsonError) {
+          console.error('Error parsing taste data:', jsonError);
         }
       }
       
-      // Set the initial user profile with fallback events
+      // Generate seasonal vibes
+      const seasonalVibes = generateSeasonalVibes(tasteData.genreProfile);
+      
+      // Set initial profile with fallback events
       setUserProfile({
         taste: tasteData,
         seasonalVibes,
-        recommendations,
-        events: getFallbackEvents() // Use fallback events initially
+        events: getFallbackEvents()
       });
       
       setLoading(false);
       
-      // After setting initial data, fetch real events
+      // Fetch real events after setting initial data
       fetchFilteredEvents();
-    } catch (err) {
-      console.error('Error fetching user data:', err);
-      setError('Failed to load your profile. Please try again later.');
-      setLoading(false);
-    }
-  };
-  
-  // Fetch filtered events when filters change
-  useEffect(() => {
-    if (userProfile && !loading) {
-      fetchFilteredEvents();
-    }
-  }, [filters, userProfile, loading]);
-  
-  const fetchFilteredEvents = async () => {
-    // Skip if we don't need to fetch
-    if (!userProfile) return;
-    
-    try {
-      setEventsLoading(true);
-      setEventsError(null);
-      
-      // Prepare query parameters
-      const queryParams = new URLSearchParams();
-      if (filters.genre !== 'all') queryParams.append('genre', filters.genre);
-      if (filters.venue !== 'all') queryParams.append('venue', filters.venue);
-      if (filters.event !== 'all') queryParams.append('event', filters.event);
-      if (filters.price !== 'all') queryParams.append('price', filters.price);
-      queryParams.append('minMatch', filters.vibeMatch);
-      
-      console.log("Events API request:", queryParams.toString());
-      
-      // Fetch events with filters
-      const eventsResponse = await fetch(`/api/events/recommendations?${queryParams.toString()}`)
-        .catch(err => {
-          console.error('Network error fetching events:', err);
-          return { ok: false };
-        });
-      
-      console.log("Events API response status:", eventsResponse.status);
-      
-      // Fall back to predefined events if API call fails
-      let eventsData = getFallbackEvents();
-      
-      if (eventsResponse.ok) {
-        try {
-          const response = await eventsResponse.json();
-          console.log("Events API response data:", response);
-          
-          // Ensure we have an array of events, even if API returns an empty array
-          if (response && response.events && Array.isArray(response.events)) {
-            if (response.events.length > 0) {
-              console.log("Using events from API:", response.events.length);
-              eventsData = response.events;
-            } else {
-              console.log("API returned empty events array, using fallbacks");
-            }
-          } else {
-            console.log("Invalid events format from API, using fallbacks:", response);
-          }
-        } catch (jsonError) {
-          console.error("Error parsing events response:", jsonError);
-          setEventsError("Error parsing event data");
-        }
-      } else {
-        console.log("Using fallback event data due to API error");
-      }
-      
-      // Force array type and handle nulls
-      if (!Array.isArray(eventsData)) {
-        console.log("eventsData is not an array, fixing:", eventsData);
-        eventsData = Array.isArray(eventsData?.events) ? eventsData.events : getFallbackEvents();
-      }
-      
-      console.log("Final events data to set:", eventsData.length);
-      
-      // Update events in user profile
-      setUserProfile(prev => {
-        const updated = {
-          ...prev,
-          events: eventsData
-        };
-        console.log("Updated profile with events:", updated.events.length);
-        return updated;
-      });
       
     } catch (error) {
-      console.error('Error fetching events:', error);
-      // Use fallback events on error
-      setUserProfile(prev => ({
-        ...prev,
-        events: getFallbackEvents()
-      }));
-    } finally {
-      setEventsLoading(false);
+      console.error('Error fetching user data:', error);
+      setError('Failed to load your profile. Please try again.');
+      setLoading(false);
     }
-  };
-  
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
   };
   
   // Generate seasonal vibes data based on user's taste
@@ -316,44 +136,105 @@ export default function Dashboard() {
       }
     };
   };
-
-  // Debug component to show when there are issues
-  const renderDebugInfo = () => {
-    // Only show in development
-    if (process.env.NODE_ENV !== 'development') return null;
-    
-    return (
-      <div className={styles.debugSection}>
-        <details>
-          <summary>Debug Info (Click to expand)</summary>
-          <div>
-            <p>Status: {status}</p>
-            <p>Events Loading: {String(eventsLoading)}</p>
-            <p>Events Error: {eventsError}</p>
-            <p>Event Count: {userProfile?.events?.length || 0}</p>
-            <p>Filters: {JSON.stringify(filters)}</p>
-          </div>
-        </details>
-      </div>
-    );
+  
+  // Fetch filtered events
+  const fetchFilteredEvents = async () => {
+    try {
+      setEventsLoading(true);
+      setEventsError(null);
+      
+      // Prepare query parameters
+      const queryParams = new URLSearchParams();
+      if (filters.genre !== 'all') queryParams.append('genre', filters.genre);
+      if (filters.venue !== 'all') queryParams.append('venue', filters.venue);
+      if (filters.event !== 'all') queryParams.append('event', filters.event);
+      if (filters.price !== 'all') queryParams.append('price', filters.price);
+      queryParams.append('minMatch', filters.vibeMatch);
+      
+      // Fetch events with error handling
+      const response = await fetch(`/api/events/recommendations?${queryParams.toString()}`)
+        .catch(err => {
+          console.error('Network error fetching events:', err);
+          return { ok: false };
+        });
+      
+      // Process response with validation
+      let eventsData = getFallbackEvents();
+      
+      if (response.ok) {
+        try {
+          const data = await response.json();
+          
+          // Validate data structure
+          if (data && Array.isArray(data.events) && data.events.length > 0) {
+            eventsData = data.events;
+          } else if (data && Array.isArray(data) && data.length > 0) {
+            eventsData = data;
+          }
+        } catch (jsonError) {
+          console.error('Error parsing events response:', jsonError);
+          setEventsError('Error processing event data');
+        }
+      }
+      
+      // Update events in user profile
+      setUserProfile(prev => ({
+        ...prev,
+        events: eventsData
+      }));
+      
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      setEventsError('Failed to load events. Please try again.');
+    } finally {
+      setEventsLoading(false);
+    }
   };
-
+  
+  // Handle filter changes
+  const handleFilterChange = (filterName, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterName]: value
+    }));
+  };
+  
+  // Fetch events when filters change
+  useEffect(() => {
+    if (userProfile && !loading) {
+      fetchFilteredEvents();
+    }
+  }, [filters]);
+  
+  // Get primary genres for display
+  const getPrimaryGenres = () => {
+    const genreProfile = userProfile?.taste?.genreProfile;
+    if (!genreProfile || Object.keys(genreProfile).length === 0) return '';
+    
+    // Sort genres by value and take top 2
+    const sortedGenres = Object.entries(genreProfile)
+      .sort(([, a], [, b]) => b - a)
+      .map(([genre]) => genre.toLowerCase())
+      .slice(0, 2);
+      
+    return sortedGenres.join(' + ');
+  };
+  
   if (status === 'loading' || loading) {
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingPulse}></div>
-        <p>Analyzing your sonic signature...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black">
+        <LoadingSpinner size="large" text="Analyzing your sonic signature..." />
       </div>
     );
   }
   
   if (error && !userProfile) {
     return (
-      <div className={styles.errorContainer}>
-        <h2>Oops!</h2>
-        <p>{error}</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
+        <h2 className="text-2xl text-fuchsia-500 mb-4">Oops!</h2>
+        <p className="mb-6">{error}</p>
         <button 
-          className={styles.retryButton}
+          className="px-4 py-2 bg-black/30 border border-cyan-500 rounded-full text-cyan-400 hover:bg-cyan-500/20 transition"
           onClick={fetchUserData}
         >
           Try Again
@@ -361,25 +242,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  // Ensure we have data to render
-  const profile = userProfile || {
-    taste: {
-      genreProfile: {},
-      mood: '',
-      topArtists: [],
-      topTracks: []
-    },
-    seasonalVibes: null,
-    events: []
-  };
-  
-  // Get primary genres for display
-  const primaryGenres = Object.entries(profile.taste.genreProfile)
-    .sort(([, a], [, b]) => b - a)
-    .map(([genre]) => genre.toLowerCase())
-    .slice(0, 2)
-    .join(' + ');
   
   return (
     <>
@@ -388,60 +250,49 @@ export default function Dashboard() {
         <meta name="description" content="Your personalized EDM dashboard" />
       </Head>
       
-      <div className={styles.container}>
-        <Header />
+      <div className="min-h-screen bg-black text-white">
+        <Navigation />
         
-        <main className={styles.main}>
-          {/* Summary Banner */}
-          <div className={styles.summaryBanner}>
-            <p>You're all about <span className={styles.highlight}>{primaryGenres}</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.</p>
+        <main className="max-w-5xl mx-auto px-4 pb-12">
+          {/* User Summary Banner */}
+          <div className="mb-8 mt-4 p-4 rounded-xl bg-gradient-to-r from-cyan-900/50 to-teal-900/50">
+            <p className="text-center text-lg">
+              You're all about <span className="text-cyan-400 font-medium">{getPrimaryGenres()}</span> with a vibe shift toward <span className="text-teal-400 font-medium">fresh sounds</span>.
+            </p>
           </div>
           
-          {/* Sonic Signature - the radar chart visualization */}
-          <SonicSignature 
-            genreData={profile.taste.genreProfile} 
-            mood={profile.taste.mood}
-            topArtist={profile.taste.topArtists[0]}
-            topTrack={profile.taste.topTracks[0]}
-            recommendations={profile.recommendations}
-          />
-          
-          {/* Seasonal Vibes */}
-          <SeasonalVibes 
-            seasonalData={profile.seasonalVibes}
-            isLoading={loading}
-          />
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            {/* Genre Radar Chart */}
+            <div className="bg-black/20 p-6 rounded-xl border border-cyan-500/20">
+              <h2 className="text-xl text-cyan-500 font-semibold mb-4">Your Genre Mix</h2>
+              <GenreRadarChart genreData={userProfile?.taste?.genreProfile} />
+            </div>
+            
+            {/* Seasonal Vibes */}
+            <SeasonalVibes seasonalData={userProfile?.seasonalVibes} />
+          </div>
           
           {/* Events section */}
-          <div className={styles.eventsSection}>
-            <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
+          <div className="mt-12">
+            <h2 className="text-2xl text-fuchsia-400 font-semibold mb-6">Events Matching Your Vibe</h2>
             
             {/* Filters */}
-            <CompactEventFilters 
+            <EventFilters 
+              filters={filters}
               onFilterChange={handleFilterChange}
-              initialFilters={filters}
             />
-            
-            {/* Debug display for events */}
-            {process.env.NODE_ENV === 'development' && (
-              <div style={{background: 'rgba(0,0,0,0.1)', padding: '10px', marginBottom: '10px'}}>
-                <p>Debug: Events count: {profile.events?.length || 0}</p>
-              </div>
-            )}
             
             {/* Events list */}
             <EventList 
-              events={profile.events} 
+              events={userProfile?.events} 
               loading={eventsLoading}
               error={eventsError}
             />
-            
-            {/* Debug info in development */}
-            {renderDebugInfo()}
           </div>
         </main>
         
-        <footer className={styles.footer}>
+        <footer className="p-4 text-center text-gray-500 border-t border-gray-800">
           <p>TIKO by Sonar • Your EDM Companion</p>
         </footer>
       </div>

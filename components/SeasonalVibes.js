@@ -1,8 +1,7 @@
+// /c/sonar/users/sonar-edm-user/components/SeasonalVibes.js
 import React from 'react';
-import Link from 'next/link';
-import styles from '@/styles/SeasonalVibes.module.css';
 
-export default function SeasonalVibes({ seasonalData, isLoading }) {
+const SeasonalVibes = ({ seasonalData }) => {
   // Get current season
   const getCurrentSeason = () => {
     const month = new Date().getMonth();
@@ -14,72 +13,75 @@ export default function SeasonalVibes({ seasonalData, isLoading }) {
   
   const currentSeason = getCurrentSeason();
   
-  // If loading or no data
-  if (isLoading || !seasonalData) {
+  // If no data, show placeholder
+  if (!seasonalData) {
     return (
-      <div className={styles.container}>
-        <h2 className={styles.title}>Your Seasonal Vibes</h2>
-        <div className={styles.loadingState}>
-          <div className={styles.spinner}></div>
-          <p>Analyzing your seasonal taste...</p>
+      <div className="bg-black/20 p-6 rounded-xl border border-fuchsia-500/20">
+        <h2 className="text-xl text-cyan-500 font-semibold mb-4">Your Seasonal Vibes</h2>
+        <div className="flex justify-center items-center h-40">
+          <p className="text-gray-400">No seasonal data available</p>
         </div>
       </div>
     );
   }
   
   return (
-    <div className={styles.container}>
-      <h2 className={styles.title}>Your Seasonal Vibes</h2>
+    <div className="bg-black/20 p-6 rounded-xl border border-fuchsia-500/20">
+      <h2 className="text-xl text-cyan-500 font-semibold mb-4">Your Seasonal Vibes</h2>
       
       {/* Year-Round Signature */}
-      <div className={styles.yearRoundContainer}>
-        <div className={styles.yearRoundTitle}>
-          <span className={styles.yearRoundEmoji}>✨</span>
-          <span className={styles.yearRoundTitleText}>Your Year-Round Vibes</span>
+      <div className="mb-6 p-4 bg-black/30 rounded-lg border-l-2 border-cyan-500">
+        <div className="flex items-center mb-2">
+          <span className="mr-2 text-xl">✨</span>
+          <span className="text-cyan-400 font-medium">Your Year-Round Vibes</span>
         </div>
-        <p className={styles.yearRoundText}>
-          Your taste evolves from <span className={styles.highlight}>deep house vibes</span> in winter 
-          to <span className={styles.highlight}>high-energy techno</span> in summer, with a consistent 
-          appreciation for <span className={styles.highlight}>melodic elements</span> year-round.
+        <p className="text-white/90 text-sm">
+          Your taste evolves from <span className="text-cyan-400 font-medium">deep house vibes</span> in winter 
+          to <span className="text-cyan-400 font-medium">high-energy techno</span> in summer, with a consistent 
+          appreciation for <span className="text-teal-400 font-medium">melodic elements</span> year-round.
         </p>
       </div>
       
       {/* Seasonal Grid */}
-      <div className={styles.seasonGrid}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         {Object.entries(seasonalData).map(([season, data]) => (
           <div 
             key={season}
-            className={`${styles.seasonCard} ${season === currentSeason ? styles.currentSeason : ''}`}
+            className={`p-3 rounded-lg ${season === currentSeason 
+              ? 'bg-black/40 border border-cyan-500/50 shadow-lg shadow-cyan-900/20' 
+              : 'bg-black/20 border border-white/10'}`}
           >
-            <div className={styles.seasonHeader}>
-              <div className={styles.seasonInfo}>
-                <span className={styles.seasonEmoji}>{data.emoji}</span>
-                <span className={styles.seasonName}>{data.title}</span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <span className="mr-2 text-xl">{data.emoji}</span>
+                <span className="font-medium">{data.title}</span>
               </div>
               {season === currentSeason && (
-                <span className={styles.currentBadge}>Now</span>
+                <span className="px-2 py-0.5 text-xs bg-cyan-500/20 text-cyan-400 rounded-full">Now</span>
               )}
             </div>
             
-            <div className={styles.seasonGenres}>
-              <span className={styles.genreLabel}>Vibe:</span>
-              <span className={styles.genreList}>{data.genres}</span>
+            <div className="mb-1">
+              <span className="text-xs text-white/60 mr-1">Vibe:</span>
+              <span className="text-sm">{data.genres}</span>
             </div>
             
-            <div className={styles.seasonMessage}>
+            <div className="text-xs text-white/70 italic">
               {data.message}
             </div>
           </div>
         ))}
       </div>
       
-      {/* Feedback section with updated "No" presentation */}
-      <div className={styles.feedbackContainer}>
-        <span className={styles.feedbackQuestion}>Did we get it right?</span>
-        <button className={styles.feedbackButton}>
+      {/* Feedback section */}
+      <div className="flex items-center justify-center mt-4 pt-3 border-t border-white/10">
+        <span className="text-sm text-white/70 mr-2">Did we get it right?</span>
+        <button className="text-cyan-400 font-bold hover:text-cyan-300 transition">
           No
         </button>
       </div>
     </div>
   );
-}
+};
+
+export default SeasonalVibes;
