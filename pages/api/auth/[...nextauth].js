@@ -60,7 +60,21 @@ export const authOptions = {
     strategy: "jwt",
   },
   
-  debug: process.env.NODE_ENV === 'development',
+  // Enable debug mode to see detailed logs
+  debug: true,
+  
+  // Add explicit cookie configuration
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+      }
+    }
+  },
 };
 
 // Refreshes an access token when it expires
