@@ -3,11 +3,8 @@ import SpotifyProvider from "next-auth/providers/spotify";
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import clientPromise from "@/lib/mongodb";
 
-/**
- * For more information on each option (and a full list of options) go to:
- * https://next-auth.js.org/configuration/options
- */
-export default NextAuth({
+// Export the auth options so they can be imported by other files
+export const authOptions = {
   adapter: MongoDBAdapter(clientPromise),
   
   providers: [
@@ -30,12 +27,12 @@ export default NextAuth({
           ...token,
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
-          accessTokenExpires: account.expires_at * 1000, // Convert to milliseconds
+          accessTokenExpires: account.expires_at * 1000,
           user
         };
       }
 
-      // Return previous token if the access token has not expired yet
+      // Return previous token if not expired
       if (Date.now() < token.accessTokenExpires) {
         return token;
       }
@@ -64,13 +61,9 @@ export default NextAuth({
   },
   
   debug: process.env.NODE_ENV === 'development',
-});
+};
 
-/**
- * Takes a token, and returns a new token with updated
- * `accessToken` and `accessTokenExpires`. If an error occurs,
- * returns the old token and an error property
- */
+// Refreshes an access token when it expires
 async function refreshAccessToken(token) {
   try {
     const url = "https://accounts.spotify.com/api/token";
@@ -108,3 +101,6 @@ async function refreshAccessToken(token) {
     };
   }
 }
+
+// Export the NextAuth function with our configuration
+export default NextAuth(authOptions);
