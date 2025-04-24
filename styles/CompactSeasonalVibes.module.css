@@ -1,0 +1,144 @@
+.container {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.yearRoundCard {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+.yearRoundHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.yearRoundIcon {
+  margin-right: 8px;
+  font-size: 1.2rem;
+}
+
+.yearRoundTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #00e5ff;
+}
+
+.yearRoundText {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.highlight {
+  color: #ff00ff;
+  font-weight: 500;
+}
+
+.seasonsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.seasonCard {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.seasonCard:hover {
+  border-color: rgba(0, 229, 255, 0.4);
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.currentSeason {
+  border-color: rgba(255, 0, 255, 0.4);
+  background-color: rgba(255, 0, 255, 0.1);
+}
+
+.seasonHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.seasonIcon {
+  margin-right: 6px;
+  font-size: 1rem;
+}
+
+.seasonName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.currentBadge {
+  position: absolute;
+  right: 0;
+  top: 0;
+  background: linear-gradient(90deg, #00e5ff, #ff00ff);
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.seasonContent {
+  font-size: 0.8rem;
+}
+
+.vibeLabel {
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 2px;
+}
+
+.vibeText {
+  color: #00e5ff;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.seasonDescription {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.feedbackSection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.feedbackQuestion {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.feedbackNo {
+  color: #ff00ff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.feedbackNo:hover {
+  color: #ff40ff;
+}

@@ -2,328 +2,354 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import Link from 'next/link';
-import SoundCharacteristicsChart from '@/components/SoundCharacteristicsChart';
-import ReorganizedSeasonalVibes from '@/components/ReorganizedSeasonalVibes';
-import EnhancedEventFilters from '@/components/EnhancedEventFilters';
-import ImprovedEventList from '@/components/ImprovedEventList';
+import SideBySideLayout from '@/components/SideBySideLayout';
+import CompactSoundCharacteristics from '@/components/CompactSoundCharacteristics';
+import CompactSeasonalVibes from '@/components/CompactSeasonalVibes';
+import EnhancedEventList from '@/components/EnhancedEventList';
+import MobileOptimizedVibeQuiz from '@/components/MobileOptimizedVibeQuiz';
 import styles from '@/styles/Dashboard.module.css';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
   const [userProfile, setUserProfile] = useState(null);
   const [events, setEvents] = useState([]);
-  const [filters, setFilters] = useState({
-    vibeMatch: 50,
-    eventType: 'all',
-    distance: 'all'
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Redirect to login if not authenticated
+  const [showVibeQuiz, setShowVibeQuiz] = useState(false);
+  const [vibeMatchFilter, setVibeMatchFilter] = useState(70);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [eventTypeFilter, setEventTypeFilter] = useState('all');
+  const [distanceFilter, setDistanceFilter] = useState('all');
+
+  // Fetch user profile and events when session is available
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/');
+    if (status === 'authenticated' && session) {
+      fetchUserProfile();
+      fetchEvents();
+    } else if (status === 'unauthenticated') {
+      router.push('/auth/signin');
     }
-  }, [status, router]);
-  
-  // Fetch user profile data
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetchUserData();
-    }
-  }, [status]);
-  
-  // Define fallback sound characteristics
-  const getFallbackSoundCharacteristics = () => {
-    return {
-      'Melody': 85,
-      'Danceability': 78,
-      'Energy': 72,
-      'Tempo': 68,
-      'Obscurity': 63
-    };
-  };
-  
-  // Define fallback seasonal data
-  const getFallbackSeasonalData = () => {
-    return {
-      spring: {
-        title: 'Spring',
-        emoji: '🌸',
-        genres: 'House, Progressive',
-        message: 'Fresh beats & uplifting vibes'
-      },
-      summer: {
-        title: 'Summer',
-        emoji: '☀️',
-        genres: 'Techno, Tech House',
-        message: 'High energy open air sounds'
-      },
-      fall: {
-        title: 'Fall',
-        emoji: '🍂',
-        genres: 'Organic House, Downtempo',
-        message: 'Mellow grooves & deep beats'
-      },
-      winter: {
-        title: 'Winter',
-        emoji: '❄️',
-        genres: 'Deep House, Ambient Techno',
-        message: 'Hypnotic journeys & warm basslines'
-      }
-    };
-  };
-  
-  // Define fallback events
-  const getFallbackEvents = () => {
-    return [
-      {
-        id: 1,
-        name: 'Techno Dreamscape',
-        venue: 'Warehouse 23',
-        venueType: 'Warehouse',
-        artists: ['Charlotte de Witte', 'Amelie Lens'],
-        genre: 'Techno',
-        price: 45,
-        date: 'Thu, May 1',
-        match: 92
-      },
-      {
-        id: 2,
-        name: 'Deep House Journey',
-        venue: 'Club Echo',
-        venueType: 'Club',
-        artists: ['Lane 8', 'Yotto'],
-        genre: 'Deep House',
-        price: 35,
-        date: 'Thu, May 8',
-        match: 85
-      },
-      {
-        id: 3,
-        name: 'Melodic Techno Night',
-        venue: 'The Sound Bar',
-        venueType: 'Club',
-        artists: ['Tale Of Us', 'Mind Against'],
-        genre: 'Melodic Techno',
-        price: 55,
-        date: 'Sun, Apr 27',
-        match: 88
-      }
-    ];
-  };
-  
-  const fetchUserData = async () => {
+  }, [session, status, router]);
+
+  // Mock function to fetch user profile
+  const fetchUserProfile = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      // Fetch music taste data
-      const tasteResponse = await fetch('/api/spotify/user-taste')
-        .catch(err => {
-          console.error('Network error fetching taste data:', err);
-          return { ok: false };
-        });
-      
-      // Use fallback data if API call fails
-      let tasteData = {
-        genreProfile: {
-          'House': 75,
-          'Techno': 65,
-          'Progressive House': 60,
-          'Trance': 45,
-          'Indie dance': 55
-        },
-        soundCharacteristics: getFallbackSoundCharacteristics(),
-        seasonalVibes: getFallbackSeasonalData(),
-        mood: 'Chillwave Flow',
-        topArtists: [{ 
-          name: 'Boris Brejcha', 
-          id: '6bDWAcdtVR39rjZS5A3SoD',
-          images: [{ url: 'https://i.scdn.co/image/ab6761610000e5eb8ae72ad1d3e564e2b883afb5' }],
-          popularity: 85,
-          genres: ['melodic techno', 'minimal techno']
-        }],
-        topTracks: [{ 
-          name: 'Realm of Consciousness', 
-          id: '2pXJ3zJ9smoG8SQqlMBvoF',
-          artists: [{ name: 'Tale Of Us' }],
-          album: { 
-            name: 'Realm of Consciousness', 
-            images: [{ url: 'https://i.scdn.co/image/ab67616d0000b273c3a84c67544c46c7df9529c5' }] 
+      // In a real app, this would be an API call
+      // For now, we'll use mock data
+      const mockProfile = {
+        name: session?.user?.name || 'EDM Enthusiast',
+        soundCharacteristics: [
+          { name: 'Melody', value: 85 },
+          { name: 'Danceability', value: 75 },
+          { name: 'Energy', value: 65 },
+          { name: 'Tempo', value: 60 },
+          { name: 'Obscurity', value: 55 }
+        ],
+        seasonalVibes: {
+          yearRound: {
+            text: 'Your taste evolves from deep house vibes in winter to high-energy techno in summer, with a consistent appreciation for melodic elements year-round.'
           },
-          popularity: 80,
-          preview_url: 'https://p.scdn.co/mp3-preview/5a6aa5ef7516e6771c964c3d44b77156c5330b7e'
-        }]
+          seasons: [
+            {
+              name: 'Spring',
+              current: true,
+              vibe: 'House, Progressive',
+              description: 'Fresh beats & uplifting vibes',
+              icon: '🌸'
+            },
+            {
+              name: 'Summer',
+              current: false,
+              vibe: 'Techno, Tech House',
+              description: 'High energy open air sounds',
+              icon: '☀️'
+            },
+            {
+              name: 'Fall',
+              current: false,
+              vibe: 'Organic House, Downtempo',
+              description: 'Mellow grooves & deep beats',
+              icon: '🍂'
+            },
+            {
+              name: 'Winter',
+              current: false,
+              vibe: 'Deep House, Ambient Techno',
+              description: 'Hypnotic journeys & warm basslines',
+              icon: '❄️'
+            }
+          ]
+        },
+        preferences: {
+          genres: ['House', 'Techno', 'Progressive'],
+          mood: ['Melodic', 'Energetic'],
+          tempo: ['Medium', 'Building'],
+          discovery: ['Underground', 'Emerging'],
+          venues: ['Clubs', 'Festivals']
+        }
       };
       
-      if (tasteResponse.ok) {
-        const fetchedData = await tasteResponse.json();
-        tasteData = {
-          ...fetchedData,
-          // Ensure we have fallbacks if API returns incomplete data
-          genreProfile: fetchedData.genreProfile || tasteData.genreProfile,
-          soundCharacteristics: fetchedData.soundCharacteristics || getFallbackSoundCharacteristics(),
-          seasonalVibes: fetchedData.seasonalVibes || getFallbackSeasonalData(),
-          mood: fetchedData.mood || tasteData.mood,
-          topArtists: fetchedData.topArtists?.items || tasteData.topArtists,
-          topTracks: fetchedData.topTracks?.items || tasteData.topTracks
-        };
-      }
+      setUserProfile(mockProfile);
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      setError('Failed to load your profile. Please try again later.');
+    }
+  };
+
+  // Mock function to fetch events
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      // In a real app, this would be an API call with filters
+      // For now, we'll use mock data
+      const mockEvents = [
+        {
+          id: 'event1',
+          name: 'Techno Warehouse Night',
+          venue: 'The Underground',
+          venueType: 'Warehouse',
+          address: '123 Industrial Ave, Brooklyn, NY',
+          headliners: ['Charlotte de Witte', 'Amelie Lens', 'FJAAK', 'I Hate Models', 'SNTS', 'Dax J'],
+          date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          matchScore: 92,
+          source: 'ticketmaster'
+        },
+        {
+          id: 'event2',
+          name: 'Summer House Festival',
+          venue: 'Sunset Park',
+          venueType: 'Festival',
+          address: '456 Parkway Dr, Miami, FL',
+          headliners: ['Disclosure', 'Kaytranada', 'The Blessed Madonna', 'Honey Dijon', 'Jayda G'],
+          date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          matchScore: 85,
+          source: 'edmtrain'
+        },
+        {
+          id: 'event3',
+          name: 'Progressive Dreams',
+          venue: 'Club Horizon',
+          venueType: 'Club',
+          address: '789 Downtown Blvd, Los Angeles, CA',
+          headliners: ['Hernan Cattaneo', 'Nick Warren', 'Guy J'],
+          date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+          matchScore: 78,
+          source: 'ticketmaster'
+        },
+        {
+          id: 'event4',
+          name: 'Melodic Techno Night',
+          venue: 'The Loft',
+          venueType: 'Rooftop',
+          address: '101 Skyline Ave, Chicago, IL',
+          headliners: ['Tale Of Us', 'Mind Against', 'Mathame', 'Kevin de Vries'],
+          date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+          matchScore: 88,
+          source: null // Sample data
+        }
+      ];
       
-      // Set events data (using fallback for now)
-      setEvents(getFallbackEvents());
+      // Filter events based on user preferences
+      const filteredEvents = mockEvents
+        .filter(event => event.matchScore >= vibeMatchFilter)
+        .filter(event => eventTypeFilter === 'all' || event.venueType.toLowerCase() === eventTypeFilter.toLowerCase())
+        .sort((a, b) => b.matchScore - a.matchScore); // Sort by match score descending
       
-      // Set the user profile
-      setUserProfile({
-        taste: tasteData
-      });
-      
+      setEvents(filteredEvents);
       setLoading(false);
     } catch (err) {
-      console.error('Error fetching user data:', err);
-      setError('Failed to load your profile. Please try again later.');
+      console.error('Error fetching events:', err);
+      setError('Failed to load events. Please try again later.');
       setLoading(false);
     }
   };
-  
-  // Handle filter changes
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
-    
-    // Filter events based on vibe match
-    const filteredEvents = getFallbackEvents().filter(event => {
-      // Filter by vibe match
-      if (event.match < newFilters.vibeMatch) {
-        return false;
-      }
-      
-      // Filter by event type
-      if (newFilters.eventType !== 'all') {
-        const eventType = event.venueType.toLowerCase();
-        if (eventType !== newFilters.eventType) {
-          return false;
-        }
-      }
-      
-      // For distance, we would need real data with location info
-      // This is just a placeholder for the concept
-      
-      return true;
-    });
-    
-    setEvents(filteredEvents);
-  };
-  
-  // Handle event click
-  const handleEventClick = (event) => {
-    console.log('Event clicked:', event);
-    // Here you would navigate to event details or show a modal
-  };
 
-  if (status === 'loading' || loading) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingPulse}></div>
-        <p>Analyzing your sonic signature...</p>
-      </div>
-    );
-  }
-  
-  if (error && !userProfile) {
-    return (
-      <div className={styles.errorContainer}>
-        <h2>Oops!</h2>
-        <p>{error}</p>
-        <button 
-          className={styles.retryButton}
-          onClick={fetchUserData}
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
-  // Ensure we have data to render
-  const profile = userProfile || {
-    taste: {
-      genreProfile: {},
-      soundCharacteristics: {},
-      seasonalVibes: {},
-      mood: '',
-      topArtists: [],
-      topTracks: []
+  // Handle vibe quiz submission
+  const handleVibeQuizSave = async (selections) => {
+    try {
+      // In a real app, this would be an API call to update the user profile
+      console.log('Saving user preferences with higher weightage:', selections);
+      
+      // Update local state to reflect changes
+      setUserProfile(prev => ({
+        ...prev,
+        preferences: selections
+      }));
+      
+      // Close the quiz
+      setShowVibeQuiz(false);
+      
+      // Refetch events with updated preferences
+      fetchEvents();
+    } catch (err) {
+      console.error('Error saving preferences:', err);
+      alert('Failed to save your preferences. Please try again.');
     }
   };
-  
-  // Get primary genres for display
-  const primaryGenres = Object.entries(profile.taste.genreProfile)
-    .sort(([, a], [, b]) => b - a)
-    .map(([genre]) => genre.toLowerCase())
-    .slice(0, 2)
-    .join(' + ');
-  
+
+  // Handle filter changes
+  useEffect(() => {
+    if (userProfile) {
+      fetchEvents();
+    }
+  }, [vibeMatchFilter, eventTypeFilter, distanceFilter]);
+
+  // If loading
+  if (status === 'loading' || !userProfile) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.pulseLoader}></div>
+        <p>Loading your personalized dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
-        <title>Dashboard | Sonar</title>
-        <meta name="description" content="Your personalized EDM dashboard" />
+        <title>TIKO | Your Dashboard</title>
+        <meta name="description" content="Your personalized electronic music dashboard" />
       </Head>
-      
+
       <div className={styles.container}>
-        <header className={styles.header}>
-          <h1>TIKO</h1>
-          <nav>
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/users/music-taste">Music Taste</Link>
-            <Link href="/users/events">Events</Link>
-            <Link href="/users/profile">Profile</Link>
-          </nav>
-        </header>
+        <div className={styles.header}>
+          <h1 className={styles.title}>TIKO</h1>
+          <div className={styles.nav}>
+            <span className={styles.activeNavItem}>Dashboard</span>
+            <span className={styles.navItem}>Music Taste</span>
+            <span className={styles.navItem}>Events</span>
+            <span className={styles.navItem}>Profile</span>
+          </div>
+        </div>
         
-        <main className={styles.main}>
-          {/* Summary Banner */}
-          <div className={styles.summaryBanner}>
-            <p>You're all about <span className={styles.highlight}>{primaryGenres}</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.</p>
+        <div className={styles.summary}>
+          You're all about <span className={styles.highlight1}>house</span> + <span className={styles.highlight2}>techno</span> with a vibe shift toward <span className={styles.highlight3}>fresh sounds</span>.
+        </div>
+        
+        {/* Side-by-side layout for sound characteristics and seasonal vibes */}
+        <SideBySideLayout>
+          <CompactSoundCharacteristics data={userProfile.soundCharacteristics} />
+          <CompactSeasonalVibes 
+            data={userProfile.seasonalVibes} 
+            onFeedbackClick={() => setShowVibeQuiz(true)}
+          />
+        </SideBySideLayout>
+        
+        {/* Event filters */}
+        <div className={styles.filtersSection}>
+          <h3 className={styles.filtersTitle}>Events Matching Your Vibe</h3>
+          
+          <div className={styles.vibeMatchFilter}>
+            <label htmlFor="vibeMatch">Vibe Match: {vibeMatchFilter}%+</label>
+            <input
+              type="range"
+              id="vibeMatch"
+              min="0"
+              max="100"
+              value={vibeMatchFilter}
+              onChange={(e) => setVibeMatchFilter(parseInt(e.target.value))}
+              className={styles.slider}
+            />
           </div>
           
-          {/* Sound Characteristics Chart */}
-          <SoundCharacteristicsChart 
-            soundData={profile.taste.soundCharacteristics} 
-          />
+          <div className={styles.moreFiltersToggle}>
+            <button 
+              className={styles.moreFiltersButton}
+              onClick={() => setShowMoreFilters(!showMoreFilters)}
+            >
+              {showMoreFilters ? 'Hide Filters' : 'More Filters'}
+            </button>
+          </div>
           
-          {/* Seasonal Vibes Section */}
-          <ReorganizedSeasonalVibes 
-            seasonalData={profile.taste.seasonalVibes}
-            isLoading={loading}
-          />
-          
-          {/* Events Section */}
-          <section className={styles.eventsSection}>
-            <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
-            
-            {/* Event Filters */}
-            <EnhancedEventFilters 
-              onFilterChange={handleFilterChange}
-              initialFilters={filters}
-            />
-            
-            {/* Event List */}
-            <ImprovedEventList 
-              events={events}
-              onEventClick={handleEventClick}
-            />
-          </section>
-        </main>
+          {showMoreFilters && (
+            <div className={styles.additionalFilters}>
+              <div className={styles.filterGroup}>
+                <label>Event Type:</label>
+                <div className={styles.filterOptions}>
+                  <button 
+                    className={`${styles.filterOption} ${eventTypeFilter === 'all' ? styles.activeFilter : ''}`}
+                    onClick={() => setEventTypeFilter('all')}
+                  >
+                    All
+                  </button>
+                  <button 
+                    className={`${styles.filterOption} ${eventTypeFilter === 'club' ? styles.activeFilter : ''}`}
+                    onClick={() => setEventTypeFilter('club')}
+                  >
+                    Club
+                  </button>
+                  <button 
+                    className={`${styles.filterOption} ${eventTypeFilter === 'warehouse' ? styles.activeFilter : ''}`}
+                    onClick={() => setEventTypeFilter('warehouse')}
+                  >
+                    Warehouse
+                  </button>
+                  <button 
+                    className={`${styles.filterOption} ${eventTypeFilter === 'festival' ? styles.activeFilter : ''}`}
+                    onClick={() => setEventTypeFilter('festival')}
+                  >
+                    Festival
+                  </button>
+                  <button 
+                    className={`${styles.filterOption} ${eventTypeFilter === 'rooftop' ? styles.activeFilter : ''}`}
+                    onClick={() => setEventTypeFilter('rooftop')}
+                  >
+                    Rooftop
+                  </button>
+                </div>
+              </div>
+              
+              <div className={styles.filterGroup}>
+                <label>Distance:</label>
+                <div className={styles.filterOptions}>
+                  <button 
+                    className={`${styles.filterOption} ${distanceFilter === 'all' ? styles.activeFilter : ''}`}
+                    onClick={() => setDistanceFilter('all')}
+                  >
+                    All
+                  </button>
+                  <button 
+                    className={`${styles.filterOption} ${distanceFilter === 'local' ? styles.activeFilter : ''}`}
+                    onClick={() => setDistanceFilter('local')}
+                  >
+                    Local
+                  </button>
+                  <button 
+                    className={`${styles.filterOption} ${distanceFilter === 'national' ? styles.activeFilter : ''}`}
+                    onClick={() => setDistanceFilter('national')}
+                  >
+                    National
+                  </button>
+                  <button 
+                    className={`${styles.filterOption} ${distanceFilter === 'international' ? styles.activeFilter : ''}`}
+                    onClick={() => setDistanceFilter('international')}
+                  >
+                    International
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
         
-        <footer className={styles.footer}>
-          <p>TIKO by Sonar • Your EDM Companion</p>
-        </footer>
+        {/* Enhanced event list */}
+        <EnhancedEventList 
+          events={events} 
+          loading={loading} 
+          error={error} 
+        />
+        
+        {/* Mobile-optimized vibe quiz (shown when user clicks "No" on "Did we get it right?") */}
+        {showVibeQuiz && (
+          <div className={styles.modalOverlay}>
+            <MobileOptimizedVibeQuiz 
+              onSave={handleVibeQuizSave}
+              onClose={() => setShowVibeQuiz(false)}
+              initialSelections={userProfile.preferences}
+            />
+          </div>
+        )}
       </div>
     </>
   );

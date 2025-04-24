@@ -1,157 +1,243 @@
 .container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
   background-color: #0a0a14;
   color: #fff;
+  font-family: 'Inter', sans-serif;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
-  background-color: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
 }
 
-.header h1 {
+.title {
   color: #00e5ff;
-  margin: 0;
   font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
 }
 
-.header nav {
+.nav {
   display: flex;
   gap: 20px;
 }
 
-.header nav a {
+.navItem {
   color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
-  transition: color 0.2s ease;
+  cursor: pointer;
 }
 
-.header nav a:hover {
+.activeNavItem {
   color: #fff;
+  position: relative;
 }
 
-.main {
-  flex: 1;
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+.activeNavItem::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
   width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #00e5ff, #ff00ff);
 }
 
-.summaryBanner {
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.3));
-  border-radius: 12px;
-  padding: 15px 20px;
-  margin-bottom: 20px;
-  text-align: center;
-  font-size: 1.1rem;
-}
-
-.highlight {
-  color: #ff00ff;
-  font-weight: bold;
-}
-
-.sectionTitle {
+.navItem:hover {
   color: #fff;
-  font-size: 1.5rem;
-  margin: 30px 0 20px;
-  text-align: center;
 }
 
-.eventsSection {
-  margin-top: 30px;
+.summary {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.2));
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  margin-bottom: 20px;
+  border: 1px solid rgba(0, 229, 255, 0.1);
 }
 
-.footer {
-  padding: 15px 20px;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.5);
+.highlight1 {
+  color: #00e5ff;
+}
+
+.highlight2 {
+  color: #ff00ff;
+}
+
+.highlight3 {
+  color: #ff00ff;
+}
+
+.filtersSection {
+  margin-bottom: 20px;
+}
+
+.filtersTitle {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+.vibeMatchFilter {
+  margin-bottom: 15px;
+}
+
+.vibeMatchFilter label {
+  display: block;
+  margin-bottom: 8px;
   font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.2), rgba(255, 0, 255, 0.2));
+  outline: none;
+  border-radius: 3px;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #00e5ff;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #00e5ff;
+  cursor: pointer;
+  border: none;
+}
+
+.moreFiltersToggle {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.moreFiltersButton {
+  background: none;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.moreFiltersButton:hover {
+  background-color: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.5);
+  color: #fff;
+}
+
+.additionalFilters {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  border: 1px solid rgba(0, 229, 255, 0.2);
+}
+
+.filterGroup {
+  margin-bottom: 15px;
+}
+
+.filterGroup:last-child {
+  margin-bottom: 0;
+}
+
+.filterGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.filterOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filterOption {
   background-color: rgba(0, 0, 0, 0.3);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filterOption:hover {
+  background-color: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.4);
+}
+
+.activeFilter {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(255, 0, 255, 0.2));
+  border-color: #00e5ff;
+  color: #fff;
 }
 
 .loadingContainer {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 100vh;
   background-color: #0a0a14;
   color: #fff;
 }
 
-.loadingPulse {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: rgba(0, 229, 255, 0.2);
-  animation: pulse 1.5s ease-in-out infinite;
+.pulseLoader {
+  width: 50px;
+  height: 50px;
   margin-bottom: 20px;
+  background: linear-gradient(90deg, #00e5ff, #ff00ff);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite ease-in-out;
 }
 
 @keyframes pulse {
   0% {
     transform: scale(0.8);
-    box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.7);
+    opacity: 0.5;
   }
-  70% {
+  50% {
     transform: scale(1);
-    box-shadow: 0 0 0 20px rgba(0, 229, 255, 0);
+    opacity: 1;
   }
   100% {
     transform: scale(0.8);
+    opacity: 0.5;
   }
 }
 
-.errorContainer {
-  min-height: 100vh;
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #0a0a14;
-  color: #fff;
+  z-index: 1000;
   padding: 20px;
-  text-align: center;
-}
-
-.errorContainer h2 {
-  color: #ff00ff;
-  margin-bottom: 10px;
-}
-
-.retryButton {
-  background: linear-gradient(90deg, #00e5ff, #ff00ff);
-  border: none;
-  border-radius: 6px;
-  color: #000;
-  font-weight: bold;
-  padding: 10px 25px;
-  cursor: pointer;
-  margin-top: 20px;
-  transition: all 0.2s ease;
-}
-
-.retryButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 229, 255, 0.4);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .main {
-    padding: 15px;
-  }
-  
-  .summaryBanner {
-    font-size: 1rem;
-  }
 }

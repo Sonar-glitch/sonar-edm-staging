@@ -1,0 +1,239 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.eventCard {
+  display: flex;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 15px;
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.eventCard:hover {
+  border-color: rgba(0, 229, 255, 0.4);
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dataSourceBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.liveDataBadge {
+  background-color: rgba(0, 200, 0, 0.2);
+  border: 1px solid rgba(0, 200, 0, 0.4);
+  color: rgba(0, 255, 0, 0.9);
+}
+
+.sampleDataBadge {
+  background-color: rgba(200, 200, 0, 0.2);
+  border: 1px solid rgba(200, 200, 0, 0.4);
+  color: rgba(255, 255, 0, 0.9);
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  background-color: rgba(0, 255, 0, 0.9);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.matchScoreCircle {
+  flex-shrink: 0;
+  margin-right: 15px;
+}
+
+.eventInfo {
+  flex-grow: 1;
+  min-width: 0; /* Prevents flex items from overflowing */
+}
+
+.eventHeader {
+  margin-bottom: 10px;
+}
+
+.eventName {
+  font-size: 1.1rem;
+  margin: 0 0 5px 0;
+  color: #fff;
+}
+
+.venueInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eventVenue {
+  font-size: 0.9rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.venueType {
+  font-size: 0.7rem;
+  background-color: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  color: #00e5ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.headliners {
+  margin-bottom: 10px;
+}
+
+.headlinersLabel {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-right: 5px;
+}
+
+.headlinersList {
+  display: inline;
+  font-size: 0.9rem;
+  color: #ff00ff;
+}
+
+.artist {
+  display: inline;
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 5px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.expandButton:hover {
+  color: #fff;
+}
+
+.expandedArtists {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.expandedArtistsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.collapseButton {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.collapseButton:hover {
+  color: #fff;
+}
+
+.artistGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.artistTag {
+  background-color: rgba(255, 0, 255, 0.1);
+  border: 1px solid rgba(255, 0, 255, 0.3);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.8rem;
+  color: #ff00ff;
+}
+
+.eventDetails {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.divider {
+  margin: 0 5px;
+}
+
+.loadingContainer, .errorContainer, .emptyContainer {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pulseLoader {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 15px;
+  background: linear-gradient(90deg, #00e5ff, #ff00ff);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+}
+
+.viewAllContainer {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.viewAllLink {
+  display: inline-block;
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.1), rgba(255, 0, 255, 0.1));
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 6px;
+  color: #fff;
+  padding: 8px 15px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.viewAllLink:hover {
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.2), rgba(255, 0, 255, 0.2));
+}
