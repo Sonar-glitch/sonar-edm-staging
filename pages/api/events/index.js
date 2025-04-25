@@ -1,266 +1,114 @@
 import axios from 'axios';
-import { getCachedData, cacheData } from '../../../lib/cache';
-export const config = {
-  api: {
-    responseLimit: false,
-  },
-};
-// Helper function to calculate distance between two coordinates using Haversine formula
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 3958.8; // Earth's radius in miles
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; // Distance in miles
-}
+import { getCachedLocation } from '@/lib/locationUtils';
+import { cacheData, getCachedData } from '@/lib/cache';
 
 export default async function handler(req, res) {
+  console.log("Starting Events API handler");
+  
+  // Get API keys from environment variables
+  const ticketmasterApiKey = process.env.TICKETMASTER_API_KEY;
+  const edmtrainApiKey = process.env.EDMTRAIN_API_KEY;
+  
+  console.log(`Using Ticketmaster API key: ${ticketmasterApiKey ? 'Available' : 'Missing'}`);
+  console.log(`Using EDMtrain API key: ${edmtrainApiKey ? 'Available' : 'Missing'}`);
+  
   try {
-    console.log('Starting Events API handler');
+    // Get user location (with Toronto as fallback)
+    const userLocation = await getCachedLocation(req);
     
-    // Get API keys from environment variables
-    const ticketmasterApiKey = process.env.TICKETMASTER_API_KEY;
-    const edmtrainApiKey = process.env.EDMTRAIN_API_KEY;
-    
-    console.log('Using Ticketmaster API key:', ticketmasterApiKey ? 'Available' : 'Not available');
-    console.log('Using EDMtrain API key:', edmtrainApiKey ? 'Available' : 'Not available');
-    
-    if (!ticketmasterApiKey && !edmtrainApiKey) {
-      return res.status(500).json({ 
-        success: false, 
-        error: 'No API keys configured for event sources' 
-      });
+    if (userLocation) {
+      console.log(`User location: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
     }
     
-    // Get user's location
-    let userLocation;
-    try {
-      // Check for cached location data
-      const cachedLocation = await getCachedData('ipapi/location', {});
-      
-      if (cachedLocation) {
-        userLocation = cachedLocation;
-        console.log('Using cached location data');
-      } else {
-        console.log('Fetching user location...');
-        const ipResponse = await axios.get('https://ipapi.co/json/');
-        userLocation = {
-          latitude: ipResponse.data.latitude,
-          longitude: ipResponse.data.longitude,
-          city: ipResponse.data.city,
-          region: ipResponse.data.region,
-          country: ipResponse.data.country_name
-        };
-        
-        // Cache location data for 24 hours (86400 seconds)
-        await cacheData('ipapi/location', {}, userLocation, 86400);
-        
-        console.log(`User location: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
-        console.log(`Coordinates: ${userLocation.latitude}, ${userLocation.longitude}`);
-      }
-    } catch (error) {
-      console.error('Error getting user location:', error.message);
-      console.log('Will use default search without location filtering');
-      
-      // Use fallback location if ipapi fails
-      userLocation = {
-        latitude: 40.7128,
-        longitude: -74.0060,
-        city: "New York",
-        region: "NY",
-        country: "United States"
-      };
-      console.log('Using fallback location:', userLocation.city);
+    // Try to get cached events first
+    const cacheKey = `events-${userLocation?.latitude?.toFixed(2)}-${userLocation?.longitude?.toFixed(2)}`;
+    const cachedEvents = await getCachedData(cacheKey);
+    
+    if (cachedEvents) {
+      console.log(`Using ${cachedEvents.length} cached events`);
+      return res.status(200).json(cachedEvents);
     }
     
-    // Get user taste data to calculate match percentages
-    let userTaste;
-    try {
-      // Check for cached user taste data
-      const cachedTaste = await getCachedData('events/user-taste', {});
-      
-      if (cachedTaste) {
-        userTaste = cachedTaste;
-        console.log('Using cached user taste data');
-      } else {
-        const userTasteResponse = await axios.get(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/spotify/user-taste`);
-        userTaste = userTasteResponse.data;
-        
-        // Cache user taste data for 24 hours (86400 seconds)
-        await cacheData('events/user-taste', {}, userTaste, 86400);
-        
-        console.log('Successfully fetched user taste data');
-      }
-    } catch (error) {
-      console.error('Error fetching user taste data:', error.message);
-      // Continue with default taste data if user taste can't be fetched
-      userTaste = {
-        genres: [
-          { name: 'House', score: 85 },
-          { name: 'Techno', score: 70 },
-          { name: 'Trance', score: 60 },
-          { name: 'Dubstep', score: 40 },
-          { name: 'Drum & Bass', score: 75 },
-          { name: 'Future Bass', score: 55 }
-        ]
-      };
-      console.log('Using default taste data instead');
-    }
-    
-    // Extract user's top genres for matching
-    const userGenres = userTaste.genres ? 
-      userTaste.genres.map(genre => genre.name.toLowerCase()) : 
-      ['house', 'techno', 'trance', 'electronic', 'dance'];
-    
-    console.log('User genres for matching:', userGenres);
-    
-    // Initialize arrays for events from different sources
+    // Fetch events from Ticketmaster API
     let ticketmasterEvents = [];
-    let edmtrainEvents = [];
     let ticketmasterError = null;
-    let edmtrainError = null;
     
-    // Fetch from Ticketmaster API
     if (ticketmasterApiKey) {
       try {
-        // Check for cached Ticketmaster events
-        const cacheParams = {
-          lat: userLocation.latitude,
-          lon: userLocation.longitude
-        };
-        const cachedTicketmaster = await getCachedData('ticketmaster/events', cacheParams);
+        console.log("Making Ticketmaster API request...");
         
-        if (cachedTicketmaster) {
-          console.log('Using cached Ticketmaster events');
-          ticketmasterEvents = cachedTicketmaster;
-        } else {
-          console.log('Making Ticketmaster API request...');
-          
-          // Set up parameters for Ticketmaster API
-          const params = {
-            apikey: ticketmasterApiKey,
-            classificationName: 'music',
-            // Broader keyword search to catch more EDM events
-            keyword: 'electronic OR dance OR dj OR festival OR rave',
-            size: 100, // Increased from 50 to get more results
-            sort: 'date,asc',
-            startDateTime: new Date().toISOString().slice(0, 19) + 'Z' // Current time in ISO format
-          };
-          
-          // Add location parameters if user location is available
-          if (userLocation) {
-      if (userLocation && userLocation.latitude && userLocation.longitude) {
-        params.latlong = `${userLocation.latitude},${userLocation.longitude}`;
-        params.radius = "100"; // 100 mile radius
-        params.unit = "miles";
-        console.log(`Adding location filter: ${params.latlong}, radius: ${params.radius} miles`);
-      } else {
-        console.log("No valid location data available, skipping location filter");
-      }
-            params.radius = '100'; // 100 mile radius
-            params.unit = 'miles';
-            console.log(`Adding location filter: ${params.latlong}, radius: ${params.radius} miles`);
-          }
-          
-          console.log('Ticketmaster API request params:', JSON.stringify(params));
-          
-          const response = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', { 
-            params,
-            timeout: 15000 // 15 second timeout
-          });
-          
-          console.log('Ticketmaster API request successful');
-          
-          // Check if we have events in the response
-          if (response.data._embedded && response.data._embedded.events) {
-            ticketmasterEvents = response.data._embedded.events;
-            
-            // Cache Ticketmaster events for 12 hours (43200 seconds)
-            await cacheData('ticketmaster/events', cacheParams, ticketmasterEvents, 43200);
-            
-            console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster`);
-          } else {
-            console.log('No events found in Ticketmaster response');
-            ticketmasterError = 'No events found from Ticketmaster';
-            
-            // Try one more time with a simpler query
-            console.log('Retrying with simpler query...');
-            params.keyword = 'electronic';
-            delete params.classificationName; // Remove classification to broaden search
-            
-            const retryResponse = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', { 
-              params,
-              timeout: 15000
-            });
-            
-            if (retryResponse.data._embedded && retryResponse.data._embedded.events) {
-              ticketmasterEvents = retryResponse.data._embedded.events;
-              
-              // Cache Ticketmaster events for 12 hours (43200 seconds)
-              await cacheData('ticketmaster/events', cacheParams, ticketmasterEvents, 43200);
-              
-              console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster retry`);
-              ticketmasterError = null;
-            } else {
-              console.log('No events found in Ticketmaster retry response');
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Ticketmaster API request failed:', error.message);
-        ticketmasterError = error.message;
-        
-        // Try one more time with a simpler query
-        try {
-      console.log("Retrying with simpler query after error...");
-      try {
-        const retryParams = {
+        // Prepare parameters for Ticketmaster API
+        const params = {
           apikey: ticketmasterApiKey,
-          keyword: "electronic",
-          size: 50,
+          classificationName: "music",
+          keyword: "electronic OR dance OR dj OR festival OR rave",
+          size: 100,
           sort: "date,asc",
           startDateTime: new Date().toISOString().slice(0, 19) + "Z"
         };
         
-        // Only add location if we have valid coordinates
+        // Add location parameters if available
         if (userLocation && userLocation.latitude && userLocation.longitude) {
-          retryParams.latlong = `${userLocation.latitude},${userLocation.longitude}`;
-          retryParams.radius = "100";
-          retryParams.unit = "miles";
+          params.latlong = `${userLocation.latitude},${userLocation.longitude}`;
+          params.radius = "100"; // 100 mile radius
+          params.unit = "miles";
+          console.log(`Adding location filter: ${params.latlong}, radius: ${params.radius} miles`);
+        } else {
+          console.log("No valid location data available, using Toronto coordinates");
+          params.latlong = "43.6532,-79.3832"; // Toronto coordinates
+          params.radius = "100";
+          params.unit = "miles";
         }
         
-        console.log("Ticketmaster retry params:", JSON.stringify(retryParams));
+        console.log("Ticketmaster API request params:", JSON.stringify(params));
         
-        const retryResponse = await axios.get("https://app.ticketmaster.com/discovery/v2/events.json", { 
-          params: retryParams,
+        const response = await axios.get("https://app.ticketmaster.com/discovery/v2/events.json", { 
+          params,
           timeout: 15000
         });
         
-        if (retryResponse.data._embedded && retryResponse.data._embedded.events) {
-          ticketmasterEvents = retryResponse.data._embedded.events;
+        if (response.data._embedded && response.data._embedded.events) {
+          ticketmasterEvents = response.data._embedded.events;
+          console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster`);
           
           // Cache Ticketmaster events for 12 hours (43200 seconds)
           await cacheData("ticketmaster/events", {
             lat: userLocation?.latitude,
             lon: userLocation?.longitude
           }, ticketmasterEvents, 43200);
-          
-          console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster retry after error`);
-          ticketmasterError = null;
         } else {
-          console.log("No events found in Ticketmaster retry response after error");
+          console.log("No events found in Ticketmaster response");
         }
-      } catch (retryError) {
-        console.error("Ticketmaster retry also failed:", retryError.message);
-        ticketmasterError = `${error.message} (retry also failed: ${retryError.message})`;
-      }
+      } catch (error) {
+        console.error("Ticketmaster API request failed:", error.message);
+        ticketmasterError = error.message;
+        
+        console.log("Retrying with simpler query after error...");
+        try {
+          const retryParams = {
+            apikey: ticketmasterApiKey,
+            keyword: "electronic",
+            size: 50,
+            sort: "date,asc",
+            startDateTime: new Date().toISOString().slice(0, 19) + "Z"
+          };
           
-          const retryResponse = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', { 
-            params,
+          // Only add location if we have valid coordinates
+          if (userLocation && userLocation.latitude && userLocation.longitude) {
+            retryParams.latlong = `${userLocation.latitude},${userLocation.longitude}`;
+            retryParams.radius = "100";
+            retryParams.unit = "miles";
+          } else {
+            // Use Toronto coordinates as fallback
+            retryParams.latlong = "43.6532,-79.3832"; // Toronto coordinates
+            retryParams.radius = "100";
+            retryParams.unit = "miles";
+          }
+          
+          console.log("Ticketmaster retry params:", JSON.stringify(retryParams));
+          
+          const retryResponse = await axios.get("https://app.ticketmaster.com/discovery/v2/events.json", { 
+            params: retryParams,
             timeout: 15000
           });
           
@@ -268,345 +116,310 @@ export default async function handler(req, res) {
             ticketmasterEvents = retryResponse.data._embedded.events;
             
             // Cache Ticketmaster events for 12 hours (43200 seconds)
-            await cacheData('ticketmaster/events', {
-              lat: userLocation.latitude,
-              lon: userLocation.longitude
+            await cacheData("ticketmaster/events", {
+              lat: userLocation?.latitude,
+              lon: userLocation?.longitude
             }, ticketmasterEvents, 43200);
             
             console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster retry after error`);
             ticketmasterError = null;
           } else {
-            console.log('No events found in Ticketmaster retry response after error');
+            console.log("No events found in Ticketmaster retry response after error");
           }
         } catch (retryError) {
-          console.error('Ticketmaster retry also failed:', retryError.message);
+          console.error("Ticketmaster retry also failed:", retryError.message);
           ticketmasterError = `${error.message} (retry also failed: ${retryError.message})`;
         }
       }
-    } else {
-      console.log('Skipping Ticketmaster API call - no API key configured');
-      ticketmasterError = 'Ticketmaster API key not configured';
     }
     
-    // Process Ticketmaster events if available
-    const processedTicketmasterEvents = ticketmasterEvents.map(event => {
-      // Extract event genres
-      let eventGenres = [];
-      if (event.classifications && event.classifications.length > 0) {
-        const classification = event.classifications[0];
-        if (classification.genre && classification.genre.name !== 'Undefined') {
-          eventGenres.push(classification.genre.name);
-        }
-        if (classification.subGenre && classification.subGenre.name !== 'Undefined') {
-          eventGenres.push(classification.subGenre.name);
-        }
-        if (classification.segment && classification.segment.name !== 'Undefined') {
-          eventGenres.push(classification.segment.name);
-        }
-      }
-      
-      // If no genres found, extract from name or use defaults
-      if (eventGenres.length === 0) {
-        const eventName = event.name.toLowerCase();
-        if (eventName.includes('techno')) eventGenres.push('Techno');
-        if (eventName.includes('house')) eventGenres.push('House');
-        if (eventName.includes('trance')) eventGenres.push('Trance');
-        if (eventName.includes('dubstep')) eventGenres.push('Dubstep');
-        if (eventName.includes('drum') && eventName.includes('bass')) eventGenres.push('Drum & Bass');
-        if (eventName.includes('edm')) eventGenres.push('EDM');
-        if (eventName.includes('dj')) eventGenres.push('DJ');
-        if (eventName.includes('electronic')) eventGenres.push('Electronic');
-        if (eventName.includes('dance')) eventGenres.push('Dance');
-        if (eventName.includes('festival')) eventGenres.push('Festival');
-        
-        // If still no genres, use default
-        if (eventGenres.length === 0) {
-          eventGenres = ['Electronic', 'Dance'];
-        }
-      }
-      
-      // Calculate match percentage
-      let matchScore = 0;
-      let matchCount = 0;
-      
-      eventGenres.forEach(eventGenre => {
-        const normalizedEventGenre = eventGenre.toLowerCase();
-        
-        userGenres.forEach((userGenre, index) => {
-          // Check for partial matches in genre names
-          if (normalizedEventGenre.includes(userGenre) || userGenre.includes(normalizedEventGenre)) {
-            // Weight the match by the genre's importance to the user
-            const genreWeight = userTaste.genres && userTaste.genres[index] ? 
-              userTaste.genres[index].score / 100 : 0.5;
-            matchScore += genreWeight;
-            matchCount++;
-          }
-        });
-      });
-      
-      // Calculate final match percentage
-      let match = 0;
-      if (matchCount > 0) {
-        match = Math.round((matchScore / matchCount) * 100);
-      } else {
-        // Base match for all EDM events
-        match = 20;
-      }
-      
-      // Ensure match is between 0-100
-      match = Math.max(0, Math.min(100, match));
-      
-      // Extract venue information
-      const venue = event._embedded?.venues?.[0] || {};
-      
-      // Calculate distance from user if location is available
-      let distance = null;
-      if (userLocation && venue.location) {
-        distance = calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          parseFloat(venue.location.latitude),
-          parseFloat(venue.location.longitude)
-        );
-      }
-      
-      // Format event data
-      return {
-        id: event.id,
-        source: 'ticketmaster',
-        name: event.name,
-        date: event.dates.start.dateTime,
-        image: event.images && event.images.length > 0 
-          ? event.images.find(img => img.ratio === '16_9')?.url || event.images[0].url 
-          : null,
-        venue: {
-          id: venue.id,
-          name: venue.name || 'Unknown Venue',
-          location: venue.city ? `${venue.city.name}, ${venue.state?.stateCode || ''}` : 'Location Unknown',
-          address: venue.address?.line1,
-          coordinates: venue.location ? {
-            latitude: venue.location.latitude,
-            longitude: venue.location.longitude
-          } : null
-        },
-        genres: eventGenres,
-        match: match,
-        ticketLink: event.url,
-        distance: distance
-      };
-    });
+    // Fetch events from EDMtrain API
+    let edmtrainEvents = [];
+    let edmtrainError = null;
     
-    // Fetch from EDMtrain API
     if (edmtrainApiKey) {
       try {
-        // Check for cached EDMtrain events
-        const cacheParams = {
-          lat: userLocation.latitude,
-          lon: userLocation.longitude
-        };
-        const cachedEdmtrain = await getCachedData('edmtrain/events', cacheParams);
+        console.log("Fetching events from EDMtrain API...");
         
-        if (cachedEdmtrain) {
-          console.log('Using cached EDMtrain events');
-          edmtrainEvents = cachedEdmtrain;
+        // Prepare parameters for EDMtrain API
+        const params = {
+          client: edmtrainApiKey,
+          radius: 100 // 100 mile radius
+        };
+        
+        // Add location parameters if available
+        if (userLocation && userLocation.latitude && userLocation.longitude) {
+          params.latitude = userLocation.latitude;
+          params.longitude = userLocation.longitude;
         } else {
-          console.log('Fetching events from EDMtrain API...');
+          // Use Toronto coordinates as fallback
+          params.latitude = 43.6532; // Toronto latitude
+          params.longitude = -79.3832; // Toronto longitude
+        }
+        
+        console.log("EDMtrain API request params:", JSON.stringify(params));
+        
+        const response = await axios.get("https://edmtrain.com/api/events", { 
+          params,
+          timeout: 15000
+        });
+        
+        if (response.data && response.data.data) {
+          edmtrainEvents = response.data.data;
+          console.log(`Found ${edmtrainEvents.length} events from EDMtrain`);
           
-          // Construct EDMtrain API request
-          let edmtrainUrl = 'https://edmtrain.com/api/events';
-          let edmtrainParams = { client: edmtrainApiKey };
+          // Cache EDMtrain events for 12 hours (43200 seconds)
+          await cacheData("edmtrain/events", {
+            lat: userLocation?.latitude,
+            lon: userLocation?.longitude
+          }, edmtrainEvents, 43200);
+        } else {
+          console.log("No events found in EDMtrain response");
+        }
+      } catch (error) {
+        console.error("EDMtrain API request failed:", error.message);
+        edmtrainError = error.message;
+      }
+    }
+    
+    // Process and combine events from both sources
+    const processedEvents = [];
+    
+    // Process Ticketmaster events
+    if (ticketmasterEvents.length > 0) {
+      for (const event of ticketmasterEvents) {
+        try {
+          // Skip non-music events
+          if (!event.classifications || !event.classifications.some(c => c.segment && c.segment.name === "Music")) {
+            continue;
+          }
           
-          // Add location parameters if available
-          if (userLocation) {
-            if (userLocation.city && userLocation.region) {
-              edmtrainParams.city = userLocation.city;
-              edmtrainParams.state = userLocation.region;
-            } else {
-              // Use latitude/longitude with radius
-              edmtrainParams.latitude = userLocation.latitude;
-              edmtrainParams.longitude = userLocation.longitude;
-              edmtrainParams.radius = 100; // 100 mile radius
+          // Extract venue information
+          const venue = event._embedded?.venues?.[0] || {};
+          const venueLocation = venue.location ? {
+            latitude: parseFloat(venue.location.latitude),
+            longitude: parseFloat(venue.location.longitude)
+          } : null;
+          
+          // Extract date information
+          const startDate = event.dates?.start?.dateTime ? new Date(event.dates.start.dateTime) : null;
+          
+          // Skip past events
+          if (startDate && startDate < new Date()) {
+            continue;
+          }
+          
+          // Extract genre information
+          const genres = [];
+          if (event.classifications) {
+            for (const classification of event.classifications) {
+              if (classification.genre && classification.genre.name && classification.genre.name !== "Undefined") {
+                genres.push(classification.genre.name.toLowerCase());
+              }
+              if (classification.subGenre && classification.subGenre.name && classification.subGenre.name !== "Undefined") {
+                genres.push(classification.subGenre.name.toLowerCase());
+              }
             }
           }
           
-          console.log('EDMtrain API request params:', JSON.stringify(edmtrainParams));
+          // Create processed event object
+          const processedEvent = {
+            id: event.id,
+            name: event.name,
+            url: event.url,
+            date: startDate ? startDate.toISOString() : null,
+            venue: {
+              name: venue.name || "Unknown Venue",
+              city: venue.city?.name || "Unknown City",
+              state: venue.state?.name || "Unknown State",
+              country: venue.country?.name || "Unknown Country",
+              address: venue.address?.line1 || "",
+              location: venueLocation
+            },
+            artists: event._embedded?.attractions?.map(a => ({
+              name: a.name,
+              url: a.url || null,
+              image: a.images && a.images.length > 0 ? a.images[0].url : null
+            })) || [],
+            genres: genres,
+            source: "ticketmaster",
+            sourceData: event,
+            liveData: true
+          };
           
-          const edmtrainResponse = await axios.get(edmtrainUrl, { 
-            params: edmtrainParams,
-            timeout: 15000
-          });
-          
-          if (edmtrainResponse.data && edmtrainResponse.data.data) {
-            edmtrainEvents = edmtrainResponse.data.data;
-            
-            // Cache EDMtrain events for 12 hours (43200 seconds)
-            await cacheData('edmtrain/events', cacheParams, edmtrainEvents, 43200);
-            
-            console.log(`Found ${edmtrainEvents.length} events from EDMtrain`);
-          } else {
-            console.log('No events found in EDMtrain response');
-            edmtrainError = 'No events found from EDMtrain';
-          }
-        }
-      } catch (error) {
-        console.error('EDMtrain API request failed:', error.message);
-        edmtrainError = error.message;
-        
-        // Try one more time with a simpler query
-        try {
-          console.log('Retrying EDMtrain with simpler query...');
-          const edmtrainUrl = 'https://edmtrain.com/api/events';
-          const edmtrainParams = { client: edmtrainApiKey };
-          
-          const retryResponse = await axios.get(edmtrainUrl, { 
-            params: edmtrainParams,
-            timeout: 15000
-          });
-          
-          if (retryResponse.data && retryResponse.data.data) {
-            edmtrainEvents = retryResponse.data.data;
-            
-            // Cache EDMtrain events for 12 hours (43200 seconds)
-            await cacheData('edmtrain/events', {
-              lat: userLocation.latitude,
-              lon: userLocation.longitude
-            }, edmtrainEvents, 43200);
-            
-            console.log(`Found ${edmtrainEvents.length} events from EDMtrain retry`);
-            edmtrainError = null;
-          } else {
-            console.log('No events found in EDMtrain retry response');
-          }
-        } catch (retryError) {
-          console.error('EDMtrain retry also failed:', retryError.message);
-          edmtrainError = `${error.message} (retry also failed: ${retryError.message})`;
+          processedEvents.push(processedEvent);
+        } catch (error) {
+          console.error("Error processing Ticketmaster event:", error);
         }
       }
-    } else {
-      console.log('Skipping EDMtrain API call - no API key configured');
-      edmtrainError = 'EDMtrain API key not configured';
     }
     
     // Process EDMtrain events
-    const processedEdmtrainEvents = edmtrainEvents.map(event => {
-      // Extract genres from artists
-      let eventGenres = [];
-      if (event.artistList && event.artistList.length > 0) {
-        event.artistList.forEach(artist => {
-          if (artist.genre) {
-            eventGenres.push(artist.genre);
+    if (edmtrainEvents.length > 0) {
+      for (const event of edmtrainEvents) {
+        try {
+          // Skip events without venue
+          if (!event.venue) {
+            continue;
           }
-        });
-      }
-      
-      // If no genres found, use default EDM genres
-      if (eventGenres.length === 0) {
-        eventGenres = ['Electronic', 'Dance'];
-      }
-      
-      // Calculate match percentage
-      let matchScore = 0;
-      let matchCount = 0;
-      
-      eventGenres.forEach(eventGenre => {
-        const normalizedEventGenre = eventGenre.toLowerCase();
-        
-        userGenres.forEach((userGenre, index) => {
-          // Check for partial matches in genre names
-          if (normalizedEventGenre.includes(userGenre) || userGenre.includes(normalizedEventGenre)) {
-            // Weight the match by the genre's importance to the user
-            const genreWeight = userTaste.genres && userTaste.genres[index] ? 
-              userTaste.genres[index].score / 100 : 0.5;
-            matchScore += genreWeight;
-            matchCount++;
+          
+          // Extract venue location
+          const venueLocation = event.venue.latitude && event.venue.longitude ? {
+            latitude: event.venue.latitude,
+            longitude: event.venue.longitude
+          } : null;
+          
+          // Extract date information
+          const startDate = event.date ? new Date(event.date) : null;
+          
+          // Skip past events
+          if (startDate && startDate < new Date()) {
+            continue;
           }
-        });
-      });
-      
-      // Calculate final match percentage
-      let match = 0;
-      if (matchCount > 0) {
-        match = Math.round((matchScore / matchCount) * 100);
-      } else {
-        // Base match for all EDM events
-        match = 20;
-      }
-      
-      // Ensure match is between 0-100
-      match = Math.max(0, Math.min(100, match));
-      
-      // Extract venue information
-      const venue = event.venue || {};
-      
-      // Calculate distance from user if location is available
-      let distance = null;
-      if (userLocation && venue.latitude && venue.longitude) {
-        distance = calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          parseFloat(venue.latitude),
-          parseFloat(venue.longitude)
-        );
-      }
-      
-      // Extract artists
-      const artists = event.artistList ? event.artistList.map(artist => artist.name) : [];
-      
-      // Format event data
-      return {
-        id: `edmtrain-${event.id}`,
-        source: 'edmtrain',
-        name: event.name || artists.join(' & ') || 'EDM Event',
-        date: event.date,
-        image: null, // EDMtrain doesn't provide images
-        venue: {
-          id: `venue-${venue.id}`,
-          name: venue.name || 'Unknown Venue',
-          location: venue.location || 'Location Unknown',
-          address: venue.address,
-          coordinates: venue.latitude && venue.longitude ? {
-            latitude: venue.latitude,
-            longitude: venue.longitude
-          } : null
-        },
-        genres: eventGenres,
-        match: match,
-        ticketLink: event.ticketLink,
-        distance: distance,
-        artists: artists
-      };
-    });
-    
-    // Combine events from both sources
-    const allEvents = [...processedTicketmasterEvents, ...processedEdmtrainEvents];
-    
-    // Sort events by match percentage (highest first)
-    allEvents.sort((a, b) => b.match - a.match);
-    
-    // Return events
-    return res.status(200).json({
-      success: true,
-      events: allEvents,
-      userLocation,
-      sources: {
-        ticketmaster: {
-          success: !ticketmasterError,
-          error: ticketmasterError,
-          count: processedTicketmasterEvents.length
-        },
-        edmtrain: {
-          success: !edmtrainError,
-          error: edmtrainError,
-          count: processedEdmtrainEvents.length
+          
+          // Create processed event object
+          const processedEvent = {
+            id: `edmtrain-${event.id}`,
+            name: event.name || "EDM Event",
+            url: `https://edmtrain.com/event/${event.id}`,
+            date: startDate ? startDate.toISOString() : null,
+            venue: {
+              name: event.venue.name || "Unknown Venue",
+              city: event.venue.location || "Unknown City",
+              state: event.venue.state || "Unknown State",
+              country: "United States", // EDMtrain only covers US events
+              address: `${event.venue.address || ""}, ${event.venue.location || ""}, ${event.venue.state || ""}`,
+              location: venueLocation
+            },
+            artists: event.artistList?.map(a => ({
+              name: a.name,
+              url: `https://edmtrain.com/artist/${a.id}`,
+              image: null
+            })) || [],
+            genres: ["electronic dance music"], // EDMtrain doesn't provide specific genres
+            source: "edmtrain",
+            sourceData: event,
+            liveData: true
+          };
+          
+          processedEvents.push(processedEvent);
+        } catch (error) {
+          console.error("Error processing EDMtrain event:", error);
         }
       }
+    }
+    
+    // Add some sample events if we don't have enough real events
+    if (processedEvents.length < 10) {
+      console.log("Adding sample events to supplement real events");
+      
+      const sampleEvents = getSampleEvents(userLocation);
+      processedEvents.push(...sampleEvents);
+    }
+    
+    // Sort events by date
+    processedEvents.sort((a, b) => {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return new Date(a.date) - new Date(b.date);
     });
+    
+    // Cache the combined events for 1 hour (3600 seconds)
+    await cacheData(cacheKey, null, processedEvents, 3600);
+    
+    // Return the combined events
+    return res.status(200).json(processedEvents);
   } catch (error) {
-    console.error('Error in events API:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Internal server error',
-      message: error.message
+    console.error("Error in events API:", error);
+    return res.status(500).json({ error: "Failed to fetch events" });
+  }
+}
+
+// Function to generate sample events
+function getSampleEvents(userLocation) {
+  const now = new Date();
+  const sampleEvents = [];
+  
+  // Toronto venues for sample events
+  const torontoVenues = [
+    {
+      name: "REBEL",
+      city: "Toronto",
+      state: "Ontario",
+      country: "Canada",
+      address: "11 Polson St, Toronto, ON M5A 1A4",
+      location: { latitude: 43.6453, longitude: -79.3571 }
+    },
+    {
+      name: "CODA",
+      city: "Toronto",
+      state: "Ontario",
+      country: "Canada",
+      address: "794 Bathurst St, Toronto, ON M5S 2R6",
+      location: { latitude: 43.6647, longitude: -79.4125 }
+    },
+    {
+      name: "The Danforth Music Hall",
+      city: "Toronto",
+      state: "Ontario",
+      country: "Canada",
+      address: "147 Danforth Ave, Toronto, ON M4K 1N2",
+      location: { latitude: 43.6768, longitude: -79.3530 }
+    },
+    {
+      name: "Velvet Underground",
+      city: "Toronto",
+      state: "Ontario",
+      country: "Canada",
+      address: "508 Queen St W, Toronto, ON M5V 2B3",
+      location: { latitude: 43.6487, longitude: -79.3975 }
+    }
+  ];
+  
+  // Sample artists
+  const sampleArtists = [
+    { name: "Melodic Techno Night", genres: ["melodic techno", "deep house"] },
+    { name: "Summer House Festival", genres: ["house", "tech house"] },
+    { name: "Progressive Dreams", genres: ["progressive house", "melodic house"] },
+    { name: "Techno Warehouse Night", genres: ["techno", "industrial techno"] },
+    { name: "Bass Music Showcase", genres: ["dubstep", "trap", "bass"] },
+    { name: "Trance Journey", genres: ["trance", "progressive trance"] },
+    { name: "Drum & Bass Collective", genres: ["drum & bass", "jungle"] },
+    { name: "Future Bass Experience", genres: ["future bass", "electronic"] }
+  ];
+  
+  // Generate 8 sample events
+  for (let i = 0; i < 8; i++) {
+    const eventDate = new Date(now);
+    eventDate.setDate(eventDate.getDate() + 7 + i * 3); // Events starting in a week, 3 days apart
+    
+    const venue = torontoVenues[i % torontoVenues.length];
+    const artistInfo = sampleArtists[i % sampleArtists.length];
+    
+    // Create featured artists
+    const featuredArtists = [];
+    const artistCount = 2 + Math.floor(Math.random() * 3); // 2-4 artists
+    
+    for (let j = 0; j < artistCount; j++) {
+      featuredArtists.push({
+        name: ["Tale of Us", "Mind Against", "Mathame", "Charlotte de Witte", "Amelie Lens", "FJAAK", "Disclosure", "Kayranada", "The Blessed Madonna", "Hernan Cattaneo", "Nick Warren", "Guy J"][Math.floor(Math.random() * 12)],
+        url: null,
+        image: null
+      });
+    }
+    
+    sampleEvents.push({
+      id: `sample-${i}`,
+      name: artistInfo.name,
+      url: null,
+      date: eventDate.toISOString(),
+      venue: venue,
+      artists: featuredArtists,
+      genres: artistInfo.genres,
+      source: "sample",
+      liveData: false
     });
   }
+  
+  return sampleEvents;
 }
