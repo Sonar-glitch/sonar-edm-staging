@@ -1,16 +1,13 @@
-// /c/sonar/users/sonar-edm-user/next.config.js
-const path = require('path');
-
-module.exports = {
-  webpack: (config) => {
-    config.resolve.alias['@'] = path.resolve(__dirname);
-    return config;
-  },
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
   experimental: {
-    optimizeCss: true,
+    // Disable experimental features that might cause issues
+    appDir: false,
+    optimizeCss: false,
+    serverComponentsExternalPackages: [],
   },
-  images: {
-    domains: ['i.scdn.co', 'mosaic.scdn.co', 'platform-lookaside.fbsbx.com', 'image-cdn-fa.spotifycdn.com'],
-    minimumCacheTTL: 1800,
-  },
-};
+}
+
+module.exports = nextConfig
