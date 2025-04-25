@@ -1,4 +1,4 @@
-// pages/api/spotify/user-taste.js - Update with better error handling and fallbacks
+// pages/api/spotify/user-taste.js - Fixed version with improved token handling
 
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
@@ -6,6 +6,7 @@ import {
   getTopArtists,
   getTopTracks,
   getAudioFeaturesForTracks,
+  refreshAccessToken
 } from "@/lib/spotify";
 import { getTopGenres, getSeasonalMood } from "@/lib/moodUtils";
 
@@ -51,30 +52,44 @@ export default async function handler(req, res) {
     const session = await getServerSession(req, res, authOptions);
 
     if (!session) {
+      console.log("No session found, returning 401");
       return res.status(401).json({ error: "Not authenticated" });
     }
 
-    const token = session.accessToken;
+    let token = session.accessToken;
     
     if (!token) {
       console.log("Missing access token in session");
-      return res.status(200).json(FALLBACK_DATA);
+      return res.status(401).json({ error: "No access token available" });
+    }
+
+    // Check if token is expired and refresh if needed
+    if (session.expires && new Date(session.expires) < new Date()) {
+      console.log("Token expired, attempting to refresh...");
+      try {
+        const refreshedSession = await refreshAccessToken(session);
+        if (refreshedSession && refreshedSession.accessToken) {
+          token = refreshedSession.accessToken;
+          console.log("Token refreshed successfully");
+        } else {
+          console.log("Token refresh failed");
+          return res.status(401).json({ error: "Authentication expired" });
+        }
+      } catch (refreshError) {
+        console.error("Error refreshing token:", refreshError);
+        return res.status(401).json({ error: "Authentication refresh failed" });
+      }
     }
 
     try {
       // Attempt to fetch data from Spotify
+      console.log("Fetching data from Spotify API...");
       const [topArtists, topTracks] = await Promise.all([
-        getTopArtists(token).catch(error => {
-          console.log("Error fetching top artists:", error.message);
-          return FALLBACK_DATA.artists;
-        }),
-        getTopTracks(token).catch(error => {
-          console.log("Error fetching top tracks:", error.message);
-          return FALLBACK_DATA.tracks;
-        })
+        getTopArtists(token),
+        getTopTracks(token)
       ]);
 
-      // Extract track IDs (with fallback handling)
+      // Extract track IDs
       const trackIds = topTracks?.items?.map(track => track.id).slice(0, 10) || [];
       
       // Attempt to get audio features only if we have track IDs
@@ -85,12 +100,7 @@ export default async function handler(req, res) {
           audioFeatures = featuresResponse.audio_features;
         } catch (error) {
           console.log("Error fetching audio features:", error.message);
-          // Create synthetic audio features for fallback
-          audioFeatures = trackIds.map(() => ({
-            valence: 0.6,
-            energy: 0.7,
-            danceability: 0.65
-          }));
+          // Continue without audio features
         }
       }
 
@@ -105,6 +115,7 @@ export default async function handler(req, res) {
         : FALLBACK_DATA.mood;
 
       // Return the complete data
+      console.log("Successfully fetched user taste data from Spotify");
       return res.status(200).json({
         artists: topArtists,
         tracks: topTracks,
@@ -113,12 +124,24 @@ export default async function handler(req, res) {
         genreProfile
       });
     } catch (error) {
-      console.error("API Failure:", error);
-      // Return fallback data on any error
+      console.error("Spotify API Failure:", error);
+      
+      // Check for specific error types
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        if (error.response.status === 401) {
+          console.log("Authentication error with Spotify API");
+          return res.status(401).json({ error: "Spotify authentication failed" });
+        }
+      }
+      
+      // For other errors, return fallback data with 200 status
+      console.log("Using fallback data due to API error");
       return res.status(200).json(FALLBACK_DATA);
     }
   } catch (error) {
     console.error("Unhandled error:", error);
-    return res.status(200).json(FALLBACK_DATA);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

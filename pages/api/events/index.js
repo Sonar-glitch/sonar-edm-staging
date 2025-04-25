@@ -153,7 +153,14 @@ export default async function handler(req, res) {
           
           // Add location parameters if user location is available
           if (userLocation) {
-            params.latlong = `${userLocation.latitude},${userLocation.longitude}`;
+      if (userLocation && userLocation.latitude && userLocation.longitude) {
+        params.latlong = `${userLocation.latitude},${userLocation.longitude}`;
+        params.radius = "100"; // 100 mile radius
+        params.unit = "miles";
+        console.log(`Adding location filter: ${params.latlong}, radius: ${params.radius} miles`);
+      } else {
+        console.log("No valid location data available, skipping location filter");
+      }
             params.radius = '100'; // 100 mile radius
             params.unit = 'miles';
             console.log(`Adding location filter: ${params.latlong}, radius: ${params.radius} miles`);
@@ -209,14 +216,48 @@ export default async function handler(req, res) {
         
         // Try one more time with a simpler query
         try {
-          console.log('Retrying with simpler query after error...');
-          const params = {
-            apikey: ticketmasterApiKey,
-            keyword: 'electronic',
-            size: 50,
-            sort: 'date,asc',
-            startDateTime: new Date().toISOString().slice(0, 19) + 'Z'
-          };
+      console.log("Retrying with simpler query after error...");
+      try {
+        const retryParams = {
+          apikey: ticketmasterApiKey,
+          keyword: "electronic",
+          size: 50,
+          sort: "date,asc",
+          startDateTime: new Date().toISOString().slice(0, 19) + "Z"
+        };
+        
+        // Only add location if we have valid coordinates
+        if (userLocation && userLocation.latitude && userLocation.longitude) {
+          retryParams.latlong = `${userLocation.latitude},${userLocation.longitude}`;
+          retryParams.radius = "100";
+          retryParams.unit = "miles";
+        }
+        
+        console.log("Ticketmaster retry params:", JSON.stringify(retryParams));
+        
+        const retryResponse = await axios.get("https://app.ticketmaster.com/discovery/v2/events.json", { 
+          params: retryParams,
+          timeout: 15000
+        });
+        
+        if (retryResponse.data._embedded && retryResponse.data._embedded.events) {
+          ticketmasterEvents = retryResponse.data._embedded.events;
+          
+          // Cache Ticketmaster events for 12 hours (43200 seconds)
+          await cacheData("ticketmaster/events", {
+            lat: userLocation?.latitude,
+            lon: userLocation?.longitude
+          }, ticketmasterEvents, 43200);
+          
+          console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster retry after error`);
+          ticketmasterError = null;
+        } else {
+          console.log("No events found in Ticketmaster retry response after error");
+        }
+      } catch (retryError) {
+        console.error("Ticketmaster retry also failed:", retryError.message);
+        ticketmasterError = `${error.message} (retry also failed: ${retryError.message})`;
+      }
           
           const retryResponse = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', { 
             params,

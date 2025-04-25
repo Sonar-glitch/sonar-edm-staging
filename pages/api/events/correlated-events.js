@@ -89,11 +89,21 @@ export default async function handler(req, res) {
       } else {
         // In a production environment, you would fetch this from your database
         // For this example, we'll use the API
-        const tasteResponse = await axios.get(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/spotify/user-taste`, {
+        const tasteResponse = await axios.get(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/spotify/user-taste`, {
           headers: {
             Cookie: req.headers.cookie // Forward cookies for authentication
+          },
+          validateStatus: function (status) {
+            return status < 500; // Only treat 500+ errors as actual errors
           }
         });
+        
+        if (tasteResponse.status === 401) {
+          console.log("Authentication required for user taste data");
+          throw new Error("Authentication required");
+        }
+        
+        userTaste = tasteResponse.data;
         
         userTaste = tasteResponse.data;
         
