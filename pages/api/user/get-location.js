@@ -1,15 +1,22 @@
-import { parse } from 'cookie';
 import { getUserLocation } from '@/lib/locationUtils';
 
 export default async function handler(req, res) {
   try {
     // Check if location is in cookies
-    const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
-    const locationCookie = cookies.userLocation;
+    const cookies = req.headers.cookie || '';
+    const cookieObj = cookies.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      if (key && value) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+    
+    const locationCookie = cookieObj.userLocation;
     
     if (locationCookie) {
       try {
-        const locationData = JSON.parse(locationCookie);
+        const locationData = JSON.parse(decodeURIComponent(locationCookie));
         const now = Date.now();
         const locationAge = locationData?.timestamp ? now - locationData.timestamp : Infinity;
         

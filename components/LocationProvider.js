@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { getUserLocationFromBrowser, getUserLocationFromIP } from '@/lib/locationUtils';
-import Cookies from 'js-cookie';
 
 // Create location context
 export const LocationContext = createContext();
@@ -15,19 +14,30 @@ export function LocationProvider({ children }) {
       try {
         setLoading(true);
         
-        // First try browser geolocation
+        // First try to get from localStorage
+        if (typeof window !== 'undefined') {
+          const savedLocation = localStorage.getItem('userLocation');
+          if (savedLocation) {
+            try {
+              const parsedLocation = JSON.parse(savedLocation);
+              setLocation(parsedLocation);
+              setLoading(false);
+              return;
+            } catch (e) {
+              console.error('Error parsing saved location:', e);
+            }
+          }
+        }
+        
+        // Then try browser geolocation
         try {
           const browserLocation = await getUserLocationFromBrowser();
           setLocation(browserLocation);
-          setLoading(false);
           
           // Store location in localStorage for persistence
           if (typeof window !== 'undefined') {
             localStorage.setItem('userLocation', JSON.stringify(browserLocation));
           }
-          
-          // Also store in cookies for server-side access
-          Cookies.set('userLocation', JSON.stringify(browserLocation), { expires: 7 });
           
           // Also send to server for API calls
           try {
@@ -40,6 +50,7 @@ export function LocationProvider({ children }) {
             console.error('Error sending location to server:', e);
           }
           
+          setLoading(false);
           return;
         } catch (browserError) {
           console.log('Browser geolocation failed, trying IP fallback');
@@ -55,9 +66,6 @@ export function LocationProvider({ children }) {
           if (typeof window !== 'undefined') {
             localStorage.setItem('userLocation', JSON.stringify(ipLocation));
           }
-          
-          // Also store in cookies for server-side access
-          Cookies.set('userLocation', JSON.stringify(ipLocation), { expires: 7 });
           
           // Also send to server for API calls
           try {
@@ -75,18 +83,6 @@ export function LocationProvider({ children }) {
       } catch (err) {
         console.error('Location detection error:', err);
         setError(err.message);
-        
-        // Try to get from localStorage as last resort
-        if (typeof window !== 'undefined') {
-          const savedLocation = localStorage.getItem('userLocation');
-          if (savedLocation) {
-            try {
-              setLocation(JSON.parse(savedLocation));
-            } catch (e) {
-              console.error('Error parsing saved location:', e);
-            }
-          }
-        }
       } finally {
         setLoading(false);
       }

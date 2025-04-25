@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { getUserLocation } from '@/lib/locationUtils';
-import { parse } from 'cookie';
 
 export default async function handler(req, res) {
   console.log("Starting Events API handler");
@@ -29,12 +28,20 @@ export default async function handler(req, res) {
     } 
     // Then check if location is in cookies
     else {
-      const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
-      const locationCookie = cookies.userLocation;
+      const cookies = req.headers.cookie || '';
+      const cookieObj = cookies.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        if (key && value) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+      
+      const locationCookie = cookieObj.userLocation;
       
       if (locationCookie) {
         try {
-          userLocation = JSON.parse(locationCookie);
+          userLocation = JSON.parse(decodeURIComponent(locationCookie));
           console.log(`Using location from cookie: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
         } catch (e) {
           console.error('Error parsing location cookie:', e);
@@ -48,6 +55,7 @@ export default async function handler(req, res) {
       console.log(`Detected location: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
     }
     
+    // Rest of the function remains the same...
     // Fetch events from Ticketmaster API
     let ticketmasterEvents = [];
     let ticketmasterError = null;

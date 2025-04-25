@@ -1,5 +1,3 @@
-import { parse, serialize } from 'cookie';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -24,15 +22,7 @@ export default async function handler(req, res) {
     };
     
     // Set cookie with location data
-    const locationCookie = serialize('userLocation', JSON.stringify(locationData), {
-      path: '/',
-      maxAge: 30 * 24 * 60 * 60, // 30 days
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
-    });
-    
-    res.setHeader('Set-Cookie', locationCookie);
+    res.setHeader('Set-Cookie', `userLocation=${JSON.stringify(locationData)}; Path=/; Max-Age=${30 * 24 * 60 * 60}; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
     
     return res.status(200).json({ success: true });
   } catch (error) {

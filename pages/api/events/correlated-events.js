@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { getUserLocation, getDistance } from '@/lib/locationUtils';
-import { parse } from 'cookie';
 
 export default async function handler(req, res) {
   try {
@@ -20,12 +19,20 @@ export default async function handler(req, res) {
     } 
     // Then check if location is in cookies
     else {
-      const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
-      const locationCookie = cookies.userLocation;
+      const cookies = req.headers.cookie || '';
+      const cookieObj = cookies.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        if (key && value) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+      
+      const locationCookie = cookieObj.userLocation;
       
       if (locationCookie) {
         try {
-          userLocation = JSON.parse(locationCookie);
+          userLocation = JSON.parse(decodeURIComponent(locationCookie));
           console.log(`Using location from cookie for correlated events: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
         } catch (e) {
           console.error('Error parsing location cookie:', e);
