@@ -1,17 +1,21 @@
 #!/bin/bash
 
-# TIKO Deployment Script
-# This script deploys the fixed TIKO platform to Heroku
+# TIKO Platform Deployment Script
+# This script commits and deploys the changes to Heroku
 
-echo "Deploying TIKO platform to Heroku..."
+echo "Starting deployment at $(date +%Y%m%d%H%M%S)"
 
-# Add all changes
-git add .
+# Navigate to the project directory
+cd /c/sonar/users/sonar-edm-user || { echo "Error: Could not navigate to project directory"; exit 1; }
 
 # Commit changes
-git commit -m "Fix user flow, implement working music taste page, and fix Ticketmaster API"
+echo "Committing changes..."
+git add .
+git commit -m "Comprehensive fix for Ticketmaster API, user flow, and event functionality"
 
-# Push to Heroku
+# Deploy to Heroku
+echo "Deploying to Heroku..."
 git push heroku main
 
-echo "Deployment complete!"
+echo "Deployment completed at $(date +%Y%m%d%H%M%S)"
+echo "Your TIKO platform is now available at your Heroku URL"
