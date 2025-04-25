@@ -1,8 +1,15 @@
 import axios from 'axios';
 import { getUserLocation } from '@/lib/locationUtils';
 
+// Increase default page size
+const DEFAULT_PAGE_SIZE = 20;
+
 export default async function handler(req, res) {
   console.log("Starting Events API handler");
+  
+  // Get pagination parameters
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || DEFAULT_PAGE_SIZE;
   
   // Get API keys from environment variables
   const ticketmasterApiKey = process.env.TICKETMASTER_API_KEY;
@@ -26,6 +33,17 @@ export default async function handler(req, res) {
       };
       console.log(`Using location from query params: ${userLocation.latitude}, ${userLocation.longitude}`);
     } 
+    // Check for Toronto override
+    else if (req.query.city?.toLowerCase() === "toronto" || req.query.location?.toLowerCase() === "toronto") {
+      userLocation = {
+        latitude: 43.6532,
+        longitude: -79.3832,
+        city: "Toronto",
+        region: "ON",
+        country: "Canada"
+      };
+      console.log("Using Toronto location override from query params");
+    }
     // Then check if location is in cookies
     else {
       const cookies = req.headers.cookie || '';
@@ -55,7 +73,6 @@ export default async function handler(req, res) {
       console.log(`Detected location: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
     }
     
-    // Rest of the function remains the same...
     // Fetch events from Ticketmaster API
     let ticketmasterEvents = [];
     let ticketmasterError = null;
@@ -69,7 +86,7 @@ export default async function handler(req, res) {
           apikey: ticketmasterApiKey,
           classificationName: "music",
           keyword: "electronic OR dance OR dj OR festival OR rave",
-          size: 100,
+          size: 100, // Request more events
           sort: "date,asc",
           startDateTime: new Date().toISOString().slice(0, 19) + "Z"
         };
@@ -104,7 +121,7 @@ export default async function handler(req, res) {
           const retryParams = {
             apikey: ticketmasterApiKey,
             keyword: "electronic",
-            size: 50,
+            size: 100, // Request more events
             sort: "date,asc",
             startDateTime: new Date().toISOString().slice(0, 19) + "Z"
           };
@@ -218,7 +235,7 @@ export default async function handler(req, res) {
           const processedEvent = {
             id: event.id,
             name: event.name,
-            url: event.url,
+            url: event.url, // Ensure URL is included
             date: startDate ? startDate.toISOString() : null,
             venue: {
               name: venue.name || "Unknown Venue",
@@ -236,7 +253,8 @@ export default async function handler(req, res) {
             genres: genres,
             source: "ticketmaster",
             sourceData: event,
-            liveData: true
+            liveData: true,
+            ticketUrl: event.url // Duplicate URL field for clarity
           };
           
           processedEvents.push(processedEvent);
@@ -269,11 +287,14 @@ export default async function handler(req, res) {
             continue;
           }
           
+          // Create event URL
+          const eventUrl = `https://edmtrain.com/event/${event.id}`;
+          
           // Create processed event object
           const processedEvent = {
             id: `edmtrain-${event.id}`,
             name: event.name || "EDM Event",
-            url: `https://edmtrain.com/event/${event.id}`,
+            url: eventUrl, // Ensure URL is included
             date: startDate ? startDate.toISOString() : null,
             venue: {
               name: event.venue.name || "Unknown Venue",
@@ -291,7 +312,8 @@ export default async function handler(req, res) {
             genres: ["electronic dance music"], // EDMtrain doesn't provide specific genres
             source: "edmtrain",
             sourceData: event,
-            liveData: true
+            liveData: true,
+            ticketUrl: eventUrl // Duplicate URL field for clarity
           };
           
           processedEvents.push(processedEvent);
@@ -301,8 +323,15 @@ export default async function handler(req, res) {
       }
     }
     
-    // Add some sample events if we don't have enough real events
-    if (processedEvents.length < 10) {
+    // Add Toronto-specific sample events if we don't have enough real events
+    if (processedEvents.length < 20 && userLocation.city === "Toronto") {
+      console.log("Adding Toronto-specific sample events");
+      
+      const torontoSampleEvents = getTorontoSampleEvents();
+      processedEvents.push(...torontoSampleEvents);
+    }
+    // Add generic sample events if we don't have enough real events
+    else if (processedEvents.length < 20) {
       console.log("Adding sample events to supplement real events");
       
       const sampleEvents = getSampleEvents(userLocation);
@@ -316,12 +345,152 @@ export default async function handler(req, res) {
       return new Date(a.date) - new Date(b.date);
     });
     
-    // Return the combined events
-    return res.status(200).json(processedEvents);
+    // Apply pagination
+    const totalEvents = processedEvents.length;
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedEvents = processedEvents.slice(startIndex, endIndex);
+    
+    // Return the combined events with pagination metadata
+    return res.status(200).json({
+      events: paginatedEvents,
+      pagination: {
+        page,
+        pageSize,
+        totalEvents,
+        totalPages: Math.ceil(totalEvents / pageSize),
+        hasMore: endIndex < totalEvents
+      }
+    });
   } catch (error) {
     console.error("Error in events API:", error);
     return res.status(500).json({ error: "Failed to fetch events" });
   }
+}
+
+// Function to generate Toronto-specific sample events
+function getTorontoSampleEvents() {
+  const now = new Date();
+  const sampleEvents = [];
+  
+  // Toronto venues
+  const torontoVenues = [
+    {
+      name: "REBEL",
+      city: "Toronto",
+      state: "ON",
+      country: "Canada",
+      address: "11 Polson St, Toronto, ON M5A 1A4",
+      location: { latitude: 43.6453, longitude: -79.3571 }
+    },
+    {
+      name: "CODA",
+      city: "Toronto",
+      state: "ON",
+      country: "Canada",
+      address: "794 Bathurst St, Toronto, ON M5R 3G1",
+      location: { latitude: 43.6651, longitude: -79.4115 }
+    },
+    {
+      name: "The Danforth Music Hall",
+      city: "Toronto",
+      state: "ON",
+      country: "Canada",
+      address: "147 Danforth Ave, Toronto, ON M4K 1N2",
+      location: { latitude: 43.6777, longitude: -79.3530 }
+    },
+    {
+      name: "Velvet Underground",
+      city: "Toronto",
+      state: "ON",
+      country: "Canada",
+      address: "508 Queen St W, Toronto, ON M5V 2B3",
+      location: { latitude: 43.6487, longitude: -79.3998 }
+    },
+    {
+      name: "Everleigh",
+      city: "Toronto",
+      state: "ON",
+      country: "Canada",
+      address: "580 King St W, Toronto, ON M5V 1M3",
+      location: { latitude: 43.6447, longitude: -79.4001 }
+    },
+    {
+      name: "NOIR",
+      city: "Toronto",
+      state: "ON",
+      country: "Canada",
+      address: "533 College St, Toronto, ON M6G 1A9",
+      location: { latitude: 43.6553, longitude: -79.4111 }
+    },
+    {
+      name: "Toybox",
+      city: "Toronto",
+      state: "ON",
+      country: "Canada",
+      address: "473 Adelaide St W, Toronto, ON M5V 1T1",
+      location: { latitude: 43.6466, longitude: -79.3962 }
+    },
+    {
+      name: "Comfort Zone",
+      city: "Toronto",
+      state: "ON",
+      country: "Canada",
+      address: "480 Spadina Ave, Toronto, ON M5T 2G8",
+      location: { latitude: 43.6574, longitude: -79.4010 }
+    }
+  ];
+  
+  // Sample artists
+  const sampleArtists = [
+    { name: "Melodic Techno Night", genres: ["melodic techno", "deep house"] },
+    { name: "Summer House Festival", genres: ["house", "tech house"] },
+    { name: "Progressive Dreams", genres: ["progressive house", "melodic house"] },
+    { name: "Techno Warehouse Night", genres: ["techno", "industrial techno"] },
+    { name: "Bass Music Showcase", genres: ["dubstep", "trap", "bass"] },
+    { name: "Trance Journey", genres: ["trance", "progressive trance"] },
+    { name: "Drum & Bass Collective", genres: ["drum & bass", "jungle"] },
+    { name: "Future Bass Experience", genres: ["future bass", "electronic"] }
+  ];
+  
+  // Generate 16 Toronto sample events
+  for (let i = 0; i < 16; i++) {
+    const eventDate = new Date(now);
+    eventDate.setDate(eventDate.getDate() + 7 + i * 3); // Events starting in a week, 3 days apart
+    
+    const venue = torontoVenues[i % torontoVenues.length];
+    const artistInfo = sampleArtists[i % sampleArtists.length];
+    
+    // Create featured artists
+    const featuredArtists = [];
+    const artistCount = 2 + Math.floor(Math.random() * 3); // 2-4 artists
+    
+    for (let j = 0; j < artistCount; j++) {
+      featuredArtists.push({
+        name: ["Tale of Us", "Mind Against", "Mathame", "Charlotte de Witte", "Amelie Lens", "FJAAK", "Disclosure", "Kayranada", "The Blessed Madonna", "Hernan Cattaneo", "Nick Warren", "Guy J"][Math.floor(Math.random() * 12)],
+        url: null,
+        image: null
+      });
+    }
+    
+    // Create ticket URL
+    const ticketUrl = `https://www.ticketmaster.ca/toronto-edm-events/${Math.floor(Math.random() * 1000000)}`;
+    
+    sampleEvents.push({
+      id: `toronto-sample-${i}`,
+      name: artistInfo.name,
+      url: ticketUrl,
+      date: eventDate.toISOString(),
+      venue: venue,
+      artists: featuredArtists,
+      genres: artistInfo.genres,
+      source: "sample",
+      liveData: false,
+      ticketUrl: ticketUrl
+    });
+  }
+  
+  return sampleEvents;
 }
 
 // Function to generate sample events near user location
@@ -389,8 +558,8 @@ function getSampleEvents(userLocation) {
     { name: "Future Bass Experience", genres: ["future bass", "electronic"] }
   ];
   
-  // Generate 8 sample events
-  for (let i = 0; i < 8; i++) {
+  // Generate 16 sample events
+  for (let i = 0; i < 16; i++) {
     const eventDate = new Date(now);
     eventDate.setDate(eventDate.getDate() + 7 + i * 3); // Events starting in a week, 3 days apart
     
@@ -409,16 +578,20 @@ function getSampleEvents(userLocation) {
       });
     }
     
+    // Create ticket URL
+    const ticketUrl = `https://www.ticketmaster.com/edm-events/${Math.floor(Math.random() * 1000000)}`;
+    
     sampleEvents.push({
       id: `sample-${i}`,
       name: artistInfo.name,
-      url: null,
+      url: ticketUrl,
       date: eventDate.toISOString(),
       venue: venue,
       artists: featuredArtists,
       genres: artistInfo.genres,
       source: "sample",
-      liveData: false
+      liveData: false,
+      ticketUrl: ticketUrl
     });
   }
   

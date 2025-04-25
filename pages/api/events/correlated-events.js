@@ -1,8 +1,15 @@
 import axios from 'axios';
 import { getUserLocation, getDistance } from '@/lib/locationUtils';
 
+// Increase default page size
+const DEFAULT_PAGE_SIZE = 20;
+
 export default async function handler(req, res) {
   try {
+    // Get pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || DEFAULT_PAGE_SIZE;
+    
     // Get user location with fallbacks
     let userLocation;
     
@@ -17,6 +24,17 @@ export default async function handler(req, res) {
       };
       console.log(`Using location from query params for correlated events: ${userLocation.latitude}, ${userLocation.longitude}`);
     } 
+    // Check for Toronto override
+    else if (req.query.city?.toLowerCase() === "toronto" || req.query.location?.toLowerCase() === "toronto") {
+      userLocation = {
+        latitude: 43.6532,
+        longitude: -79.3832,
+        city: "Toronto",
+        region: "ON",
+        country: "Canada"
+      };
+      console.log("Using Toronto location override from query params for correlated events");
+    }
     // Then check if location is in cookies
     else {
       const cookies = req.headers.cookie || '';
@@ -95,11 +113,12 @@ export default async function handler(req, res) {
           lon: userLocation.longitude,
           city: userLocation.city,
           region: userLocation.region,
-          country: userLocation.country
+          country: userLocation.country,
+          pageSize: 100 // Request more events for better correlation
         }
       });
       
-      allEvents = eventsResponse.data;
+      allEvents = eventsResponse.data.events || eventsResponse.data;
       console.log(`Found ${allEvents.length} events for correlation`);
     } catch (error) {
       console.error("Error fetching events:", error.message);
@@ -146,17 +165,36 @@ export default async function handler(req, res) {
       // Ensure score is between 0 and 100
       correlationScore = Math.min(100, Math.max(0, correlationScore));
       
+      // Ensure ticket URL is available
+      const ticketUrl = event.ticketUrl || event.url || null;
+      
       return {
         ...event,
-        correlationScore: Math.round(correlationScore)
+        correlationScore: Math.round(correlationScore),
+        ticketUrl: ticketUrl // Ensure ticket URL is available
       };
     });
     
     // Sort by correlation score (descending)
     correlatedEvents.sort((a, b) => b.correlationScore - a.correlationScore);
     
-    // Return the correlated events
-    return res.status(200).json(correlatedEvents);
+    // Apply pagination
+    const totalEvents = correlatedEvents.length;
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedEvents = correlatedEvents.slice(startIndex, endIndex);
+    
+    // Return the correlated events with pagination metadata
+    return res.status(200).json({
+      events: paginatedEvents,
+      pagination: {
+        page,
+        pageSize,
+        totalEvents,
+        totalPages: Math.ceil(totalEvents / pageSize),
+        hasMore: endIndex < totalEvents
+      }
+    });
   } catch (error) {
     console.error("Error in correlated events API:", error);
     return res.status(500).json({ error: "Failed to fetch correlated events" });

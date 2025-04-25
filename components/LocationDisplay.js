@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './LocationDisplay.module.css';
 
 export default function LocationDisplay({ location }) {
-  const [userLocation, setUserLocation] = React.useState(location);
-  const [loading, setLoading] = React.useState(!location);
-  const [error, setError] = React.useState(null);
+  const [userLocation, setUserLocation] = useState(location);
+  const [loading, setLoading] = useState(!location);
+  const [error, setError] = useState(null);
+  const [showLocationSelector, setShowLocationSelector] = useState(false);
+  
+  // Predefined locations
+  const predefinedLocations = [
+    { city: "Toronto", region: "ON", country: "Canada", latitude: 43.6532, longitude: -79.3832 },
+    { city: "New York", region: "NY", country: "United States", latitude: 40.7128, longitude: -74.0060 },
+    { city: "Los Angeles", region: "CA", country: "United States", latitude: 34.0522, longitude: -118.2437 },
+    { city: "Chicago", region: "IL", country: "United States", latitude: 41.8781, longitude: -87.6298 },
+    { city: "Miami", region: "FL", country: "United States", latitude: 25.7617, longitude: -80.1918 },
+    { city: "London", region: "England", country: "United Kingdom", latitude: 51.5074, longitude: -0.1278 },
+    { city: "Berlin", region: "Berlin", country: "Germany", latitude: 52.5200, longitude: 13.4050 },
+    { city: "Amsterdam", region: "North Holland", country: "Netherlands", latitude: 52.3676, longitude: 4.9041 }
+  ];
   
   React.useEffect(() => {
     if (location) {
@@ -54,6 +67,30 @@ export default function LocationDisplay({ location }) {
     getLocation();
   }, [location]);
   
+  const handleLocationChange = async (newLocation) => {
+    setUserLocation(newLocation);
+    setShowLocationSelector(false);
+    
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('userLocation', JSON.stringify(newLocation));
+    }
+    
+    // Send to server
+    try {
+      await fetch('/api/user/set-location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLocation)
+      });
+      
+      // Reload the page to refresh events with new location
+      window.location.reload();
+    } catch (e) {
+      console.error('Error sending location to server:', e);
+    }
+  };
+  
   if (loading) {
     return <div className={styles.locationDisplay}>Detecting your location...</div>;
   }
@@ -82,6 +119,25 @@ export default function LocationDisplay({ location }) {
       <span className={styles.locationText}>
         {userLocation.city}, {userLocation.region}, {userLocation.country}
       </span>
+      <button 
+        className={styles.changeLocationButton}
+        onClick={() => setShowLocationSelector(!showLocationSelector)}
+      >
+        Change
+      </button>
+      
+      {showLocationSelector && (
+        <div className={styles.locationSelector}>
+          <h4>Select Location</h4>
+          <ul>
+            {predefinedLocations.map((loc, index) => (
+              <li key={index} onClick={() => handleLocationChange(loc)}>
+                {loc.city}, {loc.region}, {loc.country}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

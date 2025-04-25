@@ -1,232 +1,261 @@
-import React, { useState } from 'react';
-import Link from 'next/link';
-import styles from '@/styles/EnhancedEventList.module.css';
+import React, { useState, useEffect } from 'react';
+import styles from './EnhancedEventList.module.css';
 
-const EnhancedEventList = ({ events, loading, error }) => {
-  // State for expanded event details
-  const [expandedEvents, setExpandedEvents] = useState({});
+export default function EnhancedEventList({ initialEvents = [], correlationScores = {} }) {
+  const [events, setEvents] = useState(initialEvents);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [activeFilters, setActiveFilters] = useState({
+    type: 'All',
+    distance: 'All'
+  });
   
-  // Toggle expanded state for an event
-  const toggleExpand = (eventId) => {
-    setExpandedEvents(prev => ({
-      ...prev,
-      [eventId]: !prev[eventId]
-    }));
-  };
+  // Filter options
+  const typeFilters = ['All', 'Club', 'Warehouse', 'Festival', 'Rooftop'];
+  const distanceFilters = ['All', 'Local', 'National', 'International'];
   
-  // Format date for display
-  const formatEventDate = (dateString) => {
-    if (!dateString) return 'Upcoming';
-    
+  // Load more events when page changes
+  useEffect(() => {
+    if (page > 1) {
+      loadMoreEvents();
+    }
+  }, [page]);
+  
+  // Function to load more events
+  const loadMoreEvents = async () => {
     try {
-      const date = new Date(dateString);
-      if (isNaN(date)) return 'Upcoming';
+      setLoading(true);
       
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const day = days[date.getDay()];
-      const dayOfMonth = date.getDate();
-      const month = date.toLocaleString('default', { month: 'short' });
+      // Get user location from localStorage if available
+      let userLocation = null;
+      if (typeof window !== 'undefined') {
+        const savedLocation = localStorage.getItem('userLocation');
+        if (savedLocation) {
+          try {
+            userLocation = JSON.parse(savedLocation);
+          } catch (e) {
+            console.error('Error parsing saved location:', e);
+          }
+        }
+      }
       
-      return `${day}, ${month} ${dayOfMonth}`;
-    } catch (e) {
-      console.error('Date formatting error:', e);
-      return 'Upcoming';
+      // Prepare location parameters
+      const locationParams = userLocation ? 
+        `&lat=${userLocation.latitude}&lon=${userLocation.longitude}&city=${userLocation.city}&region=${userLocation.region}&country=${userLocation.country}` : 
+        '';
+      
+      // Fetch more events
+      const response = await fetch(`/api/events?page=${page}&pageSize=10${locationParams}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.events && data.events.length > 0) {
+          // Append new events to existing events
+          setEvents(prevEvents => [...prevEvents, ...data.events]);
+          setHasMore(data.pagination.hasMore);
+        } else {
+          setHasMore(false);
+        }
+      } else {
+        console.error('Error fetching more events:', response.statusText);
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error loading more events:', error);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
     }
   };
   
-  // If loading
-  if (loading) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.pulseLoader}></div>
-        <p>Finding your perfect events...</p>
-      </div>
-    );
-  }
+  // Function to handle event click
+  const handleEventClick = (event) => {
+    // Get the ticket URL
+    const ticketUrl = event.ticketUrl || event.url;
+    
+    if (ticketUrl) {
+      // Open ticket URL in a new tab
+      window.open(ticketUrl, '_blank');
+    } else {
+      console.error('No ticket URL available for this event');
+    }
+  };
   
-  // If error
-  if (error) {
-    return (
-      <div className={styles.errorContainer}>
-        <p>Sorry, we couldn't load events for you. Please try again later.</p>
-        <p>Error: {error}</p>
-      </div>
-    );
-  }
+  // Function to handle filter change
+  const handleFilterChange = (filterType, value) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
+  };
   
-  // If no events
-  if (!events || !Array.isArray(events) || events.length === 0) {
-    return (
-      <div className={styles.emptyContainer}>
-        <p>No events match your current filters.</p>
-        <p>Try adjusting your filters or expanding your search radius.</p>
-      </div>
-    );
-  }
+  // Filter events based on active filters
+  const filteredEvents = events.filter(event => {
+    // Type filter
+    if (activeFilters.type !== 'All') {
+      const eventType = event.venue?.name?.toLowerCase() || '';
+      const eventName = event.name?.toLowerCase() || '';
+      
+      const typeMatches = 
+        (activeFilters.type === 'Club' && (eventType.includes('club') || eventName.includes('club'))) ||
+        (activeFilters.type === 'Warehouse' && (eventType.includes('warehouse') || eventName.includes('warehouse'))) ||
+        (activeFilters.type === 'Festival' && (eventType.includes('festival') || eventName.includes('festival'))) ||
+        (activeFilters.type === 'Rooftop' && (eventType.includes('rooftop') || eventName.includes('rooftop')));
+      
+      if (!typeMatches) return false;
+    }
+    
+    // Distance filter
+    if (activeFilters.distance !== 'All') {
+      // This would require actual distance calculation based on user location
+      // For now, we'll use a simple heuristic based on country
+      const userCountry = typeof window !== 'undefined' && localStorage.getItem('userLocation') ? 
+        JSON.parse(localStorage.getItem('userLocation')).country : 
+        'United States';
+      
+      const eventCountry = event.venue?.country || '';
+      
+      const distanceMatches = 
+        (activeFilters.distance === 'Local' && eventCountry === userCountry) ||
+        (activeFilters.distance === 'National' && eventCountry === userCountry) ||
+        (activeFilters.distance === 'International' && eventCountry !== userCountry);
+      
+      if (!distanceMatches) return false;
+    }
+    
+    return true;
+  });
   
   return (
-    <div className={styles.container}>
-      {events.map(event => {
-        // Generate a unique ID if none exists
-        const eventId = event.id || `event-${Math.random()}`;
-        const isExpanded = expandedEvents[eventId];
-        
-        // Determine if this is real data or a mockup
-        const isRealData = event.source === 'ticketmaster' || event.source === 'edmtrain';
-        
-        // Format the list of DJs/artists
-        const artists = event.headliners || event.artists || event.lineup || [];
-        const artistList = Array.isArray(artists) ? artists : artists.split(',').map(a => a.trim());
-        
-        // Show only first 3 artists in collapsed view
-        const displayArtists = isExpanded ? artistList : artistList.slice(0, 3);
-        const hasMoreArtists = artistList.length > 3;
-        
-        return (
-          <div key={eventId} className={styles.eventCard}>
-            {/* Data Source Badge */}
-            <div className={`${styles.dataSourceBadge} ${isRealData ? styles.liveDataBadge : styles.sampleDataBadge}`}>
-              {isRealData ? (
-                <>
-                  <span className={styles.liveDot}></span>
-                  Live Data
-                </>
-              ) : (
-                'Sample'
-              )}
-            </div>
-            
-            {/* Match Score Circle */}
-            <div className={styles.matchScoreCircle}>
-              <svg width="60" height="60" viewBox="0 0 60 60">
-                <circle 
-                  cx="30" 
-                  cy="30" 
-                  r="25" 
-                  fill="none" 
-                  stroke="rgba(255,255,255,0.2)" 
-                  strokeWidth="5"
-                />
-                <circle 
-                  cx="30" 
-                  cy="30" 
-                  r="25" 
-                  fill="none" 
-                  stroke="url(#circleGradient)" 
-                  strokeWidth="5"
-                  strokeDasharray={`${(event.matchScore || 75) * 1.57} 157`}
-                  strokeDashoffset="39.25"
-                  transform="rotate(-90 30 30)"
-                />
-                <defs>
-                  <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#00e5ff" />
-                    <stop offset="100%" stopColor="#ff00ff" />
-                  </linearGradient>
-                </defs>
-                <text 
-                  x="30" 
-                  y="30" 
-                  textAnchor="middle" 
-                  dominantBaseline="middle" 
-                  fill="#ffffff" 
-                  fontSize="14" 
-                  fontWeight="bold"
-                >
-                  {event.matchScore || 75}%
-                </text>
-              </svg>
-            </div>
-            
-            {/* Event Details */}
-            <div className={styles.eventInfo}>
-              <div className={styles.eventHeader}>
-                <h3 className={styles.eventName}>{event.name}</h3>
-                
-                <div className={styles.venueInfo}>
-                  <p className={styles.eventVenue}>{event.venue}</p>
-                  <span className={styles.venueType}>{event.venueType || 'Club'}</span>
-                </div>
-              </div>
-              
-              {/* Headliners/DJs */}
-              <div className={styles.headliners}>
-                <span className={styles.headlinersLabel}>Featuring:</span>
-                <div className={styles.headlinersList}>
-                  {displayArtists.length > 0 ? (
-                    displayArtists.map((artist, index) => (
-                      <span key={index} className={styles.artist}>
-                        {artist}{index < displayArtists.length - 1 ? ', ' : ''}
-                      </span>
-                    ))
-                  ) : (
-                    <span className={styles.artist}>TBA</span>
-                  )}
-                  
-                  {!isExpanded && hasMoreArtists && (
-                    <button 
-                      className={styles.expandButton}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toggleExpand(eventId);
-                      }}
-                    >
-                      +{artistList.length - 3} more
-                    </button>
-                  )}
-                </div>
-              </div>
-              
-              {/* Expanded artist list */}
-              {isExpanded && hasMoreArtists && (
-                <div className={styles.expandedArtists}>
-                  <div className={styles.expandedArtistsHeader}>
-                    <span>All Artists:</span>
-                    <button 
-                      className={styles.collapseButton}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toggleExpand(eventId);
-                      }}
-                    >
-                      Show less
-                    </button>
-                  </div>
-                  <div className={styles.artistGrid}>
-                    {artistList.map((artist, index) => (
-                      <span key={index} className={styles.artistTag}>
-                        {artist}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <div className={styles.eventDetails}>
-                <span className={styles.eventLocation}>
-                  {event.address || event.location || 'Location TBA'}
-                </span>
-                <span className={styles.divider}>•</span>
-                <span className={styles.eventDate}>
-                  {formatEventDate(event.date)}
-                </span>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+    <div className={styles.eventListContainer}>
+      <div className={styles.eventListHeader}>
+        <h2>Events Matching Your Vibe</h2>
+        <div className={styles.matchIndicator}>
+          <span>Vibe Match: 70%+</span>
+        </div>
+      </div>
       
-      {events.length > 3 && (
-        <div className={styles.viewAllContainer}>
-          <Link href="/events" legacyBehavior>
-            <a className={styles.viewAllLink}>
-              View All Events
-            </a>
-          </Link>
+      <div className={styles.filterContainer}>
+        <div className={styles.filterSection}>
+          <h3>Event Type:</h3>
+          <div className={styles.filterOptions}>
+            {typeFilters.map(filter => (
+              <button
+                key={filter}
+                className={`${styles.filterButton} ${activeFilters.type === filter ? styles.active : ''}`}
+                onClick={() => handleFilterChange('type', filter)}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className={styles.filterSection}>
+          <h3>Distance:</h3>
+          <div className={styles.filterOptions}>
+            {distanceFilters.map(filter => (
+              <button
+                key={filter}
+                className={`${styles.filterButton} ${activeFilters.distance === filter ? styles.active : ''}`}
+                onClick={() => handleFilterChange('distance', filter)}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      <div className={styles.eventList}>
+        {filteredEvents.map(event => {
+          // Get correlation score
+          const correlationScore = event.correlationScore || 
+            correlationScores[event.id] || 
+            Math.floor(70 + Math.random() * 30); // Fallback to random score between 70-100
+          
+          return (
+            <div 
+              key={event.id} 
+              className={styles.eventCard}
+              onClick={() => handleEventClick(event)}
+            >
+              <div className={styles.scoreCircle}>
+                <svg viewBox="0 0 36 36">
+                  <path
+                    className={styles.scoreCircleBg}
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className={styles.scoreCircleFill}
+                    strokeDasharray={`${correlationScore}, 100`}
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <text x="18" y="20.35" className={styles.scoreText}>
+                    {correlationScore}%
+                  </text>
+                </svg>
+              </div>
+              
+              <div className={styles.eventInfo}>
+                <h3>{event.name}</h3>
+                <div className={styles.venueInfo}>
+                  <span className={styles.venueName}>{event.venue?.name}</span>
+                  {event.venue?.type && (
+                    <span className={styles.venueType}>{event.venue.type}</span>
+                  )}
+                </div>
+                
+                <div className={styles.artistList}>
+                  <span className={styles.featuringLabel}>Featuring:</span>
+                  {event.artists && event.artists.map((artist, index) => (
+                    <React.Fragment key={index}>
+                      <span className={styles.artist}>{artist.name}</span>
+                      {index < event.artists.length - 1 && ', '}
+                    </React.Fragment>
+                  ))}
+                  {event.artists && event.artists.length > 3 && (
+                    <span className={styles.moreArtists}>+{event.artists.length - 3} more</span>
+                  )}
+                </div>
+                
+                <div className={styles.venueAddress}>
+                  {event.venue?.address}, {event.venue?.city}, {event.venue?.state}
+                  {event.date && (
+                    <span className={styles.eventDate}>
+                      • {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {event.liveData ? (
+                <div className={styles.liveDataBadge}>Live Data</div>
+              ) : (
+                <div className={styles.sampleBadge}>Sample</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      {hasMore && (
+        <div className={styles.loadMoreContainer}>
+          <button 
+            className={styles.loadMoreButton}
+            onClick={() => setPage(prevPage => prevPage + 1)}
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : 'View All Events'}
+          </button>
         </div>
       )}
     </div>
   );
-};
-
-export default EnhancedEventList;
+}
