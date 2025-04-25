@@ -1,0 +1,4 @@
+1:import React from 'react';
+2:import Head from 'next/head';
+3:import { SessionProvider } from 'next-auth/react';
+4:import '@/styles/globals.css';

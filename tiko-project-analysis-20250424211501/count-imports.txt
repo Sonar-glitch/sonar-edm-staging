@@ -1,0 +1,2 @@
+4:import { getServerSession } from "next-auth/next";
+5:import { authOptions } from "../auth/[...nextauth]";
