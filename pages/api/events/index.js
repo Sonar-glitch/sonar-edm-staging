@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getUserLocation } from '@/lib/locationUtils';
+import { parse } from 'cookie';
 
 export default async function handler(req, res) {
   console.log("Starting Events API handler");
@@ -26,13 +27,23 @@ export default async function handler(req, res) {
       };
       console.log(`Using location from query params: ${userLocation.latitude}, ${userLocation.longitude}`);
     } 
-    // Then check if location is in session
-    else if (req.session?.userLocation) {
-      userLocation = req.session.userLocation;
-      console.log(`Using location from session: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
-    } 
-    // Otherwise detect from request
+    // Then check if location is in cookies
     else {
+      const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
+      const locationCookie = cookies.userLocation;
+      
+      if (locationCookie) {
+        try {
+          userLocation = JSON.parse(locationCookie);
+          console.log(`Using location from cookie: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
+        } catch (e) {
+          console.error('Error parsing location cookie:', e);
+        }
+      }
+    }
+    
+    // If no location found yet, detect from request
+    if (!userLocation) {
       userLocation = await getUserLocation(req);
       console.log(`Detected location: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
     }

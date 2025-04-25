@@ -1,32 +1,33 @@
-import { withIronSessionApiRoute } from 'iron-session/next';
-import { sessionOptions } from '@/lib/session';
+import { parse } from 'cookie';
 import { getUserLocation } from '@/lib/locationUtils';
 
-export default withIronSessionApiRoute(async function handler(req, res) {
+export default async function handler(req, res) {
   try {
-    // Check if location is in session and not expired (24 hours)
-    const sessionLocation = req.session.userLocation;
-    const now = Date.now();
-    const locationAge = sessionLocation?.timestamp ? now - sessionLocation.timestamp : Infinity;
+    // Check if location is in cookies
+    const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
+    const locationCookie = cookies.userLocation;
     
-    if (sessionLocation && locationAge < 24 * 60 * 60 * 1000) {
-      return res.status(200).json(sessionLocation);
+    if (locationCookie) {
+      try {
+        const locationData = JSON.parse(locationCookie);
+        const now = Date.now();
+        const locationAge = locationData?.timestamp ? now - locationData.timestamp : Infinity;
+        
+        // Use cookie location if not expired (24 hours)
+        if (locationData && locationAge < 24 * 60 * 60 * 1000) {
+          return res.status(200).json(locationData);
+        }
+      } catch (e) {
+        console.error('Error parsing location cookie:', e);
+      }
     }
     
-    // If no valid session location, detect from request
+    // If no valid cookie location, detect from request
     const detectedLocation = await getUserLocation(req);
-    
-    // Store in session
-    req.session.userLocation = {
-      ...detectedLocation,
-      timestamp: now
-    };
-    
-    await req.session.save();
     
     return res.status(200).json(detectedLocation);
   } catch (error) {
     console.error('Error getting location:', error);
     return res.status(500).json({ error: 'Failed to get location' });
   }
-}, sessionOptions);
+}

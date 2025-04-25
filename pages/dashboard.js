@@ -1,23 +1,14 @@
+import LocationDisplay from "@/components/LocationDisplay";
 import React, { useState, useEffect } from 'react';
-import LocationDisplay from "@/components/LocationDisplay";
 import { useSession } from 'next-auth/react';
-import LocationDisplay from "@/components/LocationDisplay";
 import { useRouter } from 'next/router';
-import LocationDisplay from "@/components/LocationDisplay";
 import Head from 'next/head';
-import LocationDisplay from "@/components/LocationDisplay";
 import SideBySideLayout from '@/components/SideBySideLayout';
-import LocationDisplay from "@/components/LocationDisplay";
 import CompactSoundCharacteristics from '@/components/CompactSoundCharacteristics';
-import LocationDisplay from "@/components/LocationDisplay";
 import CompactSeasonalVibes from '@/components/CompactSeasonalVibes';
-import LocationDisplay from "@/components/LocationDisplay";
 import EnhancedEventList from '@/components/EnhancedEventList';
-import LocationDisplay from "@/components/LocationDisplay";
 import MobileOptimizedVibeQuiz from '@/components/MobileOptimizedVibeQuiz';
-import LocationDisplay from "@/components/LocationDisplay";
 import styles from '@/styles/Dashboard.module.css';
-import LocationDisplay from "@/components/LocationDisplay";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();

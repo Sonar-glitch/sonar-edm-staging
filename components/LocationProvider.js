@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { getUserLocationFromBrowser, getUserLocationFromIP } from '@/lib/locationUtils';
+import Cookies from 'js-cookie';
 
 // Create location context
 export const LocationContext = createContext();
@@ -21,14 +22,23 @@ export function LocationProvider({ children }) {
           setLoading(false);
           
           // Store location in localStorage for persistence
-          localStorage.setItem('userLocation', JSON.stringify(browserLocation));
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('userLocation', JSON.stringify(browserLocation));
+          }
+          
+          // Also store in cookies for server-side access
+          Cookies.set('userLocation', JSON.stringify(browserLocation), { expires: 7 });
           
           // Also send to server for API calls
-          await fetch('/api/user/set-location', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(browserLocation)
-          });
+          try {
+            await fetch('/api/user/set-location', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(browserLocation)
+            });
+          } catch (e) {
+            console.error('Error sending location to server:', e);
+          }
           
           return;
         } catch (browserError) {
@@ -42,14 +52,23 @@ export function LocationProvider({ children }) {
           setLocation(ipLocation);
           
           // Store location in localStorage for persistence
-          localStorage.setItem('userLocation', JSON.stringify(ipLocation));
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('userLocation', JSON.stringify(ipLocation));
+          }
+          
+          // Also store in cookies for server-side access
+          Cookies.set('userLocation', JSON.stringify(ipLocation), { expires: 7 });
           
           // Also send to server for API calls
-          await fetch('/api/user/set-location', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(ipLocation)
-          });
+          try {
+            await fetch('/api/user/set-location', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(ipLocation)
+            });
+          } catch (e) {
+            console.error('Error sending location to server:', e);
+          }
         } else {
           throw new Error('Could not detect location');
         }
@@ -58,12 +77,14 @@ export function LocationProvider({ children }) {
         setError(err.message);
         
         // Try to get from localStorage as last resort
-        const savedLocation = localStorage.getItem('userLocation');
-        if (savedLocation) {
-          try {
-            setLocation(JSON.parse(savedLocation));
-          } catch (e) {
-            console.error('Error parsing saved location:', e);
+        if (typeof window !== 'undefined') {
+          const savedLocation = localStorage.getItem('userLocation');
+          if (savedLocation) {
+            try {
+              setLocation(JSON.parse(savedLocation));
+            } catch (e) {
+              console.error('Error parsing saved location:', e);
+            }
           }
         }
       } finally {

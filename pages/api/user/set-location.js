@@ -1,7 +1,6 @@
-import { withIronSessionApiRoute } from 'iron-session/next';
-import { sessionOptions } from '@/lib/session';
+import { parse, serialize } from 'cookie';
 
-export default withIronSessionApiRoute(async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -14,8 +13,8 @@ export default withIronSessionApiRoute(async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid location data' });
     }
     
-    // Store location in session
-    req.session.userLocation = {
+    // Store location in cookie
+    const locationData = {
       latitude,
       longitude,
       city: city || 'Unknown',
@@ -24,11 +23,20 @@ export default withIronSessionApiRoute(async function handler(req, res) {
       timestamp: Date.now()
     };
     
-    await req.session.save();
+    // Set cookie with location data
+    const locationCookie = serialize('userLocation', JSON.stringify(locationData), {
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+    
+    res.setHeader('Set-Cookie', locationCookie);
     
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error saving location:', error);
     return res.status(500).json({ error: 'Failed to save location' });
   }
-}, sessionOptions);
+}

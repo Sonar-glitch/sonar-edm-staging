@@ -1,9 +1,58 @@
 import React from 'react';
-import { useLocation } from './LocationProvider';
 import styles from './LocationDisplay.module.css';
 
-export default function LocationDisplay() {
-  const { location, loading, error } = useLocation();
+export default function LocationDisplay({ location }) {
+  const [userLocation, setUserLocation] = React.useState(location);
+  const [loading, setLoading] = React.useState(!location);
+  const [error, setError] = React.useState(null);
+  
+  React.useEffect(() => {
+    if (location) {
+      setUserLocation(location);
+      return;
+    }
+    
+    async function getLocation() {
+      try {
+        setLoading(true);
+        
+        // Try to get location from localStorage
+        if (typeof window !== 'undefined') {
+          const savedLocation = localStorage.getItem('userLocation');
+          if (savedLocation) {
+            try {
+              setUserLocation(JSON.parse(savedLocation));
+              setLoading(false);
+              return;
+            } catch (e) {
+              console.error('Error parsing saved location:', e);
+            }
+          }
+        }
+        
+        // Try to get location from API
+        const response = await fetch('/api/user/get-location');
+        if (response.ok) {
+          const data = await response.json();
+          setUserLocation(data);
+          
+          // Save to localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('userLocation', JSON.stringify(data));
+          }
+        } else {
+          throw new Error('Failed to get location');
+        }
+      } catch (err) {
+        console.error('Error getting location:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    getLocation();
+  }, [location]);
   
   if (loading) {
     return <div className={styles.locationDisplay}>Detecting your location...</div>;
@@ -23,7 +72,7 @@ export default function LocationDisplay() {
     );
   }
   
-  if (!location) {
+  if (!userLocation) {
     return <div className={styles.locationDisplay}>Location unavailable</div>;
   }
   
@@ -31,7 +80,7 @@ export default function LocationDisplay() {
     <div className={styles.locationDisplay}>
       <span className={styles.locationIcon}>📍</span>
       <span className={styles.locationText}>
-        {location.city}, {location.region}, {location.country}
+        {userLocation.city}, {userLocation.region}, {userLocation.country}
       </span>
     </div>
   );
