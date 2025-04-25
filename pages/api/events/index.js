@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { getCachedLocation } from '@/lib/locationUtils';
-import { cacheData, getCachedData } from '@/lib/cache';
+import { getUserLocation } from '@/lib/locationUtils';
 
 export default async function handler(req, res) {
   console.log("Starting Events API handler");
@@ -13,20 +12,29 @@ export default async function handler(req, res) {
   console.log(`Using EDMtrain API key: ${edmtrainApiKey ? 'Available' : 'Missing'}`);
   
   try {
-    // Get user location (with Toronto as fallback)
-    const userLocation = await getCachedLocation(req);
+    // Get user location with fallbacks
+    let userLocation;
     
-    if (userLocation) {
-      console.log(`User location: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
-    }
-    
-    // Try to get cached events first
-    const cacheKey = `events-${userLocation?.latitude?.toFixed(2)}-${userLocation?.longitude?.toFixed(2)}`;
-    const cachedEvents = await getCachedData(cacheKey);
-    
-    if (cachedEvents) {
-      console.log(`Using ${cachedEvents.length} cached events`);
-      return res.status(200).json(cachedEvents);
+    // First check if location is provided in the request
+    if (req.query.lat && req.query.lon) {
+      userLocation = {
+        latitude: parseFloat(req.query.lat),
+        longitude: parseFloat(req.query.lon),
+        city: req.query.city || 'Unknown',
+        region: req.query.region || 'Unknown',
+        country: req.query.country || 'Unknown'
+      };
+      console.log(`Using location from query params: ${userLocation.latitude}, ${userLocation.longitude}`);
+    } 
+    // Then check if location is in session
+    else if (req.session?.userLocation) {
+      userLocation = req.session.userLocation;
+      console.log(`Using location from session: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
+    } 
+    // Otherwise detect from request
+    else {
+      userLocation = await getUserLocation(req);
+      console.log(`Detected location: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
     }
     
     // Fetch events from Ticketmaster API
@@ -53,11 +61,6 @@ export default async function handler(req, res) {
           params.radius = "100"; // 100 mile radius
           params.unit = "miles";
           console.log(`Adding location filter: ${params.latlong}, radius: ${params.radius} miles`);
-        } else {
-          console.log("No valid location data available, using Toronto coordinates");
-          params.latlong = "43.6532,-79.3832"; // Toronto coordinates
-          params.radius = "100";
-          params.unit = "miles";
         }
         
         console.log("Ticketmaster API request params:", JSON.stringify(params));
@@ -70,12 +73,6 @@ export default async function handler(req, res) {
         if (response.data._embedded && response.data._embedded.events) {
           ticketmasterEvents = response.data._embedded.events;
           console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster`);
-          
-          // Cache Ticketmaster events for 12 hours (43200 seconds)
-          await cacheData("ticketmaster/events", {
-            lat: userLocation?.latitude,
-            lon: userLocation?.longitude
-          }, ticketmasterEvents, 43200);
         } else {
           console.log("No events found in Ticketmaster response");
         }
@@ -98,14 +95,7 @@ export default async function handler(req, res) {
             retryParams.latlong = `${userLocation.latitude},${userLocation.longitude}`;
             retryParams.radius = "100";
             retryParams.unit = "miles";
-          } else {
-            // Use Toronto coordinates as fallback
-            retryParams.latlong = "43.6532,-79.3832"; // Toronto coordinates
-            retryParams.radius = "100";
-            retryParams.unit = "miles";
           }
-          
-          console.log("Ticketmaster retry params:", JSON.stringify(retryParams));
           
           const retryResponse = await axios.get("https://app.ticketmaster.com/discovery/v2/events.json", { 
             params: retryParams,
@@ -114,13 +104,6 @@ export default async function handler(req, res) {
           
           if (retryResponse.data._embedded && retryResponse.data._embedded.events) {
             ticketmasterEvents = retryResponse.data._embedded.events;
-            
-            // Cache Ticketmaster events for 12 hours (43200 seconds)
-            await cacheData("ticketmaster/events", {
-              lat: userLocation?.latitude,
-              lon: userLocation?.longitude
-            }, ticketmasterEvents, 43200);
-            
             console.log(`Found ${ticketmasterEvents.length} events from Ticketmaster retry after error`);
             ticketmasterError = null;
           } else {
@@ -151,10 +134,6 @@ export default async function handler(req, res) {
         if (userLocation && userLocation.latitude && userLocation.longitude) {
           params.latitude = userLocation.latitude;
           params.longitude = userLocation.longitude;
-        } else {
-          // Use Toronto coordinates as fallback
-          params.latitude = 43.6532; // Toronto latitude
-          params.longitude = -79.3832; // Toronto longitude
         }
         
         console.log("EDMtrain API request params:", JSON.stringify(params));
@@ -167,12 +146,6 @@ export default async function handler(req, res) {
         if (response.data && response.data.data) {
           edmtrainEvents = response.data.data;
           console.log(`Found ${edmtrainEvents.length} events from EDMtrain`);
-          
-          // Cache EDMtrain events for 12 hours (43200 seconds)
-          await cacheData("edmtrain/events", {
-            lat: userLocation?.latitude,
-            lon: userLocation?.longitude
-          }, edmtrainEvents, 43200);
         } else {
           console.log("No events found in EDMtrain response");
         }
@@ -324,9 +297,6 @@ export default async function handler(req, res) {
       return new Date(a.date) - new Date(b.date);
     });
     
-    // Cache the combined events for 1 hour (3600 seconds)
-    await cacheData(cacheKey, null, processedEvents, 3600);
-    
     // Return the combined events
     return res.status(200).json(processedEvents);
   } catch (error) {
@@ -335,44 +305,56 @@ export default async function handler(req, res) {
   }
 }
 
-// Function to generate sample events
+// Function to generate sample events near user location
 function getSampleEvents(userLocation) {
   const now = new Date();
   const sampleEvents = [];
   
-  // Toronto venues for sample events
-  const torontoVenues = [
+  // Sample venues (will be adjusted based on user location)
+  const sampleVenues = [
     {
-      name: "REBEL",
-      city: "Toronto",
-      state: "Ontario",
-      country: "Canada",
-      address: "11 Polson St, Toronto, ON M5A 1A4",
-      location: { latitude: 43.6453, longitude: -79.3571 }
+      name: "The Underground",
+      city: userLocation?.city || "Unknown City",
+      state: userLocation?.region || "Unknown State",
+      country: userLocation?.country || "Unknown Country",
+      address: "123 Main St",
+      location: { 
+        latitude: userLocation?.latitude ? userLocation.latitude + 0.01 : 40.7128,
+        longitude: userLocation?.longitude ? userLocation.longitude + 0.01 : -74.0060
+      }
     },
     {
-      name: "CODA",
-      city: "Toronto",
-      state: "Ontario",
-      country: "Canada",
-      address: "794 Bathurst St, Toronto, ON M5S 2R6",
-      location: { latitude: 43.6647, longitude: -79.4125 }
+      name: "The Loft",
+      city: userLocation?.city || "Unknown City",
+      state: userLocation?.region || "Unknown State",
+      country: userLocation?.country || "Unknown Country",
+      address: "101 Skyline Ave",
+      location: { 
+        latitude: userLocation?.latitude ? userLocation.latitude - 0.01 : 40.7128,
+        longitude: userLocation?.longitude ? userLocation.longitude - 0.01 : -74.0060
+      }
     },
     {
-      name: "The Danforth Music Hall",
-      city: "Toronto",
-      state: "Ontario",
-      country: "Canada",
-      address: "147 Danforth Ave, Toronto, ON M4K 1N2",
-      location: { latitude: 43.6768, longitude: -79.3530 }
+      name: "Sunset Park",
+      city: userLocation?.city || "Unknown City",
+      state: userLocation?.region || "Unknown State",
+      country: userLocation?.country || "Unknown Country",
+      address: "456 Parkway Dr",
+      location: { 
+        latitude: userLocation?.latitude ? userLocation.latitude + 0.02 : 40.7128,
+        longitude: userLocation?.longitude ? userLocation.longitude + 0.02 : -74.0060
+      }
     },
     {
-      name: "Velvet Underground",
-      city: "Toronto",
-      state: "Ontario",
-      country: "Canada",
-      address: "508 Queen St W, Toronto, ON M5V 2B3",
-      location: { latitude: 43.6487, longitude: -79.3975 }
+      name: "Club Horizon",
+      city: userLocation?.city || "Unknown City",
+      state: userLocation?.region || "Unknown State",
+      country: userLocation?.country || "Unknown Country",
+      address: "789 Downtown Blvd",
+      location: { 
+        latitude: userLocation?.latitude ? userLocation.latitude - 0.02 : 40.7128,
+        longitude: userLocation?.longitude ? userLocation.longitude - 0.02 : -74.0060
+      }
     }
   ];
   
@@ -393,7 +375,7 @@ function getSampleEvents(userLocation) {
     const eventDate = new Date(now);
     eventDate.setDate(eventDate.getDate() + 7 + i * 3); // Events starting in a week, 3 days apart
     
-    const venue = torontoVenues[i % torontoVenues.length];
+    const venue = sampleVenues[i % sampleVenues.length];
     const artistInfo = sampleArtists[i % sampleArtists.length];
     
     // Create featured artists

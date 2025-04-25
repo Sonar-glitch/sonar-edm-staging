@@ -1,23 +1,31 @@
 import axios from 'axios';
-import { getCachedLocation } from '@/lib/locationUtils';
-import { cacheData, getCachedData } from '@/lib/cache';
+import { getUserLocation, getDistance } from '@/lib/locationUtils';
 
 export default async function handler(req, res) {
   try {
-    // Get user location (with Toronto as fallback)
-    const userLocation = await getCachedLocation(req);
+    // Get user location with fallbacks
+    let userLocation;
     
-    if (userLocation) {
-      console.log(`User location for correlated events: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
-    }
-    
-    // Try to get cached correlated events first
-    const cacheKey = `correlated-events-${userLocation?.latitude?.toFixed(2)}-${userLocation?.longitude?.toFixed(2)}`;
-    const cachedEvents = await getCachedData(cacheKey);
-    
-    if (cachedEvents) {
-      console.log(`Using ${cachedEvents.length} cached correlated events`);
-      return res.status(200).json(cachedEvents);
+    // First check if location is provided in the request
+    if (req.query.lat && req.query.lon) {
+      userLocation = {
+        latitude: parseFloat(req.query.lat),
+        longitude: parseFloat(req.query.lon),
+        city: req.query.city || 'Unknown',
+        region: req.query.region || 'Unknown',
+        country: req.query.country || 'Unknown'
+      };
+      console.log(`Using location from query params for correlated events: ${userLocation.latitude}, ${userLocation.longitude}`);
+    } 
+    // Then check if location is in session
+    else if (req.session?.userLocation) {
+      userLocation = req.session.userLocation;
+      console.log(`Using location from session for correlated events: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
+    } 
+    // Otherwise detect from request
+    else {
+      userLocation = await getUserLocation(req);
+      console.log(`Detected location for correlated events: ${userLocation.city}, ${userLocation.region}, ${userLocation.country}`);
     }
     
     // Get user taste profile
@@ -66,7 +74,10 @@ export default async function handler(req, res) {
       const eventsResponse = await axios.get(eventsUrl, {
         params: {
           lat: userLocation.latitude,
-          lon: userLocation.longitude
+          lon: userLocation.longitude,
+          city: userLocation.city,
+          region: userLocation.region,
+          country: userLocation.country
         }
       });
       
@@ -126,31 +137,10 @@ export default async function handler(req, res) {
     // Sort by correlation score (descending)
     correlatedEvents.sort((a, b) => b.correlationScore - a.correlationScore);
     
-    // Cache the correlated events for 1 hour (3600 seconds)
-    await cacheData(cacheKey, null, correlatedEvents, 3600);
-    
     // Return the correlated events
     return res.status(200).json(correlatedEvents);
   } catch (error) {
     console.error("Error in correlated events API:", error);
     return res.status(500).json({ error: "Failed to fetch correlated events" });
   }
-}
-
-// Calculate distance between two coordinates in kilometers
-function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Radius of the earth in km
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2); 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  const d = R * c; // Distance in km
-  return d;
-}
-
-function deg2rad(deg) {
-  return deg * (Math.PI/180);
 }
