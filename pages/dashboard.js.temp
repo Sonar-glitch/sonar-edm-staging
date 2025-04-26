@@ -1,0 +1,27 @@
+// Find this section in the dashboard.js file
+{events.map((event) => (
+  <div 
+    key={event.id} 
+    className={styles.eventCard}
+    onClick={() => window.open(event.url, '_blank')}
+  >
+    <img 
+      src={event.images?.[0]?.url || '/placeholder-event.jpg'} 
+      alt={event.name} 
+      className={styles.eventImage} 
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = '/images/placeholders/event_placeholder_medium.jpg';
+      }}
+    />
+    <div className={styles.eventInfo}>
+      <h3 className={styles.eventTitle}>{event.name}</h3>
+      <p className={styles.eventDetails}>
+        {event._embedded?.venues?.[0]?.name}, {event._embedded?.venues?.[0]?.city?.name}<br />
+        {event._embedded?.venues?.[0]?.address?.line1}<br />
+        {new Date(event.dates?.start?.localDate).toLocaleDateString()} at {event.dates?.start?.localTime}
+      </p>
+    </div>
+    <span className={styles.eventMatch}>{event.matchScore}% Match</span>
+  </div>
+))}

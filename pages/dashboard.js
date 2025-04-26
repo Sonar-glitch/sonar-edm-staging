@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [eventsError, setEventsError] = useState(null);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [location, setLocation] = useState({
     lat: null,
     lon: null,
@@ -53,23 +54,77 @@ export default function Dashboard() {
   const fetchEvents = async () => {
     setIsLoadingEvents(true);
     setEventsError(null);
+    setLoadingTimeout(false);
+    
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.log("Events loading timeout triggered");
+      setLoadingTimeout(true);
+      setEventsError('Loading took too long. Please try again.');
+      setIsLoadingEvents(false);
+    }, 10000); // 10 second timeout
 
     try {
       let params = {};
       
       if (location.lat && location.lon) {
-        params = { lat: location.lat, lon: location.lon };
+        params = { 
+          lat: location.lat, 
+          lon: location.lon 
+        };
+        console.log(`Fetching events with coordinates: lat=${location.lat}, lon=${location.lon}`);
       } else if (location.city) {
         params = { city: location.city };
+        console.log(`Fetching events with city: ${location.city}`);
+      } else {
+        // Default to Toronto if no location
+        params = { 
+          city: 'Toronto',
+          lat: '43.65',
+          lon: '-79.38'
+        };
+        console.log('No location set, defaulting to Toronto');
       }
       
-      const response = await axios.get('/api/events', { params });
-      setEvents(response.data.events || []);
+      // Add a timestamp to prevent caching
+      params.timestamp = new Date().getTime();
+      
+      console.log("Fetching events with params:", params);
+      const response = await axios.get('/api/events', { 
+        params,
+        timeout: 15000 // 15 second timeout
+      });
+      
+      // Clear the timeout since we got a response
+      clearTimeout(timeoutId);
+      
+      // Log the response for debugging
+      console.log("Events API response:", {
+        source: response.data.source,
+        eventCount: response.data.events?.length || 0
+      });
+      
+      // Validate events data before setting state
+      if (response.data.events && Array.isArray(response.data.events)) {
+        // Filter out any invalid events
+        const validEvents = response.data.events.filter(event => event && event.id);
+        setEvents(validEvents);
+      } else {
+        console.error("Invalid events data received:", response.data);
+        setEvents([]);
+        setEventsError('Received invalid event data. Please try again.');
+      }
+      
       setIsLoadingEvents(false);
+      setLoadingTimeout(false);
     } catch (error) {
+      // Clear the timeout since we got an error
+      clearTimeout(timeoutId);
+      
       console.error('Error fetching events:', error);
       setEventsError('Failed to load events. Please try again.');
       setIsLoadingEvents(false);
+      setLoadingTimeout(false);
     }
   };
 
@@ -80,6 +135,50 @@ export default function Dashboard() {
   const handleRetry = () => {
     fetchEvents();
   };
+
+  // Fallback events for when API fails
+  const fallbackEvents = [
+    {
+      id: "fallback-1",
+      name: "Toronto House Night",
+      url: "https://www.ticketmaster.ca/event/fallback1",
+      images: [{ url: "/images/placeholders/event_placeholder_medium.jpg" }],
+      _embedded: {
+        venues: [{
+          name: "CODA",
+          city: { name: "Toronto" },
+          address: { line1: "794 Bathurst St" }
+        }]
+      },
+      dates: {
+        start: {
+          localDate: "2025-05-15",
+          localTime: "22:00:00"
+        }
+      },
+      matchScore: 85
+    },
+    {
+      id: "fallback-2",
+      name: "Techno Underground",
+      url: "https://www.ticketmaster.ca/event/fallback2",
+      images: [{ url: "/images/placeholders/event_placeholder_medium.jpg" }],
+      _embedded: {
+        venues: [{
+          name: "REBEL",
+          city: { name: "Toronto" },
+          address: { line1: "11 Polson St" }
+        }]
+      },
+      dates: {
+        start: {
+          localDate: "2025-05-22",
+          localTime: "23:00:00"
+        }
+      },
+      matchScore: 92
+    }
+  ];
 
   if (status === 'loading') {
     return <div className={styles.container}>Loading...</div>;
@@ -223,46 +322,137 @@ export default function Dashboard() {
 
         {isLoadingEvents ? (
           <div className={styles.noEvents}>Loading events...</div>
+        ) : loadingTimeout ? (
+          <div className={styles.noEvents}>
+            <p>Loading took too long. Showing fallback events instead.</p>
+            <div>
+              {fallbackEvents.map((event) => (
+                <div 
+                  key={event.id} 
+                  className={styles.eventCard}
+                  onClick={() => event.url ? window.open(event.url, "_blank") : null}
+                >
+                  <img 
+                    src="/images/placeholders/event_placeholder_medium.jpg" 
+                    alt={event.name || 'Event'} 
+                    className={styles.eventImage}
+                  />
+                  <div className={styles.eventInfo}>
+                    <h3 className={styles.eventTitle}>{event.name || 'Unnamed Event'}</h3>
+                    <p className={styles.eventDetails}>
+                      {event._embedded?.venues?.[0]?.name || 'Unknown Venue'}, {event._embedded?.venues?.[0]?.city?.name || 'Unknown City'}<br />
+                      {event._embedded?.venues?.[0]?.address?.line1 || ''}<br />
+                      {event.dates?.start?.localDate ? new Date(event.dates.start.localDate).toLocaleDateString() : 'TBD'} at {event.dates?.start?.localTime || 'TBD'}
+                    </p>
+                  </div>
+                  <span className={styles.eventMatch}>{event.matchScore || 70}% Match</span>
+                </div>
+              ))}
+              <button className={styles.retryButton} onClick={handleRetry}>Retry with Ticketmaster</button>
+            </div>
+          </div>
         ) : eventsError ? (
           <div className={styles.noEvents}>
             <p>{eventsError}</p>
-            <button className={styles.retryButton} onClick={handleRetry}>Retry</button>
+            <div>
+              {fallbackEvents.map((event) => (
+                <div 
+                  key={event.id} 
+                  className={styles.eventCard}
+                  onClick={() => event.url ? window.open(event.url, "_blank") : null}
+                >
+                  <img 
+                    src="/images/placeholders/event_placeholder_medium.jpg" 
+                    alt={event.name || 'Event'} 
+                    className={styles.eventImage}
+                  />
+                  <div className={styles.eventInfo}>
+                    <h3 className={styles.eventTitle}>{event.name || 'Unnamed Event'}</h3>
+                    <p className={styles.eventDetails}>
+                      {event._embedded?.venues?.[0]?.name || 'Unknown Venue'}, {event._embedded?.venues?.[0]?.city?.name || 'Unknown City'}<br />
+                      {event._embedded?.venues?.[0]?.address?.line1 || ''}<br />
+                      {event.dates?.start?.localDate ? new Date(event.dates.start.localDate).toLocaleDateString() : 'TBD'} at {event.dates?.start?.localTime || 'TBD'}
+                    </p>
+                  </div>
+                  <span className={styles.eventMatch}>{event.matchScore || 70}% Match</span>
+                </div>
+              ))}
+              <button className={styles.retryButton} onClick={handleRetry}>Retry with Ticketmaster</button>
+            </div>
           </div>
         ) : events.length === 0 ? (
           <div className={styles.noEvents}>
-            <p>No events found. Please try again later.</p>
-            <button className={styles.retryButton} onClick={handleRetry}>Retry</button>
+            <p>No events found. Showing fallback events instead.</p>
+            <div>
+              {fallbackEvents.map((event) => (
+                <div 
+                  key={event.id} 
+                  className={styles.eventCard}
+                  onClick={() => event.url ? window.open(event.url, "_blank") : null}
+                >
+                  <img 
+                    src="/images/placeholders/event_placeholder_medium.jpg" 
+                    alt={event.name || 'Event'} 
+                    className={styles.eventImage}
+                  />
+                  <div className={styles.eventInfo}>
+                    <h3 className={styles.eventTitle}>{event.name || 'Unnamed Event'}</h3>
+                    <p className={styles.eventDetails}>
+                      {event._embedded?.venues?.[0]?.name || 'Unknown Venue'}, {event._embedded?.venues?.[0]?.city?.name || 'Unknown City'}<br />
+                      {event._embedded?.venues?.[0]?.address?.line1 || ''}<br />
+                      {event.dates?.start?.localDate ? new Date(event.dates.start.localDate).toLocaleDateString() : 'TBD'} at {event.dates?.start?.localTime || 'TBD'}
+                    </p>
+                  </div>
+                  <span className={styles.eventMatch}>{event.matchScore || 70}% Match</span>
+                </div>
+              ))}
+              <button className={styles.retryButton} onClick={handleRetry}>Retry with Ticketmaster</button>
+            </div>
           </div>
         ) : (
-          <>
-            {events.map((event) => (
-              <div 
-                key={event.id} 
-                className={styles.eventCard}
-                onClick={() => window.open(event.url, "_blank")}
-              >
-                <img 
-                  src={event.images?.[0]?.url || "/images/placeholders/event_placeholder_medium.jpg"} 
-                  alt={event.name} 
-                  className={styles.eventImage} 
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/placeholders/event_placeholder_medium.jpg";
-                  }}
-                />
-                <div className={styles.eventInfo}>
-                  <h3 className={styles.eventTitle}>{event.name}</h3>
-                  <p className={styles.eventDetails}>
-                    {event._embedded?.venues?.[0]?.name}, {event._embedded?.venues?.[0]?.city?.name}<br />
-                    {event._embedded?.venues?.[0]?.address?.line1}<br />
-                    {new Date(event.dates?.start?.localDate).toLocaleDateString()} at {event.dates?.start?.localTime}
-                  </p>
+          <div>
+            {events.map((event) => {
+              // Skip rendering if event is missing critical data
+              if (!event || !event.id) return null;
+              
+              // Safely extract nested properties
+              const venueName = event._embedded?.venues?.[0]?.name || 'Unknown Venue';
+              const cityName = event._embedded?.venues?.[0]?.city?.name || 'Unknown City';
+              const address = event._embedded?.venues?.[0]?.address?.line1 || '';
+              const eventDate = event.dates?.start?.localDate ? new Date(event.dates.start.localDate).toLocaleDateString() : 'TBD';
+              const eventTime = event.dates?.start?.localTime || 'TBD';
+              const imageUrl = event.images?.[0]?.url || "/images/placeholders/event_placeholder_medium.jpg";
+              const matchScore = event.matchScore || 70;
+              
+              return (
+                <div 
+                  key={event.id} 
+                  className={styles.eventCard}
+                  onClick={() => event.url ? window.open(event.url, "_blank") : null}
+                >
+                  <img 
+                    src={imageUrl} 
+                    alt={event.name || 'Event'} 
+                    className={styles.eventImage} 
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/images/placeholders/event_placeholder_medium.jpg";
+                    }}
+                  />
+                  <div className={styles.eventInfo}>
+                    <h3 className={styles.eventTitle}>{event.name || 'Unnamed Event'}</h3>
+                    <p className={styles.eventDetails}>
+                      {venueName}, {cityName}<br />
+                      {address}<br />
+                      {eventDate} at {eventTime}
+                    </p>
+                  </div>
+                  <span className={styles.eventMatch}>{matchScore}% Match</span>
                 </div>
-                <span className={styles.eventMatch}>{event.matchScore}% Match</span>
-              </div>
-            ))}
+              );
+            })}
             <button className={styles.loadMoreButton}>More Filters</button>
-          </>
+          </div>
         )}
       </div>
     </div>

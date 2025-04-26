@@ -1,0 +1,4 @@
+1:import { signOut } from "next-auth/react";
+2:import { useEffect, useState } from "react";
+3:import styles from '../../styles/SignOut.module.css';
+4:import Head from 'next/head';
