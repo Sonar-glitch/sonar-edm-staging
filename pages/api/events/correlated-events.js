@@ -105,9 +105,15 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
   
+  console.log("Starting correlated-events API handler");
+  
   try {
     // Check for session
     const session = await getServerSession(req, res, authOptions);
+    
+    // Log session status
+    console.log("Session status:", session ? "Authenticated" : "Not authenticated");
+    
     if (!session) {
       console.log("Not authenticated, returning sample events");
       // Return sample events for non-authenticated users
@@ -120,6 +126,9 @@ export default async function handler(req, res) {
       });
     }
 
+    // Log session token availability
+    console.log("Session token available:", !!session.accessToken);
+    
     // Check cache first
     const now = Date.now();
     const cacheExpired = now - cache.timestamp > 30 * 60 * 1000; // 30 minutes
@@ -139,9 +148,10 @@ export default async function handler(req, res) {
     // Get user taste profile using the session
     let userTaste = null;
     try {
+      // Use a direct cookie-based approach instead of Authorization header
       const tasteResponse = await axios.get(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/spotify/user-taste`, {
         headers: {
-          Authorization: `Bearer ${session.accessToken}` // Use the session token
+          Cookie: req.headers.cookie || '' // Forward the user's cookies
         },
         validateStatus: function (status) {
           return status < 500;
@@ -149,23 +159,16 @@ export default async function handler(req, res) {
         timeout: 5000 // 5 second timeout
       });
       
-      if (tasteResponse.status === 401) {
-        console.log("Authentication required for user taste data");
-        throw new Error("Authentication required");
+      if (tasteResponse.status === 200) {
+        userTaste = tasteResponse.data;
+        console.log("Successfully fetched user taste data");
+      } else {
+        console.log("Non-200 response from user taste API:", tasteResponse.status);
+        // Continue with null userTaste
       }
-      
-      userTaste = tasteResponse.data;
     } catch (error) {
       console.error("Error fetching user taste data:", error.message);
-      // Return sample events if we can't get user taste
-      const allSampleEvents = [...sampleEvents, ...edmtrainSampleEvents];
-      allSampleEvents.sort((a, b) => b.matchScore - a.matchScore);
-      
-      return res.status(200).json({
-        events: allSampleEvents,
-        source: 'taste_error_fallback',
-        error: error.message
-      });
+      // Continue with null userTaste - we'll still try to get events
     }
     
     // Fetch all events
@@ -176,10 +179,12 @@ export default async function handler(req, res) {
       });
       
       allEvents = eventsResponse.data.events || [];
+      console.log(`Fetched ${allEvents.length} events from API`);
     } catch (error) {
       console.error("Error fetching events:", error.message);
       // Use sample events if we can't fetch real events
       allEvents = [...sampleEvents, ...edmtrainSampleEvents];
+      console.log("Using sample events due to events API error");
     }
     
     // Calculate correlation scores based on user taste and location
@@ -238,6 +243,7 @@ export default async function handler(req, res) {
     }
     
     // Return correlated events
+    console.log(`Returning ${correlatedEvents.length} correlated events`);
     return res.status(200).json({
       events: correlatedEvents,
       source: 'correlated',
