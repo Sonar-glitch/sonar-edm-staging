@@ -1,13 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  images: {
-    domains: ['i.scdn.co', 'images.ticketmaster.com'],
+  swcMinify: true,
+  experimental: {
+    // Disable experimental features that might cause issues
+    appDir: false,
+    optimizeCss: false,
+    serverComponentsExternalPackages: [],
   },
-  // Remove experimental features that might cause issues
-  // experimental: {
-  //   optimizeCss: true,
-  // },
 }
 
 module.exports = nextConfig
