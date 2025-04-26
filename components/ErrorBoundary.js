@@ -3,49 +3,37 @@ import React from 'react';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error) {
-    // Update state so the next render will show the fallback UI
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log the error to console
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
-    });
-  }
-
-  resetError = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
+    console.error("Error caught by ErrorBoundary:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
-      // Render fallback UI
       return (
         <div style={{
           padding: '20px',
-          margin: '10px 0',
-          backgroundColor: '#2a2a3a',
-          borderRadius: '8px',
+          backgroundColor: '#1e1e2f',
+          borderRadius: '10px',
           color: 'white',
           textAlign: 'center'
         }}>
-          <h3 style={{ color: '#ff00cc' }}>Something went wrong</h3>
-          <p>We encountered an error loading this section.</p>
-          <button 
-            onClick={this.resetError}
+          <h3>Something went wrong</h3>
+          <p>{this.state.error?.message || 'An error occurred'}</p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
             style={{
-              backgroundColor: '#00c6ff',
+              backgroundColor: '#ff00ff',
               color: 'white',
               border: 'none',
               padding: '8px 16px',
-              borderRadius: '4px',
+              borderRadius: '5px',
               cursor: 'pointer',
               marginTop: '10px'
             }}
