@@ -1,0 +1,2 @@
+1:import NextAuth from "next-auth";
+2:import SpotifyProvider from "next-auth/providers/spotify";

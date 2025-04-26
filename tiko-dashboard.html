@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TIKO Dashboard</title>
+    <style>
+        body { background-color: #121225; color: white; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { font-size: 48px; margin-bottom: 10px; }
+        .section { margin-bottom: 40px; background-color: #1e1e2f; border-radius: 10px; padding: 20px; }
+        .section-title { margin-top: 0; margin-bottom: 20px; }
+        .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .event-card { background-color: #1e1e2f; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .event-image { height: 150px; background-color: #333; display: flex; align-items: center; justify-content: center; }
+        .event-details { padding: 15px; }
+        .event-title { margin: 0 0 10px 0; font-size: 18px; }
+        .event-info { display: flex; align-items: center; margin-bottom: 8px; }
+        .event-icon { color: #ff00ff; margin-right: 8px; }
+        .event-location-icon { color: #00ffff; }
+        .event-text { font-size: 14px; }
+        .ticket-button { display: block; background-color: #ff00ff; color: white; text-align: center; padding: 8px 0; border-radius: 5px; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TIKO</h1>
+            <p>You're all about <span style="color: #00ffff;">house</span> + <span style="color: #ff00ff;">techno</span> with a vibe shift toward <span style="color: #00ff00;">fresh sounds</span>.</p>
+        </header>
+
+        <div class="section">
+            <h2 class="section-title">Events Matching Your Vibe</h2>
+            <div class="events-grid">
+                <!-- Event 1 -->
+                <div class="event-card">
+                    <div class="event-image">
+                        <div style="color: white; font-size: 18px; text-align: center;">House & Techno Night</div>
+                    </div>
+                    <div class="event-details">
+                        <h3 class="event-title">House & Techno Night</h3>
+                        <div class="event-info">
+                            <span class="event-icon">📅</span>
+                            <span class="event-text">Sat, May 3 • 10:00 PM</span>
+                        </div>
+                        <div class="event-info">
+                            <span class="event-icon event-location-icon">📍</span>
+                            <span class="event-text">CODA, Toronto</span>
+                        </div>
+                        <a href="#" class="ticket-button">Get Tickets</a>
+                    </div>
+                </div>
+
+                <!-- Event 2 -->
+                <div class="event-card">
+                    <div class="event-image">
+                        <div style="color: white; font-size: 18px; text-align: center;">Deep House Sessions</div>
+                    </div>
+                    <div class="event-details">
+                        <h3 class="event-title">Deep House Sessions</h3>
+                        <div class="event-info">
+                            <span class="event-icon">📅</span>
+                            <span class="event-text">Sat, May 10 • 9:00 PM</span>
+                        </div>
+                        <div class="event-info">
+                            <span class="event-icon event-location-icon">📍</span>
+                            <span class="event-text">Rebel, Toronto</span>
+                        </div>
+                        <a href="#" class="ticket-button">Get Tickets</a>
+                    </div>
+                </div>
+
+                <!-- Event 3 -->
+                <div class="event-card">
+                    <div class="event-image">
+                        <div style="color: white; font-size: 18px; text-align: center;">Techno Underground</div>
+                    </div>
+                    <div class="event-details">
+                        <h3 class="event-title">Techno Underground</h3>
+                        <div class="event-info">
+                            <span class="event-icon">📅</span>
+                            <span class="event-text">Sat, May 17 • 11:00 PM</span>
+                        </div>
+                        <div class="event-info">
+                            <span class="event-icon event-location-icon">📍</span>
+                            <span class="event-text">Vertigo, Toronto</span>
+                        </div>
+                        <a href="#" class="ticket-button">Get Tickets</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
