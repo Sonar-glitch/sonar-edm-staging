@@ -1,143 +1,281 @@
-import React, { useState, useEffect } from 'react';
-import styles from './LocationDisplay.module.css';
+import { useState, useEffect } from 'react';
+import styles from '../styles/Dashboard.module.css';
 
-export default function LocationDisplay({ location }) {
-  const [userLocation, setUserLocation] = useState(location);
-  const [loading, setLoading] = useState(!location);
-  const [error, setError] = useState(null);
-  const [showLocationSelector, setShowLocationSelector] = useState(false);
+const LocationDisplay = ({ onLocationChange }) => {
+  const [location, setLocation] = useState({
+    city: '',
+    region: '',
+    country: '',
+    lat: null,
+    lon: null,
+    isLoading: true,
+    error: null
+  });
+  
+  const [isChangingLocation, setIsChangingLocation] = useState(false);
+  const [customLocation, setCustomLocation] = useState('');
   
   // Predefined locations
   const predefinedLocations = [
-    { city: "Toronto", region: "ON", country: "Canada", latitude: 43.6532, longitude: -79.3832 },
-    { city: "New York", region: "NY", country: "United States", latitude: 40.7128, longitude: -74.0060 },
-    { city: "Los Angeles", region: "CA", country: "United States", latitude: 34.0522, longitude: -118.2437 },
-    { city: "Chicago", region: "IL", country: "United States", latitude: 41.8781, longitude: -87.6298 },
-    { city: "Miami", region: "FL", country: "United States", latitude: 25.7617, longitude: -80.1918 },
-    { city: "London", region: "England", country: "United Kingdom", latitude: 51.5074, longitude: -0.1278 },
-    { city: "Berlin", region: "Berlin", country: "Germany", latitude: 52.5200, longitude: 13.4050 },
-    { city: "Amsterdam", region: "North Holland", country: "Netherlands", latitude: 52.3676, longitude: 4.9041 }
+    { name: 'Toronto, ON, Canada', lat: 43.65, lon: -79.38 },
+    { name: 'Montreal, QC, Canada', lat: 45.50, lon: -73.57 },
+    { name: 'Vancouver, BC, Canada', lat: 49.28, lon: -123.12 },
+    { name: 'New York, NY, USA', lat: 40.71, lon: -74.01 },
+    { name: 'Los Angeles, CA, USA', lat: 34.05, lon: -118.24 }
   ];
   
-  React.useEffect(() => {
-    if (location) {
-      setUserLocation(location);
-      return;
-    }
-    
-    async function getLocation() {
+  useEffect(() => {
+    // Try to get location from localStorage first
+    const savedLocation = localStorage.getItem('userLocation');
+    if (savedLocation) {
       try {
-        setLoading(true);
+        const parsedLocation = JSON.parse(savedLocation);
+        setLocation({
+          ...parsedLocation,
+          isLoading: false,
+          error: null
+        });
         
-        // Try to get location from localStorage
-        if (typeof window !== 'undefined') {
-          const savedLocation = localStorage.getItem('userLocation');
-          if (savedLocation) {
-            try {
-              setUserLocation(JSON.parse(savedLocation));
-              setLoading(false);
-              return;
-            } catch (e) {
-              console.error('Error parsing saved location:', e);
-            }
-          }
+        // Notify parent component
+        if (onLocationChange && parsedLocation.lat && parsedLocation.lon) {
+          onLocationChange({
+            lat: parsedLocation.lat,
+            lon: parsedLocation.lon,
+            city: parsedLocation.city
+          });
         }
-        
-        // Try to get location from API
-        const response = await fetch('/api/user/get-location');
-        if (response.ok) {
-          const data = await response.json();
-          setUserLocation(data);
-          
-          // Save to localStorage
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('userLocation', JSON.stringify(data));
-          }
-        } else {
-          throw new Error('Failed to get location');
-        }
-      } catch (err) {
-        console.error('Error getting location:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+        return;
+      } catch (e) {
+        console.error("Error parsing saved location:", e);
+        // Continue with geolocation if parsing fails
       }
     }
     
-    getLocation();
-  }, [location]);
-  
-  const handleLocationChange = async (newLocation) => {
-    setUserLocation(newLocation);
-    setShowLocationSelector(false);
-    
-    // Save to localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('userLocation', JSON.stringify(newLocation));
-    }
-    
-    // Send to server
-    try {
-      await fetch('/api/user/set-location', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newLocation)
-      });
+    // Default to Toronto if geolocation fails or is not available
+    const defaultToToronto = () => {
+      const toronto = {
+        city: 'Toronto',
+        region: 'ON',
+        country: 'Canada',
+        lat: 43.65,
+        lon: -79.38,
+        isLoading: false,
+        error: null
+      };
       
-      // Reload the page to refresh events with new location
-      window.location.reload();
-    } catch (e) {
-      console.error('Error sending location to server:', e);
+      setLocation(toronto);
+      localStorage.setItem('userLocation', JSON.stringify(toronto));
+      
+      // Notify parent component
+      if (onLocationChange) {
+        onLocationChange({
+          lat: toronto.lat,
+          lon: toronto.lon,
+          city: toronto.city
+        });
+      }
+    };
+    
+    // Try to get user's location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            // Use reverse geocoding to get city name
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=10`
+            );
+            
+            if (!response.ok) {
+              throw new Error('Geocoding failed');
+            }
+            
+            const data = await response.json();
+            
+            // Extract location information
+            const locationData = {
+              city: data.address.city || data.address.town || data.address.village || 'Unknown',
+              region: data.address.state || data.address.county || '',
+              country: data.address.country || '',
+              lat: position.coords.latitude,
+              lon: position.coords.longitude,
+              isLoading: false,
+              error: null
+            };
+            
+            setLocation(locationData);
+            localStorage.setItem('userLocation', JSON.stringify(locationData));
+            
+            // Notify parent component
+            if (onLocationChange) {
+              onLocationChange({
+                lat: locationData.lat,
+                lon: locationData.lon,
+                city: locationData.city
+              });
+            }
+          } catch (error) {
+            console.error("Error getting location details:", error);
+            defaultToToronto();
+          }
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          defaultToToronto();
+        },
+        { timeout: 10000 }
+      );
+    } else {
+      // Geolocation not supported
+      console.log("Geolocation not supported");
+      defaultToToronto();
+    }
+  }, [onLocationChange]);
+  
+  const handleChangeClick = () => {
+    setIsChangingLocation(true);
+  };
+  
+  const handleLocationSelect = (selectedLocation) => {
+    // Update location
+    const newLocation = {
+      city: selectedLocation.name.split(',')[0],
+      region: selectedLocation.name.split(',')[1]?.trim() || '',
+      country: selectedLocation.name.split(',')[2]?.trim() || '',
+      lat: selectedLocation.lat,
+      lon: selectedLocation.lon,
+      isLoading: false,
+      error: null
+    };
+    
+    setLocation(newLocation);
+    localStorage.setItem('userLocation', JSON.stringify(newLocation));
+    setIsChangingLocation(false);
+    
+    // Notify parent component
+    if (onLocationChange) {
+      onLocationChange({
+        lat: newLocation.lat,
+        lon: newLocation.lon,
+        city: newLocation.city
+      });
     }
   };
   
-  if (loading) {
-    return <div className={styles.locationDisplay}>Detecting your location...</div>;
+  const handleCustomLocationSubmit = async () => {
+    if (!customLocation.trim()) return;
+    
+    try {
+      // Use geocoding to get coordinates
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(customLocation)}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Geocoding failed');
+      }
+      
+      const data = await response.json();
+      
+      if (data.length === 0) {
+        alert('Location not found. Please try a different location.');
+        return;
+      }
+      
+      // Use the first result
+      const result = data[0];
+      
+      // Extract location information
+      const locationData = {
+        city: customLocation.split(',')[0] || 'Unknown',
+        region: customLocation.split(',')[1]?.trim() || '',
+        country: customLocation.split(',')[2]?.trim() || '',
+        lat: parseFloat(result.lat),
+        lon: parseFloat(result.lon),
+        isLoading: false,
+        error: null
+      };
+      
+      setLocation(locationData);
+      localStorage.setItem('userLocation', JSON.stringify(locationData));
+      setIsChangingLocation(false);
+      setCustomLocation('');
+      
+      // Notify parent component
+      if (onLocationChange) {
+        onLocationChange({
+          lat: locationData.lat,
+          lon: locationData.lon,
+          city: locationData.city
+        });
+      }
+    } catch (error) {
+      console.error("Error geocoding custom location:", error);
+      alert('Error finding location. Please try again.');
+    }
+  };
+  
+  if (location.isLoading) {
+    return <div className={styles.locationDisplay}>Loading location...</div>;
   }
   
-  if (error) {
+  if (location.error) {
     return (
       <div className={styles.locationDisplay}>
-        <span className={styles.error}>Location detection failed.</span>
-        <button 
-          className={styles.retryButton}
-          onClick={() => window.location.reload()}
-        >
-          Retry
-        </button>
+        <span>Location error. Using default.</span>
+        <button onClick={handleChangeClick}>Change</button>
       </div>
     );
   }
   
-  if (!userLocation) {
-    return <div className={styles.locationDisplay}>Location unavailable</div>;
-  }
-  
   return (
-    <div className={styles.locationDisplay}>
-      <span className={styles.locationIcon}>📍</span>
-      <span className={styles.locationText}>
-        {userLocation.city}, {userLocation.region}, {userLocation.country}
-      </span>
-      <button 
-        className={styles.changeLocationButton}
-        onClick={() => setShowLocationSelector(!showLocationSelector)}
-      >
-        Change
-      </button>
-      
-      {showLocationSelector && (
+    <div className={styles.locationDisplayContainer}>
+      {!isChangingLocation ? (
+        <div className={styles.locationDisplay}>
+          <span className={styles.locationIcon}>📍</span>
+          <span className={styles.locationText}>
+            {location.city}{location.region ? `, ${location.region}` : ''}{location.country ? `, ${location.country}` : ''}
+          </span>
+          <button className={styles.changeButton} onClick={handleChangeClick}>Change</button>
+        </div>
+      ) : (
         <div className={styles.locationSelector}>
-          <h4>Select Location</h4>
-          <ul>
-            {predefinedLocations.map((loc, index) => (
-              <li key={index} onClick={() => handleLocationChange(loc)}>
-                {loc.city}, {loc.region}, {loc.country}
-              </li>
-            ))}
-          </ul>
+          <div className={styles.predefinedLocations}>
+            <h4>Select a location:</h4>
+            <div className={styles.locationButtons}>
+              {predefinedLocations.map((loc) => (
+                <button
+                  key={loc.name}
+                  className={styles.locationButton}
+                  onClick={() => handleLocationSelect(loc)}
+                >
+                  {loc.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className={styles.customLocation}>
+            <h4>Or enter a custom location:</h4>
+            <div className={styles.customLocationInput}>
+              <input
+                type="text"
+                value={customLocation}
+                onChange={(e) => setCustomLocation(e.target.value)}
+                placeholder="City, Region, Country"
+              />
+              <button onClick={handleCustomLocationSubmit}>Set Location</button>
+            </div>
+          </div>
+          <button 
+            className={styles.cancelButton}
+            onClick={() => setIsChangingLocation(false)}
+          >
+            Cancel
+          </button>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default LocationDisplay;
