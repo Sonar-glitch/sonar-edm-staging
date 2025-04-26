@@ -298,7 +298,11 @@ export default async function handler(req, res) {
     
     console.log("Making Ticketmaster API request with params:", params);
     
-    // Log the response structure (not the full data)
+    // Log the API key (masked for security)
+    const apiKey = process.env.TICKETMASTER_API_KEY || '';
+    console.log(`API Key length: ${apiKey.length}, first 4 chars: ${apiKey.substring(0, 4)}...`);
+    
+    // Try the API request
     try {
       const response = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', {
         params,
@@ -411,7 +415,8 @@ export default async function handler(req, res) {
         }
       }
     } catch (error) {
-      console.error("Error with Ticketmaster API request:", error);
+      console.error("Error with Ticketmaster API request:", error.message);
+      console.error("Error details:", error.response?.data || "No response data");
       
       // If error and it's a Toronto request, return sample events
       if (isTorontoRequest) {
@@ -431,7 +436,7 @@ export default async function handler(req, res) {
       });
     }
   } catch (error) {
-    console.error("Error in events API handler:", error);
+    console.error("Error in events API handler:", error.message);
     
     // If error and it's a Toronto request, return sample events
     if (isTorontoRequest) {
