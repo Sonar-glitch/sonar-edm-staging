@@ -1,7 +1,29 @@
-// Debug version of events API that always returns sample events
-// This is a simplified version for troubleshooting
+// Combined Ticketmaster and EDMTrain API with Caching for TIKO Platform
+// This file should replace pages/api/events/index.js
 
-// Sample events with valid links
+// Cache storage for both APIs
+let eventCache = {
+  ticketmaster: {
+    data: null,
+    timestamp: 0,
+    city: ''
+  },
+  edmtrain: {
+    data: null,
+    timestamp: 0,
+    city: ''
+  },
+  combined: {
+    data: null,
+    timestamp: 0,
+    city: ''
+  }
+};
+
+// Cache duration in milliseconds (1 hour)
+const CACHE_DURATION = 60 * 60 * 1000;
+
+// Sample events for absolute fallback
 const sampleEvents = [
   {
     name: "House & Techno Night",
@@ -41,6 +63,262 @@ const sampleEvents = [
   }
 ];
 
+// Check if cache is valid
+const isCacheValid = (cacheType, city) => {
+  const now = Date.now();
+  return (
+    eventCache[cacheType].data !== null &&
+    eventCache[cacheType].city === city &&
+    now - eventCache[cacheType].timestamp < CACHE_DURATION
+  );
+};
+
+// Direct Ticketmaster API call function with no external dependencies
+const directTicketmasterApiCall = async (apiKey, city = 'Toronto') => {
+  console.log(`Making direct API call to Ticketmaster for city: ${city}`);
+  
+  try {
+    // Use a simple, direct URL that's most likely to work
+    const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${apiKey}&city=${encodeURIComponent(city)}&classificationName=music&size=10`;
+    
+    console.log(`Ticketmaster API URL: ${url}`);
+    
+    // Use native fetch (available in Next.js)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      console.error(`Ticketmaster API request failed with status ${response.status}`);
+      
+      // If rate limited, throw specific error
+      if (response.status === 429) {
+        throw new Error('Ticketmaster rate limit exceeded');
+      }
+      
+      throw new Error(`Ticketmaster API request failed with status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Ticketmaster API response received successfully');
+    
+    return data;
+  } catch (error) {
+    console.error('Direct Ticketmaster API call failed:', error.message);
+    return null;
+  }
+};
+
+// Direct EDMTrain API call function with no external dependencies
+const directEDMTrainApiCall = async (apiKey, city = 'Toronto') => {
+  console.log(`Making direct API call to EDMTrain for city: ${city}`);
+  
+  try {
+    // Get the current date in YYYY-MM-DD format
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    
+    // EDMTrain API requires location IDs, so we need to map city names to IDs
+    // Toronto is ID 142
+    let locationId = 142; // Default to Toronto
+    
+    // Map common cities to their EDMTrain location IDs
+    const cityMap = {
+      'toronto': 142,
+      'new york': 1,
+      'los angeles': 2,
+      'chicago': 3,
+      'miami': 4,
+      'las vegas': 5,
+      'san francisco': 6,
+      'denver': 8,
+      'seattle': 9,
+      'boston': 10
+    };
+    
+    // Try to match the city name to a known location ID
+    const lowerCity = city.toLowerCase();
+    for (const [key, value] of Object.entries(cityMap)) {
+      if (lowerCity.includes(key)) {
+        locationId = value;
+        break;
+      }
+    }
+    
+    // Use a simple, direct URL that's most likely to work
+    const url = `https://edmtrain.com/api/events?locationIds=${locationId}&startDate=${formattedDate}&endDate=&artistIds=&client=${apiKey}`;
+    
+    console.log(`EDMTrain API URL: ${url} (with location ID: ${locationId})`);
+    
+    // Use native fetch (available in Next.js)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      console.error(`EDMTrain API request failed with status ${response.status}`);
+      
+      // If rate limited, throw specific error
+      if (response.status === 429) {
+        throw new Error('EDMTrain rate limit exceeded');
+      }
+      
+      throw new Error(`EDMTrain API request failed with status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('EDMTrain API response received successfully');
+    
+    return data;
+  } catch (error) {
+    console.error('Direct EDMTrain API call failed:', error.message);
+    return null;
+  }
+};
+
+// Process Ticketmaster events into our format
+const processTicketmasterEvents = (data) => {
+  if (!data || !data._embedded || !data._embedded.events || data._embedded.events.length === 0) {
+    console.log('No events found in Ticketmaster API response');
+    return [];
+  }
+  
+  console.log(`Processing ${data._embedded.events.length} events from Ticketmaster`);
+  
+  return data._embedded.events.map(event => {
+    // Extract venue info
+    const venue = event._embedded?.venues?.[0]?.name || 'Unknown Venue';
+    const city = event._embedded?.venues?.[0]?.city?.name || 'Unknown City';
+    const address = event._embedded?.venues?.[0]?.address?.line1 || '';
+    
+    // Extract image with fallback
+    let image = 'https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg';
+    if (event.images && event.images.length > 0) {
+      // Find a suitable image
+      const suitableImage = event.images.find(img => 
+        img.url && img.url.startsWith('http') && 
+        (img.width > 300 && img.width < 800)
+      );
+      
+      if (suitableImage) {
+        image = suitableImage.url;
+      } else if (event.images[0].url) {
+        image = event.images[0].url;
+      }
+    }
+    
+    // Extract date and time
+    const date = event.dates?.start?.localDate || 'TBD';
+    const time = event.dates?.start?.localTime || 'TBD';
+    
+    // Generate a match score
+    const matchScore = Math.floor(Math.random() * 20) + 70; // Between 70-90
+    
+    return {
+      id: event.id,
+      name: event.name,
+      venue,
+      city,
+      address,
+      date,
+      time,
+      image,
+      url: event.url || 'https://www.ticketmaster.ca/electronic-dance-music-tickets/category/10001',
+      matchScore,
+      source: 'ticketmaster'
+    };
+  });
+};
+
+// Process EDMTrain events into our format
+const processEDMTrainEvents = (data) => {
+  if (!data || !data.data || data.data.length === 0) {
+    console.log('No events found in EDMTrain API response');
+    return [];
+  }
+  
+  console.log(`Processing ${data.data.length} events from EDMTrain`);
+  
+  return data.data.map(event => {
+    // Extract venue info
+    const venue = event.venue?.name || 'Unknown Venue';
+    const city = event.venue?.location || 'Unknown City';
+    const address = ''; // EDMTrain doesn't provide detailed address
+    
+    // Extract date and time
+    const eventDate = new Date(event.date);
+    const date = eventDate.toISOString().split('T')[0];
+    const time = event.startTime || '20:00:00';
+    
+    // Default image for EDM events
+    const image = 'https://edmtrain-public.s3.us-east-2.amazonaws.com/img/logos/edmtrain-logo-tag.png';
+    
+    // Generate a match score
+    const matchScore = Math.floor(Math.random() * 20) + 70; // Between 70-90
+    
+    // Create event name from artists
+    let name = 'EDM Event';
+    if (event.artistList && event.artistList.length > 0) {
+      const artists = event.artistList.map(artist => artist.name);
+      if (artists.length === 1) {
+        name = artists[0];
+      } else if (artists.length === 2) {
+        name = `${artists[0]} & ${artists[1]}`;
+      } else if (artists.length > 2) {
+        name = `${artists[0]} with ${artists.length - 1} more`;
+      }
+    }
+    
+    // Create URL to EDMTrain event page
+    const url = `https://edmtrain.com/event/${event.id}`;
+    
+    return {
+      id: `edmtrain-${event.id}`,
+      name,
+      venue,
+      city,
+      address,
+      date,
+      time,
+      image,
+      url,
+      matchScore,
+      source: 'edmtrain'
+    };
+  });
+};
+
+// Combine events from both APIs and sort by match score
+const combineEvents = (ticketmasterEvents, edmtrainEvents) => {
+  const combined = [...ticketmasterEvents, ...edmtrainEvents];
+  
+  // Sort by match score (highest first)
+  combined.sort((a, b) => b.matchScore - a.matchScore);
+  
+  // Limit to 10 events
+  return combined.slice(0, 10);
+};
+
 // Main handler function
 const handler = async (req, res) => {
   // Set CORS headers
@@ -55,15 +333,193 @@ const handler = async (req, res) => {
     return;
   }
   
-  console.log('DEBUG Events API called with query:', req.query);
+  console.log('Events API called with query:', req.query);
   
-  // Always return sample events for debugging
-  return res.status(200).json({
-    events: sampleEvents,
-    source: 'debug_mode',
-    location: { city: req.query.city || 'Toronto' },
-    debug: true
-  });
+  // Extract location parameters with fallbacks
+  const city = req.query.city || 'Toronto';
+  
+  // Check for force refresh parameter
+  const forceRefresh = req.query.refresh === 'true';
+  
+  try {
+    // Check if we have valid combined cache
+    if (!forceRefresh && isCacheValid('combined', city)) {
+      console.log(`Using combined cached events data for ${city}, cache age: ${(Date.now() - eventCache.combined.timestamp) / 1000} seconds`);
+      
+      return res.status(200).json({
+        events: eventCache.combined.data,
+        source: 'combined_cache',
+        location: { city },
+        cached: true,
+        cacheAge: (Date.now() - eventCache.combined.timestamp) / 1000
+      });
+    }
+    
+    // Get API keys directly from environment variables
+    const ticketmasterApiKey = process.env.TICKETMASTER_API_KEY;
+    const edmtrainApiKey = process.env.EDMTRAIN_API_KEY;
+    
+    if (!ticketmasterApiKey && !edmtrainApiKey) {
+      console.error('Neither Ticketmaster nor EDMTrain API keys found in environment variables');
+      throw new Error('API keys not configured');
+    }
+    
+    // Initialize arrays for events from each API
+    let ticketmasterEvents = [];
+    let edmtrainEvents = [];
+    
+    // Try to get Ticketmaster events
+    if (ticketmasterApiKey) {
+      console.log('Using Ticketmaster API key:', ticketmasterApiKey.substring(0, 4) + '...');
+      
+      // Check if we have valid Ticketmaster cache
+      if (!forceRefresh && isCacheValid('ticketmaster', city)) {
+        console.log(`Using cached Ticketmaster events data for ${city}`);
+        ticketmasterEvents = eventCache.ticketmaster.data;
+      } else {
+        // Make direct API call
+        const ticketmasterData = await directTicketmasterApiCall(ticketmasterApiKey, city);
+        
+        // Process events if we got data
+        if (ticketmasterData) {
+          ticketmasterEvents = processTicketmasterEvents(ticketmasterData);
+          
+          if (ticketmasterEvents.length > 0) {
+            console.log(`Successfully processed ${ticketmasterEvents.length} events from Ticketmaster`);
+            
+            // Update Ticketmaster cache
+            eventCache.ticketmaster = {
+              data: ticketmasterEvents,
+              timestamp: Date.now(),
+              city
+            };
+          }
+        } else if (eventCache.ticketmaster.data !== null && 
+                  eventCache.ticketmaster.city === city && 
+                  (Date.now() - eventCache.ticketmaster.timestamp < 24 * 60 * 60 * 1000)) {
+          // Use expired cache as fallback (up to 24 hours old)
+          console.log('Using expired Ticketmaster cache as fallback');
+          ticketmasterEvents = eventCache.ticketmaster.data;
+        }
+      }
+    }
+    
+    // Try to get EDMTrain events
+    if (edmtrainApiKey) {
+      console.log('Using EDMTrain API key:', edmtrainApiKey.substring(0, 4) + '...');
+      
+      // Check if we have valid EDMTrain cache
+      if (!forceRefresh && isCacheValid('edmtrain', city)) {
+        console.log(`Using cached EDMTrain events data for ${city}`);
+        edmtrainEvents = eventCache.edmtrain.data;
+      } else {
+        // Make direct API call
+        const edmtrainData = await directEDMTrainApiCall(edmtrainApiKey, city);
+        
+        // Process events if we got data
+        if (edmtrainData) {
+          edmtrainEvents = processEDMTrainEvents(edmtrainData);
+          
+          if (edmtrainEvents.length > 0) {
+            console.log(`Successfully processed ${edmtrainEvents.length} events from EDMTrain`);
+            
+            // Update EDMTrain cache
+            eventCache.edmtrain = {
+              data: edmtrainEvents,
+              timestamp: Date.now(),
+              city
+            };
+          }
+        } else if (eventCache.edmtrain.data !== null && 
+                  eventCache.edmtrain.city === city && 
+                  (Date.now() - eventCache.edmtrain.timestamp < 24 * 60 * 60 * 1000)) {
+          // Use expired cache as fallback (up to 24 hours old)
+          console.log('Using expired EDMTrain cache as fallback');
+          edmtrainEvents = eventCache.edmtrain.data;
+        }
+      }
+    }
+    
+    // Combine events from both APIs
+    const totalEvents = ticketmasterEvents.length + edmtrainEvents.length;
+    
+    if (totalEvents > 0) {
+      console.log(`Combining ${ticketmasterEvents.length} Ticketmaster events and ${edmtrainEvents.length} EDMTrain events`);
+      
+      const combinedEvents = combineEvents(ticketmasterEvents, edmtrainEvents);
+      
+      // Update combined cache
+      eventCache.combined = {
+        data: combinedEvents,
+        timestamp: Date.now(),
+        city
+      };
+      
+      // Return the combined events
+      return res.status(200).json({
+        events: combinedEvents,
+        source: 'combined_api',
+        location: { city },
+        cached: false,
+        ticketmasterCount: ticketmasterEvents.length,
+        edmtrainCount: edmtrainEvents.length
+      });
+    }
+    
+    // If we get here, both API calls failed or returned no events
+    console.log('Both API calls failed or returned no events, checking combined cache before using sample events');
+    
+    // Try to use slightly expired combined cache as fallback (up to 24 hours old)
+    if (eventCache.combined.data !== null && 
+        eventCache.combined.city === city && 
+        (Date.now() - eventCache.combined.timestamp < 24 * 60 * 60 * 1000)) {
+      console.log('Using expired combined cache as fallback');
+      
+      return res.status(200).json({
+        events: eventCache.combined.data,
+        source: 'expired_combined_cache',
+        location: { city },
+        cached: true,
+        cacheAge: (Date.now() - eventCache.combined.timestamp) / 1000
+      });
+    }
+    
+    // Return sample events as last resort fallback
+    console.log('No cache available, using sample events');
+    
+    return res.status(200).json({
+      events: sampleEvents,
+      source: 'fallback',
+      location: { city }
+    });
+    
+  } catch (error) {
+    console.error('Error in events API:', error);
+    
+    // Try to use cache even if expired (up to 24 hours) when errors occur
+    if (eventCache.combined.data !== null && 
+        eventCache.combined.city === city && 
+        (Date.now() - eventCache.combined.timestamp < 24 * 60 * 60 * 1000)) {
+      console.log('Error occurred, using combined cached data as fallback');
+      
+      return res.status(200).json({
+        events: eventCache.combined.data,
+        source: 'error_cache_fallback',
+        location: { city },
+        cached: true,
+        cacheAge: (Date.now() - eventCache.combined.timestamp) / 1000,
+        error: error.message
+      });
+    }
+    
+    // Always return sample events as last resort fallback
+    return res.status(200).json({
+      events: sampleEvents,
+      source: 'error_fallback',
+      error: error.message,
+      location: { city }
+    });
+  }
 };
 
 export default handler;
