@@ -13,8 +13,10 @@ export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [eventsError, setEventsError] = useState(null);
+  
+  // Initialize with Toronto coordinates to ensure we always have valid location data
   const [location, setLocation] = useState({
-    lat: '43.65', // Default to Toronto coordinates
+    lat: '43.65',
     lon: '-79.38',
     city: 'Toronto'
   });
@@ -48,33 +50,10 @@ export default function Dashboard() {
     }
   }, [session]);
 
-  // Initialize location from user data or default to Toronto
-  useEffect(() => {
-    const fetchInitialLocation = async () => {
-      try {
-        const response = await axios.get('/api/user/get-location');
-        if (response.data && (response.data.lat || response.data.city)) {
-          setLocation({
-            lat: response.data.lat || '43.65',
-            lon: response.data.lon || '-79.38',
-            city: response.data.city || 'Toronto'
-          });
-        }
-        // If no valid location data, we keep the default Toronto coordinates
-      } catch (error) {
-        console.error('Error fetching location:', error);
-        // Default to Toronto is already set in initial state
-      }
-    };
-
-    if (session) {
-      fetchInitialLocation();
-    }
-  }, [session]);
-
   // Fetch events when location changes or on initial load
   useEffect(() => {
     if (session) {
+      console.log('Location changed or session initialized, fetching events with location:', location);
       fetchEvents();
     }
   }, [location, session]);
@@ -226,7 +205,10 @@ export default function Dashboard() {
               </div>
             </div>
             <div className={styles.locationDisplayContainer}>
-              <LocationDisplay onLocationChange={handleLocationChange} initialLocation={location} />
+              <LocationDisplay 
+                onLocationChange={handleLocationChange} 
+                initialLocation={location} 
+              />
             </div>
           </div>
         </ErrorBoundary>

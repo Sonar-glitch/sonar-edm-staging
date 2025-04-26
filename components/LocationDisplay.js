@@ -1,14 +1,15 @@
+// Modified LocationDisplay.js with explicit initialLocation handling
 import { useState, useEffect } from 'react';
 import styles from '../styles/Dashboard.module.css';
 
-const LocationDisplay = ({ onLocationChange }) => {
+const LocationDisplay = ({ onLocationChange, initialLocation }) => {
   const [location, setLocation] = useState({
-    city: '',
+    city: initialLocation?.city || '',
     region: '',
     country: '',
-    lat: null,
-    lon: null,
-    isLoading: true,
+    lat: initialLocation?.lat || null,
+    lon: initialLocation?.lon || null,
+    isLoading: !initialLocation, // Not loading if initialLocation is provided
     error: null
   });
   
@@ -24,7 +25,25 @@ const LocationDisplay = ({ onLocationChange }) => {
     { name: 'Los Angeles, CA, USA', lat: 34.05, lon: -118.24 }
   ];
   
+  // Immediately notify parent of initialLocation if provided
   useEffect(() => {
+    if (initialLocation && initialLocation.lat && initialLocation.lon && onLocationChange) {
+      console.log('Using initialLocation:', initialLocation);
+      onLocationChange({
+        lat: initialLocation.lat,
+        lon: initialLocation.lon,
+        city: initialLocation.city || 'Toronto'
+      });
+    }
+  }, [initialLocation, onLocationChange]);
+  
+  useEffect(() => {
+    // Skip geolocation if initialLocation is provided
+    if (initialLocation && initialLocation.lat && initialLocation.lon) {
+      console.log('Using provided initialLocation, skipping geolocation');
+      return;
+    }
+    
     // Try to get location from localStorage first
     const savedLocation = localStorage.getItem('userLocation');
     if (savedLocation) {
@@ -38,6 +57,7 @@ const LocationDisplay = ({ onLocationChange }) => {
         
         // Notify parent component
         if (onLocationChange && parsedLocation.lat && parsedLocation.lon) {
+          console.log('Using saved location from localStorage:', parsedLocation);
           onLocationChange({
             lat: parsedLocation.lat,
             lon: parsedLocation.lon,
@@ -68,6 +88,7 @@ const LocationDisplay = ({ onLocationChange }) => {
       
       // Notify parent component
       if (onLocationChange) {
+        console.log('Defaulting to Toronto:', toronto);
         onLocationChange({
           lat: toronto.lat,
           lon: toronto.lon,
@@ -108,6 +129,7 @@ const LocationDisplay = ({ onLocationChange }) => {
             
             // Notify parent component
             if (onLocationChange) {
+              console.log('Using geolocation:', locationData);
               onLocationChange({
                 lat: locationData.lat,
                 lon: locationData.lon,
@@ -130,7 +152,7 @@ const LocationDisplay = ({ onLocationChange }) => {
       console.log("Geolocation not supported");
       defaultToToronto();
     }
-  }, [onLocationChange]);
+  }, [onLocationChange, initialLocation]);
   
   const handleChangeClick = () => {
     setIsChangingLocation(true);
@@ -154,6 +176,7 @@ const LocationDisplay = ({ onLocationChange }) => {
     
     // Notify parent component
     if (onLocationChange) {
+      console.log('Location changed to:', newLocation);
       onLocationChange({
         lat: newLocation.lat,
         lon: newLocation.lon,
@@ -203,6 +226,7 @@ const LocationDisplay = ({ onLocationChange }) => {
       
       // Notify parent component
       if (onLocationChange) {
+        console.log('Custom location set:', locationData);
         onLocationChange({
           lat: locationData.lat,
           lon: locationData.lon,
