@@ -5,9 +5,8 @@ const nextConfig = {
   experimental: {
     // Disable experimental features that might cause issues
     appDir: false,
-    optimizeCss: false,
-    serverComponentsExternalPackages: [],
-  },
-}
+    serverComponentsExternalPackages: []
+  }
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
