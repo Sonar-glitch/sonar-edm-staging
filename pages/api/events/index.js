@@ -1,5 +1,3 @@
-import corsMiddleware from '../cors-middleware';
-
 // Sample events for fallback
 const sampleEvents = [
   {
@@ -9,7 +7,7 @@ const sampleEvents = [
     address: "794 Bathurst St",
     date: "2025-05-03",
     time: "22:00",
-    image: "/images/placeholders/event_placeholder_medium.jpg",
+    image: "https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg",
     url: "https://ticketmaster.ca",
     matchScore: 85
   },
@@ -20,7 +18,7 @@ const sampleEvents = [
     address: "11 Polson St",
     date: "2025-05-10",
     time: "21:00",
-    image: "/images/placeholders/event_placeholder_medium.jpg",
+    image: "https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg",
     url: "https://ticketmaster.ca",
     matchScore: 80
   },
@@ -31,7 +29,7 @@ const sampleEvents = [
     address: "567 Queen St W",
     date: "2025-05-17",
     time: "23:00",
-    image: "/images/placeholders/event_placeholder_medium.jpg",
+    image: "https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg",
     url: "https://ticketmaster.ca",
     matchScore: 75
   }
@@ -84,7 +82,7 @@ const handler = async (req, res) => {
         const address = event._embedded?.venues?.[0]?.address?.line1 || '';
         
         // Extract image
-        let image = '/images/placeholders/event_placeholder_medium.jpg';
+        let image = 'https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg';
         if (event.images && event.images.length > 0) {
           const mediumImage = event.images.find(img => img.width > 300 && img.width < 800);
           image = mediumImage ? mediumImage.url : event.images[0].url;
@@ -135,4 +133,4 @@ const handler = async (req, res) => {
   }
 };
 
-export default corsMiddleware(handler);
+export default handler;

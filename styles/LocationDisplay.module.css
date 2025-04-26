@@ -1,0 +1,82 @@
+.container {
+  margin-top: 1.5rem;
+}
+
+.locationDisplay {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon {
+  color: #ff00ff;
+  font-size: 1.2rem;
+}
+
+.location {
+  flex-grow: 1;
+}
+
+.changeButton {
+  background-color: #2a2a3a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.changeButton:hover {
+  background-color: #3a3a4a;
+}
+
+.editContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-grow: 1;
+}
+
+.input {
+  background-color: #2a2a3a;
+  color: white;
+  border: 1px solid #3a3a4a;
+  border-radius: 4px;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.saveButton, .cancelButton {
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.saveButton {
+  background-color: #00c6ff;
+  color: white;
+}
+
+.saveButton:hover {
+  background-color: #00a0cc;
+}
+
+.cancelButton {
+  background-color: #2a2a3a;
+  color: white;
+}
+
+.cancelButton:hover {
+  background-color: #3a3a4a;
+}
