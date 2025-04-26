@@ -12,29 +12,34 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // You can also log the error to an error reporting service
-    console.error("Error caught by ErrorBoundary:", error, errorInfo);
+    // Log the error to console
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
     this.setState({
       error: error,
       errorInfo: errorInfo
     });
   }
 
+  resetError = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null });
+  }
+
   render() {
     if (this.state.hasError) {
-      // You can render any custom fallback UI
+      // Render fallback UI
       return (
-        <div style={{ 
-          padding: '20px', 
-          margin: '10px', 
-          backgroundColor: 'rgba(30, 30, 40, 0.7)',
+        <div style={{
+          padding: '20px',
+          margin: '10px 0',
+          backgroundColor: '#2a2a3a',
           borderRadius: '8px',
-          color: 'white'
+          color: 'white',
+          textAlign: 'center'
         }}>
-          <h2>Something went wrong.</h2>
-          <p>The component couldn't be displayed. Please try again later.</p>
+          <h3 style={{ color: '#ff00cc' }}>Something went wrong</h3>
+          <p>We encountered an error loading this section.</p>
           <button 
-            onClick={() => this.setState({ hasError: false })}
+            onClick={this.resetError}
             style={{
               backgroundColor: '#00c6ff',
               color: 'white',

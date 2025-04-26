@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
@@ -14,10 +14,16 @@ export default function Dashboard() {
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [eventsError, setEventsError] = useState(null);
   const [location, setLocation] = useState({
-    lat: null,
-    lon: null,
-    city: null
+    lat: '43.65', // Default to Toronto coordinates
+    lon: '-79.38',
+    city: 'Toronto'
   });
+
+  // Function to handle image loading errors
+  const handleImageError = (e) => {
+    e.target.onerror = null; // Prevent infinite loop
+    e.target.src = "/images/placeholders/event_placeholder_medium.jpg";
+  };
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -42,16 +48,38 @@ export default function Dashboard() {
     }
   }, [session]);
 
-  // Fetch events when location changes
+  // Initialize location from user data or default to Toronto
   useEffect(() => {
-    if (location.lat && location.lon) {
-      fetchEvents();
-    } else if (location.city) {
+    const fetchInitialLocation = async () => {
+      try {
+        const response = await axios.get('/api/user/get-location');
+        if (response.data && (response.data.lat || response.data.city)) {
+          setLocation({
+            lat: response.data.lat || '43.65',
+            lon: response.data.lon || '-79.38',
+            city: response.data.city || 'Toronto'
+          });
+        }
+        // If no valid location data, we keep the default Toronto coordinates
+      } catch (error) {
+        console.error('Error fetching location:', error);
+        // Default to Toronto is already set in initial state
+      }
+    };
+
+    if (session) {
+      fetchInitialLocation();
+    }
+  }, [session]);
+
+  // Fetch events when location changes or on initial load
+  useEffect(() => {
+    if (session) {
       fetchEvents();
     }
-  }, [location]);
+  }, [location, session]);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setIsLoadingEvents(true);
     setEventsError(null);
 
@@ -59,24 +87,53 @@ export default function Dashboard() {
     const timeoutId = setTimeout(() => {
       setEventsError('Loading took too long. Please try again.');
       setIsLoadingEvents(false);
-    }, 10000);
+    }, 15000);
 
     try {
-      let params = {};
+      // Always include all location parameters, with defaults if needed
+      const params = { 
+        lat: location.lat || '43.65', 
+        lon: location.lon || '-79.38',
+        city: location.city || 'Toronto'
+      };
       
-      if (location.lat && location.lon) {
-        params = { lat: location.lat, lon: location.lon };
-      } else if (location.city) {
-        params = { city: location.city };
-      }
-      
+      console.log('Fetching events with params:', params);
       const response = await axios.get('/api/events', { params });
       
       // Clear the timeout since we got a response
       clearTimeout(timeoutId);
       
-      setEvents(response.data.events || []);
-      setIsLoadingEvents(false);
+      console.log('Events API response:', response.data);
+      
+      if (response.data && Array.isArray(response.data.events) && response.data.events.length > 0) {
+        setEvents(response.data.events);
+        setIsLoadingEvents(false);
+        setEventsError(null);
+      } else if (response.data && response.data.events && response.data.events.length === 0) {
+        // API returned empty events array
+        setEvents([]);
+        setIsLoadingEvents(false);
+        setEventsError('No events found matching your taste profile.');
+      } else {
+        // Invalid response format
+        console.error('Invalid events response format:', response.data);
+        setEventsError('Unexpected response format. Please try again.');
+        setIsLoadingEvents(false);
+        
+        // Try to fetch with Toronto as fallback
+        try {
+          const fallbackResponse = await axios.get('/api/events', { 
+            params: { city: 'Toronto', fallback: true } 
+          });
+          
+          if (fallbackResponse.data && Array.isArray(fallbackResponse.data.events) && fallbackResponse.data.events.length > 0) {
+            setEvents(fallbackResponse.data.events);
+            setEventsError(null);
+          }
+        } catch (fallbackError) {
+          console.error('Fallback events request failed:', fallbackError);
+        }
+      }
     } catch (error) {
       // Clear the timeout since we got an error
       clearTimeout(timeoutId);
@@ -84,11 +141,31 @@ export default function Dashboard() {
       console.error('Error fetching events:', error);
       setEventsError('Failed to load events. Please try again.');
       setIsLoadingEvents(false);
+      
+      // Try to fetch with Toronto as fallback
+      try {
+        const fallbackResponse = await axios.get('/api/events', { 
+          params: { city: 'Toronto', fallback: true } 
+        });
+        
+        if (fallbackResponse.data && Array.isArray(fallbackResponse.data.events) && fallbackResponse.data.events.length > 0) {
+          setEvents(fallbackResponse.data.events);
+          setEventsError(null);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback events request failed:', fallbackError);
+      }
     }
-  };
+  }, [location]);
 
   const handleLocationChange = (newLocation) => {
-    setLocation(newLocation);
+    console.log('Location changed to:', newLocation);
+    // Ensure we have valid location data
+    setLocation({
+      lat: newLocation.lat || '43.65',
+      lon: newLocation.lon || '-79.38',
+      city: newLocation.city || 'Toronto'
+    });
   };
 
   const handleRetry = () => {
@@ -149,7 +226,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div className={styles.locationDisplayContainer}>
-              <LocationDisplay onLocationChange={handleLocationChange} />
+              <LocationDisplay onLocationChange={handleLocationChange} initialLocation={location} />
             </div>
           </div>
         </ErrorBoundary>
@@ -254,30 +331,29 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              {events.map((event) => (
+              {events.map((event, index) => (
                 <div 
-                  key={event.id} 
+                  key={event.id || `event-${index}`} 
                   className={styles.eventCard}
                   onClick={() => window.open(event.url, "_blank")}
                 >
                   <img 
                     src={event.images?.[0]?.url || "/images/placeholders/event_placeholder_medium.jpg"} 
-                    alt={event.name} 
+                    alt={event.name || 'Event'} 
                     className={styles.eventImage} 
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "/images/placeholders/event_placeholder_medium.jpg";
-                    }}
+                    onError={handleImageError}
                   />
                   <div className={styles.eventInfo}>
-                    <h3 className={styles.eventTitle}>{event.name}</h3>
+                    <h3 className={styles.eventTitle}>{event.name || 'Event Name'}</h3>
                     <p className={styles.eventDetails}>
-                      {event._embedded?.venues?.[0]?.name}, {event._embedded?.venues?.[0]?.city?.name}<br />
-                      {event._embedded?.venues?.[0]?.address?.line1}<br />
-                      {new Date(event.dates?.start?.localDate).toLocaleDateString()} at {event.dates?.start?.localTime}
+                      {event._embedded?.venues?.[0]?.name || 'Venue'}, {event._embedded?.venues?.[0]?.city?.name || 'City'}<br />
+                      {event._embedded?.venues?.[0]?.address?.line1 || ''}<br />
+                      {event.dates?.start?.localDate ? 
+                        new Date(event.dates.start.localDate).toLocaleDateString() : 'Date TBA'} 
+                      {event.dates?.start?.localTime ? ` at ${event.dates.start.localTime}` : ''}
                     </p>
                   </div>
-                  <span className={styles.eventMatch}>{event.matchScore}% Match</span>
+                  <span className={styles.eventMatch}>{event.matchScore || 70}% Match</span>
                 </div>
               ))}
               <button className={styles.loadMoreButton}>More Filters</button>
