@@ -239,12 +239,16 @@ export default function Dashboard() {
               <div 
                 key={event.id} 
                 className={styles.eventCard}
-                onClick={() => window.open(event.url, '_blank')}
+                onClick={() => window.open(event.url, "_blank")}
               >
                 <img 
-                  src={event.images?.[0]?.url || '/placeholder-event.jpg'} 
+                  src={event.images?.[0]?.url || "/images/placeholders/event_placeholder_medium.jpg"} 
                   alt={event.name} 
                   className={styles.eventImage} 
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "/images/placeholders/event_placeholder_medium.jpg";
+                  }}
                 />
                 <div className={styles.eventInfo}>
                   <h3 className={styles.eventTitle}>{event.name}</h3>

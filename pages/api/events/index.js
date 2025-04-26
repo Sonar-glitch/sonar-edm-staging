@@ -2,13 +2,13 @@ import axios from 'axios';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
 
-// Sample events for Toronto as fallback
+// Sample events for Toronto as fallback with local placeholder images
 const TORONTO_SAMPLE_EVENTS = [
   {
     id: "toronto-event-1",
     name: "Electric Nights: Toronto House Edition",
     url: "https://www.ticketmaster.ca/electric-nights-toronto-house-edition-toronto-ontario-05-15-2025/event/10005E8B9A3A1234",
-    images: [{ url: "https://s1.ticketm.net/dam/a/1f6/0e4fe8ee-488a-46ba-9d6e-717fde4841f6_1339061_TABLET_LANDSCAPE_LARGE_16_9.jpg" }],
+    images: [{ url: "/images/placeholders/event_placeholder_large.jpg" }],
     dates: {
       start: {
         localDate: "2025-05-15",
@@ -60,7 +60,7 @@ const TORONTO_SAMPLE_EVENTS = [
     id: "toronto-event-2",
     name: "Deep Techno Underground",
     url: "https://www.ticketmaster.ca/deep-techno-underground-toronto-ontario-05-22-2025/event/10005E8B9A3A5678",
-    images: [{ url: "https://s1.ticketm.net/dam/a/1f6/0e4fe8ee-488a-46ba-9d6e-717fde4841f6_1339061_TABLET_LANDSCAPE_LARGE_16_9.jpg" }],
+    images: [{ url: "/images/placeholders/event_placeholder_large.jpg" }],
     dates: {
       start: {
         localDate: "2025-05-22",
@@ -112,7 +112,7 @@ const TORONTO_SAMPLE_EVENTS = [
     id: "toronto-event-3",
     name: "Progressive House Showcase",
     url: "https://www.ticketmaster.ca/progressive-house-showcase-toronto-ontario-05-29-2025/event/10005E8B9A3A9012",
-    images: [{ url: "https://s1.ticketm.net/dam/a/1f6/0e4fe8ee-488a-46ba-9d6e-717fde4841f6_1339061_TABLET_LANDSCAPE_LARGE_16_9.jpg" }],
+    images: [{ url: "/images/placeholders/event_placeholder_large.jpg" }],
     dates: {
       start: {
         localDate: "2025-05-29",
@@ -162,6 +162,28 @@ const TORONTO_SAMPLE_EVENTS = [
   }
 ];
 
+// Function to ensure events have valid image URLs
+function ensureValidImageUrls(events) {
+  if (!events || !Array.isArray(events)) return [];
+  
+  return events.map(event => {
+    // Check if event has valid images
+    if (!event.images || !Array.isArray(event.images) || event.images.length === 0) {
+      // If no images or invalid images, add placeholder
+      event.images = [{ url: "/images/placeholders/event_placeholder_large.jpg" }];
+    } else {
+      // Check each image URL and replace if invalid
+      event.images = event.images.map(img => {
+        if (!img.url || img.url.includes('undefined') || img.url.includes('null')) {
+          return { url: "/images/placeholders/event_placeholder_large.jpg" };
+        }
+        return img;
+      });
+    }
+    return event;
+  });
+}
+
 // Function to calculate match score based on user's music taste
 function calculateMatchScore(event, userTaste) {
   // Default score if we can't determine
@@ -210,61 +232,86 @@ function calculateMatchScore(event, userTaste) {
 }
 
 export default async function handler(req, res) {
+  console.log("Events API handler called with query:", req.query);
+  
   // Get user session
   const session = await getServerSession(req, res, authOptions);
   
   if (!session) {
+    console.log("No session found, returning 401");
     return res.status(401).json({ error: "Unauthorized" });
   }
   
   // Get location from query parameters
-  const { lat, lon, city } = req.query;
+  let { lat, lon, city } = req.query;
+  console.log(`Original location parameters: lat=${lat}, lon=${lon}, city=${city}`);
+  
+  // Validate and fix location parameters
+  if (lat === 'undefined' || lon === 'undefined' || !lat || !lon) {
+    // If we have a city, use that
+    if (city && city !== 'undefined') {
+      console.log(`Using city parameter: ${city}`);
+      // City is valid, continue with it
+    } else if (city === 'Toronto' || city?.includes('Toronto')) {
+      // For Toronto, set specific coordinates
+      lat = '43.65';
+      lon = '-79.38';
+      city = 'Toronto';
+      console.log(`Setting Toronto coordinates: lat=${lat}, lon=${lon}`);
+    } else {
+      // Default to Toronto if no valid location
+      lat = '43.65';
+      lon = '-79.38';
+      city = 'Toronto';
+      console.log(`No valid location, defaulting to Toronto: lat=${lat}, lon=${lon}`);
+    }
+  }
   
   // Check if we have a Toronto request
   const isTorontoRequest = city?.toLowerCase().includes('toronto') || 
                           (lat && lon && Math.abs(parseFloat(lat) - 43.65) < 0.5 && Math.abs(parseFloat(lon) - (-79.38)) < 0.5);
   
+  console.log(`Is Toronto request: ${isTorontoRequest}`);
+  
   try {
-    // Validate location parameters
-    if ((!lat || !lon) && !city) {
-      console.log("Using sample events due to missing location parameters");
-      // Return sample events if location is missing
-      return res.status(200).json({
-        events: TORONTO_SAMPLE_EVENTS,
-        source: "sample"
-      });
-    }
-    
     // Prepare API request parameters
     let params = {
       apikey: process.env.TICKETMASTER_API_KEY,
       classificationName: "music",
-      size: 10,
-      sort: "date,asc"
+      keyword: "electronic OR dance OR dj OR festival OR rave",
+      size: 20,
+      sort: "date,asc",
+      startDateTime: new Date().toISOString()
     };
     
     // Add location parameters
-    if (lat && lon) {
+    if (lat && lon && lat !== 'undefined' && lon !== 'undefined') {
       params.latlong = `${lat},${lon}`;
       params.radius = "50";
       params.unit = "miles";
-    } else if (city) {
+      console.log(`Using coordinates for Ticketmaster API: ${params.latlong}`);
+    } else if (city && city !== 'undefined') {
       params.city = city;
+      console.log(`Using city for Ticketmaster API: ${params.city}`);
     }
+    
+    console.log("Making Ticketmaster API request with params:", params);
     
     // Make request to Ticketmaster API
     const response = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', {
       params,
-      timeout: 5000 // 5 second timeout
+      timeout: 8000 // 8 second timeout
     });
     
     // Check if we have events
     if (response.data._embedded && response.data._embedded.events && response.data._embedded.events.length > 0) {
+      console.log(`Found ${response.data._embedded.events.length} events from Ticketmaster API`);
+      
       // Process events
-      const events = response.data._embedded.events.map(event => {
+      let events = response.data._embedded.events.map(event => {
         // Calculate match score
         const matchScore = calculateMatchScore(event, {
-          genres: ["electronic", "house", "techno", "dance"]
+          genres: ["electronic", "house", "techno", "dance", "trance", "dubstep"]
         });
         
         return {
@@ -272,6 +319,9 @@ export default async function handler(req, res) {
           matchScore
         };
       });
+      
+      // Ensure all events have valid image URLs
+      events = ensureValidImageUrls(events);
       
       // Sort by match score
       events.sort((a, b) => b.matchScore - a.matchScore);
@@ -281,38 +331,87 @@ export default async function handler(req, res) {
         source: "ticketmaster"
       });
     } else {
-      console.log("No events found from Ticketmaster API, using sample events");
+      console.log("No events found from Ticketmaster API, trying simplified query...");
       
-      // If no events found and it's a Toronto request, return sample events
+      // Try again with a simpler query
+      const simplifiedParams = {
+        ...params,
+        keyword: "music", // More generic keyword
+        classificationName: "music",
+        size: 30
+      };
+      
+      try {
+        const retryResponse = await axios.get('https://app.ticketmaster.com/discovery/v2/events.json', {
+          params: simplifiedParams,
+          timeout: 8000
+        });
+        
+        if (retryResponse.data._embedded && retryResponse.data._embedded.events && retryResponse.data._embedded.events.length > 0) {
+          console.log(`Found ${retryResponse.data._embedded.events.length} events from simplified Ticketmaster API query`);
+          
+          // Process events
+          let events = retryResponse.data._embedded.events.map(event => {
+            // Calculate match score
+            const matchScore = calculateMatchScore(event, {
+              genres: ["electronic", "house", "techno", "dance", "trance", "dubstep"]
+            });
+            
+            return {
+              ...event,
+              matchScore
+            };
+          });
+          
+          // Ensure all events have valid image URLs
+          events = ensureValidImageUrls(events);
+          
+          // Sort by match score
+          events.sort((a, b) => b.matchScore - a.matchScore);
+          
+          return res.status(200).json({
+            events,
+            source: "ticketmaster_simplified"
+          });
+        }
+      } catch (retryError) {
+        console.error("Error with simplified Ticketmaster query:", retryError);
+      }
+      
+      // If still no events or retry failed, use sample events for Toronto
       if (isTorontoRequest) {
+        console.log("Using Toronto sample events as fallback");
         return res.status(200).json({
           events: TORONTO_SAMPLE_EVENTS,
           source: "sample"
         });
+      } else {
+        // For non-Toronto locations with no events, return empty array
+        console.log("No events found and not Toronto, returning empty array");
+        return res.status(200).json({
+          events: [],
+          source: "ticketmaster_empty"
+        });
       }
-      
-      // Otherwise return empty array
-      return res.status(200).json({
-        events: [],
-        source: "ticketmaster"
-      });
     }
   } catch (error) {
     console.error("Error fetching events:", error);
     
     // If error and it's a Toronto request, return sample events
     if (isTorontoRequest) {
-      console.log("Error fetching events, using Toronto sample events");
+      console.log("Error fetching events, using Toronto sample events as fallback");
       return res.status(200).json({
         events: TORONTO_SAMPLE_EVENTS,
-        source: "sample"
+        source: "sample_fallback"
       });
     }
     
-    // Otherwise return error
-    return res.status(500).json({ 
+    // Otherwise return empty array with error
+    return res.status(200).json({ 
+      events: [],
       error: "Failed to fetch events",
-      message: error.message
+      message: error.message,
+      source: "error_fallback"
     });
   }
 }
