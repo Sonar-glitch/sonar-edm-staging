@@ -1,8 +1,5 @@
-// Enhanced Ticketmaster API with Caching for TIKO Platform
+// Enhanced Ticketmaster API with Caching (No external dependencies)
 // This file should replace pages/api/events/index.js
-
-// Import required modules
-import fetch from 'node-fetch';
 
 // Cache storage
 let eventCache = {
@@ -14,7 +11,7 @@ let eventCache = {
 // Cache duration in milliseconds (1 hour)
 const CACHE_DURATION = 60 * 60 * 1000;
 
-// Sample events for absolute fallback (only used if API completely fails)
+// Sample events for absolute fallback
 const sampleEvents = [
   {
     name: "House & Techno Night",
@@ -52,7 +49,7 @@ const sampleEvents = [
 ];
 
 // Check if cache is valid
-const isCacheValid = (city) => {
+const isCacheValid = (city)  => {
   const now = Date.now();
   return (
     eventCache.data !== null &&
@@ -61,30 +58,26 @@ const isCacheValid = (city) => {
   );
 };
 
-// Direct API call function with no dependencies on external libraries
+// Direct API call function with no external dependencies
 const directTicketmasterApiCall = async (apiKey, city = 'Toronto') => {
   console.log(`Making direct API call to Ticketmaster for city: ${city}`);
   
   try {
     // Use a simple, direct URL that's most likely to work
-    const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${apiKey}&city=${encodeURIComponent(city)}&classificationName=music&size=3`;
+    const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${apiKey}&city=${encodeURIComponent(city) }&classificationName=music&size=3`;
     
     console.log(`API URL: ${url}`);
     
-    // Set a timeout for the fetch request
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
+    // Use native fetch (available in Next.js)
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      signal: controller.signal
+      // Set a timeout using AbortController
+      signal: AbortSignal.timeout(10000) // 10 second timeout
     });
-    
-    clearTimeout(timeoutId);
     
     if (!response.ok) {
       console.error(`API request failed with status ${response.status}`);
@@ -124,10 +117,10 @@ const processTicketmasterEvents = (data) => {
     
     // Extract image with fallback
     let image = 'https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg';
-    if (event.images && event.images.length > 0) {
+    if (event.images && event.images.length > 0)  {
       // Find a suitable image
       const suitableImage = event.images.find(img => 
-        img.url && img.url.startsWith('http') && 
+        img.url && img.url.startsWith('http')  && 
         (img.width > 300 && img.width < 800)
       );
       
@@ -157,7 +150,7 @@ const processTicketmasterEvents = (data) => {
       url: event.url || 'https://www.ticketmaster.ca',
       matchScore
     };
-  });
+  }) ;
 };
 
 // Main handler function
