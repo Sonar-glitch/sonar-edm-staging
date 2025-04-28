@@ -1,12 +1,13 @@
-// Comprehensive fix for events API to address multiple issues:
-// 1. Location filtering (showing correct city events)
-// 2. EDM genre filtering (showing only EDM events)
-// 3. Proper EDMTrain links (event-specific URLs)
-// 4. Improved caching with location awareness
-// 5. Better integration with user taste preferences
+// Comprehensive events API implementation that:
+// 1. Restores Ticketmaster integration with proper EDM filtering
+// 2. Adds Resident Advisor RSS feed integration
+// 3. Ensures at least 6 events are displayed
+// 4. Implements expandable list functionality
+// 5. Fixes match filter functionality
 
 // Import necessary modules
 const axios = require('axios');
+const xml2js = require('xml2js');
 
 // EDM-specific genre IDs for Ticketmaster
 const EDM_GENRE_IDS = [
@@ -71,106 +72,11 @@ const sampleEvents = [
   }
 ];
 
-// EDMTrain sample events - these will be used when EDMTrain API is unavailable
-const edmtrainSampleEvents = [
-  {
-    id: "edmtrain-12345",
-    name: "Armin van Buuren",
-    venue: "Rebel",
-    city: "Toronto",
-    address: "",
-    date: "2025-05-05",
-    time: "22:00:00",
-    image: "https://edmtrain-public.s3.us-east-2.amazonaws.com/img/logos/edmtrain-logo-tag.png",
-    url: "https://edmtrain.com/toronto/armin-van-buuren-12345",
-    matchScore: 88,
-    source: "edmtrain_sample",
-    genres: ["Trance", "Progressive"]
-  },
-  {
-    id: "edmtrain-23456",
-    name: "Deadmau5 with 2 more",
-    venue: "CODA",
-    city: "Toronto",
-    address: "",
-    date: "2025-05-12",
-    time: "21:00:00",
-    image: "https://edmtrain-public.s3.us-east-2.amazonaws.com/img/logos/edmtrain-logo-tag.png",
-    url: "https://edmtrain.com/toronto/deadmau5-23456",
-    matchScore: 82,
-    source: "edmtrain_sample",
-    genres: ["Progressive House", "Techno"]
-  },
-  {
-    id: "edmtrain-34567",
-    name: "Above & Beyond",
-    venue: "Danforth Music Hall",
-    city: "Toronto",
-    address: "",
-    date: "2025-05-19",
-    time: "20:00:00",
-    image: "https://edmtrain-public.s3.us-east-2.amazonaws.com/img/logos/edmtrain-logo-tag.png",
-    url: "https://edmtrain.com/toronto/above-and-beyond-34567",
-    matchScore: 78,
-    source: "edmtrain_sample",
-    genres: ["Trance", "Progressive"]
-  }
-];
-
-// City to EDMTrain location ID mapping
-const cityToEdmtrainLocationId = {
-  'toronto': 146,
-  'vancouver': 57,
-  'montreal': 175,
-  'calgary': 72,
-  'edmonton': 81,
-  'ottawa': 140,
-  'quebec city': 141,
-  'winnipeg': 151,
-  'halifax': 152,
-  'victoria': 153,
-  'saskatoon': 154,
-  'regina': 155,
-  'london': 156,
-  'kitchener': 157,
-  'st. john\'s': 158,
-  'oshawa': 159,
-  'windsor': 160,
-  'niagara falls': 161,
-  'barrie': 162,
-  'kelowna': 163,
-  'kingston': 164,
-  'abbotsford': 165,
-  'sudbury': 166,
-  'sault ste. marie': 167,
-  'thunder bay': 168,
-  'peterborough': 169,
-  'lethbridge': 170,
-  'kamloops': 171,
-  'belleville': 172,
-  'charlottetown': 173,
-  'fredericton': 174,
-  'new york': 3,
-  'los angeles': 2,
-  'chicago': 1,
-  'miami': 4,
-  'san francisco': 5,
-  'las vegas': 19,
-  'denver': 20,
-  'seattle': 6,
-  'boston': 10,
-  'washington': 8,
-  'philadelphia': 9,
-  'detroit': 11,
-  'phoenix': 13,
-  'san diego': 14,
-  'austin': 15,
-  'houston': 16,
-  'dallas': 17,
-  'atlanta': 7,
-  'new orleans': 18,
-  'portland': 12,
-  'ashburn': 146  // Default to Toronto for Ashburn (AWS location)
+// Resident Advisor RSS feed URLs for top Canadian cities
+const RA_RSS_FEEDS = {
+  'toronto': 'https://ra.co/xml/events/ca/toronto',
+  'vancouver': 'https://ra.co/xml/events/ca/vancouver',
+  'montreal': 'https://ra.co/xml/events/ca/montreal'
 };
 
 // Location-aware cache
@@ -216,21 +122,155 @@ function isEdmEvent(event) {
   return false;
 }
 
-// Helper function to create a proper EDMTrain URL
-function createEdmtrainUrl(event, city) {
-  if (!event.id) return `https://edmtrain.com/${city.toLowerCase().replace(/\s+/g, '-')}`;
+// Helper function to parse date from various formats
+function parseEventDate(dateString) {
+  if (!dateString) return null;
   
-  // Extract the event ID
-  const eventId = event.id.startsWith('edmtrain-') ? event.id.substring(9) : event.id;
+  // Try to parse the date
+  const date = new Date(dateString);
+  if (!isNaN(date.getTime())) {
+    return {
+      date: date.toISOString().split('T')[0], // YYYY-MM-DD
+      time: date.toTimeString().split(' ')[0].substring(0, 5) // HH:MM
+    };
+  }
   
-  // Create a URL-friendly event name
-  const eventSlug = event.name
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')  // Remove special characters
-    .replace(/\s+/g, '-')      // Replace spaces with hyphens
-    .substring(0, 50);         // Limit length
+  return null;
+}
+
+// Helper function to extract genres from event description or title
+function extractGenresFromText(text) {
+  if (!text) return ["Electronic"]; // Default genre
   
-  return `https://edmtrain.com/${city.toLowerCase().replace(/\s+/g, '-')}/${eventSlug}-${eventId}`;
+  const lowerText = text.toLowerCase();
+  const foundGenres = [];
+  
+  // Common EDM genres to look for
+  const genreKeywords = {
+    "house": "House",
+    "deep house": "Deep House",
+    "tech house": "Tech House",
+    "progressive house": "Progressive House",
+    "techno": "Techno",
+    "minimal techno": "Minimal Techno",
+    "trance": "Trance",
+    "progressive trance": "Progressive Trance",
+    "psytrance": "Psytrance",
+    "drum and bass": "Drum & Bass",
+    "drum & bass": "Drum & Bass",
+    "dnb": "Drum & Bass",
+    "dubstep": "Dubstep",
+    "future bass": "Future Bass",
+    "trap": "Trap",
+    "edm": "EDM",
+    "electronic": "Electronic",
+    "electronica": "Electronica",
+    "ambient": "Ambient",
+    "experimental": "Experimental",
+    "idm": "IDM",
+    "breakbeat": "Breakbeat",
+    "electro": "Electro",
+    "hardstyle": "Hardstyle",
+    "hardcore": "Hardcore",
+    "gabber": "Gabber",
+    "goa": "Goa",
+    "jungle": "Jungle"
+  };
+  
+  // Check for genre keywords
+  for (const [keyword, genre] of Object.entries(genreKeywords)) {
+    if (lowerText.includes(keyword)) {
+      foundGenres.push(genre);
+    }
+  }
+  
+  // If no specific genres found, default to Electronic
+  if (foundGenres.length === 0) {
+    foundGenres.push("Electronic");
+  }
+  
+  return foundGenres;
+}
+
+// Helper function to fetch and parse Resident Advisor RSS feed
+async function fetchResidentAdvisorEvents(city) {
+  const feedUrl = RA_RSS_FEEDS[city.toLowerCase()];
+  if (!feedUrl) {
+    console.log(`No RA RSS feed available for ${city}`);
+    return [];
+  }
+  
+  try {
+    console.log(`Fetching RA RSS feed for ${city}: ${feedUrl}`);
+    const response = await axios.get(feedUrl, { timeout: 5000 });
+    
+    if (response.status !== 200) {
+      console.log(`Error fetching RA RSS feed for ${city}: ${response.status}`);
+      return [];
+    }
+    
+    // Parse XML
+    const parser = new xml2js.Parser({ explicitArray: false });
+    const result = await parser.parseStringPromise(response.data);
+    
+    if (!result || !result.rss || !result.rss.channel || !result.rss.channel.item) {
+      console.log(`Invalid RSS feed format for ${city}`);
+      return [];
+    }
+    
+    // Ensure items is an array
+    const items = Array.isArray(result.rss.channel.item) 
+      ? result.rss.channel.item 
+      : [result.rss.channel.item];
+    
+    console.log(`Found ${items.length} events in RA RSS feed for ${city}`);
+    
+    // Process items
+    return items.map(item => {
+      // Extract date and time
+      const dateInfo = parseEventDate(item.pubDate);
+      
+      // Extract venue from description or title
+      let venue = "Unknown Venue";
+      let address = "";
+      
+      if (item.description) {
+        // Try to extract venue from description
+        const venueMatch = item.description.match(/at\s+([^,]+),/i);
+        if (venueMatch && venueMatch[1]) {
+          venue = venueMatch[1].trim();
+        }
+        
+        // Try to extract address
+        const addressMatch = item.description.match(/at\s+[^,]+,\s+([^.]+)/i);
+        if (addressMatch && addressMatch[1]) {
+          address = addressMatch[1].trim();
+        }
+      }
+      
+      // Extract genres
+      const genres = extractGenresFromText(item.title + " " + (item.description || ""));
+      
+      // Create event object
+      return {
+        id: `ra-${Buffer.from(item.link).toString('base64').substring(0, 10)}`,
+        name: item.title,
+        venue: venue,
+        city: city,
+        address: address,
+        date: dateInfo ? dateInfo.date : new Date().toISOString().split('T')[0],
+        time: dateInfo ? dateInfo.time : "20:00",
+        image: "https://ra.co/img/ra-logo-black.png", // Default RA logo
+        url: item.link,
+        matchScore: 70, // Default score, will be adjusted based on user preferences
+        source: "residentadvisor",
+        genres: genres
+      };
+    });
+  } catch (error) {
+    console.error(`Error fetching RA RSS feed for ${city}:`, error.message);
+    return [];
+  }
 }
 
 // Main handler function
@@ -253,11 +293,15 @@ export default async function handler(req, res) {
     const city = (req.query.city || 'toronto').toLowerCase();
     console.log(`Requested city: ${city}`);
     
+    // Get minimum match score from query params or default to 0
+    const minMatchScore = parseInt(req.query.minMatchScore || '0', 10);
+    console.log(`Minimum match score: ${minMatchScore}`);
+    
     // Check if we have a location-specific cache
     if (!locationCache[city]) {
       locationCache[city] = {
         ticketmaster: { timestamp: 0, data: null },
-        edmtrain: { timestamp: 0, data: null },
+        residentadvisor: { timestamp: 0, data: null },
         combined: { timestamp: 0, data: null }
       };
     }
@@ -268,24 +312,43 @@ export default async function handler(req, res) {
     
     if (locationCache[city].combined.data && !cacheExpired) {
       console.log(`Using cached combined events data for ${city}`);
+      
+      // Filter by minimum match score
+      const filteredEvents = locationCache[city].combined.data.filter(
+        event => event.matchScore >= minMatchScore
+      );
+      
+      // Ensure at least 6 events are returned
+      let eventsToReturn = filteredEvents;
+      if (filteredEvents.length < 6 && locationCache[city].combined.data.length >= 6) {
+        console.log(`Not enough events match the score threshold, adjusting threshold to ensure 6 events`);
+        // Sort all events by match score
+        const sortedEvents = [...locationCache[city].combined.data].sort(
+          (a, b) => b.matchScore - a.matchScore
+        );
+        // Take top 6 events
+        eventsToReturn = sortedEvents.slice(0, 6);
+      }
+      
       return res.status(200).json({
-        events: locationCache[city].combined.data,
+        events: eventsToReturn,
+        totalEvents: locationCache[city].combined.data.length,
+        displayedEvents: eventsToReturn.length,
+        hasMore: eventsToReturn.length < locationCache[city].combined.data.length,
         source: 'cache',
         timestamp: new Date(locationCache[city].combined.timestamp).toISOString(),
-        city: city
+        city: city,
+        minMatchScore: minMatchScore
       });
     }
     
-    // Get events from both APIs
+    // Get events from both sources
     let ticketmasterEvents = [];
-    let edmtrainEvents = [];
+    let residentAdvisorEvents = [];
     
-    // Check if we have API keys
+    // Check if we have Ticketmaster API key
     const ticketmasterApiKey = process.env.TICKETMASTER_API_KEY;
-    const edmtrainApiKey = process.env.EDMTRAIN_API_KEY;
-    
     console.log("Using Ticketmaster API key:", ticketmasterApiKey ? "Available" : "Not available");
-    console.log("Using EDMtrain API key:", edmtrainApiKey ? "Available" : "Not available");
     
     // Fetch Ticketmaster events
     if (ticketmasterApiKey) {
@@ -342,9 +405,9 @@ export default async function handler(req, res) {
                   time: event.dates?.start?.localTime || '',
                   image: event.images?.[0]?.url || 'https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg',
                   url: event.url || `https://www.ticketmaster.ca/electronic-dance-music-tickets/category/10001`,
-                  matchScore: Math.floor(Math.random() * 20) + 70, // Random score between 70-90
+                  matchScore: Math.floor(Math.random() * 20) + 70, // Random score between 70-90, will be adjusted later
                   source: 'ticketmaster',
-                  genres: genres,
+                  genres: genres.length > 0 ? genres : ['Electronic'], // Default to Electronic if no genres found
                   classifications: event.classifications
                 };
               })
@@ -385,111 +448,39 @@ export default async function handler(req, res) {
       }
     }
     
-    // Fetch EDMTrain events
-    if (edmtrainApiKey) {
-      try {
-        // Check EDMTrain cache
-        const edmtrainCacheExpired = now - locationCache[city].edmtrain.timestamp > 60 * 60 * 1000; // 1 hour
+    // Fetch Resident Advisor events
+    try {
+      // Check RA cache
+      const raCacheExpired = now - locationCache[city].residentadvisor.timestamp > 60 * 60 * 1000; // 1 hour
+      
+      if (locationCache[city].residentadvisor.data && !raCacheExpired) {
+        console.log(`Using cached Resident Advisor events for ${city}`);
+        residentAdvisorEvents = locationCache[city].residentadvisor.data;
+      } else {
+        console.log(`Fetching Resident Advisor events for ${city}`);
         
-        if (locationCache[city].edmtrain.data && !edmtrainCacheExpired) {
-          console.log(`Using cached EDMTrain events for ${city}`);
-          edmtrainEvents = locationCache[city].edmtrain.data;
-        } else {
-          console.log(`Fetching EDMTrain events for ${city}`);
-          // Get location ID for the city
-          const locationId = cityToEdmtrainLocationId[city] || 146; // Default to Toronto
-          
-          console.log(`EDMTrain location ID for ${city}: ${locationId}`);
-          
-          const response = await axios.get(`https://edmtrain.com/api/events?locationIds=${locationId}`, {
-            headers: {
-              'Authorization': edmtrainApiKey
-            },
-            timeout: 5000 // 5 second timeout
-          });
-          
-          if (response.data && response.data.data) {
-            const events = response.data.data;
-            console.log(`Received ${events.length} events from EDMTrain for ${city}`);
-            
-            edmtrainEvents = events.map(event => {
-              // Extract artist names and genres
-              const artistNames = event.artistList.map(artist => artist.name).join(', ');
-              
-              // Create a proper URL
-              const eventUrl = createEdmtrainUrl(event, city);
-              
-              return {
-                id: `edmtrain-${event.id}`,
-                name: artistNames,
-                venue: event.venue.name,
-                city: event.venue.location || city,
-                address: '',
-                date: event.date,
-                time: event.startTime || '20:00:00',
-                image: event.artistList[0]?.img || 'https://edmtrain-public.s3.us-east-2.amazonaws.com/img/logos/edmtrain-logo-tag.png',
-                url: eventUrl,
-                matchScore: Math.floor(Math.random() * 20) + 70, // Random score between 70-90
-                source: 'edmtrain',
-                genres: ['Electronic', 'Dance'] // Default genres for EDMTrain events
-              };
-            });
-            
-            console.log(`Processed ${edmtrainEvents.length} EDMTrain events for ${city}`);
-            
-            // Update EDMTrain cache
-            locationCache[city].edmtrain = {
-              timestamp: now,
-              data: edmtrainEvents
-            };
-          }
-        }
-      } catch (error) {
-        console.error(`Error fetching EDMTrain events for ${city}:`, error.message);
-        // Use expired cache if available
-        if (locationCache[city].edmtrain.data) {
-          console.log(`Using expired EDMTrain cache for ${city}`);
-          edmtrainEvents = locationCache[city].edmtrain.data;
-        } else {
-          // Use sample events as fallback
-          console.log(`Using EDMTrain sample events for ${city}`);
-          edmtrainEvents = edmtrainSampleEvents.filter(event => event.city.toLowerCase() === city);
-          if (edmtrainEvents.length === 0) {
-            // If no city-specific sample events, use all samples
-            edmtrainEvents = edmtrainSampleEvents;
-          }
-        }
+        // Fetch events from RA RSS feed
+        residentAdvisorEvents = await fetchResidentAdvisorEvents(city);
+        
+        console.log(`Fetched ${residentAdvisorEvents.length} events from Resident Advisor for ${city}`);
+        
+        // Update RA cache
+        locationCache[city].residentadvisor = {
+          timestamp: now,
+          data: residentAdvisorEvents
+        };
       }
-    } else {
-      console.log('No EDMTrain API key, using sample events');
-      edmtrainEvents = edmtrainSampleEvents.filter(event => event.city.toLowerCase() === city);
-      if (edmtrainEvents.length === 0) {
-        // If no city-specific sample events, use all samples
-        edmtrainEvents = edmtrainSampleEvents;
+    } catch (error) {
+      console.error(`Error fetching Resident Advisor events for ${city}:`, error.message);
+      // Use expired cache if available
+      if (locationCache[city].residentadvisor.data) {
+        console.log(`Using expired Resident Advisor cache for ${city}`);
+        residentAdvisorEvents = locationCache[city].residentadvisor.data;
       }
     }
     
     // Combine events from both sources
-    let allEvents = [...ticketmasterEvents, ...edmtrainEvents];
-    
-    // Ensure we have at least 3 EDMTrain events
-    const edmtrainEventsCount = allEvents.filter(event => 
-      event.source === 'edmtrain' || event.source === 'edmtrain_sample'
-    ).length;
-    
-    if (edmtrainEventsCount < 3 && edmtrainSampleEvents.length > 0) {
-      console.log(`Adding ${3 - edmtrainEventsCount} EDMTrain sample events to ensure representation`);
-      // Filter sample events for the requested city
-      let citySpecificSamples = edmtrainSampleEvents.filter(event => event.city.toLowerCase() === city);
-      
-      // If no city-specific samples, use all samples
-      if (citySpecificSamples.length === 0) {
-        citySpecificSamples = edmtrainSampleEvents;
-      }
-      
-      const sampleToAdd = citySpecificSamples.slice(0, 3 - edmtrainEventsCount);
-      allEvents = [...allEvents, ...sampleToAdd];
-    }
+    let allEvents = [...ticketmasterEvents, ...residentAdvisorEvents];
     
     // Sort by match score
     allEvents.sort((a, b) => b.matchScore - a.matchScore);
@@ -500,13 +491,33 @@ export default async function handler(req, res) {
       data: allEvents
     };
     
+    // Filter by minimum match score
+    const filteredEvents = allEvents.filter(
+      event => event.matchScore >= minMatchScore
+    );
+    
+    // Ensure at least 6 events are returned
+    let eventsToReturn = filteredEvents;
+    if (filteredEvents.length < 6 && allEvents.length >= 6) {
+      console.log(`Not enough events match the score threshold, adjusting threshold to ensure 6 events`);
+      // Sort all events by match score
+      const sortedEvents = [...allEvents].sort(
+        (a, b) => b.matchScore - a.matchScore
+      );
+      // Take top 6 events
+      eventsToReturn = sortedEvents.slice(0, 6);
+    }
+    
     // Return events
     return res.status(200).json({
-      events: allEvents,
+      events: eventsToReturn,
+      totalEvents: allEvents.length,
+      displayedEvents: eventsToReturn.length,
+      hasMore: eventsToReturn.length < allEvents.length,
       ticketmasterCount: ticketmasterEvents.length,
-      edmtrainCount: edmtrainEvents.length,
-      totalCount: allEvents.length,
+      residentAdvisorCount: residentAdvisorEvents.length,
       city: city,
+      minMatchScore: minMatchScore,
       source: 'api'
     });
     
@@ -517,17 +528,20 @@ export default async function handler(req, res) {
     const city = (req.query.city || 'toronto').toLowerCase();
     
     // Return sample events as fallback
-    let citySpecificSamples = [...sampleEvents, ...edmtrainSampleEvents].filter(
+    let citySpecificSamples = sampleEvents.filter(
       event => event.city.toLowerCase() === city
     );
     
     // If no city-specific samples, use all samples
     if (citySpecificSamples.length === 0) {
-      citySpecificSamples = [...sampleEvents, ...edmtrainSampleEvents];
+      citySpecificSamples = sampleEvents;
     }
     
     return res.status(200).json({
       events: citySpecificSamples,
+      totalEvents: citySpecificSamples.length,
+      displayedEvents: citySpecificSamples.length,
+      hasMore: false,
       city: city,
       source: 'error_fallback',
       error: error.message
