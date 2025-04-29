@@ -4,46 +4,227 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import styles from '../styles/EnhancedDashboard.module.css';
+import MatchPercentage from '../components/MatchPercentage';
 
-// Simple placeholder component for EnhancedEventCard if it doesn't exist
-const PlaceholderEventCard = ({ event }) => {
+// Simple placeholder component for SoundCharacteristics if it doesn't exist
+const SoundCharacteristics = () => {
   return (
-    <div className={styles.card}>
-      <h3>{event.name}</h3>
-      <p>{event.venue?.name || 'Venue not specified'}</p>
-      <p>{new Date(event.date).toLocaleDateString()}</p>
-      <p>Match: {Math.round(event.matchScore || 0)}%</p>
-      {event.url && (
-        <a href={event.url} target="_blank" rel="noopener noreferrer">
-          Get Tickets
-        </a>
-      )}
+    <div>
+      <div className={styles.characteristic}>
+        <span>Melody</span>
+        <div className={styles.progressBar}>
+          <div className={styles.progress} style={{ width: '80%' }}></div>
+        </div>
+      </div>
+      <div className={styles.characteristic}>
+        <span>Danceability</span>
+        <div className={styles.progressBar}>
+          <div className={styles.progress} style={{ width: '90%' }}></div>
+        </div>
+      </div>
+      <div className={styles.characteristic}>
+        <span>Energy</span>
+        <div className={styles.progressBar}>
+          <div className={styles.progress} style={{ width: '85%' }}></div>
+        </div>
+      </div>
+      <div className={styles.characteristic}>
+        <span>Tempo</span>
+        <div className={styles.progressBar}>
+          <div className={styles.progress} style={{ width: '75%' }}></div>
+        </div>
+      </div>
+      <div className={styles.characteristic}>
+        <span>Obscurity</span>
+        <div className={styles.progressBar}>
+          <div className={styles.progress} style={{ width: '60%' }}></div>
+        </div>
+      </div>
     </div>
   );
 };
 
-// Simple placeholder component for EnhancedFilterPanel if it doesn't exist
-const PlaceholderFilterPanel = ({ onFilterChange, initialFilters }) => {
-  const [vibeMatch, setVibeMatch] = useState(initialFilters.vibeMatch || 50);
+// Simple placeholder component for SeasonalVibes if it doesn't exist
+const SeasonalVibes = () => {
+  return (
+    <div>
+      <div className={styles.season}>
+        <h3>Spring/Now</h3>
+        <p>House, Progressive</p>
+        <p>Fresh beats & uplifting vibes</p>
+      </div>
+      <div className={styles.season}>
+        <h3>Summer</h3>
+        <p>Techno, Tech House</p>
+        <p>High energy open air sounds</p>
+      </div>
+      <div className={styles.season}>
+        <h3>Fall</h3>
+        <p>Organic House, Downtempo</p>
+        <p>Mellow grooves & deep beats</p>
+      </div>
+      <div className={styles.season}>
+        <h3>Winter</h3>
+        <p>Deep House, Ambient Techno</p>
+        <p>Hypnotic journeys & warm basslines</p>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Event Card Component
+const EnhancedEventCard = ({ event }) => {
+  // Format date to display as "Thu, May 29"
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { weekday: 'short', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  // Get up to 3 artists from the event
+  const getArtists = () => {
+    if (!event.artists || event.artists.length === 0) {
+      return [{ name: event.name, matchScore: event.matchScore }];
+    }
+    return event.artists.slice(0, 3);
+  };
+
+  const artists = getArtists();
+  const matchScore = Math.round(event.matchScore || 0);
+  
+  return (
+    <div className={styles.eventCard}>
+      <div className={styles.eventHeader}>
+        <h3>{event.name}</h3>
+        <p>{event.venue?.name || 'Venue not specified'}</p>
+      </div>
+      
+      <div className={styles.eventDetails}>
+        <div className={styles.artistList}>
+          <p className={styles.featuring}>Featuring:</p>
+          {artists.map((artist, index) => (
+            <div key={index} className={styles.artist}>
+              <span>{artist.name}</span>
+              <span className={styles.artistMatch}>
+                {Math.round(artist.matchScore || matchScore)}%
+              </span>
+            </div>
+          ))}
+        </div>
+        
+        <div className={styles.eventMeta}>
+          <div className={styles.eventType}>
+            <span className={styles.genre}>Dance/Electronic</span>
+            <span className={styles.date}>{formatDate(event.date)}</span>
+          </div>
+          
+          <a href={event.url} target="_blank" rel="noopener noreferrer" className={styles.detailsButton}>
+            Details
+          </a>
+        </div>
+      </div>
+      
+      <div className={styles.matchScoreContainer}>
+        <MatchPercentage percentage={matchScore} />
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Filter Panel Component
+const EnhancedFilterPanel = ({ onFilterChange, initialFilters }) => {
+  const [filters, setFilters] = useState(initialFilters || {
+    vibeMatch: 50,
+    price: 'all',
+    genre: 'all',
+    distance: 'local'
+  });
+  
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
   
   const handleVibeMatchChange = (e) => {
     const value = parseInt(e.target.value);
-    setVibeMatch(value);
-    onFilterChange({ ...initialFilters, vibeMatch: value });
+    const newFilters = { ...filters, vibeMatch: value };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+  
+  const handleFilterChange = (name, value) => {
+    const newFilters = { ...filters, [name]: value };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
   };
   
   return (
     <div className={styles.filterPanel}>
-      <div className={styles.filterItem}>
-        <label>Vibe Match: {vibeMatch}%+</label>
+      <div className={styles.mainFilter}>
+        <div className={styles.vibeMatchLabel}>
+          <span>Vibe Match</span>
+          <span className={styles.vibeMatchValue}>{filters.vibeMatch}%+</span>
+        </div>
+        
         <input 
           type="range" 
           min="0" 
           max="100" 
-          value={vibeMatch} 
+          value={filters.vibeMatch} 
           onChange={handleVibeMatchChange}
+          className={styles.vibeMatchSlider}
         />
+        
+        <button 
+          className={styles.moreFiltersButton}
+          onClick={() => setShowMoreFilters(!showMoreFilters)}
+        >
+          <span>More Filters</span>
+          <span className={styles.arrowIcon}>{showMoreFilters ? '▲' : '▼'}</span>
+        </button>
       </div>
+      
+      {showMoreFilters && (
+        <div className={styles.additionalFilters}>
+          <div className={styles.filterGroup}>
+            <label>Price Range</label>
+            <select 
+              value={filters.price} 
+              onChange={(e) => handleFilterChange('price', e.target.value)}
+            >
+              <option value="all">All Prices</option>
+              <option value="free">Free</option>
+              <option value="low">$</option>
+              <option value="medium">$$</option>
+              <option value="high">$$$</option>
+            </select>
+          </div>
+          
+          <div className={styles.filterGroup}>
+            <label>Genre</label>
+            <select 
+              value={filters.genre} 
+              onChange={(e) => handleFilterChange('genre', e.target.value)}
+            >
+              <option value="all">All Genres</option>
+              <option value="house">House</option>
+              <option value="techno">Techno</option>
+              <option value="trance">Trance</option>
+              <option value="dnb">Drum & Bass</option>
+              <option value="ambient">Ambient</option>
+            </select>
+          </div>
+          
+          <div className={styles.filterGroup}>
+            <label>Distance</label>
+            <select 
+              value={filters.distance} 
+              onChange={(e) => handleFilterChange('distance', e.target.value)}
+            >
+              <option value="local">Local</option>
+              <option value="national">National</option>
+              <option value="international">International</option>
+            </select>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -61,33 +242,6 @@ export default function Dashboard() {
     distance: 'local'
   });
   const [showAllEvents, setShowAllEvents] = useState(false);
-
-  // Import components dynamically to handle missing components gracefully
-  const [EventCard, setEventCard] = useState(null);
-  const [FilterPanel, setFilterPanel] = useState(null);
-
-  useEffect(() => {
-    // Try to dynamically import the enhanced components
-    const loadComponents = async () => {
-      try {
-        const eventCardModule = await import('../components/EnhancedEventCard');
-        setEventCard(() => eventCardModule.default);
-      } catch (err) {
-        console.warn('EnhancedEventCard not found, using placeholder');
-        setEventCard(() => PlaceholderEventCard);
-      }
-
-      try {
-        const filterPanelModule = await import('../components/EnhancedFilterPanel');
-        setFilterPanel(() => filterPanelModule.default);
-      } catch (err) {
-        console.warn('EnhancedFilterPanel not found, using placeholder');
-        setFilterPanel(() => PlaceholderFilterPanel);
-      }
-    };
-
-    loadComponents();
-  }, []);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -140,7 +294,7 @@ export default function Dashboard() {
   // Limit displayed events to 6 unless "Show More" is clicked
   const displayedEvents = showAllEvents ? events : events.slice(0, 6);
 
-  if (status === 'loading' || !EventCard || !FilterPanel) {
+  if (status === 'loading') {
     return <div className={styles.loading}>Loading...</div>;
   }
 
@@ -158,13 +312,25 @@ export default function Dashboard() {
         </h1>
         
         <p className={styles.description}>
-          Your personalized EDM event dashboard
+          You're all about <span className={styles.house}>house</span> + <span className={styles.techno}>techno</span> with a vibe shift toward <span className={styles.fresh}>fresh sounds</span>.
         </p>
+
+        <div className={styles.grid}>
+          <div className={styles.card}>
+            <h2 className={styles.sectionTitle}>Your Sound Characteristics</h2>
+            <SoundCharacteristics />
+          </div>
+
+          <div className={styles.card}>
+            <h2 className={styles.sectionTitle}>Your Year-Round Vibes</h2>
+            <SeasonalVibes />
+          </div>
+        </div>
 
         <h2 className={styles.eventsTitle}>Events Matching Your Vibe</h2>
         
-        {/* Filter Panel */}
-        <FilterPanel 
+        {/* Enhanced Filter Panel */}
+        <EnhancedFilterPanel 
           onFilterChange={handleFilterChange}
           initialFilters={filters}
         />
@@ -179,7 +345,7 @@ export default function Dashboard() {
           <>
             <div className={styles.eventsGrid}>
               {displayedEvents.map((event) => (
-                <EventCard key={event.id || event.name} event={event} />
+                <EnhancedEventCard key={event.id || event.name} event={event} />
               ))}
             </div>
             
