@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import styles from '../styles/EventsSection.module.css';
+import MatchPercentage from './MatchPercentage'; // Import the MatchPercentage component
 
 export default function EventsSection({ location }) {
   const [events, setEvents] = useState([]);
@@ -31,7 +32,12 @@ export default function EventsSection({ location }) {
         const data = await response.json();
         
         if (data.events && data.events.length > 0) {
-          setEvents(data.events);
+          // Ensure matchScore is a number, default to 0 if missing or invalid
+          const eventsWithScore = data.events.map(event => ({
+            ...event,
+            matchScore: typeof event.matchScore === 'number' ? event.matchScore : 0
+          }));
+          setEvents(eventsWithScore);
         } else {
           setError('No events found for your location');
         }
@@ -85,6 +91,7 @@ export default function EventsSection({ location }) {
   );
 }
 
+// Inline EventCard component modified to include MatchPercentage
 function EventCard({ event }) {
   const handleImageError = (e) => {
     e.target.onerror = null;
@@ -100,6 +107,10 @@ function EventCard({ event }) {
           onError={handleImageError}
           className={styles.eventImage}
         />
+        {/* Add MatchPercentage component here, positioned absolutely */}
+        <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 1 }}>
+          <MatchPercentage percentage={event.matchScore} size="small" />
+        </div>
       </div>
       <div className={styles.eventDetails}>
         <h3 className={styles.eventName}>{event.name}</h3>
@@ -123,3 +134,4 @@ function EventCard({ event }) {
     </div>
   );
 }
+
