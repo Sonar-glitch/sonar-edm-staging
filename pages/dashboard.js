@@ -1,97 +1,199 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import styles from '../styles/Dashboard.module.css';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import SoundCharacteristics from '../components/SoundCharacteristics';
-import SeasonalVibes from '../components/SeasonalVibes';
-import EventsSection from '../components/EventsSection';
-import LocationDisplay from '../components/LocationDisplay';
+import axios from 'axios';
+import styles from '../styles/EnhancedDashboard.module.css';
+
+// Simple placeholder component for EnhancedEventCard if it doesn't exist
+const PlaceholderEventCard = ({ event }) => {
+  return (
+    <div className={styles.card}>
+      <h3>{event.name}</h3>
+      <p>{event.venue?.name || 'Venue not specified'}</p>
+      <p>{new Date(event.date).toLocaleDateString()}</p>
+      <p>Match: {Math.round(event.matchScore || 0)}%</p>
+      {event.url && (
+        <a href={event.url} target="_blank" rel="noopener noreferrer">
+          Get Tickets
+        </a>
+      )}
+    </div>
+  );
+};
+
+// Simple placeholder component for EnhancedFilterPanel if it doesn't exist
+const PlaceholderFilterPanel = ({ onFilterChange, initialFilters }) => {
+  const [vibeMatch, setVibeMatch] = useState(initialFilters.vibeMatch || 50);
+  
+  const handleVibeMatchChange = (e) => {
+    const value = parseInt(e.target.value);
+    setVibeMatch(value);
+    onFilterChange({ ...initialFilters, vibeMatch: value });
+  };
+  
+  return (
+    <div className={styles.filterPanel}>
+      <div className={styles.filterItem}>
+        <label>Vibe Match: {vibeMatch}%+</label>
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={vibeMatch} 
+          onChange={handleVibeMatchChange}
+        />
+      </div>
+    </div>
+  );
+};
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [userProfile, setUserProfile] = useState(null);
-  const [location, setLocation] = useState({ lat: '43.65', lon: '-79.38', city: 'Toronto' });
-  const [isLoading, setIsLoading] = useState(true);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    vibeMatch: 50,
+    price: 'all',
+    genre: 'all',
+    distance: 'local'
+  });
+  const [showAllEvents, setShowAllEvents] = useState(false);
+
+  // Import components dynamically to handle missing components gracefully
+  const [EventCard, setEventCard] = useState(null);
+  const [FilterPanel, setFilterPanel] = useState(null);
 
   useEffect(() => {
-    // Check authentication
-    if (status === 'unauthenticated') {
-      router.push('/');
-    }
-
-    // Load user profile
-    if (session?.user) {
-      fetch('/api/user/profile')
-        .then(res => res.json())
-        .then(data => {
-          setUserProfile(data);
-          setIsLoading(false);
-        })
-        .catch(err => {
-          console.error('Error fetching user profile:', err);
-          setIsLoading(false);
-        });
-    }
-
-    // Initialize location
-    try {
-      const savedLocation = localStorage.getItem('userLocation');
-      if (savedLocation) {
-        const parsedLocation = JSON.parse(savedLocation);
-        if (parsedLocation && parsedLocation.lat && parsedLocation.lon) {
-          setLocation(parsedLocation);
-        }
+    // Try to dynamically import the enhanced components
+    const loadComponents = async () => {
+      try {
+        const eventCardModule = await import('../components/EnhancedEventCard');
+        setEventCard(() => eventCardModule.default);
+      } catch (err) {
+        console.warn('EnhancedEventCard not found, using placeholder');
+        setEventCard(() => PlaceholderEventCard);
       }
-    } catch (error) {
-      console.error('Error handling location:', error);
-    }
-  }, [session, status, router]);
 
-  const updateLocation = (newLocation) => {
-    setLocation(newLocation);
-    try {
-      localStorage.setItem('userLocation', JSON.stringify(newLocation));
-    } catch (error) {
-      console.error('Error saving location:', error);
+      try {
+        const filterPanelModule = await import('../components/EnhancedFilterPanel');
+        setFilterPanel(() => filterPanelModule.default);
+      } catch (err) {
+        console.warn('EnhancedFilterPanel not found, using placeholder');
+        setFilterPanel(() => PlaceholderFilterPanel);
+      }
+    };
+
+    loadComponents();
+  }, []);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
     }
+  }, [status, router]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/api/events/correlated-events', {
+          params: {
+            minMatchScore: filters.vibeMatch,
+            lat: router.query.lat,
+            lon: router.query.lon,
+            genre: filters.genre !== 'all' ? filters.genre : undefined,
+            price: filters.price !== 'all' ? filters.price : undefined,
+            distance: filters.distance
+          }
+        });
+        
+        // Sort events by match score in descending order
+        const sortedEvents = (response.data.events || []).sort((a, b) => 
+          b.matchScore - a.matchScore
+        );
+        
+        setEvents(sortedEvents);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching events:', err);
+        setError('Failed to load events. Please try again later.');
+        setEvents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (status === 'authenticated') {
+      fetchEvents();
+    }
+  }, [status, filters, router.query.lat, router.query.lon]);
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    // Reset to only show first 6 events when filters change
+    setShowAllEvents(false);
   };
 
-  if (status === 'loading' || isLoading) {
-    return <div className={styles.loading}>Loading dashboard...</div>;
+  // Limit displayed events to 6 unless "Show More" is clicked
+  const displayedEvents = showAllEvents ? events : events.slice(0, 6);
+
+  if (status === 'loading' || !EventCard || !FilterPanel) {
+    return <div className={styles.loading}>Loading...</div>;
   }
 
   return (
     <div className={styles.container}>
       <Head>
-        <title>TIKO - Your Dashboard</title>
-        <meta name="description" content="Your personalized EDM dashboard" />
+        <title>TIKO - Your EDM Dashboard</title>
+        <meta name="description" content="Discover electronic music events that match your taste" />
         <link rel="icon" href="/favicon.ico" />
-        <script src="/js/service-worker-bypass.js" defer></script>
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>TIKO</h1>
+        <h1 className={styles.title}>
+          TIKO
+        </h1>
         
         <p className={styles.description}>
-          You're all about <span className={styles.house}>house</span> + <span className={styles.techno}>techno</span> with a vibe shift toward <span className={styles.fresh}>fresh sounds</span>.
+          Your personalized EDM event dashboard
         </p>
 
-        <div className={styles.grid}>
-          <div className={styles.card}>
-            <SoundCharacteristics profile={userProfile} />
-            <LocationDisplay location={location} onUpdateLocation={updateLocation} />
-          </div>
+        <h2 className={styles.eventsTitle}>Events Matching Your Vibe</h2>
+        
+        {/* Filter Panel */}
+        <FilterPanel 
+          onFilterChange={handleFilterChange}
+          initialFilters={filters}
+        />
 
-          <div className={styles.card}>
-            <SeasonalVibes profile={userProfile} />
-          </div>
-        </div>
-
-        <div className={styles.eventsSection}>
-          <EventsSection location={location} />
-        </div>
+        {loading ? (
+          <div className={styles.loading}>Loading events...</div>
+        ) : error ? (
+          <div className={styles.error}>{error}</div>
+        ) : events.length === 0 ? (
+          <div className={styles.noEvents}>No events found for your location</div>
+        ) : (
+          <>
+            <div className={styles.eventsGrid}>
+              {displayedEvents.map((event) => (
+                <EventCard key={event.id || event.name} event={event} />
+              ))}
+            </div>
+            
+            {/* Show More button - only display if there are more than 6 events and not all are shown */}
+            {events.length > 6 && !showAllEvents && (
+              <button 
+                className={styles.showMoreButton}
+                onClick={() => setShowAllEvents(true)}
+              >
+                Show More Events ({events.length - 6} more)
+              </button>
+            )}
+          </>
+        )}
       </main>
     </div>
   );
