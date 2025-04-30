@@ -1,6 +1,6 @@
-import styles from '../styles/SoundCharacteristicsCompact.module.css'; // Use the compact styles
+import styles from '../styles/SoundCharacteristics.module.css'; // CORRECTED PATH
 
-export default function SoundCharacteristicsCompact({ profile }) {
+export default function SoundCharacteristics({ profile }) { // CORRECTED FUNCTION NAME
   // Default values if profile is not available
   const characteristics = {
     melody: 65,
