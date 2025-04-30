@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '@/styles/MatchPercentage.module.css';
+import styles from '../styles/MatchPercentage.module.css';
 
 export default function MatchPercentage({ percentage, size = 'medium' }) {
   // Calculate the circumference of the circle

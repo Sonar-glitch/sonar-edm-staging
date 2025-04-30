@@ -1,6 +1,6 @@
-import styles from '../styles/SoundCharacteristics.module.css';
+import styles from '../styles/SoundCharacteristicsCompact.module.css'; // Use the compact styles
 
-export default function SoundCharacteristics({ profile }) {
+export default function SoundCharacteristicsCompact({ profile }) {
   // Default values if profile is not available
   const characteristics = {
     melody: 65,
@@ -73,3 +73,4 @@ export default function SoundCharacteristics({ profile }) {
     </div>
   );
 }
+

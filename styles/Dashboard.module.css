@@ -1,80 +1,97 @@
+/* DashboardNewLayout.module.css */
+
 .container {
   min-height: 100vh;
-  padding: 0 1rem;
+  padding: 0 0.5rem;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: flex-start; /* Align content to the top */
   align-items: center;
-  background-color: #0a0a1a;
-  color: white;
+  background-color: #0f0f1a; /* Dark background */
+  color: #e0e0e0;
 }
 
 .main {
-  padding: 2rem 0;
+  padding: 2rem 0; /* Reduced top/bottom padding */
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: center;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1100px; /* Max width for content */
 }
 
 .title {
   margin: 0;
   line-height: 1.15;
-  font-size: 4rem;
+  font-size: 2.5rem; /* Slightly smaller title */
   text-align: center;
+  color: #fff;
 }
 
 .description {
-  text-align: center;
   line-height: 1.5;
-  font-size: 1.5rem;
-  margin: 1rem 0 2rem;
+  font-size: 1.1rem;
+  text-align: center;
+  margin: 1rem 0 2rem 0; /* Adjusted margins */
+  color: #a0a0b0;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
+/* Style for highlighted text in description */
+.house { color: #00c6ff; font-weight: bold; }
+.techno { color: #ff00ea; font-weight: bold; }
+.fresh { color: #a0a0b0; font-style: italic; }
+
+/* Section for Sound Characteristics and Seasonal Vibes */
+.topSection {
   width: 100%;
   margin-bottom: 2rem;
 }
 
-.card {
-  background-color: #1e1e2f;
-  border-radius: 10px;
+/* Card styling within topSection */
+.topSection .card {
+  background: #1e1e2f; /* Darker card background */
+  border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  /* No grid layout needed here, components stack vertically */
 }
 
+/* Ensure components inside the top card have appropriate spacing */
+.topSection .card > div:not(:last-child) { /* Target direct children divs */
+  margin-bottom: 1.5rem; /* Add space between SoundCharacteristics and SeasonalVibes */
+}
+
+/* Events Section */
 .eventsSection {
   width: 100%;
 }
 
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-size: 1.5rem;
+/* Loading and Error states */
+.loading, .error {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #a0a0b0;
 }
 
-.house {
-  color: #00c6ff;
+.error {
+  color: #ff4d4d;
 }
 
-.techno {
-  color: #ff00ff;
-}
-
-.fresh {
-  color: #00ff9d;
-}
-
-@media (min-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr 1fr;
+/* Responsive adjustments if needed */
+@media (max-width: 768px) {
+  .main {
+    padding: 1.5rem 0;
+  }
+  .title {
+    font-size: 2rem;
+  }
+  .description {
+    font-size: 1rem;
+  }
+  .topSection .card {
+    padding: 1rem;
   }
 }
+
