@@ -1,5 +1,0 @@
-1:import NextAuth from "next-auth";
-2:import SpotifyProvider from "next-auth/providers/spotify";
-3:import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
-4:import clientPromise from "@/lib/mongoPromise"; // <-- Updated import!
-6:// Export the auth options so they can be imported by other files

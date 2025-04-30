@@ -1,0 +1,29 @@
+/* MatchPercentage.module.css */
+.container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progressRing {
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.progressRingCircleBg {
+  opacity: 0.2;
+}
+
+.progressRingCircle {
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.percentageText {
+  position: absolute;
+  font-weight: bold;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,4 +1,0 @@
-3:import { getServerSession } from "next-auth/next";
-4:import { authOptions } from "../auth/[...nextauth]";
-5:import {
-10:import { getTopGenres, getSeasonalMood } from "@/lib/moodUtils";

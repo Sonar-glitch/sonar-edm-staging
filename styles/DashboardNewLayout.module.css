@@ -1,30 +1,30 @@
-/* DashboardNewLayout.module.css (Final - Two Column) */
+/* DashboardNewLayout.module.css */
 
 .container {
   min-height: 100vh;
-  padding: 0 1rem; /* Add some horizontal padding */
+  padding: 0 0.5rem;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: flex-start; /* Align content to the top */
   align-items: center;
-  background-color: #0f0f1a;
+  background-color: #0f0f1a; /* Dark background */
   color: #e0e0e0;
 }
 
 .main {
-  padding: 2rem 0;
+  padding: 2rem 0; /* Reduced top/bottom padding */
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1100px; /* Max width for content */
 }
 
 .title {
   margin: 0;
   line-height: 1.15;
-  font-size: 2.5rem;
+  font-size: 2.5rem; /* Slightly smaller title */
   text-align: center;
   color: #fff;
 }
@@ -33,36 +33,33 @@
   line-height: 1.5;
   font-size: 1.1rem;
   text-align: center;
-  margin: 1rem 0 2rem 0;
+  margin: 1rem 0 2rem 0; /* Adjusted margins */
   color: #a0a0b0;
 }
 
+/* Style for highlighted text in description */
 .house { color: #00c6ff; font-weight: bold; }
 .techno { color: #ff00ea; font-weight: bold; }
 .fresh { color: #a0a0b0; font-style: italic; }
 
-/* Two-column grid for top sections */
-.topGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Two equal columns */
-  gap: 1.5rem; /* Gap between columns */
+/* Section for Sound Characteristics and Seasonal Vibes */
+.topSection {
   width: 100%;
   margin-bottom: 2rem;
 }
 
-/* General card styling */
-.card {
-  background: #1e1e2f;
+/* Card styling within topSection */
+.topSection .card {
+  background: #1e1e2f; /* Darker card background */
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column; /* Stack items vertically within cards */
+  /* No grid layout needed here, components stack vertically */
 }
 
-/* Spacing within the left card (SoundCharacteristics + LocationDisplay) */
-.leftCard > div:not(:last-child) { 
-  margin-bottom: 1.5rem; 
+/* Ensure components inside the top card have appropriate spacing */
+.topSection .card > div:not(:last-child) { /* Target direct children divs */
+  margin-bottom: 1.5rem; /* Add space between SoundCharacteristics and SeasonalVibes */
 }
 
 /* Events Section */
@@ -82,7 +79,7 @@
   color: #ff4d4d;
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments if needed */
 @media (max-width: 768px) {
   .main {
     padding: 1.5rem 0;
@@ -93,12 +90,7 @@
   .description {
     font-size: 1rem;
   }
-  /* Stack columns on smaller screens */
-  .topGrid {
-    grid-template-columns: 1fr; /* Single column */
-    gap: 1rem; /* Adjust gap for single column */
-  }
-  .card {
+  .topSection .card {
     padding: 1rem;
   }
 }

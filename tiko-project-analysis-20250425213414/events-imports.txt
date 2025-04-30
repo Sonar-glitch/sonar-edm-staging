@@ -1,7 +1,0 @@
-1:import React from 'react';
-2:import { useSession } from 'next-auth/react';
-3:import Head from 'next/head';
-4:import Link from 'next/link';
-5:import styles from '../../styles/Events.module.css';
-6:import EventCard from '../../components/EventCard';
-7:import Navigation from '../../components/Navigation';

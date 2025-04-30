@@ -1,7 +1,0 @@
-1:import React, { useState, useEffect } from 'react';
-2:import { useSession } from 'next-auth/react';
-3:import { useRouter } from 'next/router';
-4:import Head from 'next/head';
-5:import Image from 'next/image';
-6:import Link from 'next/link';
-7:import styles from '@/styles/Settings.module.css';
