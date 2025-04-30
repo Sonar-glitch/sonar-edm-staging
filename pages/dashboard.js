@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import styles from '../styles/DashboardNewLayout.module.css'; // Use new layout styles
+import styles from '../styles/Dashboard.module.css'; // CORRECTED PATH
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import SoundCharacteristicsCompact from '../components/SoundCharacteristicsCompact'; // Use compact version
+import SoundCharacteristics from '../components/SoundCharacteristics'; // CORRECTED PATH
 import SeasonalVibes from '../components/SeasonalVibes';
-import EventsSectionSorted from '../components/EventsSectionSorted'; // Use sorted version
+import EventsSection from '../components/EventsSection'; // CORRECTED PATH
 import LocationDisplay from '../components/LocationDisplay';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);
-  // Default location if none is saved or fetched
   const [location, setLocation] = useState({ lat: '43.65', lon: '-79.38', city: 'Toronto' }); 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -26,8 +25,6 @@ export default function Dashboard() {
         .then(res => res.json())
         .then(data => {
           setUserProfile(data);
-          // Optionally fetch initial location from profile if available
-          // if (data.location) setLocation(data.location);
           setIsLoading(false);
         })
         .catch(err => {
@@ -36,7 +33,6 @@ export default function Dashboard() {
         });
     }
 
-    // Load location from localStorage if available
     try {
       const savedLocation = localStorage.getItem('userLocation');
       if (savedLocation) {
@@ -57,8 +53,6 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error saving location:', error);
     }
-    // Optionally save location to user profile via API
-    // fetch('/api/user/set-location', { method: 'POST', body: JSON.stringify(newLocation), headers: {'Content-Type': 'application/json'} });
   };
 
   if (status === 'loading' || isLoading) {
@@ -81,19 +75,23 @@ export default function Dashboard() {
           You're all about <span className={styles.house}>house</span> + <span className={styles.techno}>techno</span> with a vibe shift toward <span className={styles.fresh}>fresh sounds</span>.
         </p>
 
-        {/* Combine Sound Characteristics and Seasonal Vibes vertically */}
-        <div className={styles.topSection}>
-          <div className={styles.card}> {/* Single card for both */} 
-            <SoundCharacteristicsCompact profile={userProfile} />
+        {/* Two-column layout for top sections */}
+        <div className={styles.topGrid}> 
+          {/* Left Column Card */}
+          <div className={`${styles.card} ${styles.leftCard}`}> 
+            <SoundCharacteristics profile={userProfile} />
+            <LocationDisplay location={location} onUpdateLocation={updateLocation} />
+          </div>
+          
+          {/* Right Column Card */}
+          <div className={`${styles.card} ${styles.rightCard}`}> 
             <SeasonalVibes profile={userProfile} />
-            {/* Consider where LocationDisplay fits best in the new layout */}
-            {/* <LocationDisplay location={location} onUpdateLocation={updateLocation} /> */}
           </div>
         </div>
 
         {/* Events Section below */}
         <div className={styles.eventsSection}>
-          <EventsSectionSorted location={location} />
+          <EventsSection location={location} />
         </div>
       </main>
     </div>
