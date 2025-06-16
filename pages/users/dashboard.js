@@ -1,29 +1,52 @@
-import { useEffect } from 'react';
+import { useSession, getSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import { useSession } from 'next-auth/react';
+import { useEffect } from 'react';
+import EnhancedPersonalizedDashboard from '../../components/EnhancedPersonalizedDashboard';
 
-export default function Dashboard() {
-  const router = useRouter();
+export default function UserDashboard() {
   const { data: session, status } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
-    // Redirect to music-taste page
-    if (status !== 'loading') {
-      router.replace('/users/music-taste');
-    }
-  }, [router, status]);
+    if (status === 'loading') return;
+    if (!session) router.push('/auth/signin');
+  }, [session, status, router]);
 
-  // Show loading while redirecting
-  return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh',
-      backgroundColor: '#0f0f17',
-      color: 'white'
-    }}>
-      <p>Redirecting to your Music Taste profile...</p>
-    </div>
-  );
+  if (status === 'loading') {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        background: 'linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)',
+        color: '#fff'
+      }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
+
+  return <EnhancedPersonalizedDashboard />;
+}
+
+export async function getServerSideProps(context) {
+  const session = await getSession(context);
+  
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/auth/signin',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: { session },
+  };
 }
