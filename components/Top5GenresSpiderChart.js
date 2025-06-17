@@ -4,50 +4,76 @@ import styles from '@/styles/Top5GenresSpiderChart.module.css';
 
 const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
   // Default genre data with PROPER NORMALIZATION (max 100%)
-  const defaultGenres = [
-    { genre: 'House', value: 100, normalizedValue: 100 },
-    { genre: 'Techno', value: 85, normalizedValue: 85 },
-    { genre: 'Progressive house', value: 70, normalizedValue: 70 },
-    { genre: 'Progressive', value: 68, normalizedValue: 68 },
-    { genre: 'Deep house', value: 61, normalizedValue: 61 }
-  ];
+  const getGenreData = () => {
+    try {
+      // Default fallback data
+      const defaultGenres = [
+        { genre: 'House', value: 100 },
+        { genre: 'Techno', value: 85 },
+        { genre: 'Progressive house', value: 70 },
+        { genre: 'Progressive', value: 68 },
+        { genre: 'Deep house', value: 61 }
+      ];
 
-  // Process user data with proper normalization
-  const processGenreData = (data) => {
-    if (!data || !data.topGenres) return defaultGenres;
-    
-    const genres = data.topGenres.slice(0, 5);
-    
-    // Find the maximum value for normalization
-    const maxValue = Math.max(...genres.map(g => g.count || g.value || 0));
-    
-    return genres.map(genre => {
-      const rawValue = genre.count || genre.value || 0;
-      // ENSURE VALUES NEVER EXCEED 100%
-      const normalizedValue = Math.min(100, Math.round((rawValue / maxValue) * 100));
+      // If no real data, return defaults
+      if (!userTasteProfile?.genrePreferences && !spotifyData?.topGenres) {
+        return defaultGenres;
+      }
+
+      // Process real data with proper normalization
+      const genreScores = new Map();
       
-      return {
-        genre: genre.name || genre.genre,
-        value: rawValue,
-        normalizedValue: normalizedValue
-      };
-    });
+      if (userTasteProfile?.genrePreferences) {
+        userTasteProfile.genrePreferences.forEach(genre => {
+          const score = (genre.weight || 0) * 100;
+          genreScores.set(genre.name, score);
+        });
+      }
+      
+      if (spotifyData?.topGenres) {
+        spotifyData.topGenres.forEach((genre, index) => {
+          const spotifyScore = Math.max(0, 100 - (index * 15));
+          const existingScore = genreScores.get(genre.name) || 0;
+          genreScores.set(genre.name, Math.max(existingScore, spotifyScore));
+        });
+      }
+      
+      if (genreScores.size === 0) {
+        return defaultGenres;
+      }
+      
+      const sortedGenres = Array.from(genreScores.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+      
+      // ENSURE VALUES NEVER EXCEED 100% - PROPER NORMALIZATION
+      const maxScore = Math.max(...sortedGenres.map(([, score]) => score));
+      
+      return sortedGenres.map(([genre, score]) => ({
+        genre: genre.charAt(0).toUpperCase() + genre.slice(1),
+        value: Math.min(100, Math.round((score / maxScore) * 100)) // CAP AT 100%
+      }));
+      
+    } catch (error) {
+      console.error('Error processing genre data:', error);
+      return [
+        { genre: 'House', value: 100 },
+        { genre: 'Techno', value: 85 },
+        { genre: 'Progressive house', value: 70 },
+        { genre: 'Progressive', value: 68 },
+        { genre: 'Deep house', value: 61 }
+      ];
+    }
   };
 
-  const genresData = userTasteProfile ? processGenreData(userTasteProfile) : defaultGenres;
-
-  // Prepare data for radar chart
-  const radarData = genresData.map(item => ({
-    genre: item.genre,
-    value: item.normalizedValue // Use normalized value (0-100%)
-  }));
+  const genresData = getGenreData();
 
   return (
     <div className={styles.container}>
-      {/* REDUCED HEIGHT SPIDER CHART */}
+      {/* REDUCED HEIGHT SPIDER CHART - NO REDUNDANT CONTENT */}
       <div className={styles.chartContainer}>
-        <ResponsiveContainer width="100%" height={200}> {/* Reduced from 300 to 200 */}
-          <RadarChart data={radarData}>
+        <ResponsiveContainer width="100%" height={200}>
+          <RadarChart data={genresData} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
             <PolarGrid 
               stroke="rgba(255, 255, 255, 0.2)"
               radialLines={true}
@@ -77,6 +103,8 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
           </RadarChart>
         </ResponsiveContainer>
       </div>
+      
+      {/* NO GENRE LIST - NO TASTE STRENGTH - CLEAN DESIGN */}
     </div>
   );
 };

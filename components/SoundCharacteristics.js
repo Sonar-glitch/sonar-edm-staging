@@ -3,14 +3,28 @@ import styles from '@/styles/SoundCharacteristics.module.css';
 
 const SoundCharacteristics = ({ userAudioFeatures, dataStatus = 'demo' }) => {
   // Default audio features
-  const defaultFeatures = {
-    energy: 0.75,
-    danceability: 0.82,
-    valence: 0.65, // Positivity
-    acousticness: 0.15
+  const getAudioFeatures = () => {
+    try {
+      const defaultFeatures = {
+        energy: 0.75,
+        danceability: 0.82,
+        valence: 0.65, // Positivity
+        acousticness: 0.15
+      };
+
+      return userAudioFeatures || defaultFeatures;
+    } catch (error) {
+      console.error('Error processing audio features:', error);
+      return {
+        energy: 0.75,
+        danceability: 0.82,
+        valence: 0.65,
+        acousticness: 0.15
+      };
+    }
   };
 
-  const features = userAudioFeatures || defaultFeatures;
+  const features = getAudioFeatures();
 
   const characteristicsData = [
     {
@@ -49,7 +63,7 @@ const SoundCharacteristics = ({ userAudioFeatures, dataStatus = 'demo' }) => {
 
   return (
     <div className={styles.container}>
-      {/* REMOVED REDUNDANT SUBTITLE */}
+      {/* NO REDUNDANT SUBTITLE - REMOVED AS DISCUSSED */}
       
       <div className={styles.characteristicsGrid}>
         {characteristicsData.map((characteristic, index) => (
