@@ -4,7 +4,7 @@ import styles from '@/styles/Top5GenresSpiderChart.module.css';
 
 const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
   const getTop5GenresData = () => {
-    // Fallback demo data for testing
+    // Fallback demo data
     if (!userTasteProfile?.genrePreferences && !spotifyData?.topGenres) {
       return [
         { genre: 'House', value: 85, normalizedValue: 85 },
@@ -45,20 +45,10 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
   };
 
   const genresData = getTop5GenresData();
-  const overallTasteStrength = genresData.length > 0 
-    ? Math.round(genresData.reduce((sum, genre) => sum + genre.normalizedValue, 0) / genresData.length)
-    : 0;
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h3 className={styles.title}>Your Top 5 Genres</h3>
-        <div className={styles.tasteStrength}>
-          <span className={styles.strengthLabel}>Taste Strength</span>
-          <span className={styles.strengthValue}>{overallTasteStrength}%</span>
-        </div>
-      </div>
-      
+      {/* CLEAN: Just the chart, no redundant content */}
       <div className={styles.chartContainer}>
         <ResponsiveContainer width="100%" height={300}>
           <RadarChart data={genresData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
@@ -86,17 +76,9 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
         </ResponsiveContainer>
       </div>
       
-      <div className={styles.genresList}>
-        {genresData.map((genre, index) => (
-          <div key={genre.genre} className={styles.genreItem}>
-            <div className={styles.genreRank}>#{index + 1}</div>
-            <div className={styles.genreInfo}>
-              <span className={styles.genreName}>{genre.genre}</span>
-              <span className={styles.genreScore}>{genre.normalizedValue}%</span>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* NO GENRE LIST - REMOVED PERMANENTLY */}
+      {/* NO TASTE STRENGTH - REMOVED TO SAVE SPACE */}
+      {/* NO REDUNDANT SUMMARY - REMOVED FOR CLEAN LAYOUT */}
     </div>
   );
 };

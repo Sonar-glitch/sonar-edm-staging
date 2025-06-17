@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from '@/styles/SoundFeatureCapsules.module.css';
 
-const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus = 'loading', showHalf = 'all' }) => {
+const SoundFeatureCapsules = ({ userAudioFeatures, dataStatus = 'demo', showHalf = 'all' }) => {
   // Default audio features
   const defaultFeatures = {
     energy: 0.75,
@@ -11,7 +11,6 @@ const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus
   };
 
   const features = userAudioFeatures || defaultFeatures;
-  const isUsingMockData = !userAudioFeatures || dataStatus === 'mock';
 
   const allCapsuleData = [
     {
@@ -50,17 +49,16 @@ const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus
     capsuleData = allCapsuleData; // All capsules
   }
 
-  const titleText = showHalf === 'all' ? 'Your Sound Characteristics' : 
-                   showHalf === 'left' ? 'Sound Characteristics' : 'Sound Characteristics';
+  const getDataIndicator = () => {
+    return dataStatus === 'real' ? 'Real Data' : 'Demo Data';
+  };
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3 className={styles.title}>{titleText}</h3>
+        <h3 className={styles.title}>Sound Characteristics</h3>
         {showHalf === 'all' && (
-          <span className={styles.dataIndicator}>
-            {isUsingMockData ? '🎭 Sample Data' : '✅ Spotify Data'}
-          </span>
+          <span className={styles.dataIndicator}>{getDataIndicator()}</span>
         )}
       </div>
       
@@ -88,12 +86,6 @@ const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus
           </div>
         ))}
       </div>
-      
-      {showHalf === 'all' && isUsingMockData && (
-        <div className={styles.mockDataNotice}>
-          🎭 Using sample audio features - Connect Spotify for personalized results
-        </div>
-      )}
     </div>
   );
 };

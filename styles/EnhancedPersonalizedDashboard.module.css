@@ -55,20 +55,24 @@
   padding: 2rem 1rem;
 }
 
-/* OPTIMAL LAYOUT: Functional Hierarchy + Space Utilization */
-.optimalLayout {
+/* FUNCTIONAL HIERARCHY LAYOUT */
+.functionalLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.informationalRow, .dataInsightsRow, .functionalRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
-  margin-bottom: 2rem;
   align-items: start;
 }
 
-/* Both columns with equal spacing and functional hierarchy */
 .leftColumn, .rightColumn {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
   height: fit-content;
 }
 
@@ -107,12 +111,7 @@
   background-clip: text;
 }
 
-.cardSubtitle {
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0 0 1.5rem 0;
-  font-size: 0.9rem;
-}
-
+/* Simple Data Indicators */
 .dataIndicator {
   font-size: 0.8rem;
   padding: 0.25rem 0.5rem;
@@ -120,6 +119,7 @@
   background: rgba(0, 212, 255, 0.1);
   border: 1px solid rgba(0, 212, 255, 0.3);
   color: #00d4ff;
+  font-weight: 500;
 }
 
 /* Seasonal Vibes Grid */
@@ -127,7 +127,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  margin-bottom: 1rem;
 }
 
 .seasonCard {
@@ -310,13 +309,6 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
-.debugInfo {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-top: 0.5rem;
-  font-family: monospace;
-}
-
 .authPrompt {
   display: flex;
   flex-direction: column;
@@ -344,7 +336,7 @@
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .optimalLayout {
+  .informationalRow, .dataInsightsRow, .functionalRow {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
