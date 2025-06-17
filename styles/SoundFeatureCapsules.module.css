@@ -1,151 +1,103 @@
-.container {
-  background: rgba(18, 18, 24, 0.8);
-  border: 1px solid rgba(255, 20, 147, 0.3);
-  border-radius: 16px;
-  padding: 1.5rem;
-  backdrop-filter: blur(10px);
-  color: #fff;
-}
-
-.header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.3rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #ff1493, #00bfff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.subtitle {
-  margin: 0;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.featuresGrid {
+/* Grid Layout (Original) */
+.gridContainer {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
+  margin: 1rem 0;
 }
 
-.featureItem {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.2rem;
-  transition: all 0.3s ease;
-}
-
-.featureItem:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 20, 147, 0.3);
-  transform: translateY(-2px);
-}
-
-.featureHeader {
-  display: flex;
-  align-items: center;
+/* Horizontal Layout (New) */
+.horizontalContainer {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.featureIcon {
-  font-size: 1.8rem;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-}
-
-.featureInfo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.featureName {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 0.2rem;
-}
-
-.featureValue {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #00bfff;
-}
-
-.capsuleContainer {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin: 1rem 0;
 }
 
 .capsule {
-  flex: 1;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
 
-.capsuleFill {
-  height: 100%;
-  border-radius: 12px;
-  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+.capsule:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.capsuleFill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(255, 255, 255, 0.3) 50%, 
-    transparent 100%);
-  animation: shimmer 2s infinite;
+.capsuleHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+.icon {
+  font-size: 1.2rem;
 }
 
-.percentageLabel {
-  font-size: 0.85rem;
+.name {
   font-weight: 600;
-  color: #fff;
-  min-width: 35px;
-  text-align: right;
+  color: #ffffff;
+  font-size: 0.95rem;
 }
 
-.featureDescription {
+.valueContainer {
+  margin-bottom: 0.75rem;
+}
+
+.value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #00c6ff;
+}
+
+.progressBar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.description {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: #b0b0b0;
   line-height: 1.4;
   margin: 0;
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
-  .featuresGrid {
+  .horizontalContainer {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .gridContainer {
     grid-template-columns: 1fr;
-    gap: 1rem;
+  }
+  
+  .capsule {
+    padding: 1rem;
+  }
+  
+  .value {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .horizontalContainer {
+    grid-template-columns: 1fr;
   }
 }

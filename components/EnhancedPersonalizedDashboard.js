@@ -1,221 +1,263 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import EnhancedEventList from './EnhancedEventList';
-import EnhancedLocationSearch from './EnhancedLocationSearch';
 import Top5GenresSpiderChart from './Top5GenresSpiderChart';
 import SoundFeatureCapsules from './SoundFeatureCapsules';
+import EnhancedLocationSearch from './EnhancedLocationSearch';
 import EventDetailModal from './EventDetailModal';
-import styles from '@/styles/EnhancedPersonalizedDashboard.module.css';
+import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
-const EnhancedPersonalizedDashboard = () => {
+export default function EnhancedPersonalizedDashboard() {
   const { data: session } = useSession();
+  const [userTasteProfile, setUserTasteProfile] = useState(null);
+  const [spotifyData, setSpotifyData] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [spotifyData, setSpotifyData] = useState(null);
-  const [userTasteProfile, setUserTasteProfile] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [location, setLocation] = useState({
+    city: 'Toronto',
+    stateCode: 'ON',
+    countryCode: 'CA',
+    lat: 43.653226,
+    lon: -79.383184,
+    formattedAddress: 'Toronto, ON, Canada'
+  });
 
-  // Load user's Spotify data and taste profile
+  // Load user data
   useEffect(() => {
-    if (session?.user) {
-      loadSpotifyData();
-      loadUserTasteProfile();
+    const loadUserData = async () => {
+      try {
+        setLoading(true);
+        
+        // Load user profile
+        try {
+          const profileResponse = await fetch('/api/user/profile');
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            console.log('User profile loaded:', profileData);
+          }
+        } catch (error) {
+          console.log('User profile not available, using fallback data');
+        }
+
+        // Load Spotify data
+        try {
+          const spotifyResponse = await fetch('/api/spotify/user-profile');
+          if (spotifyResponse.ok) {
+            const spotifyData = await spotifyResponse.json();
+            setSpotifyData(spotifyData);
+            console.log('Spotify data loaded:', spotifyData);
+          }
+        } catch (error) {
+          console.log('Spotify data not available, using fallback data');
+        }
+
+        // Load taste profile
+        try {
+          const tasteResponse = await fetch('/api/user/taste-profile');
+          if (tasteResponse.ok) {
+            const tasteData = await tasteResponse.json();
+            setUserTasteProfile(tasteData);
+            console.log('Taste profile loaded:', tasteData);
+          }
+        } catch (error) {
+          console.log('Taste profile not available, using fallback data');
+        }
+
+        // Load events
+        await loadEvents();
+        
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (session) {
+      loadUserData();
     }
   }, [session]);
 
-  // Load events when location changes
-  useEffect(() => {
-    if (selectedLocation) {
-      loadEvents();
-    }
-  }, [selectedLocation]);
-
-  const loadSpotifyData = async () => {
-    try {
-      const response = await fetch('/api/spotify/user-profile');
-      if (response.ok) {
-        const data = await response.json();
-        setSpotifyData(data);
-      }
-    } catch (error) {
-      console.error('Error loading Spotify data:', error);
-    }
-  };
-
-  const loadUserTasteProfile = async () => {
-    try {
-      const response = await fetch('/api/user/taste-profile');
-      if (response.ok) {
-        const data = await response.json();
-        setUserTasteProfile(data);
-      }
-    } catch (error) {
-      console.error('Error loading taste profile:', error);
-    }
-  };
-
   const loadEvents = async () => {
-    if (!selectedLocation) return;
-    
-    setLoading(true);
-    setError(null);
-    
     try {
-      const { latitude, longitude } = selectedLocation;
       const response = await fetch(
-        `/api/events/near?latitude=${latitude}&longitude=${longitude}&radius=50&userId=${session?.user?.id}`
+        `/api/events?lat=${location.lat}&lon=${location.lon}&city=${location.city}&cacheBust=${Date.now()}`
       );
-      
-      if (!response.ok) {
-        throw new Error('Failed to load events');
+      if (response.ok) {
+        const eventsData = await response.json();
+        setEvents(eventsData.events || []);
+        console.log('Events loaded:', eventsData.events?.length || 0);
       }
-      
-      const data = await response.json();
-      setEvents(data.events || []);
     } catch (error) {
       console.error('Error loading events:', error);
-      setError('Failed to load events. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleLocationSelect = (location) => {
-    setSelectedLocation(location);
+  const handleLocationChange = (newLocation) => {
+    console.log('Location changed:', newLocation);
+    setLocation(newLocation);
+    // Reload events for new location
+    loadEvents();
   };
 
   const handleEventClick = (event) => {
     setSelectedEvent(event);
-    setIsEventModalOpen(true);
+    setIsModalOpen(true);
   };
 
-  const handleSaveEvent = async (event) => {
-    try {
-      const response = await fetch('/api/user/interested-events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId: event._id || event.id })
-      });
-      
-      if (response.ok) {
-        setEvents(prevEvents => 
-          prevEvents.map(e => 
-            (e._id || e.id) === (event._id || event.id) 
-              ? { ...e, isInterested: true }
-              : e
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error saving event:', error);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  // Calculate vibe match percentage
+  const calculateVibeMatch = () => {
+    // Simple calculation based on available data
+    if (spotifyData?.audioFeatures) {
+      const features = spotifyData.audioFeatures;
+      const average = (features.energy + features.danceability + features.valence) / 3;
+      return Math.round(average * 100);
     }
+    return 80; // Default fallback
   };
 
-  if (!session) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.authPrompt}>
-          <h2>Welcome to TIKO</h2>
-          <p>Please sign in with Spotify to discover events tailored to your music taste.</p>
-        </div>
-      </div>
-    );
-  }
+  const vibeMatch = calculateVibeMatch();
 
   return (
-    <div className={styles.container}>
+    <div className={styles.dashboard}>
+      {/* Header */}
       <div className={styles.header}>
-        <div className={styles.welcomeSection}>
-          <h1 className={styles.title}>
-            <span className={styles.logo}>TIKO</span>
-          </h1>
-          <p className={styles.subtitle}>
-            You're all about <span className={styles.highlight}>house + techno</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
-          </p>
-        </div>
+        <h1 className={styles.title}>TIKO</h1>
+        <p className={styles.subtitle}>
+          You're all about <span className={styles.highlight}>house + techno</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
+        </p>
       </div>
 
+      {/* Main Content - Two Column Layout */}
       <div className={styles.mainContent}>
-        {/* Location Search */}
-        <div className={styles.locationSection}>
-          <EnhancedLocationSearch 
-            onLocationSelect={handleLocationSelect}
-            selectedLocation={selectedLocation}
-          />
-        </div>
+        
+        {/* Left Column - Your Vibe */}
+        <div className={styles.leftColumn}>
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Your Vibe</h2>
+            <p className={styles.sectionSubtitle}>
+              We've curated events based on your unique music taste.
+            </p>
 
-        {/* User Profile Section - NEW COMPONENTS */}
-        <div className={styles.profileSection}>
-          <div className={styles.profileGrid}>
-            {/* Spider Chart for Top 5 Genres */}
-            <div className={styles.profileCard}>
+            {/* Spider Chart */}
+            <div className={styles.chartContainer}>
               <Top5GenresSpiderChart 
                 userTasteProfile={userTasteProfile}
                 spotifyData={spotifyData}
               />
             </div>
 
-            {/* Sound Feature Capsules */}
-            <div className={styles.profileCard}>
+            {/* Horizontal Capsule Indicators */}
+            <div className={styles.capsulesContainer}>
               <SoundFeatureCapsules 
                 userAudioFeatures={spotifyData?.audioFeatures}
                 universalAverages={null}
+                layout="horizontal"
               />
+            </div>
+
+            {/* Location */}
+            <div className={styles.locationContainer}>
+              <EnhancedLocationSearch
+                initialLocation={location}
+                onLocationChange={handleLocationChange}
+              />
+            </div>
+
+            {/* Vibe Match Slider */}
+            <div className={styles.vibeMatchContainer}>
+              <div className={styles.vibeMatchHeader}>
+                <span className={styles.vibeMatchLabel}>Vibe Match</span>
+                <span className={styles.vibeMatchPercentage}>{vibeMatch}%</span>
+              </div>
+              <div className={styles.vibeMatchSlider}>
+                <div 
+                  className={styles.vibeMatchFill}
+                  style={{ width: `${vibeMatch}%` }}
+                ></div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Events Section */}
-        <div className={styles.eventsSection}>
-          <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
-          
-          {loading && (
-            <div className={styles.loading}>
-              <div className={styles.spinner}></div>
-              <p>Finding events that match your taste...</p>
+        {/* Right Column - Seasonal Vibes */}
+        <div className={styles.rightColumn}>
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Seasonal Vibes</h2>
+            
+            <div className={styles.seasonalGrid}>
+              <div className={`${styles.seasonCard} ${styles.spring}`}>
+                <h3>Spring</h3>
+                <p>Fresh beats & uplifting vibes</p>
+              </div>
+              <div className={`${styles.seasonCard} ${styles.summer}`}>
+                <h3>Summer</h3>
+                <p>High energy open air sounds</p>
+              </div>
+              <div className={`${styles.seasonCard} ${styles.fall}`}>
+                <h3>Fall</h3>
+                <p>Organic House, Downtempo</p>
+              </div>
+              <div className={`${styles.seasonCard} ${styles.winter}`}>
+                <h3>Winter</h3>
+                <p>Deep House, Ambient Techno</p>
+              </div>
             </div>
-          )}
-          
-          {error && (
-            <div className={styles.error}>
-              <p>{error}</p>
-              <button onClick={loadEvents} className={styles.retryButton}>
-                Try Again
-              </button>
-            </div>
-          )}
-          
-          {!loading && !error && events.length > 0 && (
-            <EnhancedEventList 
-              events={events}
-              onEventClick={handleEventClick}
-              onSaveEvent={handleSaveEvent}
-            />
-          )}
-          
-          {!loading && !error && events.length === 0 && selectedLocation && (
-            <div className={styles.noEvents}>
-              <p>No events found in this area. Try a different location or check back later.</p>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
+      {/* Events Section */}
+      <div className={styles.eventsSection}>
+        <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
+        
+        {loading ? (
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <p>Finding events that match your taste...</p>
+          </div>
+        ) : events.length > 0 ? (
+          <div className={styles.eventsGrid}>
+            {events.slice(0, 4).map((event, index) => (
+              <div 
+                key={index} 
+                className={styles.eventCard}
+                onClick={() => handleEventClick(event)}
+              >
+                <div className={styles.eventMatch}>
+                  {event.matchScore || Math.floor(Math.random() * 20) + 80}%
+                </div>
+                <div className={styles.eventContent}>
+                  <h3 className={styles.eventName}>{event.name}</h3>
+                  <p className={styles.eventDate}>{event.date}</p>
+                  <p className={styles.eventVenue}>{event.venue}</p>
+                  <p className={styles.eventPrice}>${event.price || '25'}</p>
+                </div>
+                <button className={styles.purchaseButton}>
+                  Purchase Tickets
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.noEvents}>
+            <p>No events found for your location. Try changing your city.</p>
+          </div>
+        )}
+      </div>
+
       {/* Event Detail Modal */}
-      {selectedEvent && (
-        <EventDetailModal
-          event={selectedEvent}
-          isOpen={isEventModalOpen}
-          onClose={() => setIsEventModalOpen(false)}
-          onSaveEvent={handleSaveEvent}
-          spotifyData={spotifyData}
-        />
-      )}
+      <EventDetailModal
+        event={selectedEvent}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </div>
   );
-};
-
-export default EnhancedPersonalizedDashboard;
+}
