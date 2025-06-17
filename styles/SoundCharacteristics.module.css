@@ -1,40 +1,129 @@
-/* SoundCharacteristicsCompact.module.css */
-
 .container {
-  margin-bottom: 1.5rem;
+  width: 100%;
 }
 
-.title {
-  font-size: 1.3rem; /* Slightly smaller title */
-  margin-bottom: 1rem;
+.subtitle {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 1.5rem 0;
+  text-align: center;
 }
 
-.characteristicsList {
+.characteristicsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.characteristicItem {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem; /* Reduced gap */
+  gap: 0.8rem;
 }
 
-.characteristic {
+.characteristicHeader {
   display: flex;
-  flex-direction: column;
-  gap: 0.3rem; /* Reduced gap */
+  justify-content: space-between;
+  align-items: center;
 }
 
-.label {
-  font-size: 0.85rem; /* Slightly smaller label */
-  color: #ccc;
+.iconAndName {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.barContainer {
-  height: 8px; /* Reduced height */
-  background-color: #2a2a3a;
+.icon {
+  font-size: 1.2rem;
+}
+
+.name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.percentage {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #00d4ff;
+}
+
+/* SHINY PROGRESS BARS MATCHING REFERENCE */
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
+  position: relative;
   overflow: hidden;
 }
 
-.bar {
+.progressBar {
   height: 100%;
   border-radius: 4px;
+  position: relative;
+  transition: width 0.8s ease;
+  overflow: hidden;
 }
 
+/* SHINE EFFECT OVERLAY */
+.shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shine 2s infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  50% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.percentageRight {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  min-width: 35px;
+  text-align: right;
+}
+
+.description {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .characteristicsGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .progressContainer {
+    gap: 0.8rem;
+  }
+}

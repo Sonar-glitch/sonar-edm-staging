@@ -3,7 +3,7 @@ import { useSession } from 'next-auth/react';
 import EnhancedEventList from './EnhancedEventList';
 import EnhancedLocationSearch from './EnhancedLocationSearch';
 import Top5GenresSpiderChart from './Top5GenresSpiderChart';
-import SoundFeatureCapsules from './SoundFeatureCapsules';
+import SoundCharacteristics from './SoundCharacteristics';
 import EventDetailModal from './EventDetailModal';
 import styles from '@/styles/EnhancedPersonalizedDashboard.module.css';
 
@@ -162,126 +162,109 @@ const EnhancedPersonalizedDashboard = () => {
 
   return (
     <div className={styles.container}>
-      {/* Top: Overall Vibe Summary (Full Width) */}
+      {/* Compact Header with Vibe Summary */}
       <div className={styles.header}>
-        <div className={styles.welcomeSection}>
-          <h1 className={styles.title}>
-            <span className={styles.logo}>TIKO</span>
-          </h1>
-          <p className={styles.subtitle}>
-            You're all about <span className={styles.highlight}>house + techno</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
-          </p>
-        </div>
+        <h1 className={styles.title}>
+          <span className={styles.logo}>TIKO</span>
+        </h1>
+        <p className={styles.subtitle}>
+          You're all about <span className={styles.highlight}>house + techno</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
+        </p>
       </div>
 
       <div className={styles.mainContent}>
-        {/* FUNCTIONAL HIERARCHY LAYOUT */}
-        <div className={styles.functionalLayout}>
-          
-          {/* 1. INFORMATIONAL (Top Priority) */}
-          <div className={styles.informationalRow}>
-            {/* Left: Spider Chart */}
-            <div className={styles.leftColumn}>
-              <div className={styles.vibeCard}>
-                <div className={styles.cardHeader}>
-                  <h2 className={styles.cardTitle}>Your Top 5 Genres</h2>
-                  <span className={styles.dataIndicator}>{getDataIndicator('spotify')}</span>
-                </div>
-                
-                {/* Clean Spider Chart - NO redundant summary, NO taste strength */}
-                <div className={styles.spiderChartContainer}>
-                  <Top5GenresSpiderChart 
-                    userTasteProfile={userTasteProfile}
-                    spotifyData={spotifyData}
-                  />
-                </div>
+        {/* CORRECTED FUNCTIONAL HIERARCHY LAYOUT */}
+        
+        {/* 1. INFORMATIONAL ROW */}
+        <div className={styles.informationalRow}>
+          {/* Left: Spider Chart */}
+          <div className={styles.leftColumn}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Your Top 5 Genres</h2>
+                <span className={styles.dataIndicator}>{getDataIndicator('spotify')}</span>
               </div>
-            </div>
-
-            {/* Right: Seasonal Vibes */}
-            <div className={styles.rightColumn}>
-              <div className={styles.seasonalCard}>
-                <div className={styles.cardHeader}>
-                  <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
-                  <span className={styles.dataIndicator}>{getDataIndicator('taste')}</span>
-                </div>
-                
-                <div className={styles.seasonalGrid}>
-                  <div className={`${styles.seasonCard} ${styles.spring}`}>
-                    <h3>Spring</h3>
-                    <p>Fresh beats & uplifting vibes</p>
-                  </div>
-                  <div className={`${styles.seasonCard} ${styles.summer}`}>
-                    <h3>Summer</h3>
-                    <p>High energy, open air sounds</p>
-                  </div>
-                  <div className={`${styles.seasonCard} ${styles.fall}`}>
-                    <h3>Fall</h3>
-                    <p>Organic House, Downtempo</p>
-                  </div>
-                  <div className={`${styles.seasonCard} ${styles.winter}`}>
-                    <h3>Winter</h3>
-                    <p>Deep House, Ambient Techno</p>
-                  </div>
-                </div>
-              </div>
+              <Top5GenresSpiderChart 
+                userTasteProfile={userTasteProfile}
+                spotifyData={spotifyData}
+              />
             </div>
           </div>
 
-          {/* 2. DATA INSIGHTS (Secondary) */}
-          <div className={styles.dataInsightsRow}>
-            {/* Left: Energy + Danceability */}
-            <div className={styles.leftColumn}>
-              <div className={styles.soundCharacteristicsCard}>
-                <SoundFeatureCapsules 
-                  userAudioFeatures={spotifyData?.audioFeatures}
-                  dataStatus={dataStatus.spotify}
-                  showHalf="left"
-                />
+          {/* Right: Seasonal Vibes */}
+          <div className={styles.rightColumn}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
+                <span className={styles.dataIndicator}>{getDataIndicator('taste')}</span>
               </div>
-            </div>
-
-            {/* Right: Positivity + Acoustic */}
-            <div className={styles.rightColumn}>
-              <div className={styles.soundCharacteristicsCard}>
-                <SoundFeatureCapsules 
-                  userAudioFeatures={spotifyData?.audioFeatures}
-                  dataStatus={dataStatus.spotify}
-                  showHalf="right"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 3. FUNCTIONAL CONTROLS (Bottom) */}
-          <div className={styles.functionalRow}>
-            {/* Left: Location Filter */}
-            <div className={styles.leftColumn}>
-              <div className={styles.locationCard}>
-                <EnhancedLocationSearch 
-                  onLocationSelect={handleLocationSelect}
-                  selectedLocation={selectedLocation}
-                />
-              </div>
-            </div>
-
-            {/* Right: Vibe Match Slider */}
-            <div className={styles.rightColumn}>
-              <div className={styles.vibeMatchCard}>
-                <div className={styles.vibeMatch}>
-                  <span className={styles.vibeLabel}>Vibe Match</span>
-                  <div className={styles.vibeSlider}>
-                    <div className={styles.vibeProgress} style={{ width: '74%' }}></div>
-                  </div>
-                  <span className={styles.vibePercentage}>74%</span>
-                  <button className={styles.gearIcon} title="Additional Filters">⚙️</button>
+              
+              <div className={styles.seasonalGrid}>
+                <div className={`${styles.seasonCard} ${styles.spring}`}>
+                  <h3>Spring</h3>
+                  <p>Fresh beats & uplifting vibes</p>
+                </div>
+                <div className={`${styles.seasonCard} ${styles.summer}`}>
+                  <h3>Summer</h3>
+                  <p>High energy, open air sounds</p>
+                </div>
+                <div className={`${styles.seasonCard} ${styles.fall}`}>
+                  <h3>Fall</h3>
+                  <p>Organic House, Downtempo</p>
+                </div>
+                <div className={`${styles.seasonCard} ${styles.winter}`}>
+                  <h3>Winter</h3>
+                  <p>Deep House, Ambient Techno</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Events Section - Full Width Below */}
+        {/* 2. DATA INSIGHTS ROW - ONE UNIFIED SOUND CHARACTERISTICS */}
+        <div className={styles.dataInsightsRow}>
+          <div className={styles.fullWidth}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Your Sound Characteristics</h2>
+                <span className={styles.dataIndicator}>{getDataIndicator('spotify')}</span>
+              </div>
+              <SoundCharacteristics 
+                userAudioFeatures={spotifyData?.audioFeatures}
+                dataStatus={dataStatus.spotify}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 3. FUNCTIONAL ROW */}
+        <div className={styles.functionalRow}>
+          {/* Left: Location Filter */}
+          <div className={styles.leftColumn}>
+            <div className={styles.card}>
+              <EnhancedLocationSearch 
+                onLocationSelect={handleLocationSelect}
+                selectedLocation={selectedLocation}
+              />
+            </div>
+          </div>
+
+          {/* Right: Vibe Match Slider */}
+          <div className={styles.rightColumn}>
+            <div className={styles.card}>
+              <div className={styles.vibeMatch}>
+                <span className={styles.vibeLabel}>Vibe Match</span>
+                <div className={styles.vibeSlider}>
+                  <div className={styles.vibeProgress} style={{ width: '74%' }}></div>
+                </div>
+                <span className={styles.vibePercentage}>74%</span>
+                <button className={styles.gearIcon} title="Additional Filters">⚙️</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Events Section */}
         <div className={styles.eventsSection}>
           <div className={styles.eventsHeader}>
             <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
