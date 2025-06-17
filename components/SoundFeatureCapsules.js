@@ -1,109 +1,80 @@
 import React from 'react';
-import styles from '../styles/SoundFeatureCapsules.module.css';
+import styles from '@/styles/SoundFeatureCapsules.module.css';
 
-export default function SoundFeatureCapsules({ 
-  userAudioFeatures, 
-  universalAverages,
-  layout = 'grid' // 'grid' or 'horizontal'
-}) {
-  // Fallback data if no user features available
-  const fallbackFeatures = {
+const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus = 'loading' }) => {
+  // Default audio features with clear indicators
+  const defaultFeatures = {
     energy: 0.75,
     danceability: 0.82,
-    valence: 0.65, // positivity
-    acousticness: 0.15,
-    instrumentalness: 0.35,
-    tempo: 128
+    valence: 0.65, // Positivity
+    acousticness: 0.15
   };
 
-  const features = userAudioFeatures || fallbackFeatures;
+  const features = userAudioFeatures || defaultFeatures;
+  const isUsingMockData = !userAudioFeatures || dataStatus === 'mock';
 
-  const capsules = [
+  const capsuleData = [
     {
       name: 'Energy',
-      value: Math.round(features.energy * 100),
+      value: features.energy,
       icon: '⚡',
-      color: '#ff6b6b',
-      description: 'How energetic and intense your music feels'
+      color: '#ff006e'
     },
     {
       name: 'Danceability',
-      value: Math.round(features.danceability * 100),
+      value: features.danceability,
       icon: '💃',
-      color: '#4ecdc4',
-      description: 'How suitable your music is for dancing'
+      color: '#00d4ff'
     },
     {
       name: 'Positivity',
-      value: Math.round(features.valence * 100),
+      value: features.valence,
       icon: '😊',
-      color: '#45b7d1',
-      description: 'How positive and uplifting your music is'
+      color: '#22c55e'
     },
     {
       name: 'Acoustic',
-      value: Math.round(features.acousticness * 100),
+      value: features.acousticness,
       icon: '🎸',
-      color: '#f9ca24',
-      description: 'How acoustic vs electronic your music is'
+      color: '#f97316'
     }
   ];
 
-  // Add additional capsules for grid layout
-  if (layout === 'grid') {
-    capsules.push(
-      {
-        name: 'Instrumental',
-        value: Math.round(features.instrumentalness * 100),
-        icon: '🎵',
-        color: '#a55eea',
-        description: 'How much instrumental vs vocal music you prefer'
-      },
-      {
-        name: 'Tempo',
-        value: Math.round(features.tempo || 128),
-        icon: '🥁',
-        color: '#fd79a8',
-        description: 'The speed/BPM of your preferred music',
-        unit: 'BPM'
-      }
-    );
-  }
-
-  const containerClass = layout === 'horizontal' 
-    ? styles.horizontalContainer 
-    : styles.gridContainer;
-
   return (
-    <div className={containerClass}>
-      {capsules.map((capsule, index) => (
-        <div key={index} className={styles.capsule}>
-          <div className={styles.capsuleHeader}>
-            <span className={styles.icon}>{capsule.icon}</span>
-            <span className={styles.name}>{capsule.name}</span>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>Your Sound Characteristics</h3>
+        <span className={styles.dataIndicator}>
+          {isUsingMockData ? '🎭 Sample Data' : '✅ Spotify Data'}
+        </span>
+      </div>
+      
+      <div className={styles.capsulesGrid}>
+        {capsuleData.map((capsule, index) => (
+          <div key={index} className={styles.capsule}>
+            <div className={styles.capsuleHeader}>
+              <span className={styles.icon}>{capsule.icon}</span>
+              <span className={styles.name}>{capsule.name}</span>
+            </div>
+            
+            <div className={styles.progressContainer}>
+              <div 
+                className={styles.progressBar}
+                style={{ 
+                  background: `linear-gradient(90deg, ${capsule.color}, ${capsule.color}80)`,
+                  width: `${capsule.value * 100}%`
+                }}
+              />
+            </div>
+            
+            <div className={styles.percentage}>
+              {Math.round(capsule.value * 100)}%
+            </div>
           </div>
-          
-          <div className={styles.valueContainer}>
-            <span className={styles.value}>
-              {capsule.value}{capsule.unit || '%'}
-            </span>
-          </div>
-          
-          <div className={styles.progressBar}>
-            <div 
-              className={styles.progressFill}
-              style={{ 
-                width: `${capsule.unit ? Math.min(capsule.value / 2, 100) : capsule.value}%`,
-                backgroundColor: capsule.color 
-              }}
-            />
-          </div>
-          
-          {layout === 'grid' && (
-            <p className={styles.description}>{capsule.description}</p>
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default SoundFeatureCapsules;

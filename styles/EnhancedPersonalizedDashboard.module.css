@@ -1,127 +1,119 @@
-.dashboard {
+.container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
-  color: white;
-  padding: 2rem;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+  color: #fff;
+  padding: 0;
+  overflow-x: hidden;
 }
 
+/* Top: Overall Vibe Summary */
 .header {
+  padding: 2rem 1rem 1rem 1rem;
   text-align: center;
-  margin-bottom: 3rem;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 0, 110, 0.2);
+}
+
+.welcomeSection {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .title {
+  margin: 0 0 1rem 0;
   font-size: 3rem;
   font-weight: 700;
-  background: linear-gradient(90deg, #00c6ff, #ff00ff);
+  text-align: center;
+}
+
+.logo {
+  background: linear-gradient(90deg, #ff006e, #00d4ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 1rem;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
 }
 
 .subtitle {
   font-size: 1.1rem;
-  color: #b0b0b0;
-  max-width: 600px;
-  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 0;
 }
 
 .highlight {
-  color: #00c6ff;
+  color: #ff006e;
   font-weight: 600;
+  text-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
 }
 
-/* Main Two-Column Layout */
 .mainContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Middle: Two Column Layout */
+.middleSection {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  margin-bottom: 3rem;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
 
-.leftColumn,
-.rightColumn {
+.leftColumn, .rightColumn {
   display: flex;
   flex-direction: column;
 }
 
-.section {
+/* Glassmorphic Cards */
+.vibeCard, .seasonalCard {
   background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
   border-radius: 16px;
-  padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 0, 110, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
 }
 
-.sectionTitle {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #ffffff;
+.vibeCard:hover, .seasonalCard:hover {
+  box-shadow: 0 0 30px rgba(255, 0, 110, 0.2);
+  transform: translateY(-2px);
 }
 
-.sectionSubtitle {
-  color: #b0b0b0;
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
-}
-
-/* Spider Chart Container */
-.chartContainer {
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: center;
-}
-
-/* Horizontal Capsules Layout */
-.capsulesContainer {
-  margin-bottom: 2rem;
-}
-
-/* Location Container */
-.locationContainer {
-  margin-bottom: 2rem;
-}
-
-/* Vibe Match Slider */
-.vibeMatchContainer {
-  margin-top: 1rem;
-}
-
-.vibeMatchHeader {
+.cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-.vibeMatchLabel {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #ffffff;
-}
-
-.vibeMatchPercentage {
-  font-size: 1.1rem;
+.cardTitle {
+  font-size: 1.5rem;
   font-weight: 600;
-  color: #00c6ff;
+  margin: 0;
+  background: linear-gradient(90deg, #ff006e, #00d4ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.vibeMatchSlider {
-  height: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
+.cardSubtitle {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 1.5rem 0;
+  font-size: 0.9rem;
 }
 
-.vibeMatchFill {
-  height: 100%;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899, #ef4444);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+.dataIndicator {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
 }
 
 /* Seasonal Vibes Grid */
@@ -132,162 +124,177 @@
 }
 
 .seasonCard {
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 12px;
   text-align: center;
-  transition: transform 0.2s ease;
-  cursor: pointer;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
 }
 
 .seasonCard:hover {
   transform: translateY(-2px);
+  filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5));
 }
 
 .seasonCard h3 {
-  font-size: 1.3rem;
+  margin: 0 0 0.5rem 0;
   font-weight: 600;
-  margin-bottom: 0.5rem;
 }
 
 .seasonCard p {
-  font-size: 0.9rem;
+  margin: 0;
+  font-size: 0.8rem;
   opacity: 0.9;
 }
 
 .spring {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05));
+  color: #22c55e;
 }
 
 .summer {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.05));
+  color: #f97316;
 }
 
 .fall {
-  background: linear-gradient(135deg, #dc2626, #991b1b);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.05));
+  color: #ef4444;
 }
 
 .winter {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05));
+  color: #3b82f6;
 }
 
-/* Events Section */
-.eventsSection {
-  margin-top: 3rem;
+/* Sound Characteristics Section */
+.characteristicsSection {
+  margin-bottom: 2rem;
 }
 
-.eventsGrid {
+.characteristicsGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-  margin-top: 2rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
-.eventCard {
-  background: linear-gradient(135deg, #1e293b, #334155);
-  border-radius: 16px;
-  padding: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  transition: all 0.3s ease;
+/* Filters Section */
+.filtersSection {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.locationFilter {
+  /* Styled by EnhancedLocationSearch component */
+}
+
+.vibeFilter {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 0, 110, 0.2);
+}
+
+.vibeMatch {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.vibeLabel {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  min-width: 80px;
+}
+
+.vibeSlider {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
   position: relative;
   overflow: hidden;
 }
 
-.eventCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 0;
+.vibeProgress {
+  height: 100%;
+  background: linear-gradient(90deg, #ff006e, #00d4ff);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
 }
 
-.eventCard:hover::before {
-  opacity: 0.1;
-}
-
-.eventCard:hover {
-  transform: translateY(-4px);
-  border-color: rgba(99, 102, 241, 0.5);
-}
-
-.eventMatch {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  background: linear-gradient(135deg, #ec4899, #8b5cf6);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
+.vibePercentage {
   font-weight: 600;
-  font-size: 0.9rem;
-  z-index: 1;
+  color: #00d4ff;
+  min-width: 40px;
+  text-align: right;
 }
 
-.eventContent {
-  position: relative;
-  z-index: 1;
+.gearIcon {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 0, 110, 0.2);
+  border-radius: 8px;
+  padding: 0.5rem;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gearIcon:hover {
+  background: rgba(255, 0, 110, 0.1);
+  box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+}
+
+/* Events Section */
+.eventsSection {
   margin-top: 2rem;
 }
 
-.eventName {
-  font-size: 1.2rem;
+.eventsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.8rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #ffffff;
+  margin: 0;
+  background: linear-gradient(90deg, #ff006e, #00d4ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.eventDate,
-.eventVenue {
-  color: #b0b0b0;
-  font-size: 0.9rem;
-  margin-bottom: 0.25rem;
-}
-
-.eventPrice {
-  color: #00c6ff;
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin: 0.5rem 0;
-}
-
-.purchaseButton {
-  background: linear-gradient(135deg, #ec4899, #8b5cf6);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  z-index: 1;
-  margin-top: 1rem;
-}
-
-.purchaseButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
-}
-
-/* Loading States */
-.loadingContainer {
-  text-align: center;
+/* Loading, Error, and Empty States */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 3rem;
+  text-align: center;
 }
 
 .spinner {
   width: 40px;
   height: 40px;
   border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid #00c6ff;
+  border-top: 3px solid #ff006e;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
+  margin-bottom: 1rem;
 }
 
 @keyframes spin {
@@ -295,28 +302,104 @@
   100% { transform: rotate(360deg); }
 }
 
+.error {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 12px;
+  margin: 1rem 0;
+  backdrop-filter: blur(10px);
+}
+
+.retryButton {
+  background: linear-gradient(90deg, #ff006e, #00d4ff);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+}
+
+.retryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 0, 110, 0.3);
+}
+
 .noEvents {
   text-align: center;
   padding: 3rem;
-  color: #b0b0b0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.authPrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: 2rem;
+}
+
+.authPrompt h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(90deg, #ff006e, #00d4ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.authPrompt p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 500px;
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-  .mainContent {
+@media (max-width: 1024px) {
+  .middleSection {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
   }
   
-  .eventsGrid {
+  .filtersSection {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .mainContent {
+    padding: 1.5rem 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 2.5rem;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+  }
+  
+  .header {
+    padding: 1.5rem 1rem;
+  }
+  
+  .mainContent {
+    padding: 1rem;
   }
   
   .seasonalGrid {
     grid-template-columns: 1fr;
   }
   
-  .dashboard {
-    padding: 1rem;
+  .vibeFilter {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
