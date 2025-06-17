@@ -1,24 +1,23 @@
 .container {
   width: 100%;
+  height: 100%; /* Fill available space */
+  display: flex;
+  flex-direction: column;
 }
 
-.subtitle {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 1.5rem 0;
-  text-align: center;
-}
+/* NO REDUNDANT SUBTITLE */
 
 .characteristicsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  gap: 1.5rem; /* Reduced gap */
+  flex: 1; /* Fill available space */
 }
 
 .characteristicItem {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.6rem; /* Reduced gap */
 }
 
 .characteristicHeader {
@@ -34,46 +33,45 @@
 }
 
 .icon {
-  font-size: 1.2rem;
+  font-size: 1.1rem; /* Slightly smaller */
 }
 
 .name {
-  font-size: 1rem;
+  font-size: 0.95rem; /* Slightly smaller */
   font-weight: 600;
   color: #fff;
 }
 
+/* SINGLE PERCENTAGE DISPLAY */
 .percentage {
-  font-size: 1rem;
+  font-size: 0.95rem; /* Slightly smaller */
   font-weight: 600;
   color: #00d4ff;
 }
 
-/* SHINY PROGRESS BARS MATCHING REFERENCE */
 .progressContainer {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0; /* NO gap - no duplicate percentage */
 }
 
 .progressTrack {
   flex: 1;
-  height: 8px;
+  height: 6px; /* Slightly smaller */
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border-radius: 3px;
   position: relative;
   overflow: hidden;
 }
 
 .progressBar {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 3px;
   position: relative;
   transition: width 0.8s ease;
   overflow: hidden;
 }
 
-/* SHINE EFFECT OVERLAY */
 .shine {
   position: absolute;
   top: 0;
@@ -101,16 +99,8 @@
   }
 }
 
-.percentageRight {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
-  min-width: 35px;
-  text-align: right;
-}
-
 .description {
-  font-size: 0.75rem;
+  font-size: 0.7rem; /* Smaller font */
   color: rgba(255, 255, 255, 0.6);
   margin: 0;
   line-height: 1.3;
@@ -120,10 +110,6 @@
 @media (max-width: 768px) {
   .characteristicsGrid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  
-  .progressContainer {
-    gap: 0.8rem;
+    gap: 1rem;
   }
 }

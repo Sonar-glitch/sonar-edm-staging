@@ -1,19 +1,34 @@
 .container {
   width: 100%;
-  height: 100%;
+  height: 100%; /* Fill available space */
+  display: flex;
+  flex-direction: column;
 }
 
+/* REDUCED HEIGHT CHART CONTAINER */
 .chartContainer {
-  width: 100%;
-  height: 300px;
+  flex: 1;
+  min-height: 200px; /* Reduced from 300px */
+  max-height: 200px; /* Cap the height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* NO genre list styles - completely removed */
-/* NO taste strength styles - removed to save space */
-/* Clean, minimal spider chart only */
+.genreLabel {
+  font-size: 11px !important;
+  fill: #fff !important;
+  font-weight: 500 !important;
+}
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .chartContainer {
-    height: 250px;
+    min-height: 180px;
+    max-height: 180px;
+  }
+  
+  .genreLabel {
+    font-size: 10px !important;
   }
 }

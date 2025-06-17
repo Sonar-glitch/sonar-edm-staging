@@ -2,7 +2,7 @@ import React from 'react';
 import styles from '@/styles/SoundCharacteristics.module.css';
 
 const SoundCharacteristics = ({ userAudioFeatures, dataStatus = 'demo' }) => {
-  // Default audio features matching reference
+  // Default audio features
   const defaultFeatures = {
     energy: 0.75,
     danceability: 0.82,
@@ -18,7 +18,7 @@ const SoundCharacteristics = ({ userAudioFeatures, dataStatus = 'demo' }) => {
       value: features.energy,
       percentage: Math.round(features.energy * 100),
       icon: '⚡',
-      color: '#ff6b6b', // Coral/pink like reference
+      color: '#ff6b6b',
       description: 'How energetic and intense your music feels'
     },
     {
@@ -26,7 +26,7 @@ const SoundCharacteristics = ({ userAudioFeatures, dataStatus = 'demo' }) => {
       value: features.danceability,
       percentage: Math.round(features.danceability * 100),
       icon: '💃',
-      color: '#4ecdc4', // Cyan/teal like reference
+      color: '#4ecdc4',
       description: 'How suitable your music is for dancing'
     },
     {
@@ -34,7 +34,7 @@ const SoundCharacteristics = ({ userAudioFeatures, dataStatus = 'demo' }) => {
       value: features.valence,
       percentage: Math.round(features.valence * 100),
       icon: '😊',
-      color: '#45b7d1', // Blue
+      color: '#45b7d1',
       description: 'The musical positivity conveyed by your tracks'
     },
     {
@@ -42,14 +42,14 @@ const SoundCharacteristics = ({ userAudioFeatures, dataStatus = 'demo' }) => {
       value: features.acousticness,
       percentage: Math.round(features.acousticness * 100),
       icon: '🎸',
-      color: '#f9ca24', // Yellow/orange
+      color: '#f9ca24',
       description: 'How acoustic vs electronic your music is'
     }
   ];
 
   return (
     <div className={styles.container}>
-      <p className={styles.subtitle}>Normalized by universal music taste</p>
+      {/* REMOVED REDUNDANT SUBTITLE */}
       
       <div className={styles.characteristicsGrid}>
         {characteristicsData.map((characteristic, index) => (
@@ -59,10 +59,11 @@ const SoundCharacteristics = ({ userAudioFeatures, dataStatus = 'demo' }) => {
                 <span className={styles.icon}>{characteristic.icon}</span>
                 <span className={styles.name}>{characteristic.name}</span>
               </div>
+              {/* SINGLE PERCENTAGE DISPLAY - NO DUPLICATES */}
               <span className={styles.percentage}>{characteristic.percentage}%</span>
             </div>
             
-            {/* Shiny Progress Bar with Glow Effects */}
+            {/* Shiny Progress Bar WITHOUT duplicate percentage */}
             <div className={styles.progressContainer}>
               <div className={styles.progressTrack}>
                 <div 
@@ -73,11 +74,10 @@ const SoundCharacteristics = ({ userAudioFeatures, dataStatus = 'demo' }) => {
                     boxShadow: `0 0 20px ${characteristic.color}40, inset 0 1px 0 rgba(255,255,255,0.3)`
                   }}
                 >
-                  {/* Shine effect overlay */}
                   <div className={styles.shine}></div>
                 </div>
               </div>
-              <span className={styles.percentageRight}>{characteristic.percentage}%</span>
+              {/* NO DUPLICATE PERCENTAGE HERE */}
             </div>
             
             <p className={styles.description}>{characteristic.description}</p>
