@@ -55,21 +55,25 @@
   padding: 2rem 1rem;
 }
 
-/* Middle: Two Column Layout */
-.middleSection {
+/* OPTIMAL LAYOUT: Functional Hierarchy + Space Utilization */
+.optimalLayout {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   margin-bottom: 2rem;
+  align-items: start;
 }
 
+/* Both columns with equal spacing and functional hierarchy */
 .leftColumn, .rightColumn {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+  height: fit-content;
 }
 
-/* Glassmorphic Cards */
-.vibeCard, .seasonalCard {
+/* Glassmorphic Card Base */
+.vibeCard, .seasonalCard, .soundCharacteristicsCard, .locationCard, .vibeMatchCard {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
   border-radius: 16px;
@@ -77,9 +81,11 @@
   border: 1px solid rgba(255, 0, 110, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
+  height: fit-content;
 }
 
-.vibeCard:hover, .seasonalCard:hover {
+.vibeCard:hover, .seasonalCard:hover, .soundCharacteristicsCard:hover, 
+.locationCard:hover, .vibeMatchCard:hover {
   box-shadow: 0 0 30px rgba(255, 0, 110, 0.2);
   transform: translateY(-2px);
 }
@@ -121,6 +127,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .seasonCard {
@@ -168,46 +175,11 @@
   color: #3b82f6;
 }
 
-/* Sound Characteristics Section */
-.characteristicsSection {
-  margin-bottom: 2rem;
-}
-
-.characteristicsGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-/* Filters Section */
-.filtersSection {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
-  align-items: center;
-}
-
-.locationFilter {
-  /* Styled by EnhancedLocationSearch component */
-}
-
-.vibeFilter {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border-radius: 12px;
-  padding: 1rem;
-  border: 1px solid rgba(255, 0, 110, 0.2);
-}
-
+/* Vibe Match Slider */
 .vibeMatch {
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex: 1;
 }
 
 .vibeLabel {
@@ -332,7 +304,17 @@
 .noEvents {
   text-align: center;
   padding: 3rem;
-  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.debugInfo {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.5rem;
+  font-family: monospace;
 }
 
 .authPrompt {
@@ -362,14 +344,9 @@
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .middleSection {
+  .optimalLayout {
     grid-template-columns: 1fr;
     gap: 1.5rem;
-  }
-  
-  .filtersSection {
-    grid-template-columns: 1fr;
-    gap: 1rem;
   }
   
   .mainContent {
@@ -398,7 +375,7 @@
     grid-template-columns: 1fr;
   }
   
-  .vibeFilter {
+  .vibeMatch {
     flex-direction: column;
     gap: 0.5rem;
   }

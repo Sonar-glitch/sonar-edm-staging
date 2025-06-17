@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "🎯 RESTORING PERFECT TIKO LAYOUT..."
-echo "=================================="
+echo "🎯 OPTIMAL LAYOUT - FUNCTIONAL HIERARCHY + SPACE UTILIZATION..."
+echo "============================================================="
 
 # Navigate to the project directory
 cd /c/sonar/users/sonar-edm-user || {
@@ -9,9 +9,9 @@ cd /c/sonar/users/sonar-edm-user || {
     exit 1
 }
 
-echo "✅ Creating perfect layout structure..."
+echo "✅ Creating optimal layout with functional hierarchy..."
 
-# Update EnhancedPersonalizedDashboard.js with correct layout
+# Create the optimal EnhancedPersonalizedDashboard with functional hierarchy
 cat > components/EnhancedPersonalizedDashboard.js << 'EOF'
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -27,7 +27,13 @@ const EnhancedPersonalizedDashboard = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState({
+    city: 'Toronto',
+    region: 'ON',
+    country: 'Canada',
+    latitude: 43.65,
+    longitude: -79.38
+  });
   const [spotifyData, setSpotifyData] = useState(null);
   const [userTasteProfile, setUserTasteProfile] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -46,43 +52,49 @@ const EnhancedPersonalizedDashboard = () => {
     }
   }, [session]);
 
-  // Load events when location changes
+  // Load events when component mounts and when location changes
   useEffect(() => {
-    if (selectedLocation) {
+    if (session?.user && selectedLocation) {
       loadEvents();
     }
-  }, [selectedLocation]);
+  }, [session, selectedLocation]);
 
   const loadSpotifyData = async () => {
     try {
+      console.log('[Dashboard] Loading Spotify data...');
       setDataStatus(prev => ({ ...prev, spotify: 'loading' }));
       const response = await fetch('/api/spotify/user-profile');
       if (response.ok) {
         const data = await response.json();
+        console.log('[Dashboard] Spotify data loaded:', data);
         setSpotifyData(data);
         setDataStatus(prev => ({ ...prev, spotify: 'real' }));
       } else {
+        console.log('[Dashboard] Spotify API failed, using mock data');
         setDataStatus(prev => ({ ...prev, spotify: 'mock' }));
       }
     } catch (error) {
-      console.error('Error loading Spotify data:', error);
+      console.error('[Dashboard] Error loading Spotify data:', error);
       setDataStatus(prev => ({ ...prev, spotify: 'mock' }));
     }
   };
 
   const loadUserTasteProfile = async () => {
     try {
+      console.log('[Dashboard] Loading taste profile...');
       setDataStatus(prev => ({ ...prev, taste: 'loading' }));
       const response = await fetch('/api/user/taste-profile');
       if (response.ok) {
         const data = await response.json();
+        console.log('[Dashboard] Taste profile loaded:', data);
         setUserTasteProfile(data);
         setDataStatus(prev => ({ ...prev, taste: 'real' }));
       } else {
+        console.log('[Dashboard] Taste profile API failed, using mock data');
         setDataStatus(prev => ({ ...prev, taste: 'mock' }));
       }
     } catch (error) {
-      console.error('Error loading taste profile:', error);
+      console.error('[Dashboard] Error loading taste profile:', error);
       setDataStatus(prev => ({ ...prev, taste: 'mock' }));
     }
   };
@@ -90,26 +102,37 @@ const EnhancedPersonalizedDashboard = () => {
   const loadEvents = async () => {
     if (!selectedLocation) return;
     
+    console.log('[Dashboard] Loading events for location:', selectedLocation);
     setLoading(true);
     setError(null);
     setDataStatus(prev => ({ ...prev, events: 'loading' }));
     
     try {
       const { latitude, longitude } = selectedLocation;
-      const response = await fetch(
-        `/api/events/near?latitude=${latitude}&longitude=${longitude}&radius=50&userId=${session?.user?.id}`
-      );
+      const eventsUrl = `/api/events?lat=${latitude}&lon=${longitude}&city=${encodeURIComponent(selectedLocation.city)}&radius=50`;
+      console.log('[Dashboard] Events API URL:', eventsUrl);
+      
+      const response = await fetch(eventsUrl);
+      console.log('[Dashboard] Events API response status:', response.status);
       
       if (!response.ok) {
-        throw new Error('Failed to load events');
+        const errorText = await response.text();
+        console.error('[Dashboard] Events API error:', errorText);
+        throw new Error(`Failed to load events: ${response.status} ${errorText}`);
       }
       
       const data = await response.json();
+      console.log('[Dashboard] Events data received:', data);
+      
       setEvents(data.events || []);
       setDataStatus(prev => ({ ...prev, events: data.isRealData ? 'real' : 'mock' }));
+      
+      if (!data.events || data.events.length === 0) {
+        console.warn('[Dashboard] No events returned from API');
+      }
     } catch (error) {
-      console.error('Error loading events:', error);
-      setError('Failed to load events. Please try again.');
+      console.error('[Dashboard] Error loading events:', error);
+      setError(`Failed to load events: ${error.message}`);
       setDataStatus(prev => ({ ...prev, events: 'error' }));
     } finally {
       setLoading(false);
@@ -117,6 +140,7 @@ const EnhancedPersonalizedDashboard = () => {
   };
 
   const handleLocationSelect = (location) => {
+    console.log('[Dashboard] Location selected:', location);
     setSelectedLocation(location);
   };
 
@@ -184,10 +208,12 @@ const EnhancedPersonalizedDashboard = () => {
       </div>
 
       <div className={styles.mainContent}>
-        {/* Middle: Two Column Layout */}
-        <div className={styles.middleSection}>
-          {/* Left Column: Spider Chart */}
+        {/* OPTIMAL LAYOUT: Functional Hierarchy + Space Utilization */}
+        <div className={styles.optimalLayout}>
+          
+          {/* LEFT COLUMN */}
           <div className={styles.leftColumn}>
+            {/* 1. INFORMATIONAL: Spider Chart */}
             <div className={styles.vibeCard}>
               <div className={styles.cardHeader}>
                 <h2 className={styles.cardTitle}>Your Vibe</h2>
@@ -199,13 +225,33 @@ const EnhancedPersonalizedDashboard = () => {
                 <Top5GenresSpiderChart 
                   userTasteProfile={userTasteProfile}
                   spotifyData={spotifyData}
+                  showGenreList={false}
                 />
               </div>
             </div>
+
+            {/* 2. DATA INSIGHTS: Sound Characteristics (Left Half) */}
+            <div className={styles.soundCharacteristicsCard}>
+              <SoundFeatureCapsules 
+                userAudioFeatures={spotifyData?.audioFeatures}
+                universalAverages={null}
+                dataStatus={dataStatus.spotify}
+                showHalf="left"
+              />
+            </div>
+
+            {/* 3. FUNCTIONAL: Location Filter */}
+            <div className={styles.locationCard}>
+              <EnhancedLocationSearch 
+                onLocationSelect={handleLocationSelect}
+                selectedLocation={selectedLocation}
+              />
+            </div>
           </div>
 
-          {/* Right Column: Seasonal Vibes */}
+          {/* RIGHT COLUMN */}
           <div className={styles.rightColumn}>
+            {/* 1. INFORMATIONAL: Seasonal Vibes */}
             <div className={styles.seasonalCard}>
               <div className={styles.cardHeader}>
                 <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
@@ -231,45 +277,32 @@ const EnhancedPersonalizedDashboard = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Below: Sound Characteristics (2 under each column) */}
-        <div className={styles.characteristicsSection}>
-          <div className={styles.characteristicsGrid}>
-            <SoundFeatureCapsules 
-              userAudioFeatures={spotifyData?.audioFeatures}
-              universalAverages={null}
-              dataStatus={dataStatus.spotify}
-            />
-          </div>
-        </div>
-
-        {/* Bottom: City Filter + Vibe Filter (Full Width) */}
-        <div className={styles.filtersSection}>
-          <div className={styles.locationFilter}>
-            <EnhancedLocationSearch 
-              onLocationSelect={handleLocationSelect}
-              selectedLocation={selectedLocation}
-            />
-          </div>
-          
-          <div className={styles.vibeFilter}>
-            <div className={styles.vibeMatch}>
-              <span className={styles.vibeLabel}>Vibe Match</span>
-              <div className={styles.vibeSlider}>
-                <div className={styles.vibeProgress} style={{ width: '74%' }}></div>
-              </div>
-              <span className={styles.vibePercentage}>74%</span>
+            {/* 2. DATA INSIGHTS: Sound Characteristics (Right Half) */}
+            <div className={styles.soundCharacteristicsCard}>
+              <SoundFeatureCapsules 
+                userAudioFeatures={spotifyData?.audioFeatures}
+                universalAverages={null}
+                dataStatus={dataStatus.spotify}
+                showHalf="right"
+              />
             </div>
-            
-            <button className={styles.gearIcon} title="Additional Filters">
-              ⚙️
-            </button>
+
+            {/* 3. FUNCTIONAL: Vibe Match Slider */}
+            <div className={styles.vibeMatchCard}>
+              <div className={styles.vibeMatch}>
+                <span className={styles.vibeLabel}>Vibe Match</span>
+                <div className={styles.vibeSlider}>
+                  <div className={styles.vibeProgress} style={{ width: '74%' }}></div>
+                </div>
+                <span className={styles.vibePercentage}>74%</span>
+                <button className={styles.gearIcon} title="Additional Filters">⚙️</button>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Events Section */}
+        {/* Events Section - Full Width Below */}
         <div className={styles.eventsSection}>
           <div className={styles.eventsHeader}>
             <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
@@ -280,12 +313,18 @@ const EnhancedPersonalizedDashboard = () => {
             <div className={styles.loading}>
               <div className={styles.spinner}></div>
               <p>Finding events that match your taste...</p>
+              <p className={styles.debugInfo}>
+                Location: {selectedLocation.city}, {selectedLocation.region}, {selectedLocation.country}
+              </p>
             </div>
           )}
           
           {error && (
             <div className={styles.error}>
               <p>{error}</p>
+              <p className={styles.debugInfo}>
+                Check browser console for detailed error logs
+              </p>
               <button onClick={loadEvents} className={styles.retryButton}>
                 Try Again
               </button>
@@ -300,9 +339,15 @@ const EnhancedPersonalizedDashboard = () => {
             />
           )}
           
-          {!loading && !error && events.length === 0 && selectedLocation && (
+          {!loading && !error && events.length === 0 && (
             <div className={styles.noEvents}>
-              <p>No events found in this area. Try a different location or check back later.</p>
+              <p>No events found for {selectedLocation.city}. This might indicate an API issue.</p>
+              <p className={styles.debugInfo}>
+                API Status: {dataStatus.events} | Location: {selectedLocation.latitude}, {selectedLocation.longitude}
+              </p>
+              <button onClick={loadEvents} className={styles.retryButton}>
+                Retry Loading Events
+              </button>
             </div>
           )}
         </div>
@@ -325,9 +370,116 @@ const EnhancedPersonalizedDashboard = () => {
 export default EnhancedPersonalizedDashboard;
 EOF
 
-echo "✅ Updating CSS with perfect glassmorphic theme..."
+echo "✅ Updating SoundFeatureCapsules to support split display..."
 
-# Update the CSS file with proper layout and glassmorphic effects
+# Update SoundFeatureCapsules to show half on each side
+cat > components/SoundFeatureCapsules.js << 'EOF'
+import React from 'react';
+import styles from '@/styles/SoundFeatureCapsules.module.css';
+
+const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus = 'loading', showHalf = 'all' }) => {
+  // Default audio features
+  const defaultFeatures = {
+    energy: 0.75,
+    danceability: 0.82,
+    valence: 0.65, // Positivity
+    acousticness: 0.15
+  };
+
+  const features = userAudioFeatures || defaultFeatures;
+  const isUsingMockData = !userAudioFeatures || dataStatus === 'mock';
+
+  const allCapsuleData = [
+    {
+      name: 'Energy',
+      value: features.energy,
+      icon: '⚡',
+      color: '#ff006e'
+    },
+    {
+      name: 'Danceability',
+      value: features.danceability,
+      icon: '💃',
+      color: '#00d4ff'
+    },
+    {
+      name: 'Positivity',
+      value: features.valence,
+      icon: '😊',
+      color: '#22c55e'
+    },
+    {
+      name: 'Acoustic',
+      value: features.acousticness,
+      icon: '🎸',
+      color: '#f97316'
+    }
+  ];
+
+  // Split capsules based on showHalf prop
+  let capsuleData;
+  if (showHalf === 'left') {
+    capsuleData = allCapsuleData.slice(0, 2); // Energy, Danceability
+  } else if (showHalf === 'right') {
+    capsuleData = allCapsuleData.slice(2, 4); // Positivity, Acoustic
+  } else {
+    capsuleData = allCapsuleData; // All capsules
+  }
+
+  const titleText = showHalf === 'all' ? 'Your Sound Characteristics' : 
+                   showHalf === 'left' ? 'Sound Characteristics' : 'Sound Characteristics';
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>{titleText}</h3>
+        {showHalf === 'all' && (
+          <span className={styles.dataIndicator}>
+            {isUsingMockData ? '🎭 Sample Data' : '✅ Spotify Data'}
+          </span>
+        )}
+      </div>
+      
+      <div className={styles.capsulesGrid}>
+        {capsuleData.map((capsule, index) => (
+          <div key={index} className={styles.capsule}>
+            <div className={styles.capsuleHeader}>
+              <span className={styles.icon}>{capsule.icon}</span>
+              <span className={styles.name}>{capsule.name}</span>
+            </div>
+            
+            <div className={styles.progressContainer}>
+              <div 
+                className={styles.progressBar}
+                style={{ 
+                  background: `linear-gradient(90deg, ${capsule.color}, ${capsule.color}80)`,
+                  width: `${capsule.value * 100}%`
+                }}
+              />
+            </div>
+            
+            <div className={styles.percentage}>
+              {Math.round(capsule.value * 100)}%
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {showHalf === 'all' && isUsingMockData && (
+        <div className={styles.mockDataNotice}>
+          🎭 Using sample audio features - Connect Spotify for personalized results
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SoundFeatureCapsules;
+EOF
+
+echo "✅ Updating CSS for optimal layout with functional hierarchy..."
+
+# Create CSS for the optimal layout
 cat > styles/EnhancedPersonalizedDashboard.module.css << 'EOF'
 .container {
   min-height: 100vh;
@@ -386,21 +538,25 @@ cat > styles/EnhancedPersonalizedDashboard.module.css << 'EOF'
   padding: 2rem 1rem;
 }
 
-/* Middle: Two Column Layout */
-.middleSection {
+/* OPTIMAL LAYOUT: Functional Hierarchy + Space Utilization */
+.optimalLayout {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   margin-bottom: 2rem;
+  align-items: start;
 }
 
+/* Both columns with equal spacing and functional hierarchy */
 .leftColumn, .rightColumn {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+  height: fit-content;
 }
 
-/* Glassmorphic Cards */
-.vibeCard, .seasonalCard {
+/* Glassmorphic Card Base */
+.vibeCard, .seasonalCard, .soundCharacteristicsCard, .locationCard, .vibeMatchCard {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
   border-radius: 16px;
@@ -408,9 +564,11 @@ cat > styles/EnhancedPersonalizedDashboard.module.css << 'EOF'
   border: 1px solid rgba(255, 0, 110, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
+  height: fit-content;
 }
 
-.vibeCard:hover, .seasonalCard:hover {
+.vibeCard:hover, .seasonalCard:hover, .soundCharacteristicsCard:hover, 
+.locationCard:hover, .vibeMatchCard:hover {
   box-shadow: 0 0 30px rgba(255, 0, 110, 0.2);
   transform: translateY(-2px);
 }
@@ -452,6 +610,7 @@ cat > styles/EnhancedPersonalizedDashboard.module.css << 'EOF'
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .seasonCard {
@@ -499,46 +658,11 @@ cat > styles/EnhancedPersonalizedDashboard.module.css << 'EOF'
   color: #3b82f6;
 }
 
-/* Sound Characteristics Section */
-.characteristicsSection {
-  margin-bottom: 2rem;
-}
-
-.characteristicsGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-/* Filters Section */
-.filtersSection {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
-  align-items: center;
-}
-
-.locationFilter {
-  /* Styled by EnhancedLocationSearch component */
-}
-
-.vibeFilter {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border-radius: 12px;
-  padding: 1rem;
-  border: 1px solid rgba(255, 0, 110, 0.2);
-}
-
+/* Vibe Match Slider */
 .vibeMatch {
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex: 1;
 }
 
 .vibeLabel {
@@ -663,7 +787,17 @@ cat > styles/EnhancedPersonalizedDashboard.module.css << 'EOF'
 .noEvents {
   text-align: center;
   padding: 3rem;
-  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.debugInfo {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.5rem;
+  font-family: monospace;
 }
 
 .authPrompt {
@@ -693,14 +827,9 @@ cat > styles/EnhancedPersonalizedDashboard.module.css << 'EOF'
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .middleSection {
+  .optimalLayout {
     grid-template-columns: 1fr;
     gap: 1.5rem;
-  }
-  
-  .filtersSection {
-    grid-template-columns: 1fr;
-    gap: 1rem;
   }
   
   .mainContent {
@@ -729,267 +858,51 @@ cat > styles/EnhancedPersonalizedDashboard.module.css << 'EOF'
     grid-template-columns: 1fr;
   }
   
-  .vibeFilter {
+  .vibeMatch {
     flex-direction: column;
     gap: 0.5rem;
   }
 }
 EOF
 
-echo "✅ Updating SoundFeatureCapsules to show horizontal layout..."
+echo "✅ Committing and deploying optimal layout..."
 
-# Update SoundFeatureCapsules to display horizontally with data indicators
-cat > components/SoundFeatureCapsules.js << 'EOF'
-import React from 'react';
-import styles from '@/styles/SoundFeatureCapsules.module.css';
-
-const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus = 'loading' }) => {
-  // Default audio features with clear indicators
-  const defaultFeatures = {
-    energy: 0.75,
-    danceability: 0.82,
-    valence: 0.65, // Positivity
-    acousticness: 0.15
-  };
-
-  const features = userAudioFeatures || defaultFeatures;
-  const isUsingMockData = !userAudioFeatures || dataStatus === 'mock';
-
-  const capsuleData = [
-    {
-      name: 'Energy',
-      value: features.energy,
-      icon: '⚡',
-      color: '#ff006e'
-    },
-    {
-      name: 'Danceability',
-      value: features.danceability,
-      icon: '💃',
-      color: '#00d4ff'
-    },
-    {
-      name: 'Positivity',
-      value: features.valence,
-      icon: '😊',
-      color: '#22c55e'
-    },
-    {
-      name: 'Acoustic',
-      value: features.acousticness,
-      icon: '🎸',
-      color: '#f97316'
-    }
-  ];
-
-  return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h3 className={styles.title}>Your Sound Characteristics</h3>
-        <span className={styles.dataIndicator}>
-          {isUsingMockData ? '🎭 Sample Data' : '✅ Spotify Data'}
-        </span>
-      </div>
-      
-      <div className={styles.capsulesGrid}>
-        {capsuleData.map((capsule, index) => (
-          <div key={index} className={styles.capsule}>
-            <div className={styles.capsuleHeader}>
-              <span className={styles.icon}>{capsule.icon}</span>
-              <span className={styles.name}>{capsule.name}</span>
-            </div>
-            
-            <div className={styles.progressContainer}>
-              <div 
-                className={styles.progressBar}
-                style={{ 
-                  background: `linear-gradient(90deg, ${capsule.color}, ${capsule.color}80)`,
-                  width: `${capsule.value * 100}%`
-                }}
-              />
-            </div>
-            
-            <div className={styles.percentage}>
-              {Math.round(capsule.value * 100)}%
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-export default SoundFeatureCapsules;
-EOF
-
-echo "✅ Creating SoundFeatureCapsules CSS..."
-
-cat > styles/SoundFeatureCapsules.module.css << 'EOF'
-.container {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
-  padding: 1.5rem;
-  border: 1px solid rgba(255, 0, 110, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
-}
-
-.container:hover {
-  box-shadow: 0 0 30px rgba(255, 0, 110, 0.2);
-  transform: translateY(-2px);
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0;
-  background: linear-gradient(90deg, #ff006e, #00d4ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.dataIndicator {
-  font-size: 0.8rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  background: rgba(0, 212, 255, 0.1);
-  border: 1px solid rgba(0, 212, 255, 0.3);
-  color: #00d4ff;
-}
-
-.capsulesGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-}
-
-.capsule {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.capsuleHeader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.name {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.progressContainer {
-  width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-
-.progressBar {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s ease;
-  box-shadow: 0 0 10px rgba(255, 0, 110, 0.3);
-}
-
-.percentage {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #00d4ff;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
-}
-
-@media (max-width: 768px) {
-  .capsulesGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-  
-  .icon {
-    font-size: 1.2rem;
-  }
-  
-  .name {
-    font-size: 0.8rem;
-  }
-  
-  .percentage {
-    font-size: 1rem;
-  }
-}
-EOF
-
-echo "✅ Committing changes..."
 git add .
-git commit -m "🎯 RESTORE PERFECT TIKO LAYOUT
+git commit -m "🎯 OPTIMAL LAYOUT - FUNCTIONAL HIERARCHY + SPACE UTILIZATION
 
-✅ Fixed Layout Structure:
-- Top: Overall vibe summary (full width)
-- Middle: Spider chart (left) + Seasonal vibes (right)
-- Below: Sound characteristics (horizontal capsules)
-- Bottom: City filter + Vibe filter + gear icon
+✅ Perfect Functional Hierarchy:
+1. INFORMATIONAL (Top): Spider chart + Seasonal vibes
+2. DATA INSIGHTS (Middle): Sound characteristics split across columns
+3. FUNCTIONAL (Bottom): Location filter + Vibe match slider
 
-✅ Removed Issues:
-- Redundant genre list below spider chart
-- Empty space in right column
-- Unclear data sources
+✅ Maximum Space Utilization:
+- Both columns perfectly balanced
+- No empty spaces
+- Clean aligned layout
 
-✅ Added Data Transparency:
-- Clear indicators: ✅ Live Data, 🎭 Sample Data, ⏳ Loading
-- Real vs mock data labeling throughout
-- Transparent data source information
+✅ Enhanced UX:
+- Information first, functionality later
+- Logical content flow
+- Optimal visual balance
 
-✅ Maintained Glassmorphic Theme:
-- backdrop-filter: blur(20px)
-- rgba(255, 255, 255, 0.05) backgrounds
-- Neon magenta/cyan gradients
-- Perfect glow effects and animations
-
-🎯 Perfect TIKO layout restored!"
+🎯 This creates the perfect balance of function and form!"
 
 echo "✅ Deploying to staging..."
 git push heroku main
 
 echo ""
-echo "🎉 PERFECT TIKO LAYOUT RESTORED!"
-echo "================================"
+echo "🎉 OPTIMAL LAYOUT DEPLOYED!"
+echo "========================="
 echo ""
-echo "✅ Layout Structure Fixed:"
-echo "   - Top: Vibe summary (full width)"
-echo "   - Middle: Spider chart + Seasonal vibes"
-echo "   - Below: Horizontal sound characteristics"
-echo "   - Bottom: Filters + gear icon"
+echo "✅ Functional Hierarchy:"
+echo "   1. Informational: Spider chart + Seasonal vibes"
+echo "   2. Data Insights: Sound characteristics (split)"
+echo "   3. Functional: Location + Vibe match"
 echo ""
-echo "✅ Issues Resolved:"
-echo "   - Removed redundant genre list"
-echo "   - Eliminated empty space"
-echo "   - Added data transparency indicators"
-echo ""
-echo "✅ Theme Maintained:"
-echo "   - Glassmorphic effects preserved"
-echo "   - Neon magenta/cyan gradients"
-echo "   - Perfect glow animations"
+echo "✅ Perfect Space Utilization:"
+echo "   - Both columns balanced"
+echo "   - No empty spaces"
+echo "   - Maximum efficiency"
 echo ""
 echo "🚀 Check your staging site:"
 echo "   https://sonar-edm-staging-ef96efd71e8e.herokuapp.com/dashboard"
@@ -998,12 +911,11 @@ EOF
 
 chmod +x /home/ubuntu/restore_perfect_layout.sh
 
-echo "🎯 Perfect TIKO layout restoration script created!"
+echo "🎯 Optimal layout script created!"
 echo ""
-echo "This script will:"
-echo "✅ Fix the exact layout structure you specified"
-echo "✅ Remove redundant genre list and empty space"
-echo "✅ Add clear data transparency indicators"
-echo "✅ Maintain your beautiful glassmorphic theme"
-echo "✅ Deploy the perfect implementation"
+echo "This creates the perfect balance:"
+echo "📊 INFORMATIONAL (Top): Spider chart + Seasonal vibes"
+echo "📈 DATA INSIGHTS (Middle): Sound characteristics split across columns"
+echo "🔧 FUNCTIONAL (Bottom): Location filter + Vibe match slider"
+echo "✅ Maximum space utilization with functional hierarchy"
 

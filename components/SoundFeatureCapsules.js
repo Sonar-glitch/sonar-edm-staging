@@ -1,8 +1,8 @@
 import React from 'react';
 import styles from '@/styles/SoundFeatureCapsules.module.css';
 
-const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus = 'loading' }) => {
-  // Default audio features with clear indicators
+const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus = 'loading', showHalf = 'all' }) => {
+  // Default audio features
   const defaultFeatures = {
     energy: 0.75,
     danceability: 0.82,
@@ -13,7 +13,7 @@ const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus
   const features = userAudioFeatures || defaultFeatures;
   const isUsingMockData = !userAudioFeatures || dataStatus === 'mock';
 
-  const capsuleData = [
+  const allCapsuleData = [
     {
       name: 'Energy',
       value: features.energy,
@@ -40,13 +40,28 @@ const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus
     }
   ];
 
+  // Split capsules based on showHalf prop
+  let capsuleData;
+  if (showHalf === 'left') {
+    capsuleData = allCapsuleData.slice(0, 2); // Energy, Danceability
+  } else if (showHalf === 'right') {
+    capsuleData = allCapsuleData.slice(2, 4); // Positivity, Acoustic
+  } else {
+    capsuleData = allCapsuleData; // All capsules
+  }
+
+  const titleText = showHalf === 'all' ? 'Your Sound Characteristics' : 
+                   showHalf === 'left' ? 'Sound Characteristics' : 'Sound Characteristics';
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3 className={styles.title}>Your Sound Characteristics</h3>
-        <span className={styles.dataIndicator}>
-          {isUsingMockData ? '🎭 Sample Data' : '✅ Spotify Data'}
-        </span>
+        <h3 className={styles.title}>{titleText}</h3>
+        {showHalf === 'all' && (
+          <span className={styles.dataIndicator}>
+            {isUsingMockData ? '🎭 Sample Data' : '✅ Spotify Data'}
+          </span>
+        )}
       </div>
       
       <div className={styles.capsulesGrid}>
@@ -73,6 +88,12 @@ const SoundFeatureCapsules = ({ userAudioFeatures, universalAverages, dataStatus
           </div>
         ))}
       </div>
+      
+      {showHalf === 'all' && isUsingMockData && (
+        <div className={styles.mockDataNotice}>
+          🎭 Using sample audio features - Connect Spotify for personalized results
+        </div>
+      )}
     </div>
   );
 };

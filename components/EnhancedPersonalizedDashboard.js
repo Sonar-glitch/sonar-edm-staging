@@ -12,7 +12,13 @@ const EnhancedPersonalizedDashboard = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState({
+    city: 'Toronto',
+    region: 'ON',
+    country: 'Canada',
+    latitude: 43.65,
+    longitude: -79.38
+  });
   const [spotifyData, setSpotifyData] = useState(null);
   const [userTasteProfile, setUserTasteProfile] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -31,43 +37,49 @@ const EnhancedPersonalizedDashboard = () => {
     }
   }, [session]);
 
-  // Load events when location changes
+  // Load events when component mounts and when location changes
   useEffect(() => {
-    if (selectedLocation) {
+    if (session?.user && selectedLocation) {
       loadEvents();
     }
-  }, [selectedLocation]);
+  }, [session, selectedLocation]);
 
   const loadSpotifyData = async () => {
     try {
+      console.log('[Dashboard] Loading Spotify data...');
       setDataStatus(prev => ({ ...prev, spotify: 'loading' }));
       const response = await fetch('/api/spotify/user-profile');
       if (response.ok) {
         const data = await response.json();
+        console.log('[Dashboard] Spotify data loaded:', data);
         setSpotifyData(data);
         setDataStatus(prev => ({ ...prev, spotify: 'real' }));
       } else {
+        console.log('[Dashboard] Spotify API failed, using mock data');
         setDataStatus(prev => ({ ...prev, spotify: 'mock' }));
       }
     } catch (error) {
-      console.error('Error loading Spotify data:', error);
+      console.error('[Dashboard] Error loading Spotify data:', error);
       setDataStatus(prev => ({ ...prev, spotify: 'mock' }));
     }
   };
 
   const loadUserTasteProfile = async () => {
     try {
+      console.log('[Dashboard] Loading taste profile...');
       setDataStatus(prev => ({ ...prev, taste: 'loading' }));
       const response = await fetch('/api/user/taste-profile');
       if (response.ok) {
         const data = await response.json();
+        console.log('[Dashboard] Taste profile loaded:', data);
         setUserTasteProfile(data);
         setDataStatus(prev => ({ ...prev, taste: 'real' }));
       } else {
+        console.log('[Dashboard] Taste profile API failed, using mock data');
         setDataStatus(prev => ({ ...prev, taste: 'mock' }));
       }
     } catch (error) {
-      console.error('Error loading taste profile:', error);
+      console.error('[Dashboard] Error loading taste profile:', error);
       setDataStatus(prev => ({ ...prev, taste: 'mock' }));
     }
   };
@@ -75,26 +87,37 @@ const EnhancedPersonalizedDashboard = () => {
   const loadEvents = async () => {
     if (!selectedLocation) return;
     
+    console.log('[Dashboard] Loading events for location:', selectedLocation);
     setLoading(true);
     setError(null);
     setDataStatus(prev => ({ ...prev, events: 'loading' }));
     
     try {
       const { latitude, longitude } = selectedLocation;
-      const response = await fetch(
-        `/api/events/near?latitude=${latitude}&longitude=${longitude}&radius=50&userId=${session?.user?.id}`
-      );
+      const eventsUrl = `/api/events?lat=${latitude}&lon=${longitude}&city=${encodeURIComponent(selectedLocation.city)}&radius=50`;
+      console.log('[Dashboard] Events API URL:', eventsUrl);
+      
+      const response = await fetch(eventsUrl);
+      console.log('[Dashboard] Events API response status:', response.status);
       
       if (!response.ok) {
-        throw new Error('Failed to load events');
+        const errorText = await response.text();
+        console.error('[Dashboard] Events API error:', errorText);
+        throw new Error(`Failed to load events: ${response.status} ${errorText}`);
       }
       
       const data = await response.json();
+      console.log('[Dashboard] Events data received:', data);
+      
       setEvents(data.events || []);
       setDataStatus(prev => ({ ...prev, events: data.isRealData ? 'real' : 'mock' }));
+      
+      if (!data.events || data.events.length === 0) {
+        console.warn('[Dashboard] No events returned from API');
+      }
     } catch (error) {
-      console.error('Error loading events:', error);
-      setError('Failed to load events. Please try again.');
+      console.error('[Dashboard] Error loading events:', error);
+      setError(`Failed to load events: ${error.message}`);
       setDataStatus(prev => ({ ...prev, events: 'error' }));
     } finally {
       setLoading(false);
@@ -102,6 +125,7 @@ const EnhancedPersonalizedDashboard = () => {
   };
 
   const handleLocationSelect = (location) => {
+    console.log('[Dashboard] Location selected:', location);
     setSelectedLocation(location);
   };
 
@@ -169,10 +193,12 @@ const EnhancedPersonalizedDashboard = () => {
       </div>
 
       <div className={styles.mainContent}>
-        {/* Middle: Two Column Layout */}
-        <div className={styles.middleSection}>
-          {/* Left Column: Spider Chart */}
+        {/* OPTIMAL LAYOUT: Functional Hierarchy + Space Utilization */}
+        <div className={styles.optimalLayout}>
+          
+          {/* LEFT COLUMN */}
           <div className={styles.leftColumn}>
+            {/* 1. INFORMATIONAL: Spider Chart */}
             <div className={styles.vibeCard}>
               <div className={styles.cardHeader}>
                 <h2 className={styles.cardTitle}>Your Vibe</h2>
@@ -184,13 +210,33 @@ const EnhancedPersonalizedDashboard = () => {
                 <Top5GenresSpiderChart 
                   userTasteProfile={userTasteProfile}
                   spotifyData={spotifyData}
+                  showGenreList={false}
                 />
               </div>
             </div>
+
+            {/* 2. DATA INSIGHTS: Sound Characteristics (Left Half) */}
+            <div className={styles.soundCharacteristicsCard}>
+              <SoundFeatureCapsules 
+                userAudioFeatures={spotifyData?.audioFeatures}
+                universalAverages={null}
+                dataStatus={dataStatus.spotify}
+                showHalf="left"
+              />
+            </div>
+
+            {/* 3. FUNCTIONAL: Location Filter */}
+            <div className={styles.locationCard}>
+              <EnhancedLocationSearch 
+                onLocationSelect={handleLocationSelect}
+                selectedLocation={selectedLocation}
+              />
+            </div>
           </div>
 
-          {/* Right Column: Seasonal Vibes */}
+          {/* RIGHT COLUMN */}
           <div className={styles.rightColumn}>
+            {/* 1. INFORMATIONAL: Seasonal Vibes */}
             <div className={styles.seasonalCard}>
               <div className={styles.cardHeader}>
                 <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
@@ -216,45 +262,32 @@ const EnhancedPersonalizedDashboard = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Below: Sound Characteristics (2 under each column) */}
-        <div className={styles.characteristicsSection}>
-          <div className={styles.characteristicsGrid}>
-            <SoundFeatureCapsules 
-              userAudioFeatures={spotifyData?.audioFeatures}
-              universalAverages={null}
-              dataStatus={dataStatus.spotify}
-            />
-          </div>
-        </div>
-
-        {/* Bottom: City Filter + Vibe Filter (Full Width) */}
-        <div className={styles.filtersSection}>
-          <div className={styles.locationFilter}>
-            <EnhancedLocationSearch 
-              onLocationSelect={handleLocationSelect}
-              selectedLocation={selectedLocation}
-            />
-          </div>
-          
-          <div className={styles.vibeFilter}>
-            <div className={styles.vibeMatch}>
-              <span className={styles.vibeLabel}>Vibe Match</span>
-              <div className={styles.vibeSlider}>
-                <div className={styles.vibeProgress} style={{ width: '74%' }}></div>
-              </div>
-              <span className={styles.vibePercentage}>74%</span>
+            {/* 2. DATA INSIGHTS: Sound Characteristics (Right Half) */}
+            <div className={styles.soundCharacteristicsCard}>
+              <SoundFeatureCapsules 
+                userAudioFeatures={spotifyData?.audioFeatures}
+                universalAverages={null}
+                dataStatus={dataStatus.spotify}
+                showHalf="right"
+              />
             </div>
-            
-            <button className={styles.gearIcon} title="Additional Filters">
-              ⚙️
-            </button>
+
+            {/* 3. FUNCTIONAL: Vibe Match Slider */}
+            <div className={styles.vibeMatchCard}>
+              <div className={styles.vibeMatch}>
+                <span className={styles.vibeLabel}>Vibe Match</span>
+                <div className={styles.vibeSlider}>
+                  <div className={styles.vibeProgress} style={{ width: '74%' }}></div>
+                </div>
+                <span className={styles.vibePercentage}>74%</span>
+                <button className={styles.gearIcon} title="Additional Filters">⚙️</button>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Events Section */}
+        {/* Events Section - Full Width Below */}
         <div className={styles.eventsSection}>
           <div className={styles.eventsHeader}>
             <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
@@ -265,12 +298,18 @@ const EnhancedPersonalizedDashboard = () => {
             <div className={styles.loading}>
               <div className={styles.spinner}></div>
               <p>Finding events that match your taste...</p>
+              <p className={styles.debugInfo}>
+                Location: {selectedLocation.city}, {selectedLocation.region}, {selectedLocation.country}
+              </p>
             </div>
           )}
           
           {error && (
             <div className={styles.error}>
               <p>{error}</p>
+              <p className={styles.debugInfo}>
+                Check browser console for detailed error logs
+              </p>
               <button onClick={loadEvents} className={styles.retryButton}>
                 Try Again
               </button>
@@ -285,9 +324,15 @@ const EnhancedPersonalizedDashboard = () => {
             />
           )}
           
-          {!loading && !error && events.length === 0 && selectedLocation && (
+          {!loading && !error && events.length === 0 && (
             <div className={styles.noEvents}>
-              <p>No events found in this area. Try a different location or check back later.</p>
+              <p>No events found for {selectedLocation.city}. This might indicate an API issue.</p>
+              <p className={styles.debugInfo}>
+                API Status: {dataStatus.events} | Location: {selectedLocation.latitude}, {selectedLocation.longitude}
+              </p>
+              <button onClick={loadEvents} className={styles.retryButton}>
+                Retry Loading Events
+              </button>
             </div>
           )}
         </div>
