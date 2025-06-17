@@ -32,23 +32,15 @@ export default function Header() {
   
   return (
     <header className={styles.header}>
-      <Link href="/dashboard" legacyBehavior>
-        <a className={styles.logo}>
+      <Link href="/dashboard" legacyBehavior className={styles.logo}>
           <span className={styles.logoText}>TIKO</span>
-        </a>
-      </Link>
+        </Link>
       
       <nav className={styles.nav}>
         <div className={styles.navLinks}>
-          <Link href="/dashboard" legacyBehavior>
-            <a className={styles.navLink}>Dashboard</a>
-          </Link>
-          <Link href="/users/music-taste" legacyBehavior>
-            <a className={styles.navLink}>Music Taste</a>
-          </Link>
-          <Link href="/events" legacyBehavior>
-            <a className={styles.navLink}>Events</a>
-          </Link>
+          <Link href="/dashboard" legacyBehavior className={styles.navLink}>Dashboard</Link>
+          <Link href="/users/music-taste" legacyBehavior className={styles.navLink}>Music Taste</Link>
+          <Link href="/events" legacyBehavior className={styles.navLink}>Events</Link>
         </div>
         
         {session ? (
@@ -89,36 +81,30 @@ export default function Header() {
                 </div>
                 
                 <div className={styles.menuItems}>
-                  <Link href="/users/profile" legacyBehavior>
-                    <a className={styles.menuItem}>
+                  <Link href="/users/profile" legacyBehavior className={styles.menuItem}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                       </svg>
                       Your Profile
-                    </a>
-                  </Link>
+                    </Link>
                   
-                  <Link href="/users/music-taste" legacyBehavior>
-                    <a className={styles.menuItem}>
+                  <Link href="/users/music-taste" legacyBehavior className={styles.menuItem}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 18V5l12-2v13"></path>
                         <circle cx="6" cy="18" r="3"></circle>
                         <circle cx="18" cy="16" r="3"></circle>
                       </svg>
                       Music Taste
-                    </a>
-                  </Link>
+                    </Link>
                   
-                  <Link href="/users/settings" legacyBehavior>
-                    <a className={styles.menuItem}>
+                  <Link href="/users/settings" legacyBehavior className={styles.menuItem}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                       </svg>
                       Settings
-                    </a>
-                  </Link>
+                    </Link>
                   
                   <button 
                     className={styles.menuItem}
@@ -136,11 +122,9 @@ export default function Header() {
             )}
           </div>
         ) : (
-          <Link href="/auth/signin" legacyBehavior>
-            <a className={styles.signInButton}>
+          <Link href="/auth/signin" legacyBehavior className={styles.signInButton}>
               Sign In
-            </a>
-          </Link>
+            </Link>
         )}
       </nav>
     </header>

@@ -19,15 +19,9 @@ const Navigation = () => {
       <div className="text-fuchsia-500 text-2xl font-bold">TIKO</div>
       
       <nav className="flex items-center space-x-6">
-        <Link href="/dashboard">
-          <a className={isActive('/dashboard')}>Dashboard</a>
-        </Link>
-        <Link href="/users/music-taste">
-          <a className={isActive('/users/music-taste')}>Music Taste</a>
-        </Link>
-        <Link href="/events">
-          <a className={isActive('/events')}>Events</a>
-        </Link>
+        <Link href="/dashboard" className={isActive('/dashboard')}>Dashboard</Link>
+        <Link href="/users/music-taste" className={isActive('/users/music-taste')}>Music Taste</Link>
+        <Link href="/events" className={isActive('/events')}>Events</Link>
         
         {session ? (
           <div className="ml-4 relative group">
@@ -56,12 +50,8 @@ const Navigation = () => {
             {/* Dropdown menu */}
             <div className="absolute right-0 mt-2 w-48 bg-black/90 border border-cyan-500/20 rounded-lg shadow-lg overflow-hidden z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
               <div className="py-1">
-                <Link href="/profile">
-                  <a className="block px-4 py-2 text-white hover:bg-cyan-500/20">Profile</a>
-                </Link>
-                <Link href="/settings">
-                  <a className="block px-4 py-2 text-white hover:bg-cyan-500/20">Settings</a>
-                </Link>
+                <Link href="/profile" className="block px-4 py-2 text-white hover:bg-cyan-500/20">Profile</Link>
+                <Link href="/settings" className="block px-4 py-2 text-white hover:bg-cyan-500/20">Settings</Link>
                 <button 
                   onClick={() => signOut()}
                   className="block w-full text-left px-4 py-2 text-white hover:bg-cyan-500/20"
@@ -72,11 +62,9 @@ const Navigation = () => {
             </div>
           </div>
         ) : (
-          <Link href="/auth/signin">
-            <a className="ml-4 px-4 py-2 bg-gradient-to-r from-cyan-500 to-fuchsia-500 rounded-full text-white">
+          <Link href="/auth/signin" className="ml-4 px-4 py-2 bg-gradient-to-r from-cyan-500 to-fuchsia-500 rounded-full text-white">
               Sign In
-            </a>
-          </Link>
+            </Link>
         )}
       </nav>
     </header>

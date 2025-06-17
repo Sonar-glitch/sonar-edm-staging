@@ -9,67 +9,49 @@ export default function Layout({ children, type = 'user' }) {
     <div className={styles.container}>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <Link href="/">
-            <a className={styles.logo}>
+          <Link href="/" className={styles.logo}>
               <span className={styles.logoGradient}>Sonar EDM</span>
-            </a>
-          </Link>
+            </Link>
         </div>
         
         <nav className={styles.navigation}>
           {type === 'user' ? (
             <>
-              <Link href="/users/dashboard">
-                <a className={styles.navItem}>
+              <Link href="/users/dashboard" className={styles.navItem}>
                   <span className={styles.navIcon}>📊</span>
                   Dashboard
-                </a>
-              </Link>
-              <Link href="/users/taste-analysis">
-                <a className={styles.navItem}>
+                </Link>
+              <Link href="/users/taste-analysis" className={styles.navItem}>
                   <span className={styles.navIcon}>🎵</span>
                   Music Taste
-                </a>
-              </Link>
-              <Link href="/users/discover">
-                <a className={styles.navItem}>
+                </Link>
+              <Link href="/users/discover" className={styles.navItem}>
                   <span className={styles.navIcon}>🔍</span>
                   Discover
-                </a>
-              </Link>
-              <Link href="/users/events">
-                <a className={styles.navItem}>
+                </Link>
+              <Link href="/users/events" className={styles.navItem}>
                   <span className={styles.navIcon}>🎪</span>
                   Events
-                </a>
-              </Link>
+                </Link>
             </>
           ) : (
             <>
-              <Link href="/promoters/dashboard">
-                <a className={styles.navItem}>
+              <Link href="/promoters/dashboard" className={styles.navItem}>
                   <span className={styles.navIcon}>📊</span>
                   Dashboard
-                </a>
-              </Link>
-              <Link href="/promoters/analytics">
-                <a className={styles.navItem}>
+                </Link>
+              <Link href="/promoters/analytics" className={styles.navItem}>
                   <span className={styles.navIcon}>📈</span>
                   Analytics
-                </a>
-              </Link>
-              <Link href="/promoters/events">
-                <a className={styles.navItem}>
+                </Link>
+              <Link href="/promoters/events" className={styles.navItem}>
                   <span className={styles.navIcon}>🎪</span>
                   Events
-                </a>
-              </Link>
-              <Link href="/promoters/audience">
-                <a className={styles.navItem}>
+                </Link>
+              <Link href="/promoters/audience" className={styles.navItem}>
                   <span className={styles.navIcon}>👥</span>
                   Audience
-                </a>
-              </Link>
+                </Link>
             </>
           )}
         </nav>

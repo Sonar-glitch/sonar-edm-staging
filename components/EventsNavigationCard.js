@@ -50,19 +50,15 @@ export default function EventsNavigationCard({ correlatedEvents = [], userTaste 
         )}
         
         <div className={styles.actionButtons}>
-          <Link href="/users/events">
-            <a className={styles.primaryButton}>
+          <Link href="/users/events" className={styles.primaryButton}>
               <span className={styles.buttonIcon}>🎭</span>
               Explore All Events
-            </a>
-          </Link>
+            </Link>
           
-          <Link href="/users/events?filter=nearby">
-            <a className={styles.secondaryButton}>
+          <Link href="/users/events?filter=nearby" className={styles.secondaryButton}>
               <span className={styles.buttonIcon}>📍</span>
               Nearby Events
-            </a>
-          </Link>
+            </Link>
         </div>
         
         <div className={styles.decorativeLine}></div>

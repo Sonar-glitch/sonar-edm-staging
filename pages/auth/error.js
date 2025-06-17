@@ -25,9 +25,7 @@ export default function Error({ error }) {
             <p>An unknown error occurred during authentication.</p>
           )}
         </div>
-        <Link href="/">
-          <a className={styles.button}>Return to Home</a>
-        </Link>
+        <Link href="/" className={styles.button}>Return to Home</Link>
       </div>
     </div>
   );

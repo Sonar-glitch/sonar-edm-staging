@@ -39,7 +39,7 @@
     "@swc/helpers": "^0.5.3"
   },
   "engines": {
-    "node": "18.x",
-    "npm": "8.x"
+  "node": "20.x",
+  "npm": "11.x"
   }
 }

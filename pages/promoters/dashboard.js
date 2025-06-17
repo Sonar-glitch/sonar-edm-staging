@@ -585,12 +585,8 @@ export default function PromoterDashboard() {
             </div>
             
             <div className={styles.actionButtons}>
-              <Link href="/promoters/events/create">
-                <a className={styles.primaryButton}>Create New Event</a>
-              </Link>
-              <Link href="/promoters/events">
-                <a className={styles.secondaryButton}>View All Events</a>
-              </Link>
+              <Link href="/promoters/events/create" className={styles.primaryButton}>Create New Event</Link>
+              <Link href="/promoters/events" className={styles.secondaryButton}>View All Events</Link>
             </div>
           </div>
         )}

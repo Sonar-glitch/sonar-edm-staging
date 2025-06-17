@@ -15,9 +15,7 @@ export default function Custom404() {
         <p className={styles.description}>
           The page you're looking for doesn't exist or has been moved.
         </p>
-        <Link href="/">
-          <a className={styles.button}>Return to Home</a>
-        </Link>
+        <Link href="/" className={styles.button}>Return to Home</Link>
       </div>
     </div>
   );

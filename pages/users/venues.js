@@ -217,15 +217,13 @@ export default function Venues() {
         
         {/* Link to events */}
         <div className={styles.eventsLinkSection}>
-          <Link href="/users/events">
-            <a className={styles.eventsLink}>
+          <Link href="/users/events" className={styles.eventsLink}>
               <span>Discover Events</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14"></path>
                 <path d="m12 5 7 7-7 7"></path>
               </svg>
-            </a>
-          </Link>
+            </Link>
         </div>
       </main>
     </div>
