@@ -10,7 +10,7 @@ const Top5GenresSpiderChart = dynamic(() => import('./Top5GenresSpiderChart'), {
 const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
 const EventDetailModal = dynamic(() => import('./EventDetailModal'), { ssr: false });
 
-const EnhancedPersonalizedDashboard = () => {
+const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
   const { data: session } = useSession();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);

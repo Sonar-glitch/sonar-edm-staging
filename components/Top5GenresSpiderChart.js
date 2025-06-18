@@ -46,12 +46,12 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5);
       
-      // ENSURE VALUES NEVER EXCEED 100% - PROPER NORMALIZATION
+      // FIXED: Ensure proper normalization with highest value always at 100%
       const maxScore = Math.max(...sortedGenres.map(([, score]) => score));
       
       return sortedGenres.map(([genre, score]) => ({
         genre: genre.charAt(0).toUpperCase() + genre.slice(1),
-        value: Math.min(100, Math.round((score / maxScore) * 100)) // CAP AT 100%
+        value: Math.min(100, Math.round((score / maxScore) * 100)) // Normalize to 100% max
       }));
       
     } catch (error) {
@@ -70,10 +70,15 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
 
   return (
     <div className={styles.container}>
-      {/* REDUCED HEIGHT SPIDER CHART - NO REDUNDANT CONTENT */}
+      {/* FIXED: Properly configured chart with explicit domain */}
       <div className={styles.chartContainer}>
         <ResponsiveContainer width="100%" height={200}>
-          <RadarChart data={genresData} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+          <RadarChart 
+            data={genresData} 
+            margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+            startAngle={90}
+            endAngle={-270}
+          >
             <PolarGrid 
               stroke="rgba(255, 255, 255, 0.2)"
               radialLines={true}
@@ -99,12 +104,12 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
                 stroke: '#fff',
                 r: 4
               }}
+              // FIXED: Explicitly set domain to ensure 0-100% scale
+              domain={[0, 100]}
             />
           </RadarChart>
         </ResponsiveContainer>
       </div>
-      
-      {/* NO GENRE LIST - NO TASTE STRENGTH - CLEAN DESIGN */}
     </div>
   );
 };

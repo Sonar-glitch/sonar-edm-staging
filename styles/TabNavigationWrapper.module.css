@@ -106,14 +106,14 @@
   box-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
 }
 
-/* TAB CONTENT */
+/* TAB CONTENT - PROPERLY HIDE DASHBOARD HEADER */
 .tabContent {
   /* Remove the header from child components */
 }
 
-/* Hide the original header in child components */
-.tabContent :global(.header) {
-  display: none;
+/* FIXED: Properly hide the original header in dashboard component */
+.tabContent > div > div:first-child {
+  display: none !important;
 }
 
 /* RESPONSIVE DESIGN - EXACT MATCH */

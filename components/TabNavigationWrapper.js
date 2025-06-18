@@ -12,13 +12,13 @@ const TabNavigationWrapper = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <EnhancedPersonalizedDashboard />;
+        return <EnhancedPersonalizedDashboard hideHeader={true} />;
       case 'music-taste':
         return <MusicTasteContent />;
       case 'my-events':
         return <MyEventsContent />;
       default:
-        return <EnhancedPersonalizedDashboard />;
+        return <EnhancedPersonalizedDashboard hideHeader={true} />;
     }
   };
 
