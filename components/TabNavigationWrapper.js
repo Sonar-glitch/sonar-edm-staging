@@ -33,6 +33,11 @@ const TabNavigationWrapper = () => {
           <p className={styles.subtitle}>
             Your <span className={styles.highlight}>personalized</span> EDM event discovery platform
           </p>
+          
+          {/* PRESERVED: Vibe summary from original dashboard */}
+          <p className={styles.vibeSummary}>
+            You're all about <span className={styles.highlight}>house + techno</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
+          </p>
         </div>
         
         {/* Tab Navigation */}

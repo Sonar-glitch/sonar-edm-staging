@@ -7,7 +7,7 @@ import styles from '@/styles/EnhancedPersonalizedDashboard.module.css';
 const MyEventsContent = () => {
   const { data: session } = useSession();
   const [interestedEvents, setInterestedEvents] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -35,7 +35,15 @@ const MyEventsContent = () => {
       }
 
       const data = await response.json();
-      setInterestedEvents(data.events || []);
+      
+      // Sort events by date (most recent first)
+      const sortedEvents = (data.events || []).sort((a, b) => {
+        const dateA = a.date ? new Date(a.date) : new Date(9999, 11, 31);
+        const dateB = b.date ? new Date(b.date) : new Date(9999, 11, 31);
+        return dateA - dateB;
+      });
+      
+      setInterestedEvents(sortedEvents);
     } catch (error) {
       console.error('Error fetching interested events:', error);
       setError(error.message);
@@ -58,9 +66,13 @@ const MyEventsContent = () => {
       });
       
       if (response.ok) {
+        // Update local state to remove the event
         setInterestedEvents(prevEvents => 
           prevEvents.filter(event => (event._id || event.id) !== eventId)
         );
+        
+        // Show success message
+        console.log('Event removed from saved events');
       }
     } catch (error) {
       console.error('Error removing event:', error);

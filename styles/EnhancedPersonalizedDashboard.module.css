@@ -450,3 +450,160 @@
   margin-left: auto;
   margin-right: auto;
 }
+/* MUSIC TASTE TAB STYLES */
+.genreChartContainer {
+  padding: 1rem 0;
+  height: 220px;
+}
+
+.tasteEvolution,
+.recentDiscoveries,
+.soundCharacteristics {
+  padding: 0.5rem 0;
+}
+
+.tasteList,
+.discoveryList {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.tasteList li,
+.discoveryList li {
+  padding: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tasteList li:last-child,
+.discoveryList li:last-child {
+  border-bottom: none;
+}
+
+.genreName,
+.artistName {
+  font-weight: 500;
+}
+
+.genreChange {
+  font-weight: 600;
+}
+
+.artistGenre {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.characteristicItem {
+  margin-bottom: 1rem;
+}
+
+.characteristicHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.characteristicIcon {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.characteristicName {
+  flex: 1;
+  font-weight: 500;
+}
+
+.characteristicValue {
+  font-weight: 600;
+  color: #00d4ff;
+}
+
+.progressBarContainer {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.characteristicDescription {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* MY EVENTS TAB STYLES */
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.emptyStateIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.emptyState h3 {
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.emptyState p {
+  margin-bottom: 1.5rem;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: #ff006e;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #ef4444;
+}
+
+.retryButton {
+  background: rgba(255, 0, 110, 0.2);
+  border: 1px solid rgba(255, 0, 110, 0.4);
+  color: #ff006e;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  margin-top: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retryButton:hover {
+  background: rgba(255, 0, 110, 0.3);
+  transform: translateY(-1px);
+}
