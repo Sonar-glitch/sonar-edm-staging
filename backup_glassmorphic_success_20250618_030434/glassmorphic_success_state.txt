@@ -1,0 +1,7 @@
+Current commit: ec87136ada3df72922f4f188b3a7985baed9bc62
+Current branch: main
+Backup created: Wed, Jun 18, 2025  3:04:35 AM
+Backup branch: backup_glassmorphic_success_20250618_030434
+Heroku version: v267
+Status: Glassmorphic events working perfectly
+Known issue: /api/user/interested-events endpoint missing (heart buttons show 404)
