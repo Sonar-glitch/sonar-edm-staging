@@ -1,0 +1,157 @@
+/* EXACT MATCH TO EXISTING DESIGN */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+  color: #fff;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* ENHANCED HEADER WITH TAB NAVIGATION */
+.header {
+  padding: 1rem 1rem 1.5rem 1rem; /* Added bottom padding for tabs */
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 0, 110, 0.1);
+  margin-bottom: 0;
+}
+
+.logoSection {
+  margin-bottom: 1.5rem; /* Space for tabs */
+}
+
+.title {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.logo {
+  background: linear-gradient(90deg, #ff006e, #00d4ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.highlight {
+  color: #ff006e;
+  font-weight: 600;
+  text-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+}
+
+/* TAB NAVIGATION - PIXEL PERFECT MATCH */
+.tabNavigation {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  background: rgba(15, 15, 25, 0.8); /* Same as card background */
+  backdrop-filter: blur(20px); /* Same as cards */
+  border-radius: 50px;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Same as cards */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); /* Same as cards */
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.75rem 2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease; /* Same as cards */
+  position: relative;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px); /* Same as card hover */
+}
+
+.activeTab {
+  color: #fff !important;
+  background: linear-gradient(90deg, rgba(255, 0, 110, 0.2), rgba(0, 212, 255, 0.2)) !important;
+  border: 1px solid rgba(255, 0, 110, 0.3);
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.2);
+  text-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: linear-gradient(90deg, #ff006e, #00d4ff); /* Same gradient as logo */
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
+}
+
+/* TAB CONTENT */
+.tabContent {
+  /* Remove the header from child components */
+}
+
+/* Hide the original header in child components */
+.tabContent :global(.header) {
+  display: none;
+}
+
+/* RESPONSIVE DESIGN - EXACT MATCH */
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem 1rem 1.5rem 1rem;
+  }
+  
+  .tabNavigation {
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    border-radius: 15px;
+    padding: 0.5rem;
+  }
+  
+  .tab {
+    padding: 1rem;
+    border-radius: 10px;
+    width: 100%;
+  }
+  
+  .activeTab::after {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab {
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  .title {
+    font-size: 2rem;
+  }
+  
+  .subtitle {
+    font-size: 0.9rem;
+  }
+}

@@ -383,3 +383,70 @@
     gap: 0.5rem;
   }
 }
+
+/* MUSIC TASTE CONTENT STYLES */
+.tasteEvolution,
+.recentDiscoveries {
+  padding: 1rem 0;
+}
+
+.tasteList,
+.discoveryList {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0 0;
+}
+
+.tasteList li,
+.discoveryList li {
+  padding: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tasteList li:last-child,
+.discoveryList li:last-child {
+  border-bottom: none;
+}
+
+.analyticsContent {
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.comingSoon {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(255, 0, 110, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 0, 110, 0.2);
+}
+
+.comingSoon span {
+  color: #ff006e;
+  font-weight: 500;
+}
+
+/* EMPTY STATE STYLES */
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.emptyStateIcon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.emptyState h3 {
+  margin: 1rem 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.emptyState p {
+  margin-bottom: 2rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}

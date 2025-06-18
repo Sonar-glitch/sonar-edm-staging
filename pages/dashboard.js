@@ -1,37 +1,38 @@
 import { useSession, getSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
-import EnhancedPersonalizedDashboard from '../components/EnhancedPersonalizedDashboard';
+import Head from 'next/head';
+import TabNavigationWrapper from '../components/TabNavigationWrapper';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'loading') return; // Still loading
-    if (!session) router.push('/auth/signin'); // Not signed in
-  }, [session, status, router]);
+    if (status === 'unauthenticated') {
+      router.push('/');
+    }
+  }, [status, router]);
 
   if (status === 'loading') {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        background: 'linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)',
-        color: '#fff'
-      }}>
-        <div>Loading...</div>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   if (!session) {
-    return null; // Will redirect to signin
+    return null;
   }
 
-  return <EnhancedPersonalizedDashboard />;
+  return (
+    <>
+      <Head>
+        <title>TIKO - Your EDM Event Discovery Platform</title>
+        <meta name="description" content="Discover EDM events tailored to your music taste" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <TabNavigationWrapper />
+    </>
+  );
 }
 
 export async function getServerSideProps(context) {
@@ -40,7 +41,7 @@ export async function getServerSideProps(context) {
   if (!session) {
     return {
       redirect: {
-        destination: '/auth/signin',
+        destination: '/',
         permanent: false,
       },
     };
