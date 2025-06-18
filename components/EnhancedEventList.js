@@ -5,15 +5,16 @@ export default function EnhancedEventList({ events, loading, error }) {
   const [visibleEvents, setVisibleEvents] = useState(4);
   const [selectedEvent, setSelectedEvent] = useState(null);
   
-  // Enhanced event click handler with validation
+  // FIXED: Enhanced event click handler with proper URL handling
   const handleEventClick = (event) => {
-    console.log('🎯 Event clicked:', event.name, 'Source:', event.source);
+    console.log('🎯 Event clicked:', event.name, 'Source:', event.source, 'URL:', event.ticketUrl);
     
-    if (event.ticketUrl && event.ticketUrl !== '#') {
+    // FIXED: Proper URL validation and handling
+    if (event.ticketUrl && event.ticketUrl !== '#' && event.ticketUrl.startsWith('http')) {
       console.log('✅ Opening ticket URL:', event.ticketUrl);
       window.open(event.ticketUrl, '_blank', 'noopener,noreferrer');
     } else {
-      console.log('ℹ️ No ticket URL available, showing event details');
+      console.log('ℹ️ No valid ticket URL, showing event details modal');
       setSelectedEvent(event);
     }
   };
@@ -35,6 +36,17 @@ export default function EnhancedEventList({ events, loading, error }) {
     const date = new Date(dateString);
     const options = { weekday: 'short', month: 'short', day: 'numeric' };
     return date.toLocaleDateString('en-US', options);
+  };
+  
+  // FIXED: Proper data source label determination
+  const getDataSourceLabel = (event) => {
+    if (event.source === 'ticketmaster') {
+      return 'Live Data';
+    } else if (event.source === 'emergency') {
+      return 'Emergency';
+    } else {
+      return 'Demo Data';
+    }
   };
   
   // Loading state
@@ -127,8 +139,7 @@ export default function EnhancedEventList({ events, loading, error }) {
                   event.source === 'ticketmaster' ? styles.liveTag : 
                   event.source === 'emergency' ? styles.emergencyTag : styles.sampleTag
                 }`}>
-                  {event.source === 'ticketmaster' ? 'Live Data' : 
-                   event.source === 'emergency' ? 'Emergency' : 'Sample'}
+                  {getDataSourceLabel(event)}
                 </span>
               </div>
             </div>
@@ -163,7 +174,10 @@ export default function EnhancedEventList({ events, loading, error }) {
                 <p><strong>Artists:</strong> {selectedEvent.headliners.join(', ')}</p>
               )}
               <p><strong>Match Score:</strong> {selectedEvent.matchScore}%</p>
-              <p><strong>Source:</strong> {selectedEvent.source}</p>
+              <p><strong>Source:</strong> {getDataSourceLabel(selectedEvent)}</p>
+              {selectedEvent.ticketUrl && selectedEvent.ticketUrl !== '#' && (
+                <p><strong>Tickets:</strong> <a href={selectedEvent.ticketUrl} target="_blank" rel="noopener noreferrer">Buy Tickets</a></p>
+              )}
             </div>
           </div>
         </div>
