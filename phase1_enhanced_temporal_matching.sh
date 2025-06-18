@@ -1,3 +1,15 @@
+#!/bin/bash
+
+# 🎯 PHASE 1: ENHANCED TEMPORAL MATCHING SYSTEM
+# =============================================
+
+echo "🎯 PHASE 1: ENHANCED TEMPORAL MATCHING SYSTEM"
+echo "============================================="
+
+# Create enhanced events API with sophisticated temporal matching
+echo "✅ Step 1: Creating enhanced temporal matching system..."
+
+cat > pages/api/events/index.js << 'EOF'
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import axios from 'axios';
@@ -714,3 +726,77 @@ function calculateEDMRelevance(event, eventGenres, artists) {
 function calculateEmergencyEventScore(enhancedUserProfile) {
   return enhancedUserProfile ? 65 : 60;
 }
+EOF
+
+echo "✅ Step 2: Creating deployment script..."
+
+cat > deploy_enhanced_temporal_matching.sh << 'EOF'
+#!/bin/bash
+
+echo "🚀 DEPLOYING ENHANCED TEMPORAL MATCHING SYSTEM"
+echo "=============================================="
+
+echo "✅ Step 1: Adding changes to git..."
+git add .
+
+echo "✅ Step 2: Committing enhanced temporal matching..."
+git commit -m "PHASE 1: Enhanced Temporal Matching - Time-weighted preferences, negative signals, taste evolution"
+
+echo "✅ Step 3: Deploying to Heroku..."
+git push heroku HEAD:main --force
+
+echo ""
+echo "🎯 ENHANCED TEMPORAL MATCHING DEPLOYED"
+echo "====================================="
+echo ""
+echo "✅ New Features:"
+echo "   - Time-weighted preferences (recent activity prioritized)"
+echo "   - Negative signal processing (removed tracks, skipped content)"
+echo "   - Taste evolution tracking (trending up/down genres)"
+echo "   - Seasonal context matching"
+echo "   - Enhanced caching for stability"
+echo ""
+echo "✅ Sophisticated Scoring Components:"
+echo "   - Genre Matching: 30% (with temporal weighting)"
+echo "   - Artist Matching: 20% (with popularity weighting)"
+echo "   - Venue Quality: 15% (reputation-based)"
+echo "   - EDM Relevance: 10% (keyword matching)"
+echo "   - Time-Weighted Preferences: 15% (NEW)"
+echo "   - Negative Signals: -10% penalty (NEW)"
+echo "   - Taste Evolution: 5% bonus (NEW)"
+echo "   - Seasonal Context: 5% (NEW)"
+echo ""
+echo "🚀 Your staging site with enhanced matching:"
+echo "   https://sonar-edm-staging-ef96efd71e8e.herokuapp.com/dashboard"
+echo ""
+EOF
+
+chmod +x deploy_enhanced_temporal_matching.sh
+
+echo ""
+echo "🎯 PHASE 1 IMPLEMENTATION COMPLETE"
+echo "=================================="
+echo ""
+echo "✅ Enhanced Temporal Matching System Features:"
+echo "   - Time-weighted preferences (recent > medium > long-term)"
+echo "   - Negative signal processing (penalties for removed/skipped content)"
+echo "   - Taste evolution tracking (trending genres, new discoveries)"
+echo "   - Seasonal context matching (current season preferences)"
+echo "   - Enhanced caching for stable, consistent scoring"
+echo ""
+echo "✅ Advanced Spotify Integration:"
+echo "   - Multiple time ranges (short/medium/long-term)"
+echo "   - Genre extraction from tracks and artists"
+echo "   - Popularity-weighted artist matching"
+echo "   - Temporal trend analysis"
+echo ""
+echo "✅ Expected Results:"
+echo "   - More accurate recommendations based on recent activity"
+echo "   - Learning from negative user signals"
+echo "   - Adaptive scoring that evolves with user taste"
+echo "   - Seasonal relevance for better event matching"
+echo ""
+echo "🚀 Ready for deployment and testing!"
+echo "   After deployment, proceed with Step 3: My Events Page"
+echo ""
+
