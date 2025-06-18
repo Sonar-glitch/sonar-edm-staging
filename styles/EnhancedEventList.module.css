@@ -1,154 +1,290 @@
+/* GLASSMORPHIC EVENT CARDS - PRESERVING EXACT LAYOUT */
+
 .container {
-  margin-top: 2rem;
+  margin-top: 2rem; /* PRESERVED: Exact same spacing */
 }
 
 .eventList {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* PRESERVED: Exact same grid */
+  gap: 1.5rem; /* PRESERVED: Exact same gap */
 }
 
+/* GLASSMORPHIC EVENT CARD - ENHANCED FROM ORIGINAL */
 .eventCard {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(0, 255, 255, 0.1);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
+  /* GLASSMORPHIC BACKGROUND */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  
+  /* NEON BORDER - ENHANCED FROM CYAN TO PINK/CYAN GRADIENT */
+  border: 1px solid rgba(255, 0, 110, 0.2);
+  border-radius: 0.75rem; /* PRESERVED: Same border radius */
+  
+  /* GLASSMORPHIC SHADOW */
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  overflow: hidden; /* PRESERVED */
+  transition: all 0.3s ease; /* PRESERVED */
+  cursor: pointer; /* PRESERVED */
+  position: relative; /* PRESERVED */
 }
 
+/* ENHANCED HOVER WITH NEON GLOW */
 .eventCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 255, 255, 0.1);
-  border-color: rgba(0, 255, 255, 0.3);
+  transform: translateY(-5px); /* PRESERVED: Same transform */
+  
+  /* NEON GLOW EFFECT */
+  box-shadow: 
+    0 10px 40px rgba(255, 0, 110, 0.3),
+    0 0 30px rgba(255, 0, 110, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  
+  /* ENHANCED BORDER GLOW */
+  border-color: rgba(255, 0, 110, 0.5);
 }
 
+/* EVENT HEADER - GLASSMORPHIC ENHANCEMENT */
 .eventHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.2);
+  display: flex; /* PRESERVED */
+  justify-content: space-between; /* PRESERVED */
+  align-items: center; /* PRESERVED */
+  padding: 1rem; /* PRESERVED: Exact same padding */
+  
+  /* GLASSMORPHIC HEADER BACKGROUND */
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
 }
 
+/* NEW: EVENT ACTIONS CONTAINER FOR MATCH SCORE + HEART */
+.eventActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* DATE BOX - GLASSMORPHIC ENHANCEMENT */
 .dateBox {
-  background: rgba(0, 0, 0, 0.5);
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.5); /* PRESERVED: Same background */
+  padding: 0.5rem 0.75rem; /* PRESERVED: Exact same padding */
+  border-radius: 0.5rem; /* PRESERVED: Same border radius */
+  
+  /* GLASSMORPHIC ENHANCEMENT */
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .date {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #fff;
+  font-size: 0.9rem; /* PRESERVED */
+  font-weight: 500; /* PRESERVED */
+  color: #fff; /* PRESERVED */
+  
+  /* SUBTLE GLOW */
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .matchScore {
-  display: flex;
-  align-items: center;
+  display: flex; /* PRESERVED */
+  align-items: center; /* PRESERVED */
 }
 
+/* NEON MATCH CIRCLE - ENHANCED WITH PINK/CYAN GRADIENT */
 .matchCircle {
-  width: 3rem;
-  height: 3rem;
+  width: 3rem; /* PRESERVED: Exact same size */
+  height: 3rem; /* PRESERVED: Exact same size */
+  border-radius: 50%; /* PRESERVED */
+  display: flex; /* PRESERVED */
+  align-items: center; /* PRESERVED */
+  justify-content: center; /* PRESERVED */
+  font-weight: 600; /* PRESERVED */
+  font-size: 0.9rem; /* PRESERVED */
+  color: #fff; /* PRESERVED */
+  
+  /* ENHANCED: Pink gradient instead of cyan */
+  background: conic-gradient(
+    rgba(255, 0, 110, 0.8) 75%,
+    rgba(255, 0, 110, 0.2) 0%
+  );
+  
+  /* GLASSMORPHIC ENHANCEMENT */
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+  
+  /* NEON TEXT GLOW */
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* NEW: HEART/LIKE BUTTON */
+.likeButton {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #fff;
-  background: conic-gradient(
-    rgba(0, 255, 255, 0.8) 75%,
-    rgba(0, 255, 255, 0.2) 0%
-  );
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
 }
 
+.likeButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 15px rgba(255, 0, 110, 0.4);
+  border-color: rgba(255, 0, 110, 0.5);
+  transform: scale(1.1);
+}
+
+.likeButton.liked {
+  background: rgba(255, 0, 110, 0.2);
+  border-color: rgba(255, 0, 110, 0.5);
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+}
+
+.likeButton.liking {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.heartIcon {
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+}
+
+.likeSpinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid rgba(255, 0, 110, 0.8);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* EVENT CONTENT - GLASSMORPHIC ENHANCEMENT */
 .eventContent {
-  padding: 1rem;
+  padding: 1rem; /* PRESERVED: Exact same padding */
 }
 
 .eventName {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  color: #fff;
+  font-size: 1.2rem; /* PRESERVED */
+  font-weight: 600; /* PRESERVED */
+  margin-bottom: 0.75rem; /* PRESERVED */
+  color: #fff; /* PRESERVED */
+  
+  /* NEON TEXT GLOW */
+  text-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
 }
 
 .venueInfo {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.75rem; /* PRESERVED */
 }
 
 .venueName {
-  display: block;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 0.25rem;
+  display: block; /* PRESERVED */
+  font-weight: 500; /* PRESERVED */
+  color: rgba(255, 255, 255, 0.9); /* PRESERVED */
+  margin-bottom: 0.25rem; /* PRESERVED */
+  
+  /* SUBTLE GLOW */
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
 }
 
 .venueAddress {
-  display: block;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.6);
+  display: block; /* PRESERVED */
+  font-size: 0.85rem; /* PRESERVED */
+  color: rgba(255, 255, 255, 0.6); /* PRESERVED */
 }
 
 .artistList {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 0.5rem;
+  font-size: 0.9rem; /* PRESERVED */
+  color: rgba(255, 255, 255, 0.8); /* PRESERVED */
+  margin-bottom: 0.5rem; /* PRESERVED */
 }
 
 .artist {
-  display: inline;
+  display: inline; /* PRESERVED */
 }
 
+/* EVENT FOOTER - GLASSMORPHIC ENHANCEMENT */
 .eventFooter {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: rgba(0, 0, 0, 0.2);
-  font-size: 0.8rem;
+  display: flex; /* PRESERVED */
+  justify-content: space-between; /* PRESERVED */
+  padding: 0.75rem 1rem; /* PRESERVED: Exact same padding */
+  font-size: 0.8rem; /* PRESERVED */
+  
+  /* GLASSMORPHIC FOOTER */
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .venueType {
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
+  color: rgba(255, 255, 255, 0.7); /* PRESERVED */
+  background: rgba(255, 255, 255, 0.1); /* PRESERVED */
+  padding: 0.25rem 0.5rem; /* PRESERVED */
+  border-radius: 0.25rem; /* PRESERVED */
+  
+  /* GLASSMORPHIC ENHANCEMENT */
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sourceTag {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem; /* PRESERVED */
+  border-radius: 0.25rem; /* PRESERVED */
+  
+  /* GLASSMORPHIC ENHANCEMENT */
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* ENHANCED LIVE TAG WITH NEON GREEN */
 .liveTag {
-  background: rgba(0, 255, 0, 0.1);
-  color: rgba(0, 255, 0, 0.8);
+  background: rgba(0, 255, 0, 0.1); /* PRESERVED */
+  color: rgba(0, 255, 0, 0.8); /* PRESERVED */
+  
+  /* NEON GLOW */
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
 }
 
 .sampleTag {
-  background: rgba(255, 165, 0, 0.1);
-  color: rgba(255, 165, 0, 0.8);
+  background: rgba(255, 165, 0, 0.1); /* PRESERVED */
+  color: rgba(255, 165, 0, 0.8); /* PRESERVED */
+  
+  /* NEON GLOW */
+  box-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
 }
 
+.emergencyTag {
+  background: rgba(255, 255, 0, 0.1);
+  color: rgba(255, 255, 0, 0.8);
+  box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
+}
+
+/* LOADING STATE - GLASSMORPHIC ENHANCEMENT */
 .loadingContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 0;
+  display: flex; /* PRESERVED */
+  flex-direction: column; /* PRESERVED */
+  align-items: center; /* PRESERVED */
+  justify-content: center; /* PRESERVED */
+  padding: 3rem 0; /* PRESERVED */
 }
 
 .spinner {
-  width: 3rem;
-  height: 3rem;
-  border: 3px solid rgba(0, 255, 255, 0.1);
-  border-top: 3px solid rgba(0, 255, 255, 0.8);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+  width: 3rem; /* PRESERVED */
+  height: 3rem; /* PRESERVED */
+  border: 3px solid rgba(255, 0, 110, 0.1); /* ENHANCED: Pink instead of cyan */
+  border-top: 3px solid rgba(255, 0, 110, 0.8); /* ENHANCED: Pink instead of cyan */
+  border-radius: 50%; /* PRESERVED */
+  animation: spin 1s linear infinite; /* PRESERVED */
+  margin-bottom: 1rem; /* PRESERVED */
+  
+  /* NEON GLOW */
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
 }
 
 @keyframes spin {
@@ -156,63 +292,178 @@
   100% { transform: rotate(360deg); }
 }
 
+/* ERROR CONTAINER - GLASSMORPHIC ENHANCEMENT */
 .errorContainer {
-  text-align: center;
-  padding: 2rem;
-  background: rgba(255, 0, 0, 0.1);
-  border-radius: 0.5rem;
-  margin: 2rem 0;
+  text-align: center; /* PRESERVED */
+  padding: 2rem; /* PRESERVED */
+  background: rgba(255, 0, 0, 0.1); /* PRESERVED */
+  border-radius: 0.5rem; /* PRESERVED */
+  margin: 2rem 0; /* PRESERVED */
+  
+  /* GLASSMORPHIC ENHANCEMENT */
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 0, 0, 0.3);
 }
 
 .errorMessage {
-  color: rgba(255, 100, 100, 0.9);
-  margin-bottom: 1rem;
+  color: rgba(255, 100, 100, 0.9); /* PRESERVED */
+  margin-bottom: 1rem; /* PRESERVED */
 }
 
 .retryButton {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.1); /* PRESERVED */
+  color: #fff; /* PRESERVED */
+  border: none; /* PRESERVED */
+  padding: 0.5rem 1.5rem; /* PRESERVED */
+  border-radius: 0.25rem; /* PRESERVED */
+  cursor: pointer; /* PRESERVED */
+  transition: all 0.2s ease; /* PRESERVED */
+  
+  /* GLASSMORPHIC ENHANCEMENT */
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .retryButton:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.2); /* PRESERVED */
+  box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
 }
 
 .noEventsContainer {
-  text-align: center;
-  padding: 3rem 0;
-  color: rgba(255, 255, 255, 0.7);
+  text-align: center; /* PRESERVED */
+  padding: 3rem 0; /* PRESERVED */
+  color: rgba(255, 255, 255, 0.7); /* PRESERVED */
 }
 
 .showMoreContainer {
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
+  display: flex; /* PRESERVED */
+  justify-content: center; /* PRESERVED */
+  margin-top: 2rem; /* PRESERVED */
 }
 
+/* ENHANCED SHOW MORE BUTTON WITH NEON GRADIENT */
 .showMoreButton {
-  background: linear-gradient(90deg, rgba(0, 200, 255, 0.5), rgba(0, 100, 255, 0.5));
-  color: #fff;
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 2rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  /* ENHANCED: Pink to cyan gradient instead of blue gradient */
+  background: linear-gradient(90deg, rgba(255, 0, 110, 0.5), rgba(0, 212, 255, 0.5));
+  color: #fff; /* PRESERVED */
+  border: none; /* PRESERVED */
+  padding: 0.75rem 2rem; /* PRESERVED */
+  border-radius: 2rem; /* PRESERVED */
+  font-weight: 500; /* PRESERVED */
+  cursor: pointer; /* PRESERVED */
+  transition: all 0.2s ease; /* PRESERVED */
+  
+  /* GLASSMORPHIC ENHANCEMENT */
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 0, 110, 0.3);
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.2);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 .showMoreButton:hover {
-  background: linear-gradient(90deg, rgba(0, 200, 255, 0.7), rgba(0, 100, 255, 0.7));
-  transform: translateY(-2px);
+  /* ENHANCED: Brighter gradient on hover */
+  background: linear-gradient(90deg, rgba(255, 0, 110, 0.7), rgba(0, 212, 255, 0.7));
+  transform: translateY(-2px); /* PRESERVED */
+  
+  /* ENHANCED GLOW */
+  box-shadow: 0 0 30px rgba(255, 0, 110, 0.4);
 }
 
+/* MODAL STYLES - GLASSMORPHIC ENHANCEMENT */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 0, 110, 0.3);
+  border-radius: 1rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modalHeader {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalHeader h2 {
+  color: #fff;
+  margin: 0;
+  text-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background: rgba(255, 0, 110, 0.2);
+  box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+}
+
+.modalBody {
+  padding: 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.modalBody p {
+  margin-bottom: 0.75rem;
+}
+
+.modalBody strong {
+  color: #fff;
+  text-shadow: 0 0 5px rgba(255, 0, 110, 0.3);
+}
+
+.modalBody a {
+  color: rgba(0, 212, 255, 0.9);
+  text-decoration: none;
+  text-shadow: 0 0 5px rgba(0, 212, 255, 0.3);
+}
+
+.modalBody a:hover {
+  color: rgba(0, 212, 255, 1);
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+/* RESPONSIVE DESIGN - PRESERVED */
 @media (max-width: 768px) {
   .eventList {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* PRESERVED */
+  }
+  
+  .eventActions {
+    gap: 0.5rem;
+  }
+  
+  .likeButton {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
   }
 }

@@ -1,15 +1,117 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import styles from '@/styles/EnhancedEventList.module.css';
 
 export default function EnhancedEventList({ events, loading, error }) {
+  const { data: session } = useSession();
   const [visibleEvents, setVisibleEvents] = useState(4);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [likedEvents, setLikedEvents] = useState(new Set());
+  const [likingInProgress, setLikingInProgress] = useState(new Set());
   
-  // FIXED: Enhanced event click handler with proper URL handling
+  // Load user's liked events on component mount
+  useEffect(() => {
+    if (session?.user) {
+      loadLikedEvents();
+    }
+  }, [session]);
+  
+  // Load liked events from API
+  const loadLikedEvents = async () => {
+    try {
+      const response = await fetch('/api/user/interested-events');
+      if (response.ok) {
+        const data = await response.json();
+        const likedEventIds = new Set(data.events.map(event => event.id || event.eventId));
+        setLikedEvents(likedEventIds);
+      }
+    } catch (error) {
+      console.error('Error loading liked events:', error);
+    }
+  };
+  
+  // Handle like/unlike event
+  const handleLikeEvent = async (event, e) => {
+    e.stopPropagation(); // Prevent event card click
+    
+    if (!session?.user) {
+      alert('Please sign in to like events');
+      return;
+    }
+    
+    const eventId = event.id;
+    const isCurrentlyLiked = likedEvents.has(eventId);
+    
+    // Prevent multiple simultaneous requests
+    if (likingInProgress.has(eventId)) return;
+    
+    setLikingInProgress(prev => new Set([...prev, eventId]));
+    
+    try {
+      if (isCurrentlyLiked) {
+        // Unlike event
+        const response = await fetch('/api/user/interested-events', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventId })
+        });
+        
+        if (response.ok) {
+          setLikedEvents(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(eventId);
+            return newSet;
+          });
+          console.log('✅ Event unliked:', event.name);
+        }
+      } else {
+        // Like event
+        const response = await fetch('/api/user/interested-events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            eventId,
+            eventData: {
+              id: event.id,
+              name: event.name,
+              date: event.date,
+              time: event.time,
+              venue: event.venue,
+              address: event.address,
+              city: event.city,
+              ticketUrl: event.ticketUrl,
+              priceRange: event.priceRange,
+              headliners: event.headliners,
+              genres: event.genres,
+              matchScore: event.matchScore,
+              source: event.source,
+              venueType: event.venueType
+            }
+          })
+        });
+        
+        if (response.ok) {
+          setLikedEvents(prev => new Set([...prev, eventId]));
+          console.log('✅ Event liked:', event.name);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      alert('Failed to update event. Please try again.');
+    } finally {
+      setLikingInProgress(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(eventId);
+        return newSet;
+      });
+    }
+  };
+  
+  // Enhanced event click handler with proper URL handling
   const handleEventClick = (event) => {
     console.log('🎯 Event clicked:', event.name, 'Source:', event.source, 'URL:', event.ticketUrl);
     
-    // FIXED: Proper URL validation and handling
+    // Proper URL validation and handling
     if (event.ticketUrl && event.ticketUrl !== '#' && event.ticketUrl.startsWith('http')) {
       console.log('✅ Opening ticket URL:', event.ticketUrl);
       window.open(event.ticketUrl, '_blank', 'noopener,noreferrer');
@@ -38,7 +140,7 @@ export default function EnhancedEventList({ events, loading, error }) {
     return date.toLocaleDateString('en-US', options);
   };
   
-  // FIXED: Proper data source label determination
+  // Proper data source label determination
   const getDataSourceLabel = (event) => {
     if (event.source === 'ticketmaster') {
       return 'Live Data';
@@ -88,62 +190,85 @@ export default function EnhancedEventList({ events, loading, error }) {
     <>
       <div className={styles.container}>
         <div className={styles.eventList}>
-          {events.slice(0, visibleEvents).map((event) => (
-            <div 
-              key={event.id} 
-              className={`${styles.eventCard} ${styles.clickable}`}
-              onClick={() => handleEventClick(event)}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className={styles.eventHeader}>
-                <div className={styles.dateBox}>
-                  <span className={styles.date}>{formatDate(event.date)}</span>
-                </div>
-                <div className={styles.matchScore}>
-                  <div 
-                    className={styles.matchCircle}
-                    style={{
-                      background: `conic-gradient(
-                        rgba(0, 255, 255, 0.8) ${event.matchScore}%,
-                        rgba(0, 255, 255, 0.2) ${event.matchScore}%
-                      )`
-                    }}
-                  >
-                    <span>{event.matchScore}%</span>
+          {events.slice(0, visibleEvents).map((event) => {
+            const isLiked = likedEvents.has(event.id);
+            const isLiking = likingInProgress.has(event.id);
+            
+            return (
+              <div 
+                key={event.id} 
+                className={`${styles.eventCard} ${styles.clickable}`}
+                onClick={() => handleEventClick(event)}
+              >
+                <div className={styles.eventHeader}>
+                  <div className={styles.dateBox}>
+                    <span className={styles.date}>{formatDate(event.date)}</span>
+                  </div>
+                  
+                  <div className={styles.eventActions}>
+                    <div className={styles.matchScore}>
+                      <div 
+                        className={styles.matchCircle}
+                        style={{
+                          background: `conic-gradient(
+                            rgba(255, 0, 110, 0.8) ${event.matchScore}%,
+                            rgba(255, 0, 110, 0.2) ${event.matchScore}%
+                          )`
+                        }}
+                      >
+                        <span>{event.matchScore}%</span>
+                      </div>
+                    </div>
+                    
+                    {/* NEW: Heart/Like Button */}
+                    <button
+                      className={`${styles.likeButton} ${isLiked ? styles.liked : ''} ${isLiking ? styles.liking : ''}`}
+                      onClick={(e) => handleLikeEvent(event, e)}
+                      disabled={isLiking}
+                      title={isLiked ? 'Remove from My Events' : 'Add to My Events'}
+                    >
+                      {isLiking ? (
+                        <div className={styles.likeSpinner}></div>
+                      ) : (
+                        <span className={styles.heartIcon}>
+                          {isLiked ? '❤️' : '🤍'}
+                        </span>
+                      )}
+                    </button>
                   </div>
                 </div>
-              </div>
-              
-              <div className={styles.eventContent}>
-                <h3 className={styles.eventName}>{event.name}</h3>
                 
-                <div className={styles.venueInfo}>
-                  <span className={styles.venueName}>{event.venue}</span>
-                  {event.address && (
-                    <span className={styles.venueAddress}>{event.address}</span>
-                  )}
+                <div className={styles.eventContent}>
+                  <h3 className={styles.eventName}>{event.name}</h3>
+                  
+                  <div className={styles.venueInfo}>
+                    <span className={styles.venueName}>{event.venue}</span>
+                    {event.address && (
+                      <span className={styles.venueAddress}>{event.address}</span>
+                    )}
+                  </div>
+                  
+                  <div className={styles.artistList}>
+                    {event.headliners && event.headliners.map((artist, index) => (
+                      <span key={index} className={styles.artist}>
+                        {artist}{index < event.headliners.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 
-                <div className={styles.artistList}>
-                  {event.headliners && event.headliners.map((artist, index) => (
-                    <span key={index} className={styles.artist}>
-                      {artist}{index < event.headliners.length - 1 ? ', ' : ''}
-                    </span>
-                  ))}
+                <div className={styles.eventFooter}>
+                  <span className={styles.venueType}>{event.venueType}</span>
+                  <span className={`${styles.sourceTag} ${
+                    event.source === 'ticketmaster' ? styles.liveTag : 
+                    event.source === 'emergency' ? styles.emergencyTag : styles.sampleTag
+                  }`}>
+                    {getDataSourceLabel(event)}
+                  </span>
                 </div>
               </div>
-              
-              <div className={styles.eventFooter}>
-                <span className={styles.venueType}>{event.venueType}</span>
-                <span className={`${styles.sourceTag} ${
-                  event.source === 'ticketmaster' ? styles.liveTag : 
-                  event.source === 'emergency' ? styles.emergencyTag : styles.sampleTag
-                }`}>
-                  {getDataSourceLabel(event)}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         
         {events.length > visibleEvents && (
