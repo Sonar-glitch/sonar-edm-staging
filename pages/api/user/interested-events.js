@@ -1,6 +1,16 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
-import clientPromise from '../../../lib/mongodb';
+import { MongoClient } from 'mongodb';
+
+// MongoDB connection
+let client;
+let clientPromise;
+
+if (!global._mongoClientPromise) {
+  client = new MongoClient(process.env.MONGODB_URI);
+  global._mongoClientPromise = client.connect();
+}
+clientPromise = global._mongoClientPromise;
 
 export default async function handler(req, res) {
   try {
