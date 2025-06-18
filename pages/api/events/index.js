@@ -1,340 +1,138 @@
-// Simplified events API implementation
-// Uses only Ticketmaster API with no external dependencies
-// Includes robust fallback mechanisms to ensure events are always displayed
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
-// Import necessary modules
-const axios = require('axios');
+const TICKETMASTER_API_KEY = process.env.TICKETMASTER_API_KEY;
+const TICKETMASTER_BASE_URL = 'https://app.ticketmaster.com/discovery/v2';
 
-// EDM-specific genre IDs for Ticketmaster
-const EDM_GENRE_IDS = [
-  'KnvZfZ7vAvF', // Electronic
-  'KnvZfZ7vAvd', // Dance/Electronic
-  'KnvZfZ7vAeJ', // Dance
-];
-
-// Sample events with valid links - these will always be available as fallback
-const sampleEvents = [
-  {
-    name: "House & Techno Night",
-    venue: "CODA",
-    city: "Toronto",
-    address: "794 Bathurst St",
-    date: "2025-05-03",
-    time: "22:00",
-    image: "https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg",
-    url: "https://www.ticketmaster.ca/electronic-dance-music-tickets/category/10001",
-    matchScore: 85,
-    source: "ticketmaster_sample",
-    genres: ["House", "Techno"]
-  },
-  {
-    name: "Deep House Sessions",
-    venue: "Rebel",
-    city: "Toronto",
-    address: "11 Polson St",
-    date: "2025-05-10",
-    time: "21:00",
-    image: "https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg",
-    url: "https://www.ticketmaster.ca/music-festivals-tickets/category/10005",
-    matchScore: 80,
-    source: "ticketmaster_sample",
-    genres: ["Deep House"]
-  },
-  {
-    name: "Techno Underground",
-    venue: "Vertigo",
-    city: "Toronto",
-    address: "567 Queen St W",
-    date: "2025-05-17",
-    time: "23:00",
-    image: "https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg",
-    url: "https://www.ticketmaster.ca/club-passes-tickets/category/10007",
-    matchScore: 75,
-    source: "ticketmaster_sample",
-    genres: ["Techno"]
-  },
-  {
-    name: "Armin van Buuren",
-    venue: "Rebel",
-    city: "Toronto",
-    address: "11 Polson St",
-    date: "2025-05-05",
-    time: "22:00:00",
-    image: "https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg",
-    url: "https://www.ticketmaster.ca/armin-van-buuren-toronto-ontario-05-05-2025/event/10005E3B8A991F8B",
-    matchScore: 88,
-    source: "ticketmaster_sample",
-    genres: ["Trance", "Progressive"]
-  },
-  {
-    name: "Deadmau5",
-    venue: "CODA",
-    city: "Toronto",
-    address: "794 Bathurst St",
-    date: "2025-05-12",
-    time: "21:00:00",
-    image: "https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg",
-    url: "https://www.ticketmaster.ca/deadmau5-toronto-ontario-05-12-2025/event/10005E3B8A991F8C",
-    matchScore: 82,
-    source: "ticketmaster_sample",
-    genres: ["Progressive House", "Techno"]
-  },
-  {
-    name: "Above & Beyond",
-    venue: "Danforth Music Hall",
-    city: "Toronto",
-    address: "147 Danforth Ave",
-    date: "2025-05-19",
-    time: "20:00:00",
-    image: "https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg",
-    url: "https://www.ticketmaster.ca/above-and-beyond-toronto-ontario-05-19-2025/event/10005E3B8A991F8D",
-    matchScore: 78,
-    source: "ticketmaster_sample",
-    genres: ["Trance", "Progressive"]
-  }
-];
-
-// Simple in-memory cache
-let cache = {
-  timestamp: 0,
-  data: null
-};
-
-// Main handler function
 export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  
-  // Handle OPTIONS request
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+  if (req.method !== 'GET') {
+    return res.status(405).json({ message: 'Method not allowed' });
   }
-  
-  console.log("Starting Simplified Events API handler");
-  
+
   try {
-    // Get user's city from query params or default to Toronto
-    const city = (req.query.city || 'toronto').toLowerCase();
-    console.log(`Requested city: ${city}`);
-    
-    // Get minimum match score from query params or default to 0
-    const minMatchScore = parseInt(req.query.minMatchScore || '0', 10);
-    console.log(`Minimum match score: ${minMatchScore}`);
-    
-    // Check cache first
-    const now = Date.now();
-    const cacheExpired = now - cache.timestamp > 30 * 60 * 1000; // 30 minutes
-    
-    if (cache.data && !cacheExpired) {
-      console.log(`Using cached events data`);
-      
-      // Filter by minimum match score and city
-      const filteredEvents = cache.data.filter(
-        event => event.matchScore >= minMatchScore && 
-                event.city.toLowerCase().includes(city)
-      );
-      
-      // Ensure at least 6 events are returned
-      let eventsToReturn = filteredEvents;
-      if (filteredEvents.length < 6) {
-        console.log(`Not enough events match the criteria, using sample events`);
-        // Use sample events filtered by city
-        const citySamples = sampleEvents.filter(
-          event => event.city.toLowerCase().includes(city)
-        );
-        eventsToReturn = citySamples.length >= 6 ? citySamples : sampleEvents;
-      }
-      
-      return res.status(200).json({
-        events: eventsToReturn,
-        totalEvents: cache.data.length,
-        displayedEvents: eventsToReturn.length,
-        hasMore: eventsToReturn.length < cache.data.length,
-        source: 'cache',
-        timestamp: new Date(cache.timestamp).toISOString(),
-        city: city,
-        minMatchScore: minMatchScore
-      });
+    const session = await getServerSession(req, res, authOptions);
+    if (!session) {
+      return res.status(401).json({ message: 'Unauthorized' });
     }
-    
-    // Get events from Ticketmaster
-    let ticketmasterEvents = [];
-    
-    // Check if we have Ticketmaster API key
-    const ticketmasterApiKey = process.env.TICKETMASTER_API_KEY;
-    console.log("Using Ticketmaster API key:", ticketmasterApiKey ? "Available" : "Not available");
-    
-    // Fetch Ticketmaster events
-    if (ticketmasterApiKey) {
+
+    const { lat = '43.65', lon = '-79.38', city = 'Toronto', radius = '50' } = req.query;
+
+    console.log(`🎯 Events API called for ${city} (${lat}, ${lon})`);
+
+    let realEvents = [];
+    let apiError = null;
+
+    // Try to fetch real events from Ticketmaster with retry logic
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        console.log(`Fetching Ticketmaster events for ${city}`);
+        console.log(`🔄 Attempt ${attempt}: Fetching Ticketmaster events...`);
         
-        // Build the Ticketmaster API URL with EDM genre filters
-        let ticketmasterUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${ticketmasterApiKey}`;
+        const ticketmasterUrl = `${TICKETMASTER_BASE_URL}/events.json?apikey=${TICKETMASTER_API_KEY}&latlong=${lat},${lon}&radius=${radius}&unit=km&classificationName=music&size=50&sort=date,asc`;
         
-        // Add city filter if provided
-        if (city && city !== 'all') {
-          ticketmasterUrl += `&city=${city}`;
-        }
-        
-        // Add EDM genre filters - use a simpler approach
-        ticketmasterUrl += `&classificationName=Electronic`;
-        
-        // Add size parameter to get more results
-        ticketmasterUrl += `&size=50`;
-        
-        console.log(`Ticketmaster URL: ${ticketmasterUrl}`);
-        
-        const response = await axios.get(ticketmasterUrl, {
-          timeout: 10000 // 10 second timeout
+        const response = await fetch(ticketmasterUrl, {
+          timeout: 10000,
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'SonarEDM/1.0'
+          }
         });
+
+        if (!response.ok) {
+          throw new Error(`Ticketmaster API error: ${response.status}`);
+        }
+
+        const data = await response.json();
         
-        if (response.data && response.data._embedded && response.data._embedded.events) {
-          // Process events
-          const events = response.data._embedded.events;
-          console.log(`Received ${events.length} events from Ticketmaster`);
-          
-          ticketmasterEvents = events.map(event => {
-            // Extract genres from classifications
-            const genres = [];
-            if (event.classifications) {
-              for (const classification of event.classifications) {
-                if (classification.genre && classification.genre.name) {
-                  genres.push(classification.genre.name);
-                }
-                if (classification.subGenre && classification.subGenre.name) {
-                  genres.push(classification.subGenre.name);
-                }
-              }
-            }
+        if (data._embedded && data._embedded.events) {
+          realEvents = data._embedded.events.map(event => {
+            const venue = event._embedded?.venues?.[0];
+            const artists = event._embedded?.attractions?.map(a => a.name) || [];
             
-            // Default image if none available
-            const defaultImage = "https://s1.ticketm.net/dam/a/1d1/47cc9b10-4904-4dec-b1d6-539e44a521d1_1825531_TABLET_LANDSCAPE_LARGE_16_9.jpg";
-            
-            // Find best image
-            let imageUrl = defaultImage;
-            if (event.images && event.images.length > 0) {
-              // Try to find a large image
-              const largeImages = event.images.filter(img => 
-                img.width > 500 && img.url && img.url.startsWith('https')
-              );
-              
-              if (largeImages.length > 0) {
-                imageUrl = largeImages[0].url;
-              } else if (event.images[0].url) {
-                imageUrl = event.images[0].url;
-              }
-            }
+            // Enhanced relevance scoring based on EDM keywords
+            const edmKeywords = ['house', 'techno', 'electronic', 'edm', 'dance', 'trance', 'dubstep', 'drum', 'bass'];
+            const eventText = `${event.name} ${artists.join(' ')} ${event.classifications?.[0]?.genre?.name || ''}`.toLowerCase();
+            const edmMatches = edmKeywords.filter(keyword => eventText.includes(keyword)).length;
+            const baseScore = Math.min(85 + (edmMatches * 5), 99);
             
             return {
               id: event.id,
               name: event.name,
-              venue: event._embedded?.venues?.[0]?.name || 'Unknown Venue',
-              city: event._embedded?.venues?.[0]?.city?.name || city,
-              address: event._embedded?.venues?.[0]?.address?.line1 || '',
-              date: event.dates?.start?.localDate || '',
-              time: event.dates?.start?.localTime || '',
-              image: imageUrl,
-              url: event.url || `https://www.ticketmaster.ca/electronic-dance-music-tickets/category/10001`,
-              matchScore: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
+              date: event.dates?.start?.localDate,
+              time: event.dates?.start?.localTime,
+              venue: venue?.name || 'Venue TBA',
+              address: venue?.address?.line1 || venue?.city?.name || 'Address TBA',
+              city: venue?.city?.name || city,
+              ticketUrl: event.url,
+              priceRange: event.priceRanges?.[0] ? `$${event.priceRanges[0].min}-${event.priceRanges[0].max}` : 'Price TBA',
+              headliners: artists.slice(0, 3),
+              matchScore: baseScore + Math.floor(Math.random() * 10),
               source: 'ticketmaster',
-              genres: genres.length > 0 ? genres : ['Electronic'] // Default to Electronic if no genres found
+              venueType: venue?.name?.toLowerCase().includes('club') ? 'Club' : 
+                        venue?.name?.toLowerCase().includes('festival') ? 'Festival' : 'Venue'
             };
           });
-          
-          console.log(`Processed ${ticketmasterEvents.length} events from Ticketmaster`);
-          
-          // Update cache
-          cache = {
-            timestamp: now,
-            data: ticketmasterEvents
-          };
-        } else {
-          console.log('No events found in Ticketmaster response');
-          console.log('Response structure:', JSON.stringify(response.data).substring(0, 200) + '...');
+
+          console.log(`✅ Successfully fetched ${realEvents.length} real events from Ticketmaster`);
+          break; // Success, exit retry loop
         }
       } catch (error) {
-        console.error(`Error fetching Ticketmaster events:`, error.message);
-        if (error.response) {
-          console.error('Response status:', error.response.status);
-          console.error('Response data:', JSON.stringify(error.response.data).substring(0, 200) + '...');
+        console.error(`❌ Attempt ${attempt} failed:`, error.message);
+        apiError = error;
+        if (attempt === 3) {
+          console.error('🚨 All Ticketmaster API attempts failed');
         }
-        // Use sample events as fallback
-        console.log(`Using sample events due to Ticketmaster API error`);
-        ticketmasterEvents = sampleEvents;
       }
-    } else {
-      console.log('No Ticketmaster API key, using sample events');
-      ticketmasterEvents = sampleEvents;
     }
+
+    // Enhanced fallback logic - only use emergency samples if NO real events
+    let finalEvents = realEvents;
     
-    // If no events from Ticketmaster, use sample events
-    if (!ticketmasterEvents || ticketmasterEvents.length === 0) {
-      console.log('No events from Ticketmaster, using sample events');
-      ticketmasterEvents = sampleEvents;
-    }
-    
-    // Filter by city if needed
-    let filteredEvents = ticketmasterEvents;
-    if (city && city !== 'all') {
-      filteredEvents = ticketmasterEvents.filter(
-        event => event.city.toLowerCase().includes(city)
-      );
+    if (realEvents.length === 0) {
+      console.log('⚠️ No real events found, using emergency fallback samples');
       
-      // If no events for the requested city, use all events
-      if (filteredEvents.length === 0) {
-        console.log(`No events found for ${city}, using all events`);
-        filteredEvents = ticketmasterEvents;
-      }
+      const emergencyEvents = [
+        {
+          id: 'emergency-1',
+          name: 'Emergency EDM Night',
+          date: '2025-07-15',
+          venue: 'Local Club',
+          address: 'Downtown Area',
+          city: city,
+          ticketUrl: '#',
+          matchScore: 75,
+          source: 'emergency',
+          headliners: ['Local DJ'],
+          venueType: 'Club'
+        }
+      ];
+      
+      finalEvents = emergencyEvents;
     }
-    
-    // Filter by minimum match score
-    filteredEvents = filteredEvents.filter(
-      event => event.matchScore >= minMatchScore
-    );
-    
-    // Ensure at least 6 events are returned
-    let eventsToReturn = filteredEvents;
-    if (filteredEvents.length < 6) {
-      console.log(`Not enough events match the criteria, using sample events`);
-      // Use sample events filtered by city
-      const citySamples = sampleEvents.filter(
-        event => event.city.toLowerCase().includes(city)
-      );
-      eventsToReturn = citySamples.length >= 6 ? citySamples : sampleEvents;
-    }
-    
-    // Update cache with all events
-    cache = {
-      timestamp: now,
-      data: ticketmasterEvents
-    };
-    
-    // Return events
-    return res.status(200).json({
-      events: eventsToReturn,
-      totalEvents: ticketmasterEvents.length,
-      displayedEvents: eventsToReturn.length,
-      hasMore: eventsToReturn.length < ticketmasterEvents.length,
-      city: city,
-      minMatchScore: minMatchScore,
-      source: 'api'
+
+    // Sort by relevance score and date
+    finalEvents.sort((a, b) => {
+      if (a.source === 'ticketmaster' && b.source !== 'ticketmaster') return -1;
+      if (b.source === 'ticketmaster' && a.source !== 'ticketmaster') return 1;
+      return b.matchScore - a.matchScore;
     });
-    
+
+    console.log(`🎯 Returning ${finalEvents.length} events (${realEvents.length} real, ${finalEvents.length - realEvents.length} emergency)`);
+
+    res.status(200).json({
+      events: finalEvents,
+      total: finalEvents.length,
+      realCount: realEvents.length,
+      source: realEvents.length > 0 ? 'ticketmaster' : 'emergency',
+      location: { city, lat, lon }
+    });
+
   } catch (error) {
-    console.error("Error in events API:", error);
-    
-    // Return sample events as fallback
-    return res.status(200).json({
-      events: sampleEvents,
-      totalEvents: sampleEvents.length,
-      displayedEvents: sampleEvents.length,
-      hasMore: false,
-      source: 'error_fallback',
-      error: error.message
+    console.error('🚨 Events API critical error:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch events',
+      error: error.message,
+      events: [],
+      total: 0
     });
   }
 }
