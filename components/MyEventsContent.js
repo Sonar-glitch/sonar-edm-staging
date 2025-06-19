@@ -1,159 +1,120 @@
 import React, { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import EnhancedEventList from './EnhancedEventList';
-import styles from '@/styles/EnhancedPersonalizedDashboard.module.css';
+import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
-/**
- * Enhanced My Events Content Component
- * 
- * Displays user's saved/liked events with:
- * - Proper error handling
- * - Loading states
- * - Empty states
- * - Retry functionality
- */
 const MyEventsContent = () => {
-  const { data: session } = useSession();
-  const [savedEvents, setSavedEvents] = useState([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [dataSource, setDataSource] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchSavedEvents();
-    }
-  }, [session]);
-
-  const fetchSavedEvents = async () => {
+  const fetchMyEvents = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/user/interested-events');
-      
+      const response = await fetch('/api/user/interested-events', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch saved events: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       
-      // Check for API-level errors
-      if (data.error || !data.success) {
-        throw new Error(data.message || 'Error fetching saved events');
+      if (data.success) {
+        setEvents(data.events || []);
+      } else {
+        throw new Error(data.message || 'Failed to fetch events');
       }
-      
-      // Set data source for verification
-      setDataSource({
-        source: data.source || 'unknown',
-        timestamp: data.timestamp || new Date().toISOString()
-      });
-      
-      // Extract the actual event objects from the response
-      // Handle both array formats: [{event: {...}}, ...] and [{...}, ...]
-      const events = Array.isArray(data.events) 
-        ? data.events.map(item => item.event || item).filter(Boolean)
-        : [];
-      
-      setSavedEvents(events);
-    } catch (error) {
-      console.error('Error fetching saved events:', error);
-      setError(error.message);
+    } catch (err) {
+      console.error('Error fetching my events:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchMyEvents();
+  }, []);
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    fetchMyEvents();
+  };
+
   const handleRemoveEvent = async (eventId) => {
     try {
-      setError(null);
-      
-      const response = await fetch('/api/user/interested-events', {
+      const response = await fetch(`/api/user/interested-events?eventId=${eventId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ eventId }),
       });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to remove event: ${response.status}`);
-      }
-      
+
       const data = await response.json();
       
-      if (!data.success) {
+      if (data.success) {
+        setEvents(prev => prev.filter(event => event.eventId !== eventId));
+      } else {
         throw new Error(data.message || 'Failed to remove event');
       }
-      
-      // Update the local state to remove the event
-      setSavedEvents(savedEvents.filter(event => event.id !== eventId));
-    } catch (error) {
-      console.error('Error removing event:', error);
-      setError(error.message);
+    } catch (err) {
+      console.error('Error removing event:', err);
+      setError(err.message);
     }
   };
 
-  // Loading state with glassmorphic styling matching the theme
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
-        <div className={styles.glassmorphicCard}>
-          <div className={styles.loadingSpinner}></div>
-          <p>Loading your saved events...</p>
-        </div>
+        <div className={styles.loadingSpinner}></div>
+        <p className={styles.loadingText}>Loading your saved events...</p>
       </div>
     );
   }
 
-  // Error state with retry button
   if (error) {
     return (
       <div className={styles.errorContainer}>
-        <div className={styles.glassmorphicCard}>
-          <h3 className={styles.errorTitle}>Unable to load events</h3>
-          <p className={styles.errorMessage}>{error}</p>
-          <button 
-            className={styles.retryButton}
-            onClick={fetchSavedEvents}
-          >
-            Try Again
-          </button>
-        </div>
+        <div className={styles.errorIcon}>⚠️</div>
+        <h3 className={styles.errorTitle}>Unable to Load Events</h3>
+        <p className={styles.errorMessage}>{error}</p>
+        <button 
+          className={styles.retryButton}
+          onClick={handleRetry}
+        >
+          Try Again {retryCount > 0 && `(${retryCount})`}
+        </button>
       </div>
     );
   }
 
-  // Empty state
-  if (savedEvents.length === 0) {
+  if (events.length === 0) {
     return (
-      <div className={styles.emptyStateContainer}>
-        <div className={styles.glassmorphicCard}>
-          <h2 className={styles.emptyStateTitle}>No Saved Events</h2>
-          <p className={styles.emptyStateMessage}>
-            You haven't saved any events yet. Browse the dashboard and click the heart icon to save events you're interested in.
-          </p>
-        </div>
+      <div className={styles.emptyContainer}>
+        <div className={styles.emptyIcon}>💫</div>
+        <h3 className={styles.emptyTitle}>No Saved Events Yet</h3>
+        <p className={styles.emptyMessage}>
+          Start exploring events in the Dashboard tab and click the heart icon to save events you're interested in.
+        </p>
       </div>
     );
   }
 
-  // Events list
   return (
     <div className={styles.myEventsContainer}>
-      <h2 className={styles.sectionTitle}>Your Saved Events</h2>
-      
-      {/* Data source indicator (only visible in development) */}
-      {process.env.NODE_ENV === 'development' && dataSource && (
-        <div className={styles.dataSourceIndicator}>
-          Source: {dataSource.source} | Updated: {new Date(dataSource.timestamp).toLocaleTimeString()}
-        </div>
-      )}
+      <div className={styles.myEventsHeader}>
+        <h2 className={styles.myEventsTitle}>My Saved Events</h2>
+        <span className={styles.eventCount}>{events.length} event{events.length !== 1 ? 's' : ''}</span>
+      </div>
       
       <EnhancedEventList 
-        events={savedEvents} 
+        events={events}
         onRemoveEvent={handleRemoveEvent}
-        showMatchScore={false}
+        showRemoveButton={true}
       />
     </div>
   );
