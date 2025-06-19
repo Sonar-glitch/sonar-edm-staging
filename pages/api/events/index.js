@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
+import { connectToDatabase } from '../../lib/mongodb';
 
 const TICKETMASTER_API_KEY = process.env.TICKETMASTER_API_KEY;
 const TICKETMASTER_BASE_URL = 'https://app.ticketmaster.com/discovery/v2';
@@ -22,26 +23,62 @@ export default async function handler(req, res) {
     let realEvents = [];
     let apiError = null;
 
-    // Try to fetch real events from Ticketmaster with retry logic
+    // Try to fetch real events from MongoDB with retry logic (preserving original structure)
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        console.log(`🔄 Attempt ${attempt}: Fetching Ticketmaster events...`);
+        console.log(`🔄 Attempt ${attempt}: Fetching MongoDB events...`);
         
-        const ticketmasterUrl = `${TICKETMASTER_BASE_URL}/events.json?apikey=${TICKETMASTER_API_KEY}&latlong=${lat},${lon}&radius=${radius}&unit=km&classificationName=music&size=50&sort=date,asc`;
+        // MINIMAL CHANGE: Replace Ticketmaster fetch with MongoDB query
+        const { db } = await connectToDatabase();
+        const eventsCollection = db.collection('events');
         
-        const response = await fetch(ticketmasterUrl, {
-          timeout: 10000,
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'SonarEDM/1.0'
+        const latitude = parseFloat(lat);
+        const longitude = parseFloat(lon);
+        const radiusInMeters = parseInt(radius) * 1000;
+        
+        const mongoEvents = await eventsCollection.find({
+          location: {
+            $near: {
+              $geometry: {
+                type: "Point",
+                coordinates: [longitude, latitude]
+              },
+              $maxDistance: radiusInMeters
+            }
+          },
+          date: { $gte: new Date() },
+          status: { $ne: 'cancelled' }
+        })
+        .limit(50)
+        .sort({ date: 1 })
+        .toArray();
+
+        // Transform MongoDB data to match Ticketmaster structure (preserving original logic)
+        const data = {
+          _embedded: {
+            events: mongoEvents.map(event => ({
+              id: event.sourceId || event._id.toString(),
+              name: event.name,
+              dates: {
+                start: {
+                  localDate: event.date ? event.date.toISOString().split('T')[0] : null,
+                  localTime: event.startTime
+                }
+              },
+              _embedded: {
+                venues: [{
+                  name: event.venue?.name,
+                  address: { line1: event.venue?.address },
+                  city: { name: event.venue?.city }
+                }],
+                attractions: (event.artistList || event.artists?.map(a => a.name) || []).map(name => ({ name }))
+              },
+              url: event.url,
+              priceRanges: event.priceRange ? [{ min: event.priceRange.min, max: event.priceRange.max }] : null,
+              classifications: event.genres ? [{ genre: { name: event.genres[0] } }] : null
+            }))
           }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Ticketmaster API error: ${response.status}`);
-        }
-
-        const data = await response.json();
+        };
         
         if (data._embedded && data._embedded.events) {
           realEvents = data._embedded.events.map(event => {
@@ -88,20 +125,20 @@ export default async function handler(req, res) {
               priceRange: event.priceRanges?.[0] ? `$${event.priceRanges[0].min}-${event.priceRanges[0].max}` : 'Price TBA',
               headliners: artists.slice(0, 3),
               matchScore: finalScore,
-              source: 'ticketmaster',
+              source: 'mongodb',
               venueType: venueType,
               detectedGenres: artistGenres
             };
           });
 
-          console.log(`✅ Successfully fetched ${realEvents.length} real events from Ticketmaster`);
+          console.log(`✅ Successfully fetched ${realEvents.length} real events from MongoDB`);
           break; // Success, exit retry loop
         }
       } catch (error) {
         console.error(`❌ Attempt ${attempt} failed:`, error.message);
         apiError = error;
         if (attempt === 3) {
-          console.error('🚨 All Ticketmaster API attempts failed');
+          console.error('🚨 All MongoDB attempts failed');
         }
       }
     }
@@ -168,7 +205,7 @@ export default async function handler(req, res) {
       events: finalEvents,
       total: finalEvents.length,
       realCount: realEvents.length,
-      source: realEvents.length > 0 ? "ticketmaster" : "emergency",
+      source: realEvents.length > 0 ? "mongodb" : "emergency",
       timestamp: new Date().toISOString(),
       location: { city, lat, lon }
     });
@@ -299,3 +336,4 @@ function detectGenresFromArtists(artists) {
   
   return Array.from(detectedGenres);
 }
+
