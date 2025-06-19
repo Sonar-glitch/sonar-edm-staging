@@ -651,3 +651,161 @@
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.8);
 }
+
+/* MongoDB Fix: Loading, Error, and Empty States (preserving theme) */
+.loadingContainer, .errorContainer, .emptyStateContainer {
+  width: 100%;
+  padding: 2rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.glassmorphicCard {
+  background: rgba(15, 15, 25, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 1rem;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #ff006e;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorTitle {
+  color: #ff006e;
+  margin-bottom: 0.5rem;
+}
+
+.errorMessage {
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.retryButton {
+  background: linear-gradient(90deg, #ff006e 0%, #00d4ff 100%);
+  border: none;
+  border-radius: 25px;
+  padding: 0.5rem 1.5rem;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.retryButton:hover {
+  transform: translateY(-2px);
+}
+
+.emptyStateTitle {
+  margin-bottom: 0.5rem;
+  background: linear-gradient(90deg, #ff006e 0%, #00d4ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.emptyStateMessage {
+  opacity: 0.8;
+  line-height: 1.5;
+}
+
+.dataSourceIndicator {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  text-align: right;
+  margin-bottom: 0.5rem;
+}
+
+/* MongoDB Fix: Loading, Error, and Empty States (preserving theme) */
+.loadingContainer, .errorContainer, .emptyStateContainer {
+  width: 100%;
+  padding: 2rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.glassmorphicCard {
+  background: rgba(15, 15, 25, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 1rem;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #ff006e;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorTitle {
+  color: #ff006e;
+  margin-bottom: 0.5rem;
+}
+
+.errorMessage {
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.retryButton {
+  background: linear-gradient(90deg, #ff006e 0%, #00d4ff 100%);
+  border: none;
+  border-radius: 25px;
+  padding: 0.5rem 1.5rem;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.retryButton:hover {
+  transform: translateY(-2px);
+}
+
+.emptyStateTitle {
+  margin-bottom: 0.5rem;
+  background: linear-gradient(90deg, #ff006e 0%, #00d4ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.emptyStateMessage {
+  opacity: 0.8;
+  line-height: 1.5;
+}
+
+.dataSourceIndicator {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  text-align: right;
+  margin-bottom: 0.5rem;
+}
