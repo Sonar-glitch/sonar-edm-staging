@@ -150,11 +150,26 @@ export default async function handler(req, res) {
 
     console.log(`🎯 Returning ${finalEvents.length} events (${realEvents.length} real, ${finalEvents.length - realEvents.length} emergency)`);
 
+    // Sort events by match score (highest first) and then by date (most recent first)
+    finalEvents.sort((a, b) => {
+      // First sort by match score (highest first)
+      if (b.matchScore !== a.matchScore) {
+        return b.matchScore - a.matchScore;
+      }
+      
+      // If match scores are equal, sort by date (most recent first)
+      const dateA = a.date ? new Date(a.date) : new Date(9999, 11, 31);
+      const dateB = b.date ? new Date(b.date) : new Date(9999, 11, 31);
+      
+      return dateA - dateB;
+    });
+
     res.status(200).json({
       events: finalEvents,
       total: finalEvents.length,
       realCount: realEvents.length,
-      source: realEvents.length > 0 ? 'ticketmaster' : 'emergency',
+      source: realEvents.length > 0 ? "ticketmaster" : "emergency",
+      timestamp: new Date().toISOString(),
       location: { city, lat, lon }
     });
 

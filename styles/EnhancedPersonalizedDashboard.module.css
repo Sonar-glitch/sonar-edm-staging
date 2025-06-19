@@ -607,3 +607,47 @@
   background: rgba(255, 0, 110, 0.3);
   transform: translateY(-1px);
 }
+/* DATA VERIFICATION STYLES */
+.dataVerification {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+}
+
+.verifyIcon {
+  color: #00d4ff;
+  margin-right: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.verifyText {
+  font-size: 0.7rem;
+  color: #00d4ff;
+  font-weight: 500;
+}
+
+.verificationDetails {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: rgba(15, 15, 25, 0.95);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 4px;
+  padding: 0.5rem;
+  width: 250px;
+  z-index: 10;
+  margin-top: 0.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.verificationDetails p {
+  margin: 0.25rem 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+}

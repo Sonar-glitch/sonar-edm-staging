@@ -8,6 +8,8 @@ const MusicTasteContent = () => {
   const [spotifyData, setSpotifyData] = useState(null);
   const [dataStatus, setDataStatus] = useState('loading');
   const [tasteProfile, setTasteProfile] = useState(null);
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationData, setVerificationData] = useState(null);
 
   useEffect(() => {
     if (session?.user) {
@@ -19,6 +21,10 @@ const MusicTasteContent = () => {
   const loadSpotifyData = async () => {
     try {
       setDataStatus('loading');
+      
+      // Log the start of verification for transparency
+      console.log('SPOTIFY_DATA_SOURCE_VERIFICATION_START');
+      
       const response = await fetch('/api/spotify/user-data');
       
       if (!response.ok) {
@@ -26,11 +32,34 @@ const MusicTasteContent = () => {
       }
       
       const data = await response.json();
+      
+      // Log the raw data and verification info
+      console.log('SPOTIFY_API_RAW_DATA:', data);
+      console.log('SPOTIFY_DATA_SOURCE:', data.source || 'unknown');
+      console.log('SPOTIFY_DATA_TIMESTAMP:', data.timestamp || 'unknown');
+      
+      // Only set Real Data if we have a valid source and timestamp
+      const isRealData = data.source === 'spotify_api' && data.timestamp;
+      setDataStatus(isRealData ? 'real' : 'demo');
+      
+      console.log('SPOTIFY_DATA_IS_REAL:', isRealData);
+      console.log('SPOTIFY_DATA_SOURCE_VERIFICATION_END');
+      
+      // Store verification data for UI display
+      setVerificationData({
+        source: data.source || 'unknown',
+        timestamp: data.timestamp || 'unknown',
+        status: response.status
+      });
+      
       setSpotifyData(data);
-      setDataStatus('real');
     } catch (error) {
-      console.error('Error loading Spotify data:', error);
+      console.error('SPOTIFY_DATA_ERROR:', error);
       setDataStatus('error');
+      setVerificationData({
+        source: 'error',
+        error: error.message
+      });
     }
   };
 
@@ -52,33 +81,42 @@ const MusicTasteContent = () => {
   const getDataIndicator = () => {
     switch (dataStatus) {
       case 'real': return 'Real Data';
+      case 'demo': return 'Demo Data';
       case 'loading': return 'Loading...';
       case 'error': return 'Error';
       default: return 'Unknown';
     }
   };
 
-  // Calculate taste evolution based on historical data
+  // Get taste evolution based on data
   const getTasteEvolution = () => {
-    // Default evolution data
+    if (spotifyData?.tasteEvolution && dataStatus === 'real') {
+      return spotifyData.tasteEvolution;
+    }
+    
+    // Clearly marked demo data
     return [
-      { genre: 'Progressive House', change: '+25%' },
-      { genre: 'Melodic Techno', change: '+18%' },
-      { genre: 'Deep House', change: '+12%' },
-      { genre: 'Tech House', change: '+8%' },
-      { genre: 'Trance', change: '-5%' }
+      { genre: 'Progressive House', change: '+25%', source: 'demo' },
+      { genre: 'Melodic Techno', change: '+18%', source: 'demo' },
+      { genre: 'Deep House', change: '+12%', source: 'demo' },
+      { genre: 'Tech House', change: '+8%', source: 'demo' },
+      { genre: 'Trance', change: '-5%', source: 'demo' }
     ];
   };
 
   // Get recent discoveries
   const getRecentDiscoveries = () => {
-    // Default discoveries
+    if (spotifyData?.recentDiscoveries && dataStatus === 'real') {
+      return spotifyData.recentDiscoveries;
+    }
+    
+    // Clearly marked demo data
     return [
-      { artist: 'Artbat', genre: 'Melodic Techno' },
-      { artist: 'Tale Of Us', genre: 'Progressive House' },
-      { artist: 'Adriatique', genre: 'Deep House' },
-      { artist: 'Anyma', genre: 'Melodic Techno' },
-      { artist: 'Mathame', genre: 'Progressive House' }
+      { artist: 'Artbat', genre: 'Melodic Techno', source: 'demo' },
+      { artist: 'Tale Of Us', genre: 'Progressive House', source: 'demo' },
+      { artist: 'Adriatique', genre: 'Deep House', source: 'demo' },
+      { artist: 'Anyma', genre: 'Melodic Techno', source: 'demo' },
+      { artist: 'Mathame', genre: 'Progressive House', source: 'demo' }
     ];
   };
 
@@ -93,6 +131,22 @@ const MusicTasteContent = () => {
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>Your Top 5 Genres</h2>
               <span className={styles.dataIndicator}>{getDataIndicator()}</span>
+              
+              {/* Data Verification UI */}
+              {dataStatus === 'real' && (
+                <div className={styles.dataVerification} onClick={() => setShowVerification(!showVerification)}>
+                  <span className={styles.verifyIcon}>✓</span>
+                  <span className={styles.verifyText}>Verified</span>
+                  
+                  {showVerification && verificationData && (
+                    <div className={styles.verificationDetails}>
+                      <p>Source: {verificationData.source}</p>
+                      <p>Fetched: {new Date(verificationData.timestamp).toLocaleString()}</p>
+                      <p>API Status: {verificationData.status}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className={styles.genreChartContainer}>
               <Top5GenresSpiderChart 
@@ -160,10 +214,22 @@ const MusicTasteContent = () => {
                 <div className={styles.characteristicHeader}>
                   <span className={styles.characteristicIcon}>⚡</span>
                   <span className={styles.characteristicName}>Energy</span>
-                  <span className={styles.characteristicValue}>75%</span>
+                  <span className={styles.characteristicValue}>
+                    {spotifyData?.audioFeatures?.energy ? 
+                      `${Math.round(spotifyData.audioFeatures.energy * 100)}%` : 
+                      '75%'}
+                  </span>
                 </div>
                 <div className={styles.progressBarContainer}>
-                  <div className={styles.progressBar} style={{ width: '75%', background: 'linear-gradient(90deg, #ff006e, #ff5757)' }}></div>
+                  <div 
+                    className={styles.progressBar} 
+                    style={{ 
+                      width: spotifyData?.audioFeatures?.energy ? 
+                        `${Math.round(spotifyData.audioFeatures.energy * 100)}%` : 
+                        '75%', 
+                      background: 'linear-gradient(90deg, #ff006e, #ff5757)' 
+                    }}
+                  ></div>
                 </div>
                 <div className={styles.characteristicDescription}>How energetic and intense your music feels</div>
               </div>
@@ -172,10 +238,22 @@ const MusicTasteContent = () => {
                 <div className={styles.characteristicHeader}>
                   <span className={styles.characteristicIcon}>💃</span>
                   <span className={styles.characteristicName}>Danceability</span>
-                  <span className={styles.characteristicValue}>82%</span>
+                  <span className={styles.characteristicValue}>
+                    {spotifyData?.audioFeatures?.danceability ? 
+                      `${Math.round(spotifyData.audioFeatures.danceability * 100)}%` : 
+                      '82%'}
+                  </span>
                 </div>
                 <div className={styles.progressBarContainer}>
-                  <div className={styles.progressBar} style={{ width: '82%', background: 'linear-gradient(90deg, #00d4ff, #00a2ff)' }}></div>
+                  <div 
+                    className={styles.progressBar} 
+                    style={{ 
+                      width: spotifyData?.audioFeatures?.danceability ? 
+                        `${Math.round(spotifyData.audioFeatures.danceability * 100)}%` : 
+                        '82%', 
+                      background: 'linear-gradient(90deg, #00d4ff, #00a2ff)' 
+                    }}
+                  ></div>
                 </div>
                 <div className={styles.characteristicDescription}>How suitable your music is for dancing</div>
               </div>

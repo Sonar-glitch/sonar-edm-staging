@@ -62,19 +62,19 @@ const DashboardPage = () => {
       {/* Tab Navigation */}
       <nav className={styles.tabNavigation}>
         <button
-          className={}
+          className={`${styles.tabButton} ${activeTab === 'dashboard' ? styles.activeTabButton : ''}`}
           onClick={() => setActiveTab('dashboard')}
         >
           Dashboard
         </button>
         <button
-          className={}
+          className={`${styles.tabButton} ${activeTab === 'music-taste' ? styles.activeTabButton : ''}`}
           onClick={() => setActiveTab('music-taste')}
         >
           Music Taste
         </button>
         <button
-          className={}
+          className={`${styles.tabButton} ${activeTab === 'my-events' ? styles.activeTabButton : ''}`}
           onClick={() => setActiveTab('my-events')}
         >
           My Events
@@ -94,7 +94,47 @@ const DashboardPage = () => {
       </main>
 
       {/* Verification Tool - For technical data source verification */}
-      <script dangerouslySetInnerHTML={{ __html: }} />
+      <script dangerouslySetInnerHTML={{ __html: `
+        window.verifyTikoData = function() {
+          console.log('🔍 TIKO DATA VERIFICATION TOOL');
+          console.log('------------------------------');
+          
+          console.log('Checking Spotify data...');
+          fetch('/api/spotify/user-data')
+            .then(r => r.json())
+            .then(data => {
+              console.log('📊 SPOTIFY DATA SOURCE:', data.source);
+              console.log('⏰ SPOTIFY DATA TIMESTAMP:', data.timestamp);
+              console.log('🎵 TOP ARTISTS:', data.topArtists?.map(a => a.name).join(', '));
+              console.log('🎧 TOP GENRES:', data.topGenres?.map(g => g.name).join(', '));
+              console.log('📱 RAW DATA:', data);
+            })
+            .catch(err => console.error('Error fetching Spotify data:', err));
+          
+          console.log('Checking events data...');
+          fetch('/api/events')
+            .then(r => r.json())
+            .then(data => {
+              console.log('🎫 EVENTS SOURCE:', data.source);
+              console.log('🎫 EVENTS COUNT:', data.events?.length);
+              console.log('🎫 REAL EVENTS COUNT:', data.realCount);
+              console.log('🎫 EVENTS SAMPLE:', data.events?.[0]);
+            })
+            .catch(err => console.error('Error fetching events data:', err));
+          
+          console.log('Checking user data...');
+          fetch('/api/user/taste-profile')
+            .then(r => r.json())
+            .then(data => {
+              console.log('👤 USER TASTE PROFILE SOURCE:', data.source || 'unknown');
+              console.log('👤 USER TASTE LAST UPDATED:', data.lastUpdated);
+              console.log('👤 USER TASTE DATA:', data);
+            })
+            .catch(err => console.error('Error fetching user data:', err));
+        };
+        
+        console.log('TIKO: Type verifyTikoData() in console to check data sources');
+      `}} />
     </div>
   );
 };

@@ -1,25 +1,26 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import clientPromise from '@/lib/mongodb'; // Ensure this path is correct
-import { ObjectId } from 'mongodb';
 
 export default async function handler(req, res) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-
-  const client = await clientPromise;
-  const db = client.db('sonar_edm_db'); // Use your actual DB name
-  const interestedEventsCollection = db.collection('interestedEvents');
-  const userId = session.user.id; // Or session.user.email, depending on your user ID
-
   try {
+    const session = await getServerSession(req, res, authOptions);
+    if (!session) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const client = await clientPromise;
+    const db = client.db('sonar_edm_db'); // Use your actual DB name
+    const interestedEventsCollection = db.collection('interestedEvents');
+    const userId = session.user.id; // Or session.user.email, depending on your user ID
+
+    // GET - Fetch all saved events for the user
     if (req.method === 'GET') {
       const events = await interestedEventsCollection.find({ userId }).toArray();
       return res.status(200).json({ events });
     }
 
+    // POST - Save a new event
     if (req.method === 'POST') {
       const { event } = req.body;
       if (!event || !event.id) {
@@ -34,6 +35,7 @@ export default async function handler(req, res) {
       return res.status(201).json({ message: 'Event saved', eventId: result.insertedId, event });
     }
 
+    // DELETE - Remove a saved event
     if (req.method === 'DELETE') {
       const { eventId } = req.body; // This should be the Ticketmaster event ID, not MongoDB ObjectId
       if (!eventId) {
@@ -46,8 +48,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: 'Event removed' });
     }
 
+    // Method not allowed
     res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
-    return res.status(405).json({ message:  });
+    return res.status(405).json({ message: `Method ${req.method} Not Allowed` });
 
   } catch (error) {
     console.error('Error in interested-events API:', error);
