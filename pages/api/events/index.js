@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
-import { connectToDatabase } from '../../../lib/mongodb';
+import { connectToDatabase } from '../../mongodb';
 import { getCachedData, setCachedData } from '../../../lib/cache';
 
 const TICKETMASTER_API_KEY = process.env.TICKETMASTER_API_KEY;
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
     console.log(`🎯 Events API called for ${city} (${lat}, ${lon})`);
 
-    // Check cache first
+    // CACHING INTEGRATION: Check cache first
     const cacheKey = `events_${city}_${lat}_${lon}_${radius}`;
     const cachedEvents = await getCachedData(cacheKey, 'EVENTS');
     
@@ -30,7 +30,6 @@ export default async function handler(req, res) {
       return res.status(200).json({
         events: cachedEvents,
         total: cachedEvents.length,
-        realCount: cachedEvents.filter(e => e.source === 'mongodb').length,
         source: "cache",
         timestamp: new Date().toISOString(),
         location: { city, lat, lon }
@@ -204,21 +203,7 @@ export default async function handler(req, res) {
 
     console.log(`🎯 Returning ${finalEvents.length} events (${realEvents.length} real, ${finalEvents.length - realEvents.length} emergency)`);
 
-    // Sort events by match score (highest first) and then by date (most recent first)
-    finalEvents.sort((a, b) => {
-      // First sort by match score (highest first)
-      if (b.matchScore !== a.matchScore) {
-        return b.matchScore - a.matchScore;
-      }
-      
-      // If match scores are equal, sort by date (most recent first)
-      const dateA = a.date ? new Date(a.date) : new Date(9999, 11, 31);
-      const dateB = b.date ? new Date(b.date) : new Date(9999, 11, 31);
-      
-      return dateA - dateB;
-    });
-
-    // Cache the final processed events for 12 hours
+    // CACHING INTEGRATION: Cache the final processed events for 12 hours
     await setCachedData(cacheKey, finalEvents, 'EVENTS');
     console.log(`💾 Cached ${finalEvents.length} events for ${city}`);
 
@@ -357,4 +342,3 @@ function detectGenresFromArtists(artists) {
   
   return Array.from(detectedGenres);
 }
-

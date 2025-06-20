@@ -1,30 +1,6 @@
-import { getDatabase, getCollection } from '../../../lib/mongodbClient';
-
-// Try to import authOptions from multiple possible locations
-let authOptions;
-try {
-  authOptions = require('../../../pages/api/auth/[...nextauth]').authOptions;
-} catch (e1) {
-  try {
-    authOptions = require('../../auth/[...nextauth]').authOptions;
-  } catch (e2) {
-    try {
-      authOptions = require('../auth/[...nextauth]').authOptions;
-    } catch (e3) {
-      console.warn('Could not import authOptions, using fallback authentication');
-      authOptions = null;
-    }
-  }
-}
-
-// Import getServerSession with error handling
-let getServerSession;
-try {
-  getServerSession = require('next-auth/next').getServerSession;
-} catch (error) {
-  console.warn('Could not import getServerSession, using fallback');
-  getServerSession = null;
-}
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { connectToDatabase } from '../../../lib/mongodb';
 
 export default async function handler(req, res) {
   const timestamp = new Date().toISOString();
@@ -43,19 +19,18 @@ export default async function handler(req, res) {
     let session = null;
     let userId = 'demo-user-' + Date.now(); // Fallback user ID
     
-    if (getServerSession && authOptions) {
-      try {
-        session = await getServerSession(req, res, authOptions);
-        if (session && session.user) {
-          userId = session.user.email || session.user.id || userId;
-        }
-      } catch (authError) {
-        console.warn('Authentication error, using demo user:', authError.message);
+    try {
+      session = await getServerSession(req, res, authOptions);
+      if (session && session.user) {
+        userId = session.user.email || session.user.id || userId;
       }
+    } catch (authError) {
+      console.warn('Authentication error, using demo user:', authError.message);
     }
 
-    // Get database connection
-    const collection = await getCollection('interested_events');
+    // CONSOLIDATED: Use connectToDatabase instead of getCollection
+    const { db } = await connectToDatabase();
+    const collection = db.collection('interested_events');
 
     if (req.method === 'GET') {
       try {

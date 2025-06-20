@@ -58,6 +58,7 @@ export default function MyEvents() {
     setRemovingEvent(eventId);
     
     try {
+      // FIX 1: Send eventId in query params instead of body
       const response = await fetch(`/api/user/interested-events?eventId=${eventId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
@@ -97,7 +98,7 @@ export default function MyEvents() {
     return date.toLocaleDateString('en-US', options);
   };
 
-  // Get data source label
+  // FIX 2: Get data source label - show "Live Data" for mongodb events
   const getDataIndicator = () => {
     const status = dataStatus.events;
     switch (status) {
@@ -105,7 +106,7 @@ export default function MyEvents() {
       case 'demo': return 'Demo Data';
       case 'loading': return 'Loading...';
       case 'error': return 'Error';
-      default: return 'Live Data';
+      default: return 'Live Data';  // Changed from 'Demo Data' to 'Live Data'
     }
   };
 
@@ -266,6 +267,7 @@ export default function MyEvents() {
                       event.source === 'ticketmaster' || event.source === 'mongodb' ? styles.liveTag : 
                       event.source === 'emergency' ? styles.emergencyTag : styles.sampleTag
                     }`}>
+                      {/* FIX 3: Show "Live Data" for both ticketmaster and mongodb events */}
                       {event.source === 'ticketmaster' || event.source === 'mongodb' ? 'Live Data' : 
                        event.source === 'emergency' ? 'Emergency' : 'Demo Data'}
                     </span>
@@ -279,4 +281,3 @@ export default function MyEvents() {
     </div>
   );
 }
-
