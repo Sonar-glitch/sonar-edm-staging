@@ -50,11 +50,10 @@ export default function EnhancedEventList({ events, loading, error }) {
     try {
       if (isCurrentlyLiked) {
         // Unlike event
-        const response = await fetch('/api/user/interested-events', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ eventId })
-        });
+        const response = await fetch(`/api/user/interested-events?eventId=${eventId}`, {
+  method: 'DELETE',
+  headers: { 'Content-Type': 'application/json' }
+});
         
         if (response.ok) {
           setLikedEvents(prev => {
