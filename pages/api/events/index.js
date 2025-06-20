@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
-import { connectToDatabase } from '../../mongodb';
+import { connectToDatabase } from '../../../lib/mongodb';
 import { getCachedData, setCachedData } from '../../../lib/cache';
 
 const TICKETMASTER_API_KEY = process.env.TICKETMASTER_API_KEY;
