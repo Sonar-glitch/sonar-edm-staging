@@ -58,11 +58,10 @@ export default function MyEvents() {
     setRemovingEvent(eventId);
     
     try {
-      const response = await fetch('/api/user/interested-events', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId })
-      });
+      const response = await fetch(`/api/user/interested-events?eventId=${eventId}`, {
+  method: 'DELETE',
+  headers: { 'Content-Type': 'application/json' }
+});
       
       if (response.ok) {
         setLikedEvents(prev => prev.filter(event => event.id !== eventId));
