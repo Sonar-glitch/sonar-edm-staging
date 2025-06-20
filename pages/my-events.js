@@ -264,11 +264,11 @@ export default function MyEvents() {
                   <div className={styles.eventFooter}>
                     <span className={styles.venueType}>{event.venueType || 'Venue'}</span>
                     <span className={`${styles.sourceTag} ${
-                      event.source === 'ticketmaster' || event.source === 'mongodb' ? styles.liveTag : 
+                      event.source === 'ticketmaster' || event.source === 'Ticketmaster' || event.source === 'mongodb' ? styles.liveTag : 
                       event.source === 'emergency' ? styles.emergencyTag : styles.sampleTag
                     }`}>
                       {/* FIX 3: Show "Live Data" for both ticketmaster and mongodb events */}
-                      {event.source === 'ticketmaster' || event.source === 'mongodb' ? 'Live Data' : 
+                      {event.source === 'ticketmaster' || event.source === 'Ticketmaster' || event.source === 'mongodb' ? 'Live Data' : 
                        event.source === 'emergency' ? 'Emergency' : 'Demo Data'}
                     </span>
                   </div>
