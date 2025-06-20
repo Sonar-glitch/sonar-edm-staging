@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { connectToDatabase } from '../../../lib/mongodb';
-
+import { getCachedData, setCachedData } from '../../../lib/cache';
 
 const TICKETMASTER_API_KEY = process.env.TICKETMASTER_API_KEY;
 const TICKETMASTER_BASE_URL = 'https://app.ticketmaster.com/discovery/v2';
@@ -20,6 +20,22 @@ export default async function handler(req, res) {
     const { lat = '43.65', lon = '-79.38', city = 'Toronto', radius = '50' } = req.query;
 
     console.log(`🎯 Events API called for ${city} (${lat}, ${lon})`);
+
+    // Check cache first
+    const cacheKey = `events_${city}_${lat}_${lon}_${radius}`;
+    const cachedEvents = await getCachedData(cacheKey, 'EVENTS');
+    
+    if (cachedEvents) {
+      console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached events`);
+      return res.status(200).json({
+        events: cachedEvents,
+        total: cachedEvents.length,
+        realCount: cachedEvents.filter(e => e.source === 'mongodb').length,
+        source: "cache",
+        timestamp: new Date().toISOString(),
+        location: { city, lat, lon }
+      });
+    }
 
     let realEvents = [];
     let apiError = null;
@@ -201,6 +217,10 @@ export default async function handler(req, res) {
       
       return dateA - dateB;
     });
+
+    // Cache the final processed events for 12 hours
+    await setCachedData(cacheKey, finalEvents, 'EVENTS');
+    console.log(`💾 Cached ${finalEvents.length} events for ${city}`);
 
     res.status(200).json({
       events: finalEvents,
