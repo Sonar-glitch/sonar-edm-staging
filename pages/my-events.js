@@ -59,9 +59,9 @@ export default function MyEvents() {
     
     try {
       const response = await fetch(`/api/user/interested-events?eventId=${eventId}`, {
-  method: 'DELETE',
-  headers: { 'Content-Type': 'application/json' }
-});
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
       
       if (response.ok) {
         setLikedEvents(prev => prev.filter(event => event.id !== eventId));
@@ -101,11 +101,11 @@ export default function MyEvents() {
   const getDataIndicator = () => {
     const status = dataStatus.events;
     switch (status) {
-      case 'real': return 'Real Data';
+      case 'real': return 'Live Data';
       case 'demo': return 'Demo Data';
       case 'loading': return 'Loading...';
       case 'error': return 'Error';
-      default: return 'Demo Data';
+      default: return 'Live Data';
     }
   };
 
@@ -263,10 +263,10 @@ export default function MyEvents() {
                   <div className={styles.eventFooter}>
                     <span className={styles.venueType}>{event.venueType || 'Venue'}</span>
                     <span className={`${styles.sourceTag} ${
-                      event.source === 'ticketmaster' ? styles.liveTag : 
+                      event.source === 'ticketmaster' || event.source === 'mongodb' ? styles.liveTag : 
                       event.source === 'emergency' ? styles.emergencyTag : styles.sampleTag
                     }`}>
-                      {event.source === 'ticketmaster' ? 'Live Data' : 
+                      {event.source === 'ticketmaster' || event.source === 'mongodb' ? 'Live Data' : 
                        event.source === 'emergency' ? 'Emergency' : 'Demo Data'}
                     </span>
                   </div>
@@ -279,3 +279,4 @@ export default function MyEvents() {
     </div>
   );
 }
+
