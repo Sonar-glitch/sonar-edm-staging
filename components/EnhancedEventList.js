@@ -142,14 +142,16 @@ export default function EnhancedEventList({ events, loading, error }) {
   
   // Proper data source label determination
   const getDataSourceLabel = (event) => {
-    if (event.source === 'ticketmaster') {
-      return 'Live Data';
-    } else if (event.source === 'emergency') {
-      return 'Emergency';
-    } else {
-      return 'Demo Data';
-    }
-  };
+  if (event.source === 'ticketmaster') {
+    return 'Live Data';
+  } else if (event.source === 'mongodb') {
+    return 'Live Data';  // ✅ MongoDB events are real data
+  } else if (event.source === 'emergency') {
+    return 'Emergency';
+  } else {
+    return 'Demo Data';
+  }
+};
   
   // Loading state
   if (loading) {
