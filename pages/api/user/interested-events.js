@@ -104,7 +104,9 @@ export default async function handler(req, res) {
           eventId,
           ...eventData,
           savedAt: timestamp,
-          source: 'user_action'
+          source: eventData.source || 'unknown',
+          userAction: 'liked',
+          actionTimestamp: timestamp
         };
 
         const result = await collection.insertOne(eventToSave);
