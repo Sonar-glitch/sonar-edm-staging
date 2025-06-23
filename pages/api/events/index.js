@@ -46,7 +46,7 @@ export default async function handler(req, res) {
         
         // MINIMAL CHANGE: Replace Ticketmaster fetch with MongoDB query
         const { db } = await connectToDatabase();
-        const eventsCollection = db.collection('events');
+        const eventsCollection = db.collection('events_unified');
         
         const latitude = parseFloat(lat);
         const longitude = parseFloat(lon);
