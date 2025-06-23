@@ -141,7 +141,7 @@ export default async function handler(req, res) {
               priceRange: event.priceRanges?.[0] ? `$${event.priceRanges[0].min}-${event.priceRanges[0].max}` : 'Price TBA',
               headliners: artists.slice(0, 3),
               matchScore: finalScore,
-              source: 'mongodb',
+              source: event.source || 'unknown',
               venueType: venueType,
               detectedGenres: artistGenres
             };
@@ -211,7 +211,7 @@ export default async function handler(req, res) {
       events: finalEvents,
       total: finalEvents.length,
       realCount: realEvents.length,
-      source: realEvents.length > 0 ? "mongodb" : "emergency",
+      source: realEvents.length > 0 ? "unified" : "emergency",
       timestamp: new Date().toISOString(),
       location: { city, lat, lon }
     });
