@@ -1,8 +1,8 @@
 import { useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import Head from "next/head";
-import Link from "next/link";
+
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -14,8 +14,19 @@ export default function Home() {
       router.push("/dashboard");
     }
   }, [session, router]);
-
+const handleSpotifyLogin = async () => {
+    try {
+      console.log("Attempting Spotify login...");
+      await signIn("spotify", { 
+        callbackUrl: "/dashboard",
+        redirect: true 
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+    }
+  };
   // If loading, show loading state
+
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -35,9 +46,12 @@ export default function Home() {
         <h1 className="text-4xl font-bold text-cyan-500 mb-8">TIKO</h1>
         <p className="text-xl mb-8 text-center">Discover electronic music events that match your taste</p>
         
-        <Link href="/api/auth/signin/spotify" className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-fuchsia-500 rounded-full font-medium hover:opacity-90 transition-opacity">
+        <button 
+          onClick={handleSpotifyLogin}
+          className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-fuchsia-500 rounded-full font-medium hover:opacity-90 transition-opacity"
+        >
           Login with Spotify
-        </Link>
+        </button>
       </main>
     </div>
   );

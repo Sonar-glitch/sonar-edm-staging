@@ -12,7 +12,7 @@ export const authOptions = {
           scope: "user-read-email user-top-read user-read-recently-played user-read-private user-library-read"
         }
       },
-      checks: ["none"] // This disables state verification
+     
     })
   ],
   cookies: {
