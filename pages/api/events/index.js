@@ -141,7 +141,7 @@ export default async function handler(req, res) {
               priceRange: event.priceRanges?.[0] ? `$${event.priceRanges[0].min}-${event.priceRanges[0].max}` : 'Price TBA',
               headliners: artists.slice(0, 3),
               matchScore: finalScore,
-              source: event.source || 'unknown',
+              source: event.unifiedProcessing?.sourceEvents?.[0]?.source?.toLowerCase() || event.source || 'unknown',
               venueType: venueType,
               detectedGenres: artistGenres
             };

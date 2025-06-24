@@ -141,11 +141,13 @@ export default function EnhancedEventList({ events, loading, error }) {
   
   // Proper data source label determination
   const getDataSourceLabel = (event) => {
-  if (event.source === 'ticketmaster') {
+  const source = event.source?.toLowerCase();
+  
+  if (source === 'ticketmaster' || source === 'edmtrain' || source === 'spotify') {
     return 'Live Data';
-  } else if (event.source === 'mongodb') {
-    return 'Live Data';  // ✅ MongoDB events are real data
-  } else if (event.source === 'emergency') {
+  } else if (source === 'mongodb') {
+    return 'Live Data';  // Keep for backward compatibility
+  } else if (source === 'emergency') {
     return 'Emergency';
   } else {
     return 'Demo Data';
