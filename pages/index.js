@@ -3,7 +3,6 @@ import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 
-
 export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -14,7 +13,9 @@ export default function Home() {
       router.push("/dashboard");
     }
   }, [session, router]);
-const handleSpotifyLogin = async () => {
+
+  // Handle Spotify login
+  const handleSpotifyLogin = async () => {
     try {
       console.log("Attempting Spotify login...");
       await signIn("spotify", { 
@@ -25,8 +26,8 @@ const handleSpotifyLogin = async () => {
       console.error("Login error:", error);
     }
   };
-  // If loading, show loading state
 
+  // If loading, show loading state
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -56,3 +57,4 @@ const handleSpotifyLogin = async () => {
     </div>
   );
 }
+
