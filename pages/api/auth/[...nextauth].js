@@ -14,6 +14,44 @@ export const authOptions = {
       }
     })
   ],
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true // Always true for HTTPS
+      }
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    },
+    state: {
+      name: `next-auth.state`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        maxAge: 900 // 15 minutes
+      }
+    }
+  },
   // Extended session duration for better user experience
   session: {
     maxAge: 30 * 24 * 60 * 60, // 30 days
