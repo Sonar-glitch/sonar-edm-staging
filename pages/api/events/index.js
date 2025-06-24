@@ -92,7 +92,9 @@ export default async function handler(req, res) {
               },
               url: event.url,
               priceRanges: event.priceRange ? [{ min: event.priceRange.min, max: event.priceRange.max }] : null,
-              classifications: event.genres ? [{ genre: { name: event.genres[0] } }] : null
+              classifications: event.genres ? [{ genre: { name: event.genres[0] } }] : null,
+              // ADD DEBUG FIELDS TO INSPECT THE ORIGINAL MONGODB EVENT
+              originalEvent: event
             }))
           }
         };
@@ -128,6 +130,14 @@ export default async function handler(req, res) {
             // IMPROVED: Better venue type detection
             const venueType = detectVenueType(venue?.name || '', event.name);
             
+            // DEBUG: Log the original MongoDB event and the transformed event
+            console.log('🔍 DEBUG: Original MongoDB event:', event.originalEvent);
+            console.log('🔍 DEBUG: Transformed event before source assignment:', event);
+            console.log('🔍 DEBUG: unifiedProcessing:', event.originalEvent?.unifiedProcessing);
+            console.log('🔍 DEBUG: sourceEvents:', event.originalEvent?.unifiedProcessing?.sourceEvents);
+            console.log('🔍 DEBUG: source from unifiedProcessing:', event.originalEvent?.unifiedProcessing?.sourceEvents?.[0]?.source);
+            console.log('🔍 DEBUG: direct source field:', event.originalEvent?.source);
+            
             return {
               id: event.id,
               name: event.name,
@@ -142,7 +152,7 @@ export default async function handler(req, res) {
               priceRange: event.priceRanges?.[0] ? `$${event.priceRanges[0].min}-${event.priceRanges[0].max}` : 'Price TBA',
               headliners: artists.slice(0, 3),
               matchScore: finalScore,
-              source: event.unifiedProcessing?.sourceEvents?.[0]?.source?.toLowerCase() || event.source || 'unknown',
+              source: event.originalEvent?.unifiedProcessing?.sourceEvents?.[0]?.source?.toLowerCase() || event.originalEvent?.source || 'unknown',
               venueType: venueType,
               detectedGenres: artistGenres
             };
@@ -343,3 +353,4 @@ function detectGenresFromArtists(artists) {
   
   return Array.from(detectedGenres);
 }
+
