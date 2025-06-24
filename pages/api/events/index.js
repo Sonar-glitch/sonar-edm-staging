@@ -23,18 +23,19 @@ export default async function handler(req, res) {
 
     // CACHING INTEGRATION: Check cache first
     const cacheKey = `events_${city}_${lat}_${lon}_${radius}`;
-    const cachedEvents = await getCachedData(cacheKey, 'EVENTS');
-    
-    if (cachedEvents) {
-      console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached events`);
-      return res.status(200).json({
-        events: cachedEvents,
-        total: cachedEvents.length,
-        source: "cache",
-        timestamp: new Date().toISOString(),
-        location: { city, lat, lon }
-      });
-    }
+  // TEMPORARILY DISABLED FOR DEBUGGING
+// const cachedEvents = await getCachedData(cacheKey, 'EVENTS');
+// 
+// if (cachedEvents) {
+//   console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached events`);
+//   return res.status(200).json({
+//     events: cachedEvents,
+//     total: cachedEvents.length,
+//     source: "cache",
+//     timestamp: new Date().toISOString(),
+//     location: { city, lat, lon }
+//   });
+// }
 
     let realEvents = [];
     let apiError = null;
