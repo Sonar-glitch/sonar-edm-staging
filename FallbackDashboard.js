@@ -99,7 +99,7 @@ export default function Dashboard() {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/events/correlated-events', {
+        const response = await axios.get('/api/events', {
           params: {
             minMatchScore: filters.vibeMatch,
             lat: router.query.lat,
