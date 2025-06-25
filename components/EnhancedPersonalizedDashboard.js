@@ -111,7 +111,22 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
   };
 
   const handleLocationSelect = (location) => {
-    setSelectedLocation(location);
+    console.log('🔍 Location selected in dashboard:', location);
+    
+    // SURGICAL FIX: Map search component data structure to dashboard expected structure
+    const mappedLocation = {
+      city: location.name || location.city || 'Unknown City',           // Map 'name' to 'city'
+      region: location.region || location.stateCode || '',              // Keep region if available
+      country: location.country || 'Unknown Country',                   // Keep country
+      latitude: location.lat || location.latitude || 0,                 // Map 'lat' to 'latitude'
+      longitude: location.lon || location.longitude || 0,               // Map 'lon' to 'longitude'
+      formattedAddress: location.formattedAddress || '',                // Keep formatted address
+      placeId: location.placeId || '',                                  // Keep place ID
+      countryCode: location.countryCode || ''                           // Keep country code
+    };
+    
+    console.log('🔍 Mapped location for dashboard:', mappedLocation);
+    setSelectedLocation(mappedLocation);
   };
 
   const handleEventClick = (event) => {
