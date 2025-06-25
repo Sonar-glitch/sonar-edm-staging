@@ -10,6 +10,7 @@
     "heroku-postbuild": "npm run build"
   },
   "dependencies": {
+    "mongoose": "^7.0.0",
     "@swc/helpers": "^0.5.3",
     "axios": "^0.27.2",
     "chart.js": "^4.3.0",

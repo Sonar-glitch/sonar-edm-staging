@@ -10,7 +10,7 @@ const Top5GenresSpiderChart = dynamic(() => import('./Top5GenresSpiderChart'), {
 const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
 const EventDetailModal = dynamic(() => import('./EventDetailModal'), { ssr: false });
 
-const EnhancedPersonalizedDashboard = () => {
+const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
   const { data: session } = useSession();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,15 +142,25 @@ const EnhancedPersonalizedDashboard = () => {
   };
 
   const getDataIndicator = (type) => {
-    const status = dataStatus[type];
-    switch (status) {
-      case 'real': return 'Real Data';
-      case 'demo': return 'Demo Data';
-      case 'loading': return 'Loading...';
-      case 'error': return 'Error';
-      default: return 'Demo Data';
-    }
-  };
+  if (type === 'events' && events.length > 0) {
+    // Count events by source
+    const sourceCount = events.reduce((acc, event) => {
+      const source = event.source || 'unknown';
+      acc[source] = (acc[source] || 0) + 1;
+      return acc;
+    }, {});
+    
+    // Create source breakdown display
+    const sourceLabels = Object.entries(sourceCount)
+      .filter(([source, count]) => source !== 'unknown' && count > 0)
+      .map(([source, count]) => `${source}: ${count}`)
+      .join(', ');
+    
+    return sourceLabels || 'Real Data';
+  }
+  
+  return dataStatus[type] === 'real' ? 'Real Data' : 'Demo Data';
+};
 
   if (!session) {
     return (

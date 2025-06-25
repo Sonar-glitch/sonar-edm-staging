@@ -1,1 +1,2 @@
-web: npm run start
+web: npm start
+worker: node workers/cityQueueProcessor.js
