@@ -86,12 +86,12 @@ async function processQueue() {
     
     try {
         // Clean up old requests
-        cleanupOldRequests();
-        const queueStats = getQueueStats();
+        await cleanupOldRequests();
+        const queueStats = await getQueueStats();
         console.log("📊 Queue Statistics:", queueStats);
         
         // Get pending requests
-        const pendingRequests = getPendingCityRequests();
+        const pendingRequests = await getPendingCityRequests();
         
         if (pendingRequests.length === 0) {
             console.log("📭 No pending city requests to process");
