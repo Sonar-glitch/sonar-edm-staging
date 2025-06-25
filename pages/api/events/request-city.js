@@ -96,7 +96,7 @@ export default async function handler(req, res) {
 
     // Add city to request queue
     console.log('🔍 Adding city to request queue...');
-    const result = addCityRequest(city, country, lat, lon);
+    const result = await addCityRequest(city, country, lat, lon);
     console.log('🔍 Queue result:', result);
 
     if (!result.success) {
@@ -108,7 +108,7 @@ export default async function handler(req, res) {
     }
 
     // Get queue statistics for response
-    const queueStats = getQueueStats();
+    const queueStats = await getQueueStats();
     console.log('🔍 Queue stats:', queueStats);
 
     console.log(`✅ City request queued: ${city}, ${country} (${result.countryCode})`);
