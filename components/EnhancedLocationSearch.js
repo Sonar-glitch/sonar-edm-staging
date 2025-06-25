@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 /**
  * Enhanced Location Search component with Google Places autocomplete
  * Preserves the original dark theme styling while adding search functionality
+ * Updated to use non-deprecated Google Geocoding API
  */
 export default function EnhancedLocationSearch({ selectedLocation, onLocationSelect }) {
   const [isSearchMode, setIsSearchMode] = useState(false);
@@ -11,8 +12,7 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
-  const autocompleteRef = useRef(null);
-  const suggestionsTimeoutRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
 
   // Default location (Toronto fallback)
   const currentLocation = selectedLocation || {
@@ -24,11 +24,6 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
     formattedAddress: 'Toronto, ON, Canada'
   };
 
-  // Load Google Maps API when component mounts
-  useEffect(() => {
-    loadGoogleMapsAPI();
-  }, []);
-
   // Focus input when entering search mode
   useEffect(() => {
     if (isSearchMode && inputRef.current) {
@@ -37,72 +32,90 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
     }
   }, [isSearchMode]);
 
-  // Initialize Google Places Autocomplete
+  // Search for cities when query changes
   useEffect(() => {
-    if (isSearchMode && window.google && window.google.maps && inputRef.current && !autocompleteRef.current) {
-      initializeAutocomplete();
-    }
-  }, [isSearchMode]);
+    if (searchQuery.length >= 2 && isSearchMode) {
+      // Clear previous timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
 
-  const loadGoogleMapsAPI = () => {
-    // Check if Google Maps API is already loaded
-    if (window.google && window.google.maps) {
-      return;
+      // Debounce search requests
+      searchTimeoutRef.current = setTimeout(() => {
+        searchCities(searchQuery);
+      }, 300);
+    } else {
+      setSuggestions([]);
+      setIsLoading(false);
     }
 
-    // Check if script is already being loaded
-    if (document.querySelector('script[src*="maps.googleapis.com"]')) {
-      return;
-    }
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, isSearchMode]);
 
+  const searchCities = async (query) => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
-      console.error('Google Maps API key not found. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY environment variable.');
+      setError('Google Maps API key not found. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY environment variable.');
       return;
     }
 
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;
-    script.async = true;
-    script.defer = true;
+    setIsLoading(true);
+    setError(null);
 
-    window.initGoogleMaps = () => {
-      console.log('Google Maps API loaded successfully');
-      delete window.initGoogleMaps;
-    };
+    try {
+      // Use Google Geocoding API to search for cities
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=locality&key=${apiKey}`
+      );
 
-    script.onerror = () => {
-      console.error('Failed to load Google Maps API');
-      setError('Failed to load location search. Please try again.');
-    };
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`);
+      }
 
-    document.head.appendChild(script);
+      const data = await response.json();
+
+      if (data.status === 'OK' && data.results) {
+        // Filter and format results for cities
+        const cityResults = data.results
+          .filter(result => 
+            result.types.includes('locality') || 
+            result.types.includes('administrative_area_level_1') ||
+            result.types.includes('political')
+          )
+          .slice(0, 5) // Limit to 5 suggestions
+          .map(result => ({
+            place_id: result.place_id,
+            formatted_address: result.formatted_address,
+            geometry: result.geometry,
+            address_components: result.address_components,
+            name: extractCityName(result.address_components) || result.formatted_address.split(',')[0]
+          }));
+
+        setSuggestions(cityResults);
+      } else if (data.status === 'ZERO_RESULTS') {
+        setSuggestions([]);
+      } else {
+        throw new Error(data.error_message || `Geocoding API Error: ${data.status}`);
+      }
+    } catch (err) {
+      console.error("Error fetching city suggestions:", err);
+      setError('Failed to fetch suggestions. Please try again.');
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const initializeAutocomplete = () => {
-    try {
-      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-        types: ['(cities)'],
-        fields: ['place_id', 'name', 'formatted_address', 'geometry', 'address_components']
-      });
-
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        
-        if (!place.geometry) {
-          console.error('No geometry found for selected place');
-          return;
-        }
-
-        const locationData = extractLocationData(place);
-        handleLocationSelect(locationData);
-      });
-
-      autocompleteRef.current = autocomplete;
-    } catch (error) {
-      console.error('Error initializing Google Places Autocomplete:', error);
-      setError('Location search unavailable. Please try again.');
-    }
+  const extractCityName = (addressComponents) => {
+    const cityComponent = addressComponents.find(component =>
+      component.types.includes('locality') ||
+      component.types.includes('administrative_area_level_1')
+    );
+    return cityComponent ? cityComponent.long_name : null;
   };
 
   const extractLocationData = (place) => {
@@ -110,8 +123,8 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
       placeId: place.place_id,
       name: place.name,
       formattedAddress: place.formatted_address,
-      lat: place.geometry.location.lat(),
-      lon: place.geometry.location.lng(),
+      lat: place.geometry.location.lat,
+      lon: place.geometry.location.lng,
       city: '',
       stateCode: '',
       countryCode: '',
@@ -181,6 +194,11 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
         console.error('Error requesting city expansion:', error);
       }
     }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    const locationData = extractLocationData(suggestion);
+    handleLocationSelect(locationData);
   };
 
   const handleChangeClick = () => {
@@ -253,7 +271,7 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
           </div>
         </div>
       ) : (
-        // Search Mode - Shows input field with autocomplete
+        // Search Mode - Shows input field with suggestions
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <span style={{ color: '#ff1493' }}>📍</span>
@@ -276,6 +294,73 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                   outline: 'none'
                 }}
               />
+              
+              {/* Suggestions Dropdown */}
+              {(suggestions.length > 0 || isLoading || error) && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: '#2a2a2a',
+                  border: '1px solid #444',
+                  borderTop: 'none',
+                  borderRadius: '0 0 4px 4px',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  zIndex: 1000
+                }}>
+                  {isLoading && (
+                    <div style={{
+                      padding: '0.5rem',
+                      color: '#888',
+                      fontSize: '0.8rem'
+                    }}>
+                      Searching...
+                    </div>
+                  )}
+                  
+                  {error && (
+                    <div style={{
+                      padding: '0.5rem',
+                      color: '#ff6b6b',
+                      fontSize: '0.8rem'
+                    }}>
+                      {error}
+                    </div>
+                  )}
+                  
+                  {!isLoading && !error && suggestions.length === 0 && searchQuery.length >= 2 && (
+                    <div style={{
+                      padding: '0.5rem',
+                      color: '#888',
+                      fontSize: '0.8rem'
+                    }}>
+                      No cities found
+                    </div>
+                  )}
+                  
+                  {suggestions.map((suggestion, index) => (
+                    <div
+                      key={suggestion.place_id || index}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      style={{
+                        padding: '0.5rem',
+                        cursor: 'pointer',
+                        borderBottom: index < suggestions.length - 1 ? '1px solid #444' : 'none',
+                        fontSize: '0.9rem',
+                        ':hover': {
+                          background: '#333'
+                        }
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = '#333'}
+                      onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                    >
+                      {suggestion.formatted_address}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <button 
               onClick={handleCancelSearch}
@@ -292,16 +377,6 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
               Cancel
             </button>
           </div>
-          
-          {error && (
-            <div style={{ 
-              fontSize: '0.8rem', 
-              color: '#ff6b6b', 
-              marginTop: '0.5rem' 
-            }}>
-              {error}
-            </div>
-          )}
           
           <div style={{ 
             fontSize: '0.8rem', 
