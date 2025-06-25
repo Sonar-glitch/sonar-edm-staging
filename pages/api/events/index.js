@@ -272,8 +272,8 @@ async function processEventsWithTasteFiltering(events, city, session) {
   const deduplicatedEvents = deduplicateEvents(processedEvents);
   console.log(`🔄 Deduplicated: ${events.length} → ${deduplicatedEvents.length} events`);
   
-  // Step 4: Apply taste-based filtering and ranking
-  const filteredEvents = applyTasteFiltering(deduplicatedEvents, userTaste);
+  // Step 4: Apply FIXED taste-based filtering and ranking
+  const filteredEvents = applyAdvancedTasteFiltering(deduplicatedEvents, userTaste);
   console.log(`🎯 Taste filtered: ${deduplicatedEvents.length} → ${filteredEvents.length} events`);
   
   return filteredEvents;
@@ -338,47 +338,115 @@ function deduplicateEvents(events) {
 }
 
 /**
- * NEW: Apply taste-based filtering and ranking
+ * FIXED: Advanced multi-level genre matching (from correlated-events.js)
  */
-function applyTasteFiltering(events, userTaste) {
-  if (!userTaste || !userTaste.genres || userTaste.genres.length === 0) {
-    console.log('⚠️ No user taste data available, returning events with original scores');
-    return events;
+function normalizeGenre(genre) {
+  if (!genre) return '';
+  return genre.toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function calculateGenreMatchScore(eventGenres, userGenres) {
+  if (!eventGenres || !userGenres || eventGenres.length === 0 || userGenres.length === 0) {
+    return 0;
   }
   
-  const userGenres = userTaste.genres.map(g => g.toLowerCase());
+  // Normalize all genres
+  const normalizedEventGenres = eventGenres.map(normalizeGenre);
+  const normalizedUserGenres = userGenres.map(normalizeGenre);
+  
+  let totalScore = 0;
+  
+  // Check for exact matches (highest weight)
+  for (const userGenre of normalizedUserGenres) {
+    if (normalizedEventGenres.includes(userGenre)) {
+      totalScore += 30; // Exact match is worth 30 points
+    }
+  }
+  
+  // Check for partial matches
+  for (const userGenre of normalizedUserGenres) {
+    for (const eventGenre of normalizedEventGenres) {
+      // Skip if already counted as exact match
+      if (eventGenre === userGenre) continue;
+      
+      // Check if one contains the other
+      if (eventGenre.includes(userGenre) || userGenre.includes(eventGenre)) {
+        totalScore += 15; // Partial match is worth 15 points
+      }
+      // Check for word-level matches
+      else {
+        const userWords = userGenre.split(' ');
+        const eventWords = eventGenre.split(' ');
+        
+        for (const userWord of userWords) {
+          if (userWord.length < 3) continue; // Skip short words
+          
+          if (eventWords.includes(userWord)) {
+            totalScore += 5; // Word match is worth 5 points
+          }
+        }
+      }
+    }
+  }
+  
+  // Cap the score at 100
+  return Math.min(totalScore, 100);
+}
+
+function calculateArtistMatchScore(eventName, userArtists) {
+  if (!eventName || !userArtists || userArtists.length === 0) {
+    return 0;
+  }
+  
+  const normalizedEventName = eventName.toLowerCase();
+  let totalScore = 0;
+  
+  // Check for artist name matches
+  for (const artist of userArtists) {
+    const normalizedArtist = artist.name.toLowerCase();
+    
+    // Exact artist match
+    if (normalizedEventName.includes(normalizedArtist)) {
+      // Higher weight for more popular artists
+      totalScore += 40 * (artist.popularity / 100);
+    }
+  }
+  
+  // Cap the score at 100
+  return Math.min(totalScore, 100);
+}
+
+/**
+ * FIXED: Advanced taste filtering with multi-level genre matching
+ */
+function applyAdvancedTasteFiltering(events, userTaste) {
+  if (!userTaste || !userTaste.genres || userTaste.genres.length === 0) {
+    console.log('⚠️ No user taste data available, returning events with base scores');
+    // Return events with base scores instead of filtering them out
+    return events.map(event => ({
+      ...event,
+      tasteScore: 25 // Base score for unknown taste
+    }));
+  }
+  
+  const userGenres = userTaste.genres;
   const userArtists = userTaste.topArtists || [];
   
-  console.log(`🎵 Applying taste filtering with ${userGenres.length} genres and ${userArtists.length} artists`);
+  console.log(`🎵 Applying advanced taste filtering with ${userGenres.length} genres and ${userArtists.length} artists`);
   
-  // Calculate taste scores for each event
+  // Calculate taste scores for each event using advanced matching
   const eventsWithTasteScores = events.map(event => {
     let tasteScore = 0;
     
-    // Genre matching (50% weight)
-    const eventGenres = event.detectedGenres.map(g => g.toLowerCase());
-    const genreMatches = eventGenres.filter(genre => 
-      userGenres.some(userGenre => 
-        genre.includes(userGenre) || userGenre.includes(genre)
-      )
-    ).length;
+    // FIXED: Use advanced genre matching (50% weight)
+    const genreScore = calculateGenreMatchScore(event.detectedGenres, userGenres);
+    tasteScore += genreScore * 0.5;
     
-    if (genreMatches > 0) {
-      tasteScore += Math.min(genreMatches * 20, 50); // Max 50 points for genres
-    }
-    
-    // Artist matching (30% weight)
-    const eventArtists = event.headliners.map(a => a.toLowerCase());
-    const artistMatches = eventArtists.filter(artist =>
-      userArtists.some(userArtist =>
-        artist.includes(userArtist.name.toLowerCase()) || 
-        userArtist.name.toLowerCase().includes(artist)
-      )
-    ).length;
-    
-    if (artistMatches > 0) {
-      tasteScore += Math.min(artistMatches * 15, 30); // Max 30 points for artists
-    }
+    // FIXED: Use advanced artist matching (30% weight)
+    const artistScore = calculateArtistMatchScore(event.name, userArtists);
+    tasteScore += artistScore * 0.3;
     
     // EDM relevance bonus (20% weight)
     const edmKeywords = ['house', 'techno', 'electronic', 'edm', 'dance', 'trance', 'dubstep'];
@@ -386,8 +454,11 @@ function applyTasteFiltering(events, userTaste) {
     const edmMatches = edmKeywords.filter(keyword => eventText.includes(keyword)).length;
     
     if (edmMatches > 0) {
-      tasteScore += Math.min(edmMatches * 3, 20); // Max 20 points for EDM relevance
+      tasteScore += Math.min(edmMatches * 4, 20); // Max 20 points for EDM relevance
     }
+    
+    // FIXED: Ensure minimum score for all events
+    tasteScore = Math.max(tasteScore, 15); // Minimum 15 points
     
     return {
       ...event,
@@ -395,25 +466,25 @@ function applyTasteFiltering(events, userTaste) {
     };
   });
   
-  // Filter out events with very low taste scores (less than 10)
+  // FIXED: Lower threshold - only filter out very low scores
   const filteredEvents = eventsWithTasteScores.filter(event => 
-    event.tasteScore >= 10 || event.matchScore >= 80
+    event.tasteScore >= 5 || event.matchScore >= 70
   );
   
-  console.log(`🎯 Taste scoring complete: ${eventsWithTasteScores.length} → ${filteredEvents.length} events after filtering`);
+  console.log(`🎯 Advanced taste scoring complete: ${eventsWithTasteScores.length} → ${filteredEvents.length} events after filtering`);
   
   return filteredEvents;
 }
 
 /**
- * ENHANCED: Original event processing function with taste integration
+ * ENHANCED: Event processing with improved genre detection
  */
 function processEvent(event, city, userTaste) {
   const venue = event._embedded?.venues?.[0];
   const artists = event._embedded?.attractions?.map(a => a.name) || [];
   
-  // Enhanced genre detection
-  const artistGenres = detectGenresFromArtists(artists);
+  // ENHANCED: Multi-source genre detection
+  const detectedGenres = detectGenresFromMultipleSources(event, artists, venue);
   
   // Enhanced relevance scoring
   const edmKeywords = ['house', 'techno', 'electronic', 'edm', 'dance', 'trance', 'dubstep', 'drum', 'bass'];
@@ -421,7 +492,7 @@ function processEvent(event, city, userTaste) {
   const edmMatches = edmKeywords.filter(keyword => eventText.includes(keyword)).length;
   
   const baseScore = Math.min(70 + (edmMatches * 3), 85);
-  const genreBonus = artistGenres.length > 0 ? Math.min(artistGenres.length * 2, 14) : 0;
+  const genreBonus = detectedGenres.length > 0 ? Math.min(detectedGenres.length * 2, 14) : 0;
   const finalScore = Math.min(baseScore + genreBonus, 99);
   
   // Better date/time formatting
@@ -453,8 +524,124 @@ function processEvent(event, city, userTaste) {
     // CRITICAL: Preserve source labeling
     source: event.unifiedProcessing?.sourceEvents?.[0]?.source?.toLowerCase() || event.source || 'unknown',
     venueType: venueType,
-    detectedGenres: artistGenres
+    detectedGenres: detectedGenres
   };
+}
+
+/**
+ * ENHANCED: Multi-source genre detection
+ */
+function detectGenresFromMultipleSources(event, artists, venue) {
+  const detectedGenres = new Set();
+  
+  // 1. Artist-based genre detection (expanded)
+  const artistGenres = detectGenresFromArtists(artists);
+  artistGenres.forEach(genre => detectedGenres.add(genre));
+  
+  // 2. Event name keyword detection
+  const eventNameGenres = detectGenresFromEventName(event.name);
+  eventNameGenres.forEach(genre => detectedGenres.add(genre));
+  
+  // 3. Venue-based genre inference
+  const venueGenres = detectGenresFromVenue(venue?.name || '');
+  venueGenres.forEach(genre => detectedGenres.add(genre));
+  
+  // 4. Ticketmaster classification
+  if (event.classifications?.[0]?.genre?.name) {
+    const tmGenre = event.classifications[0].genre.name.toLowerCase();
+    detectedGenres.add(tmGenre);
+  }
+  
+  return Array.from(detectedGenres);
+}
+
+function detectGenresFromEventName(eventName) {
+  if (!eventName) return [];
+  
+  const name = eventName.toLowerCase();
+  const genres = [];
+  
+  // Electronic music keywords
+  if (name.includes('house')) genres.push('house');
+  if (name.includes('techno')) genres.push('techno');
+  if (name.includes('trance')) genres.push('trance');
+  if (name.includes('progressive')) genres.push('progressive');
+  if (name.includes('deep')) genres.push('deep house');
+  if (name.includes('electronic')) genres.push('electronic');
+  if (name.includes('edm')) genres.push('edm');
+  if (name.includes('dance')) genres.push('dance');
+  if (name.includes('dubstep')) genres.push('dubstep');
+  if (name.includes('drum') && name.includes('bass')) genres.push('drum and bass');
+  
+  return genres;
+}
+
+function detectGenresFromVenue(venueName) {
+  if (!venueName) return [];
+  
+  const venue = venueName.toLowerCase();
+  const genres = [];
+  
+  // Toronto venue mappings
+  if (venue.includes('coda')) genres.push('house', 'techno');
+  if (venue.includes('rebel')) genres.push('edm', 'progressive house');
+  if (venue.includes('toybox')) genres.push('house', 'techno');
+  if (venue.includes('vertigo')) genres.push('techno', 'underground');
+  if (venue.includes('dprtmnt')) genres.push('house', 'deep house');
+  
+  return genres;
+}
+
+function detectGenresFromArtists(artists) {
+  // ENHANCED: Expanded artist database
+  const artistGenreMap = {
+    // Progressive House
+    'deadmau5': ['progressive house', 'electro house'],
+    'eric prydz': ['progressive house', 'techno'],
+    'kaskade': ['progressive house', 'deep house'],
+    'martin garrix': ['big room', 'progressive house'],
+    'tiesto': ['big room', 'progressive house'],
+    'above & beyond': ['trance', 'progressive trance'],
+    'armin van buuren': ['trance', 'progressive trance'],
+    
+    // Techno
+    'carl cox': ['techno', 'house'],
+    'richie hawtin': ['minimal techno', 'techno'],
+    'charlotte de witte': ['techno', 'dark techno'],
+    'amelie lens': ['techno', 'hard techno'],
+    'adam beyer': ['techno', 'hard techno'],
+    'nina kraviz': ['techno', 'acid techno'],
+    
+    // House
+    'calvin harris': ['electro house', 'progressive house'],
+    'david guetta': ['electro house', 'progressive house'],
+    'disclosure': ['deep house', 'uk garage'],
+    'duke dumont': ['deep house', 'tech house'],
+    'fisher': ['tech house', 'house'],
+    'chris lake': ['tech house', 'house'],
+    
+    // Bass Music
+    'skrillex': ['dubstep', 'bass house'],
+    'diplo': ['trap', 'moombahton'],
+    'flume': ['future bass', 'electronic'],
+    'odesza': ['future bass', 'electronic'],
+    
+    // Trance
+    'paul van dyk': ['trance', 'progressive trance'],
+    'ferry corsten': ['trance', 'progressive trance'],
+    'aly & fila': ['trance', 'uplifting trance']
+  };
+  
+  const detectedGenres = new Set();
+  
+  artists.forEach(artist => {
+    const artistLower = artist.toLowerCase();
+    if (artistGenreMap[artistLower]) {
+      artistGenreMap[artistLower].forEach(genre => detectedGenres.add(genre));
+    }
+  });
+  
+  return Array.from(detectedGenres);
 }
 
 /**
@@ -515,7 +702,8 @@ function getEmergencyEvents(city, country) {
       source: 'emergency',
       headliners: ['Local Artists'],
       venueType: 'Club',
-      detectedGenres: ['house', 'techno']
+      detectedGenres: ['house', 'techno'],
+      tasteScore: 25
     }
   ];
 }
@@ -556,34 +744,4 @@ function detectVenueType(venueName, eventName) {
   }
   
   return 'Venue';
-}
-
-function detectGenresFromArtists(artists) {
-  const artistGenreMap = {
-    'deadmau5': ['progressive house', 'electro house'],
-    'eric prydz': ['progressive house', 'techno'],
-    'kaskade': ['progressive house', 'deep house'],
-    'skrillex': ['dubstep', 'bass house'],
-    'martin garrix': ['big room', 'progressive house'],
-    'tiesto': ['big room', 'progressive house'],
-    'calvin harris': ['electro house', 'progressive house'],
-    'david guetta': ['electro house', 'progressive house'],
-    'armin van buuren': ['trance', 'progressive trance'],
-    'above & beyond': ['trance', 'progressive trance'],
-    'carl cox': ['techno', 'house'],
-    'richie hawtin': ['minimal techno', 'techno'],
-    'charlotte de witte': ['techno', 'dark techno'],
-    'amelie lens': ['techno', 'hard techno']
-  };
-  
-  const detectedGenres = new Set();
-  
-  artists.forEach(artist => {
-    const artistLower = artist.toLowerCase();
-    if (artistGenreMap[artistLower]) {
-      artistGenreMap[artistLower].forEach(genre => detectedGenres.add(genre));
-    }
-  });
-  
-  return Array.from(detectedGenres);
 }
