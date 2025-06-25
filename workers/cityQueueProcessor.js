@@ -129,9 +129,6 @@ async function processQueue() {
                 totalEvents += cityEvents.length;
                 citiesProcessed++;
                 
-                // Clear cache for this city so fresh events are returned
-                await clearCityCache(cityRequest.city, cityRequest.latitude, cityRequest.longitude);
-                
                 // Rate limiting between cities
                 if (citiesProcessed < pendingRequests.length) {
                     console.log("⏳ Rate limiting delay (5 seconds)...");
@@ -268,17 +265,6 @@ function transformTicketmasterEvent(event, city, countryCode, latitude, longitud
         createdAt: new Date(),
         updatedAt: new Date()
     };
-}
-
-// Clear cache for a city
-async function clearCityCache(city, latitude, longitude) {
-    try {
-        // This would integrate with your cache system
-        // For now, we'll just log that cache should be cleared
-        console.log(`🗑️ Cache cleared for ${city} (${latitude}, ${longitude})`);
-    } catch (error) {
-        console.error(`⚠️ Error clearing cache for ${city}:`, error.message);
-    }
 }
 
 // Run the queue processor
