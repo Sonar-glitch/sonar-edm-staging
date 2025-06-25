@@ -2,8 +2,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { connectToDatabase } from '../../../lib/mongodb';
 import { getCachedData, setCachedData } from '../../../lib/cache';
+import axios from 'axios';
 
-// Import city request utilities (NEW - for dynamic city expansion)
+// Import city request utilities (PRESERVED)
 const { addCityRequest, isCountrySupported } = require('../../../lib/cityRequestQueue');
 
 // PRESERVED: Original Ticketmaster constants
@@ -33,12 +34,13 @@ export default async function handler(req, res) {
 
     console.log(`🎯 Events API called for ${city}, ${country} (${lat}, ${lon})`);
 
-    // PRESERVED: Original cache key format for compatibility
-    const cacheKey = `events_${city}_${lat}_${lon}_${radius}`;
+    // ENHANCED: Cache key includes user ID for personalized caching
+    const userId = session.user?.id || session.user?.email || 'anonymous';
+    const cacheKey = `events_${city}_${lat}_${lon}_${radius}_${userId}`;
     const cachedEvents = await getCachedData(cacheKey, 'EVENTS');
     
     if (cachedEvents) {
-      console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached events`);
+      console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached personalized events`);
       return res.status(200).json({
         events: cachedEvents,
         total: cachedEvents.length,
@@ -79,7 +81,7 @@ export default async function handler(req, res) {
           date: { $gte: new Date() },
           status: { $ne: 'cancelled' }
         })
-        .limit(50)
+        .limit(100) // ENHANCED: Fetch more events for better deduplication
         .sort({ date: 1 })
         .toArray();
 
@@ -91,7 +93,7 @@ export default async function handler(req, res) {
           cityRequestInfo = await handleAutomaticCityRequest(city, country, latitude, longitude);
         }
 
-        // PRESERVED: Original MongoDB data transformation
+        // ENHANCED: Process events with deduplication and taste filtering
         if (mongoEvents.length > 0) {
           const data = {
             _embedded: {
@@ -115,15 +117,16 @@ export default async function handler(req, res) {
                 url: event.url,
                 priceRanges: event.priceRange ? [{ min: event.priceRange.min, max: event.priceRange.max }] : null,
                 classifications: event.genres ? [{ genre: { name: event.genres[0] } }] : null,
-                // CRITICAL: Preserve source labeling (the fix you spent hours on!)
+                // CRITICAL: Preserve source labeling
                 unifiedProcessing: event.unifiedProcessing,
                 source: event.source
               }))
             }
           };
           
-          realEvents = processEvents(data._embedded.events, city);
-          console.log(`✅ Successfully processed ${realEvents.length} real events from MongoDB`);
+          // ENHANCED: Process events with deduplication and personalization
+          realEvents = await processEventsWithTasteFiltering(data._embedded.events, city, session);
+          console.log(`✅ Successfully processed ${realEvents.length} personalized events from MongoDB`);
           break; // Success, exit retry loop
         }
       } catch (error) {
@@ -181,24 +184,30 @@ export default async function handler(req, res) {
       }
     }
 
-    // PRESERVED: Original sorting logic
+    // ENHANCED: Sorting logic with taste-based ranking
     if (finalEvents.length > 0 && finalEvents[0].matchScore !== undefined && !finalEvents[0].isPlaceholder) {
       finalEvents.sort((a, b) => {
+        // Primary sort by taste score (if available)
+        if (b.tasteScore !== undefined && a.tasteScore !== undefined && b.tasteScore !== a.tasteScore) {
+          return b.tasteScore - a.tasteScore;
+        }
+        // Secondary sort by match score
         if (b.matchScore !== a.matchScore) {
           return b.matchScore - a.matchScore;
         }
+        // Tertiary sort by date
         const dateA = a.date ? new Date(a.date) : new Date(9999, 11, 31);
         const dateB = b.date ? new Date(b.date) : new Date(9999, 11, 31);
         return dateA - dateB;
       });
     }
 
-    console.log(`🎯 Returning ${finalEvents.length} events (${realEvents.length} real, source: ${responseSource})`);
+    console.log(`🎯 Returning ${finalEvents.length} personalized events (${realEvents.length} real, source: ${responseSource})`);
 
-    // PRESERVED: Original caching logic
+    // ENHANCED: Cache personalized results
     if (finalEvents.length > 0 && responseSource !== 'fetching') {
       await setCachedData(cacheKey, finalEvents, 'EVENTS');
-      console.log(`💾 Cached ${finalEvents.length} events for ${city}, ${country}`);
+      console.log(`💾 Cached ${finalEvents.length} personalized events for ${city}, ${country}`);
     }
 
     // PRESERVED: Original response format with enhancements
@@ -208,7 +217,8 @@ export default async function handler(req, res) {
       realCount: realEvents.length,
       source: responseSource,
       timestamp: new Date().toISOString(),
-      location: { city, country, lat, lon }
+      location: { city, country, lat, lon },
+      personalized: realEvents.length > 0 // NEW: Indicate if results are personalized
     };
 
     // NEW: Add city request info if applicable
@@ -239,11 +249,219 @@ export default async function handler(req, res) {
 }
 
 /**
- * NEW: Handle automatic city request when no events found
+ * NEW: Enhanced event processing with deduplication and taste filtering
+ */
+async function processEventsWithTasteFiltering(events, city, session) {
+  console.log(`🎵 Processing ${events.length} events with taste filtering...`);
+  
+  // Step 1: Get user taste profile
+  let userTaste = null;
+  try {
+    if (session && session.accessToken) {
+      userTaste = await fetchUserTasteProfile(session.accessToken);
+      console.log(`✅ Fetched user taste profile: ${userTaste?.genres?.length || 0} genres`);
+    }
+  } catch (error) {
+    console.error('❌ Failed to fetch user taste profile:', error.message);
+  }
+
+  // Step 2: Process and deduplicate events
+  const processedEvents = events.map(event => processEvent(event, city, userTaste));
+  
+  // Step 3: Deduplicate events by name + venue + date
+  const deduplicatedEvents = deduplicateEvents(processedEvents);
+  console.log(`🔄 Deduplicated: ${events.length} → ${deduplicatedEvents.length} events`);
+  
+  // Step 4: Apply taste-based filtering and ranking
+  const filteredEvents = applyTasteFiltering(deduplicatedEvents, userTaste);
+  console.log(`🎯 Taste filtered: ${deduplicatedEvents.length} → ${filteredEvents.length} events`);
+  
+  return filteredEvents;
+}
+
+/**
+ * NEW: Fetch user taste profile from Spotify
+ */
+async function fetchUserTasteProfile(accessToken) {
+  try {
+    // Get top artists
+    const artistsResponse = await axios.get('https://api.spotify.com/v1/me/top/artists', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: { limit: 20, time_range: 'medium_term' },
+      timeout: 5000
+    });
+    
+    if (artistsResponse.status === 200 && artistsResponse.data.items) {
+      const topArtists = artistsResponse.data.items.map(artist => ({
+        id: artist.id,
+        name: artist.name,
+        popularity: artist.popularity,
+        genres: artist.genres || []
+      }));
+      
+      // Extract unique genres
+      const allGenres = topArtists.flatMap(artist => artist.genres);
+      const uniqueGenres = [...new Set(allGenres)];
+      
+      return {
+        genres: uniqueGenres,
+        topArtists: topArtists
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching Spotify taste profile:', error.message);
+  }
+  
+  return null;
+}
+
+/**
+ * NEW: Deduplicate events by name + venue + date
+ */
+function deduplicateEvents(events) {
+  const seen = new Set();
+  const deduplicated = [];
+  
+  for (const event of events) {
+    // Create a unique key for deduplication
+    const key = `${event.name.toLowerCase().trim()}_${event.venue.toLowerCase().trim()}_${event.date}`;
+    
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduplicated.push(event);
+    } else {
+      console.log(`🔄 Duplicate removed: ${event.name} at ${event.venue}`);
+    }
+  }
+  
+  return deduplicated;
+}
+
+/**
+ * NEW: Apply taste-based filtering and ranking
+ */
+function applyTasteFiltering(events, userTaste) {
+  if (!userTaste || !userTaste.genres || userTaste.genres.length === 0) {
+    console.log('⚠️ No user taste data available, returning events with original scores');
+    return events;
+  }
+  
+  const userGenres = userTaste.genres.map(g => g.toLowerCase());
+  const userArtists = userTaste.topArtists || [];
+  
+  console.log(`🎵 Applying taste filtering with ${userGenres.length} genres and ${userArtists.length} artists`);
+  
+  // Calculate taste scores for each event
+  const eventsWithTasteScores = events.map(event => {
+    let tasteScore = 0;
+    
+    // Genre matching (50% weight)
+    const eventGenres = event.detectedGenres.map(g => g.toLowerCase());
+    const genreMatches = eventGenres.filter(genre => 
+      userGenres.some(userGenre => 
+        genre.includes(userGenre) || userGenre.includes(genre)
+      )
+    ).length;
+    
+    if (genreMatches > 0) {
+      tasteScore += Math.min(genreMatches * 20, 50); // Max 50 points for genres
+    }
+    
+    // Artist matching (30% weight)
+    const eventArtists = event.headliners.map(a => a.toLowerCase());
+    const artistMatches = eventArtists.filter(artist =>
+      userArtists.some(userArtist =>
+        artist.includes(userArtist.name.toLowerCase()) || 
+        userArtist.name.toLowerCase().includes(artist)
+      )
+    ).length;
+    
+    if (artistMatches > 0) {
+      tasteScore += Math.min(artistMatches * 15, 30); // Max 30 points for artists
+    }
+    
+    // EDM relevance bonus (20% weight)
+    const edmKeywords = ['house', 'techno', 'electronic', 'edm', 'dance', 'trance', 'dubstep'];
+    const eventText = `${event.name} ${event.headliners.join(' ')}`.toLowerCase();
+    const edmMatches = edmKeywords.filter(keyword => eventText.includes(keyword)).length;
+    
+    if (edmMatches > 0) {
+      tasteScore += Math.min(edmMatches * 3, 20); // Max 20 points for EDM relevance
+    }
+    
+    return {
+      ...event,
+      tasteScore: Math.round(tasteScore)
+    };
+  });
+  
+  // Filter out events with very low taste scores (less than 10)
+  const filteredEvents = eventsWithTasteScores.filter(event => 
+    event.tasteScore >= 10 || event.matchScore >= 80
+  );
+  
+  console.log(`🎯 Taste scoring complete: ${eventsWithTasteScores.length} → ${filteredEvents.length} events after filtering`);
+  
+  return filteredEvents;
+}
+
+/**
+ * ENHANCED: Original event processing function with taste integration
+ */
+function processEvent(event, city, userTaste) {
+  const venue = event._embedded?.venues?.[0];
+  const artists = event._embedded?.attractions?.map(a => a.name) || [];
+  
+  // Enhanced genre detection
+  const artistGenres = detectGenresFromArtists(artists);
+  
+  // Enhanced relevance scoring
+  const edmKeywords = ['house', 'techno', 'electronic', 'edm', 'dance', 'trance', 'dubstep', 'drum', 'bass'];
+  const eventText = `${event.name} ${artists.join(' ')} ${event.classifications?.[0]?.genre?.name || ''}`.toLowerCase();
+  const edmMatches = edmKeywords.filter(keyword => eventText.includes(keyword)).length;
+  
+  const baseScore = Math.min(70 + (edmMatches * 3), 85);
+  const genreBonus = artistGenres.length > 0 ? Math.min(artistGenres.length * 2, 14) : 0;
+  const finalScore = Math.min(baseScore + genreBonus, 99);
+  
+  // Better date/time formatting
+  const eventDate = event.dates?.start?.localDate ? new Date(event.dates?.start?.localDate) : null;
+  const formattedDate = eventDate ? 
+    eventDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 
+    'Date TBA';
+  
+  const formattedTime = event.dates?.start?.localTime ? 
+    formatTime(event.dates?.start?.localTime) : 
+    'Time TBA';
+  
+  const venueType = detectVenueType(venue?.name || '', event.name);
+  
+  return {
+    id: event.id,
+    name: event.name,
+    date: event.dates?.start?.localDate,
+    time: event.dates?.start?.localTime,
+    formattedDate: formattedDate,
+    formattedTime: formattedTime,
+    venue: venue?.name || 'Venue TBA',
+    address: venue?.address?.line1 || venue?.city?.name || 'Address TBA',
+    city: venue?.city?.name || city,
+    ticketUrl: event.url,
+    priceRange: event.priceRanges?.[0] ? `$${event.priceRanges[0].min}-${event.priceRanges[0].max}` : 'Price TBA',
+    headliners: artists.slice(0, 3),
+    matchScore: finalScore,
+    // CRITICAL: Preserve source labeling
+    source: event.unifiedProcessing?.sourceEvents?.[0]?.source?.toLowerCase() || event.source || 'unknown',
+    venueType: venueType,
+    detectedGenres: artistGenres
+  };
+}
+
+/**
+ * PRESERVED: All original helper functions
  */
 async function handleAutomaticCityRequest(city, country, latitude, longitude) {
   try {
-    // Check if country is supported
     if (!isCountrySupported(country)) {
       console.log(`❌ Country not supported: ${country}`);
       return {
@@ -252,7 +470,6 @@ async function handleAutomaticCityRequest(city, country, latitude, longitude) {
       };
     }
 
-    // Add city request automatically
     const result = addCityRequest(city, country, latitude, longitude);
     
     if (result.success) {
@@ -282,63 +499,6 @@ async function handleAutomaticCityRequest(city, country, latitude, longitude) {
   }
 }
 
-/**
- * PRESERVED: Original event processing function
- */
-function processEvents(events, city) {
-  return events.map(event => {
-    const venue = event._embedded?.venues?.[0];
-    const artists = event._embedded?.attractions?.map(a => a.name) || [];
-    
-    // Enhanced genre detection
-    const artistGenres = detectGenresFromArtists(artists);
-    
-    // Enhanced relevance scoring
-    const edmKeywords = ['house', 'techno', 'electronic', 'edm', 'dance', 'trance', 'dubstep', 'drum', 'bass'];
-    const eventText = `${event.name} ${artists.join(' ')} ${event.classifications?.[0]?.genre?.name || ''}`.toLowerCase();
-    const edmMatches = edmKeywords.filter(keyword => eventText.includes(keyword)).length;
-    
-    const baseScore = Math.min(70 + (edmMatches * 3), 85);
-    const genreBonus = artistGenres.length > 0 ? Math.min(artistGenres.length * 2, 14) : 0;
-    const finalScore = Math.min(baseScore + genreBonus, 99);
-    
-    // Better date/time formatting
-    const eventDate = event.dates?.start?.localDate ? new Date(event.dates?.start?.localDate) : null;
-    const formattedDate = eventDate ? 
-      eventDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 
-      'Date TBA';
-    
-    const formattedTime = event.dates?.start?.localTime ? 
-      formatTime(event.dates?.start?.localTime) : 
-      'Time TBA';
-    
-    const venueType = detectVenueType(venue?.name || '', event.name);
-    
-    return {
-      id: event.id,
-      name: event.name,
-      date: event.dates?.start?.localDate,
-      time: event.dates?.start?.localTime,
-      formattedDate: formattedDate,
-      formattedTime: formattedTime,
-      venue: venue?.name || 'Venue TBA',
-      address: venue?.address?.line1 || venue?.city?.name || 'Address TBA',
-      city: venue?.city?.name || city,
-      ticketUrl: event.url,
-      priceRange: event.priceRanges?.[0] ? `$${event.priceRanges[0].min}-${event.priceRanges[0].max}` : 'Price TBA',
-      headliners: artists.slice(0, 3),
-      matchScore: finalScore,
-      // CRITICAL: Preserve source labeling - This was the critical fix!
-      source: event.unifiedProcessing?.sourceEvents?.[0]?.source?.toLowerCase() || event.source || 'unknown',
-      venueType: venueType,
-      detectedGenres: artistGenres
-    };
-  });
-}
-
-/**
- * PRESERVED: Original emergency fallback events
- */
 function getEmergencyEvents(city, country) {
   return [
     {
@@ -360,7 +520,6 @@ function getEmergencyEvents(city, country) {
   ];
 }
 
-// PRESERVED: All original helper functions
 function formatTime(timeString) {
   if (!timeString) return 'Time TBA';
   
@@ -400,14 +559,21 @@ function detectVenueType(venueName, eventName) {
 }
 
 function detectGenresFromArtists(artists) {
-  // Simplified genre detection (PRESERVED)
   const artistGenreMap = {
     'deadmau5': ['progressive house', 'electro house'],
     'eric prydz': ['progressive house', 'techno'],
     'kaskade': ['progressive house', 'deep house'],
     'skrillex': ['dubstep', 'bass house'],
     'martin garrix': ['big room', 'progressive house'],
-    'tiesto': ['big room', 'progressive house']
+    'tiesto': ['big room', 'progressive house'],
+    'calvin harris': ['electro house', 'progressive house'],
+    'david guetta': ['electro house', 'progressive house'],
+    'armin van buuren': ['trance', 'progressive trance'],
+    'above & beyond': ['trance', 'progressive trance'],
+    'carl cox': ['techno', 'house'],
+    'richie hawtin': ['minimal techno', 'techno'],
+    'charlotte de witte': ['techno', 'dark techno'],
+    'amelie lens': ['techno', 'hard techno']
   };
   
   const detectedGenres = new Set();
@@ -421,4 +587,3 @@ function detectGenresFromArtists(artists) {
   
   return Array.from(detectedGenres);
 }
-
