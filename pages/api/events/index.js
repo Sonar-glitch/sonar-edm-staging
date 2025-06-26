@@ -280,17 +280,56 @@ async function processEventsWithTasteFiltering(events, city, session) {
 }
 
 /**
- * NEW: Fetch user taste profile from Spotify
+ * Enhanced fetchUserTasteProfile using sophisticated taste processor
  */
 async function fetchUserTasteProfile(accessToken) {
   try {
-    // Get top artists
+    // Import sophisticated processor
+    const { processAndSaveUserTaste } = require('../../../lib/spotifyTasteProcessor');
+    
+    // Create session object for the processor
+    const session = { 
+      accessToken, 
+      user: { email: 'recommendation-user' }
+    };
+    
+    console.log('🎵 Using sophisticated taste processor for recommendations...');
+    
+    // Get comprehensive taste profile
+    const tasteProfile = await processAndSaveUserTaste(session);
+    
+    if (tasteProfile && tasteProfile.genreProfile) {
+      const genres = Object.keys(tasteProfile.genreProfile);
+      const topArtists = tasteProfile.topArtists || [];
+      
+      console.log(`✅ Sophisticated taste profile: ${genres.length} genres, ${topArtists.length} artists`);
+      
+      return {
+        genres: genres,
+        topArtists: topArtists
+      };
+    } else {
+      // Fallback to basic API
+      return await fetchBasicTasteProfile(accessToken);
+    }
+    
+  } catch (error) {
+    console.error('❌ Sophisticated processor failed:', error.message);
+    return await fetchBasicTasteProfile(accessToken);
+  }
+}
+
+/**
+ * Fallback function - basic Spotify API call
+ */
+async function fetchBasicTasteProfile(accessToken) {
+  try {
     const artistsResponse = await axios.get('https://api.spotify.com/v1/me/top/artists', {
       headers: { Authorization: `Bearer ${accessToken}` },
       params: { limit: 20, time_range: 'medium_term' },
       timeout: 5000
-    });
-    
+    } );
+
     if (artistsResponse.status === 200 && artistsResponse.data.items) {
       const topArtists = artistsResponse.data.items.map(artist => ({
         id: artist.id,
@@ -298,20 +337,19 @@ async function fetchUserTasteProfile(accessToken) {
         popularity: artist.popularity,
         genres: artist.genres || []
       }));
-      
-      // Extract unique genres
+
       const allGenres = topArtists.flatMap(artist => artist.genres);
       const uniqueGenres = [...new Set(allGenres)];
-      
+
       return {
         genres: uniqueGenres,
         topArtists: topArtists
       };
     }
   } catch (error) {
-    console.error('Error fetching Spotify taste profile:', error.message);
+    console.error('❌ Basic Spotify API failed:', error.message);
   }
-  
+
   return null;
 }
 
