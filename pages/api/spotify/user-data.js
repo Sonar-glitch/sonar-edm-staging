@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
-
+const { processAndSaveUserTaste } = require('../../../lib/spotifyTasteProcessor');
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -21,9 +21,23 @@ export default async function handler(req, res) {
       // This would be your actual token retrieval logic
       // accessToken = await getSpotifyAccessToken(session);
       
-      // For demo purposes, we'll simulate a token error
-      // Remove this line and uncomment above when implementing real Spotify API
-      throw new Error('Spotify token not available');
+      /// SURGICAL FIX: Use real Spotify API instead of demo
+      const { processAndSaveUserTaste } = require('../../../lib/spotifyTasteProcessor');
+      const tasteProfile = await processAndSaveUserTaste(session);
+      
+      // Convert to existing format (PRESERVE EXACT STRUCTURE)
+      const processedData = {
+        source: 'spotify_api',
+        timestamp: tasteProfile.lastUpdated.toISOString(),
+        topGenres: Object.entries(tasteProfile.genreProfile || {}).map(([name, popularity]) => ({
+          name, popularity
+        })),
+        topArtists: tasteProfile.topArtists || [],
+        audioFeatures: tasteProfile.audioFeatures || {
+          energy: 0.75, danceability: 0.82, positivity: 0.65, acoustic: 0.15
+        }
+      };
+      return res.status(200).json(processedData);
     } catch (tokenError) {
       console.log('Spotify token error:', tokenError.message);
       
