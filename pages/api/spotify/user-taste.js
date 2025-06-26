@@ -121,7 +121,8 @@ export default async function handler(req, res) {
         tracks: topTracks,
         audioFeatures,
         mood,
-        genreProfile
+        genreProfile,
+  source: 'spotify_api'
       });
     } catch (error) {
       console.error("Spotify API Failure:", error);
