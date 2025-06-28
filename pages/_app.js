@@ -1,4 +1,5 @@
 import { SessionProvider, useSession } from "next-auth/react";
+import LocationProvider from "../components/LocationProvider";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import "../styles/globals.css";
@@ -66,6 +67,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
 
   return (
     <SessionProvider session={session}>
+      <LocationProvider>
       {requiredAuth ? (
         <Auth requiredAuth={requiredAuth}>
           <Component {...pageProps} />
@@ -73,6 +75,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
       ) : (
         <Component {...pageProps} />
       )}
+          </LocationProvider>
     </SessionProvider>
   );
 }
