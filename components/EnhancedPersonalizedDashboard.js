@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useLocation } from './LocationProvider';
 import dynamic from 'next/dynamic';
 import styles from '@/styles/EnhancedPersonalizedDashboard.module.css';
 
@@ -15,13 +16,8 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState({
-    city: 'Toronto',
-    region: 'ON',
-    country: 'Canada',
-    latitude: 43.65,
-    longitude: -79.38
-  });
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const { location, loading: locationLoading } = useLocation();
   const [spotifyData, setSpotifyData] = useState(null);
   const [userTasteProfile, setUserTasteProfile] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -46,6 +42,13 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
       loadEvents();
     }
   }, [session, selectedLocation]);
+
+  // Sync with LocationProvider
+  useEffect(() => {
+    if (location && !selectedLocation) {
+      setSelectedLocation(location);
+    }
+  }, [location, selectedLocation]);
 
   const loadSpotifyData = async () => {
     try {
