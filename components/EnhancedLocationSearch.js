@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { searchCities, getCoordinatesFromPlaceId } from '../lib/locationUtils';
+import { useLocation } from './LocationProvider';
 
 /**
  * Enhanced Location Search component with Google Places autocomplete
- * Preserves the original dark theme styling while adding search functionality
- * Updated to use non-deprecated Google Geocoding API
+ * Preserves the original dark theme styling while adding robust search functionality
+ * Updated to use Google Places API with proper error handling
  */
 export default function EnhancedLocationSearch({ selectedLocation, onLocationSelect }) {
   const [isSearchMode, setIsSearchMode] = useState(false);
@@ -13,388 +15,275 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
+  const { refreshLocation } = useLocation();
 
   // Default location (Toronto fallback)
   const currentLocation = selectedLocation || {
-    city: 'Toronto',
-    stateCode: 'ON',
-    countryCode: 'CA',
-    lat: 43.653226,
-    lon: -79.383184,
+    city: "Toronto",
+    region: "ON", 
+    country: "Canada"
   };
 
-  // Country code to full name mapping for API compatibility
-  const countryCodeToName = {
-    'CA': 'Canada',
-    'US': 'United States',
-    'GB': 'United Kingdom',
-    'UK': 'United Kingdom',
-    'DE': 'Germany',
-    'FR': 'France',
-    'IT': 'Italy',
-    'ES': 'Spain',
-    'NL': 'Netherlands',
-    'BE': 'Belgium',
-    'CH': 'Switzerland',
-    'AT': 'Austria',
-    'SE': 'Sweden',
-    'NO': 'Norway',
-    'DK': 'Denmark',
-    'FI': 'Finland',
-    'IE': 'Ireland',
-    'PT': 'Portugal',
-    'AU': 'Australia',
-    'NZ': 'New Zealand',
-    'JP': 'Japan',
-    'KR': 'South Korea',
-    'SG': 'Singapore',
-    'HK': 'Hong Kong',
-    'MX': 'Mexico',
-    'BR': 'Brazil',
-    'AR': 'Argentina',
-    'CL': 'Chile',
-    'CO': 'Colombia',
-    'PE': 'Peru'
-  };
+  // Handle search input changes with debouncing
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    setError(null);
 
-  // Focus input when entering search mode
-  useEffect(() => {
-    if (isSearchMode && inputRef.current) {
-      inputRef.current.focus();
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
-  }, [isSearchMode]);
 
-  // Debounced search function
-  useEffect(() => {
-    if (searchQuery.length >= 2) {
-      // Clear previous timeout
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-
-      // Set new timeout for debounced search
-      searchTimeoutRef.current = setTimeout(() => {
-        searchCities(searchQuery);
+    // Debounce search requests
+    if (query.trim().length >= 2) {
+      searchTimeoutRef.current = setTimeout(async () => {
+        await performSearch(query.trim());
       }, 300);
     } else {
       setSuggestions([]);
     }
+  };
 
-    // Cleanup timeout on unmount
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchQuery]);
-
-  const searchCities = async (query) => {
+  // Perform city search using Google Places API
+  const performSearch = async (query) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-      );
+      console.log(`🔍 Searching for cities: "${query}"`);
+      const results = await searchCities(query);
       
-      const data = await response.json();
-      
-      if (data.status === 'OK' && data.results) {
-        // Filter and format results for cities
-        const cityResults = data.results
-          .filter(result => 
-            result.types.includes('locality') || 
-            result.types.includes('administrative_area_level_1') ||
-            result.types.includes('political')
-          )
-          .slice(0, 5) // Limit to 5 suggestions
-          .map(result => ({
-            place_id: result.place_id,
-            formatted_address: result.formatted_address,
-            geometry: result.geometry,
-            address_components: result.address_components,
-            name: extractCityName(result.address_components) || result.formatted_address.split(',')[0]
-          }));
-
-        setSuggestions(cityResults);
-      } else if (data.status === 'ZERO_RESULTS') {
-        setSuggestions([]);
+      if (results.length > 0) {
+        setSuggestions(results);
+        console.log(`✅ Found ${results.length} city suggestions`);
       } else {
-        setError(`Search failed: ${data.status}`);
+        setSuggestions([]);
+        setError('No cities found. Try a different search term.');
       }
     } catch (error) {
-      console.error('Error searching cities:', error);
-      setError('Failed to search cities. Please try again.');
+      console.error('❌ City search failed:', error);
+      setSuggestions([]);
+      setError('Search failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const extractCityName = (addressComponents) => {
-    for (const component of addressComponents) {
-      if (component.types.includes('locality')) {
-        return component.long_name;
+  // Handle suggestion selection
+  const handleSuggestionSelect = async (suggestion) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log(`📍 Getting coordinates for: ${suggestion.name}`);
+      
+      // Get coordinates from place ID
+      const locationData = await getCoordinatesFromPlaceId(suggestion.id);
+      
+      if (locationData) {
+        console.log('✅ Location data retrieved:', locationData);
+        
+        // Call the parent callback with the new location
+        if (onLocationSelect) {
+          onLocationSelect(locationData);
+        }
+        
+        // Update search query to show selected location
+        setSearchQuery(suggestion.name);
+        setSuggestions([]);
+        setIsSearchMode(false);
+        
+        console.log('📍 Location selected successfully');
+      } else {
+        throw new Error('Unable to get location details');
       }
+    } catch (error) {
+      console.error('❌ Location selection failed:', error);
+      setError('Failed to select location. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    return null;
   };
 
-  const extractLocationData = (place) => {
-    const location = {
-      placeId: place.place_id,
-      name: place.name,
-      formattedAddress: place.formatted_address,
-      lat: place.geometry.location.lat,
-      lon: place.geometry.location.lng
+  // Handle search mode toggle
+  const toggleSearchMode = () => {
+    if (isSearchMode) {
+      // Exiting search mode
+      setIsSearchMode(false);
+      setSearchQuery('');
+      setSuggestions([]);
+      setError(null);
+    } else {
+      // Entering search mode
+      setIsSearchMode(true);
+      setSearchQuery('');
+      setSuggestions([]);
+      setError(null);
+      
+      // Focus input after state update
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+    }
+  };
+
+  // Handle auto-detect location
+  const handleAutoDetect = () => {
+    console.log('🎯 Auto-detecting location...');
+    setIsLoading(true);
+    setError(null);
+    
+    // Use LocationProvider's refresh function
+    refreshLocation();
+    
+    // Reset search mode
+    setIsSearchMode(false);
+    setSearchQuery('');
+    setSuggestions([]);
+    
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+  };
+
+  // Handle click outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (inputRef.current && !inputRef.current.contains(event.target)) {
+        setSuggestions([]);
+      }
     };
 
-    // Extract city, state, and country from address components
-    if (place.address_components) {
-      place.address_components.forEach(component => {
-        const types = component.types;
-        if (types.includes('locality')) {
-          location.city = component.long_name;
-        } else if (types.includes('administrative_area_level_1')) {
-          location.stateCode = component.short_name;
-        } else if (types.includes('country')) {
-          location.country = component.long_name;
-          location.countryCode = component.short_name;
-        }
-      });
-    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
-    // If no city found, try to use the place name
-    if (!location.city && place.name) {
-      location.city = place.name;
-    }
-
-    return location;
-  };
-
-  const handleLocationSelect = async (locationData) => {
-    console.log('Location selected:', locationData);
-    
-    // Update the display
-    setIsSearchMode(false);
-    setSearchQuery('');
-    setSuggestions([]);
-    setError(null);
-
-    // Call the parent callback to update the location
-    if (onLocationSelect) {
-      onLocationSelect(locationData);
-    }
-
-    // Trigger city expansion if it's a new city
-    if (locationData.city && locationData.countryCode) {
-      try {
-        // Map country code to full name for API compatibility
-        let countryName = locationData.country;
-        if (locationData.countryCode && countryCodeToName[locationData.countryCode]) {
-          countryName = countryCodeToName[locationData.countryCode];
-        }
-        
-        console.log('Country being sent to API:', countryName);
-        
-        const response = await fetch('/api/events/request-city', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            city: locationData.city,
-            country: countryName, // Send full country name
-            latitude: locationData.lat,
-            longitude: locationData.lon
-          }),
-        });
-
-        if (!response.ok) {
-          console.error('City expansion request failed:', response.status);
-        } else {
-          console.log('City expansion request successful');
-        }
-      } catch (error) {
-        console.error('Error requesting city expansion:', error);
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
-    }
-  };
-
-  const handleSuggestionClick = (suggestion) => {
-    const locationData = extractLocationData(suggestion);
-    handleLocationSelect(locationData);
-  };
-
-  const handleChangeClick = () => {
-    setIsSearchMode(true);
-    setError(null);
-  };
-
-  const handleCancelSearch = () => {
-    setIsSearchMode(false);
-    setSearchQuery('');
-    setSuggestions([]);
-    setError(null);
-  };
-
-  const handleInputChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      handleCancelSearch();
-    }
-  };
-
-  // Format location for display - FIXED to handle both 'region' and 'stateCode'
-  const formatLocationDisplay = (location) => {
-    if (!location) return 'Unknown Location';
-    
-    if (location.formattedAddress) {
-      return location.formattedAddress;
-    }
-    
-    const parts = [];
-    if (location.city) parts.push(location.city);
-    // Handle both 'stateCode' and 'region' property names
-    if (location.stateCode || location.region) parts.push(location.stateCode || location.region);
-    if (location.country) parts.push(location.country);
-    
-    return parts.join(', ') || 'Unknown Location';
-  };
+    };
+  }, []);
 
   return (
-    <div style={{ 
-      padding: '1rem', 
-      background: '#1a1a1a', 
-      borderRadius: '8px',
-      border: '1px solid #333',
-      color: '#fff',
-      position: 'relative'
-    }}>
-      {!isSearchMode ? (
-        // Display Mode - Shows current location
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: '#ff1493' }}>📍</span>
-            <span>{formatLocationDisplay(currentLocation)}</span>
-            <button 
-              onClick={handleChangeClick}
-              style={{
-                background: 'linear-gradient(90deg, #00c6ff, #ff00ff)',
-                border: 'none',
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                color: 'white',
-                fontSize: '0.8rem',
-                cursor: 'pointer'
-              }}
+    <div className="relative">
+      {/* Location Display / Search Toggle */}
+      <div className="flex items-center space-x-2">
+        {!isSearchMode ? (
+          // Display current location
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 text-gray-300">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+              <span className="text-sm">
+                {currentLocation.city}, {currentLocation.region}
+              </span>
+            </div>
+            
+            {/* Search Button */}
+            <button
+              onClick={toggleSearchMode}
+              className="text-cyan-400 hover:text-cyan-300 transition-colors"
+              title="Search for a different city"
             >
-              Change
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+            
+            {/* Auto-detect Button */}
+            <button
+              onClick={handleAutoDetect}
+              disabled={isLoading}
+              className="text-green-400 hover:text-green-300 transition-colors disabled:opacity-50"
+              title="Auto-detect my location"
+            >
+              {isLoading ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              )}
             </button>
           </div>
-        </div>
-      ) : (
-        // Search Mode - Shows input field with suggestions
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <span style={{ color: '#ff1493' }}>📍</span>
-            <div style={{ flex: 1, position: 'relative' }}>
+        ) : (
+          // Search input mode
+          <div className="flex items-center space-x-2 w-full">
+            <div className="relative flex-1" ref={inputRef}>
               <input
-                ref={inputRef}
                 type="text"
                 value={searchQuery}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
+                onChange={handleSearchChange}
                 placeholder="Search for a city..."
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  background: '#2a2a2a',
-                  border: '1px solid #444',
-                  borderRadius: '4px',
-                  color: '#fff',
-                  fontSize: '0.9rem',
-                  outline: 'none'
-                }}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                autoFocus
               />
               
-              {/* Suggestions Dropdown */}
-              {(suggestions.length > 0 || isLoading || error) && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  background: '#2a2a2a',
-                  border: '1px solid #444',
-                  borderTop: 'none',
-                  borderRadius: '0 0 4px 4px',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  zIndex: 1000
-                }}>
-                  {isLoading && (
-                    <div style={{
-                      padding: '0.5rem',
-                      color: '#888',
-                      fontSize: '0.9rem'
-                    }}>
-                      Searching...
-                    </div>
-                  )}
-                  
-                  {error && (
-                    <div style={{
-                      padding: '0.5rem',
-                      color: '#ff6b6b',
-                      fontSize: '0.9rem'
-                    }}>
-                      {error}
-                    </div>
-                  )}
-                  
-                  {suggestions.map((suggestion, index) => (
-                    <div
-                      key={suggestion.place_id || index}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      style={{
-                        padding: '0.5rem',
-                        cursor: 'pointer',
-                        borderBottom: index < suggestions.length - 1 ? '1px solid #444' : 'none',
-                        fontSize: '0.9rem',
-                        ':hover': {
-                          background: '#333'
-                        }
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = '#333'}
-                      onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                    >
-                      {suggestion.formatted_address}
-                    </div>
-                  ))}
+              {/* Loading indicator */}
+              {isLoading && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <svg className="w-4 h-4 animate-spin text-cyan-400" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
                 </div>
               )}
             </div>
-            <button 
-              onClick={handleCancelSearch}
-              style={{
-                background: '#666',
-                border: 'none',
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                color: 'white',
-                fontSize: '0.8rem',
-                cursor: 'pointer'
-              }}
+            
+            {/* Cancel Button */}
+            <button
+              onClick={toggleSearchMode}
+              className="text-gray-400 hover:text-gray-300 transition-colors"
+              title="Cancel search"
             >
-              Cancel
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#888' }}>
-            Start typing to search for cities worldwide
-          </div>
+        )}
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mt-2 text-sm text-red-400">
+          {error}
+        </div>
+      )}
+
+      {/* Search Suggestions */}
+      {isSearchMode && suggestions.length > 0 && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+          {suggestions.map((suggestion, index) => (
+            <button
+              key={suggestion.id}
+              onClick={() => handleSuggestionSelect(suggestion)}
+              className="w-full px-4 py-3 text-left hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-b-0"
+              disabled={isLoading}
+            >
+              <div className="text-white text-sm">
+                {suggestion.structured_formatting?.main_text || suggestion.name}
+              </div>
+              {suggestion.structured_formatting?.secondary_text && (
+                <div className="text-gray-400 text-xs mt-1">
+                  {suggestion.structured_formatting.secondary_text}
+                </div>
+              )}
+            </button>
+          ))}
         </div>
       )}
     </div>
