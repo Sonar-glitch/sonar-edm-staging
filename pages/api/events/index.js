@@ -3,6 +3,7 @@ import { authOptions } from '../auth/[...nextauth]';
 import { connectToDatabase } from '../../../lib/mongodb';
 import { getCachedData, setCachedData } from '../../../lib/cache';
 import axios from 'axios';
+const { enhancedRecommendationSystem } = require('../../../lib/enhancedRecommendationSystem');
 
 // Import city request utilities (PRESERVED)
 const { addCityRequest, isCountrySupported } = require('../../../lib/cityRequestQueue');
@@ -253,7 +254,16 @@ export default async function handler(req, res) {
  */
 async function processEventsWithTasteFiltering(events, city, session) {
   console.log(`🎵 Processing ${events.length} events with taste filtering...`);
-  
+  if (process.env.ENHANCED_RECOMMENDATION_ENABLED === 'true') {
+  try {
+    console.log('🚀 Applying Phase 2 enhanced scoring...');
+    filteredEvents = await enhancedRecommendationSystem.processEventsWithEnhancedScoring(filteredEvents, userTaste);
+    console.log('✅ Phase 2 enhanced scoring applied successfully');
+  } catch (error) {
+    console.error('❌ Phase 2 enhanced scoring failed, using original results:', error);
+    // Continue with original results if Phase 2 fails
+  }
+}
   // Step 1: Get user taste profile
   let userTaste = null;
   try {
