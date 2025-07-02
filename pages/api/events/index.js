@@ -94,57 +94,26 @@ export default async function handler(req, res) {
         if (data && data.length > 0) {
           console.log(`✅ Found ${data.length} events from MongoDB`);
 
-          // FIXED: Complete venue and time data preservation
-          const formattedEvents = data.map(event => {
-            // Extract time from ISO date string
-            const eventDate = new Date(event.date);
-            const timeString = eventDate.toLocaleTimeString('en-US', { 
-              hour: 'numeric', 
-              minute: '2-digit',
-              hour12: true 
-            });
-            
-            return {
-              id: event._id || event.id,
-              name: event.name,
-              url: event.url,
-              ticketUrl: event.url, // FIXED: Map url to ticketUrl for frontend
-              source: 'mongodb', // FIXED: Add source field
-              date: event.date, // FIXED: Keep full ISO date
-              dateFormatted: eventDate.toLocaleDateString('en-US', { 
-                weekday: 'short', 
-                month: 'short', 
-                day: 'numeric' 
-              }),
-              time: timeString, // FIXED: Extract time for frontend
-              startTime: event.startTime, // FIXED: Include if available
-              doorTime: event.doorTime, // FIXED: Include if available
-              dates: { start: { localDate: event.date } }, // Keep for API compatibility
-              
-              // FIXED: Complete venue data preservation
-              venue: {
-                name: event.venue?.name || 'Venue TBA',
-                address: event.venue?.address || '',
-                city: event.venue?.city || '',
-                state: event.venue?.state || '',
-                country: event.venue?.country || '',
-                postalCode: event.venue?.postalCode || '',
-                fullAddress: event.venue ? 
-                  `${event.venue.address || ''}, ${event.venue.city || ''}, ${event.venue.state || ''}`.replace(/^,\s*|,\s*$/g, '') : 
-                  'Address TBA'
-              },
-              
-              venues: event.venue ? [event.venue] : [], // Keep for API compatibility
-              artists: event.artists ? event.artists.map(artist => ({ name: artist.name, id: artist.id })) : [],
-              _embedded: {
-                venues: event.venue ? [event.venue] : [],
-                attractions: event.artists ? event.artists.map(artist => ({ name: artist.name, id: artist.id })) : []
-              },
-              classifications: event.classifications || [],
-              priceRanges: event.priceRanges || [],
-              images: event.images || []
-            };
-          });
+          // FIXED: Convert MongoDB format to frontend-expected format with ALL field mappings
+          const formattedEvents = data.map(event => ({
+            id: event._id || event.id,
+            name: event.name,
+            url: event.url,
+            ticketUrl: event.url, // FIXED: Map url to ticketUrl for frontend
+            source: 'mongodb', // FIXED: Add source field
+            date: event.date, // FIXED: Map date directly for frontend
+            dates: { start: { localDate: event.date } }, // Keep for API compatibility
+            venue: event.venue?.name || 'Venue TBA', // FIXED: Map venue.name directly for frontend
+            venues: event.venue ? [event.venue] : [], // Keep for API compatibility
+            artists: event.artists ? event.artists.map(artist => ({ name: artist.name, id: artist.id })) : [],
+            _embedded: {
+              venues: event.venue ? [event.venue] : [],
+              attractions: event.artists ? event.artists.map(artist => ({ name: artist.name, id: artist.id })) : []
+            },
+            classifications: event.classifications || [],
+            priceRanges: event.priceRanges || [],
+            images: event.images || []
+          }));
 
           // ENHANCED: Process events with deduplication and personalization
           realEvents = await processEventsWithTasteFiltering(formattedEvents, city, session);
@@ -173,34 +142,14 @@ export default async function handler(req, res) {
         if (response.data && response.data._embedded && response.data._embedded.events) {
           console.log(`✅ Ticketmaster returned ${response.data._embedded.events.length} events`);
           
-          // FIXED: Complete field mapping for Ticketmaster events too
-          const ticketmasterEvents = response.data._embedded.events.map(event => {
-            const eventDate = event.dates?.start?.localDate ? new Date(event.dates.start.localDate) : new Date();
-            const timeString = event.dates?.start?.localTime || 'Time TBA';
-            
-            return {
-              ...event,
-              source: 'ticketmaster',
-              ticketUrl: event.url, // FIXED: Map url to ticketUrl
-              date: event.dates?.start?.localDate, // FIXED: Extract date for frontend
-              dateFormatted: eventDate.toLocaleDateString('en-US', { 
-                weekday: 'short', 
-                month: 'short', 
-                day: 'numeric' 
-              }),
-              time: timeString, // FIXED: Extract time
-              venue: {
-                name: event._embedded?.venues?.[0]?.name || 'Venue TBA',
-                address: event._embedded?.venues?.[0]?.address?.line1 || '',
-                city: event._embedded?.venues?.[0]?.city?.name || '',
-                state: event._embedded?.venues?.[0]?.state?.stateCode || '',
-                country: event._embedded?.venues?.[0]?.country?.countryCode || '',
-                fullAddress: event._embedded?.venues?.[0] ? 
-                  `${event._embedded.venues[0].address?.line1 || ''}, ${event._embedded.venues[0].city?.name || ''}, ${event._embedded.venues[0].state?.stateCode || ''}`.replace(/^,\s*|,\s*$/g, '') : 
-                  'Address TBA'
-              }
-            };
-          });
+          // FIXED: Add proper field mapping for Ticketmaster events too
+          const ticketmasterEvents = response.data._embedded.events.map(event => ({
+            ...event,
+            source: 'ticketmaster',
+            ticketUrl: event.url, // FIXED: Map url to ticketUrl
+            date: event.dates?.start?.localDate, // FIXED: Extract date for frontend
+            venue: event._embedded?.venues?.[0]?.name || 'Venue TBA' // FIXED: Extract venue name
+          }));
           
           realEvents = await processEventsWithTasteFiltering(ticketmasterEvents, city, session);
         }
@@ -304,20 +253,14 @@ async function processEventsWithTasteFiltering(events, city, session) {
       
       filteredEvents = await enhancedRecommendationSystem.processEventsWithEnhancedScoring(filteredEvents, userTaste);
       
-      // CRITICAL FIX: Map enhanced tasteScore to matchScore WITHOUT capping
-      filteredEvents = filteredEvents.map(event => {
-        const enhancedScore = event.tasteScore || event.originalScore || 10;
-        console.log(`🎯 Event "${event.name}": Enhanced score ${enhancedScore}%`);
-        
-        return {
-          ...event,
-          matchScore: enhancedScore, // FIXED: Direct mapping without reduction
-          displayScore: enhancedScore // FIXED: Additional field for frontend
-        };
-      });
+      // CRITICAL FIX: Map enhanced tasteScore to matchScore for frontend display
+      filteredEvents = filteredEvents.map(event => ({
+        ...event,
+        matchScore: event.tasteScore // FIXED: Ensure frontend gets enhanced scores
+      }));
       
       console.log('✅ Phase 2 enhanced scoring applied successfully');
-      console.log(`🎯 Score range: ${Math.min(...filteredEvents.map(e => e.matchScore))}% - ${Math.max(...filteredEvents.map(e => e.matchScore))}%`);
+      console.log(`🎯 Sample enhanced scores: ${filteredEvents.slice(0, 3).map(e => `${e.name}: ${e.matchScore}%`).join(', ')}`);
     } catch (error) {
       console.error('❌ Phase 2 enhanced scoring failed, using original results:', error);
       // Continue with original results if Phase 2 fails
@@ -423,11 +366,11 @@ async function fetchUserTasteProfile(accessToken) {
 }
 
 /**
- * FIXED: Process individual event with complete venue and time data preservation
+ * FIXED: Process individual event with correct field mapping for frontend
  */
 function processEvent(event, city, userTaste) {
   try {
-    // FIXED: Preserve ALL venue and time data
+    // Extract basic event information with FRONTEND FIELD MAPPING
     const processedEvent = {
       id: event.id,
       name: event.name || 'Unnamed Event',
@@ -435,12 +378,8 @@ function processEvent(event, city, userTaste) {
       ticketUrl: event.url || '', // FIXED: Map url to ticketUrl for frontend
       source: event.source || 'unknown',
       date: event.date || event.dates?.start?.localDate, // FIXED: Map date for frontend
-      dateFormatted: event.dateFormatted || 'Date TBA',
-      time: event.time || 'Time TBA', // FIXED: Include time
-      startTime: event.startTime, // FIXED: Include start time if available
-      doorTime: event.doorTime, // FIXED: Include door time if available
       dates: event.dates || {},
-      venue: event.venue || 'Venue TBA', // FIXED: Complete venue object
+      venue: event.venue || event._embedded?.venues?.[0]?.name || 'Venue TBA', // FIXED: Map venue for frontend
       venues: extractVenues(event),
       artists: extractArtists(event),
       genres: extractGenres(event),
@@ -463,8 +402,7 @@ function processEvent(event, city, userTaste) {
       source: event.source || 'unknown',
       ticketUrl: event.url || '', // FIXED: Even in error case
       date: event.date || 'Date TBA', // FIXED: Even in error case
-      time: 'Time TBA', // FIXED: Even in error case
-      venue: { name: 'Venue TBA', address: '', fullAddress: 'Address TBA' }, // FIXED: Even in error case
+      venue: 'Venue TBA', // FIXED: Even in error case
       tasteScore: 0,
       matchScore: 0, // FIXED: Even in error case
       error: error.message
@@ -473,7 +411,7 @@ function processEvent(event, city, userTaste) {
 }
 
 /**
- * ENHANCED: Extract venues with complete address information
+ * ENHANCED: Extract venues with better location handling
  */
 function extractVenues(event) {
   const venues = [];
@@ -484,14 +422,9 @@ function extractVenues(event) {
         name: venue.name || 'Unknown Venue',
         address: venue.address || {},
         city: venue.city || {},
-        state: venue.state || {},
-        country: venue.country || {},
         location: venue.location || {}
       });
     });
-  } else if (event.venue) {
-    // FIXED: Handle direct venue object
-    venues.push(event.venue);
   }
 
   return venues;
@@ -513,15 +446,6 @@ function extractArtists(event) {
             attraction.classifications.map(c => c.genre?.name).filter(Boolean) : []
         });
       }
-    });
-  } else if (event.artists) {
-    // FIXED: Handle direct artists array
-    event.artists.forEach(artist => {
-      artists.push({
-        name: artist.name || artist,
-        id: artist.id,
-        genres: artist.genres || []
-      });
     });
   }
 
@@ -559,18 +483,11 @@ function extractGenres(event) {
     });
   }
 
-  // FIXED: From direct genres array
-  if (event.genres) {
-    event.genres.forEach(genre => {
-      genres.add(genre.toLowerCase());
-    });
-  }
-
   return Array.from(genres);
 }
 
 /**
- * ENHANCED: Calculate taste score with improved algorithm and NO capping
+ * FIXED: Calculate taste score with improved algorithm and debug logging
  */
 function calculateTasteScore(event, userTaste) {
   console.log('🔍 calculateTasteScore called with userTaste:', userTaste ? 'valid object' : 'null');
@@ -607,8 +524,8 @@ function calculateTasteScore(event, userTaste) {
         }
       }
     }
-    // FIXED: Remove artificial capping to allow higher scores
-    console.log(`🎯 Raw genre score: ${genreScore}`);
+    genreScore = Math.min(genreScore, 100); // Cap at 100
+    console.log(`🎯 Final genre score: ${genreScore}`);
   }
 
   score += genreScore * genreWeight;
@@ -634,19 +551,18 @@ function calculateTasteScore(event, userTaste) {
         }
       }
     }
-    // FIXED: Remove artificial capping to allow higher scores
-    console.log(`🎯 Raw artist score: ${artistScore}`);
+    artistScore = Math.min(artistScore, 100); // Cap at 100
+    console.log(`🎯 Final artist score: ${artistScore}`);
   }
 
   score += artistScore * artistWeight;
   maxScore += 100 * artistWeight;
 
-  // Calculate final percentage WITHOUT artificial limits
+  // Calculate final percentage
   const finalScore = maxScore > 0 ? Math.round((score / maxScore) * 100) : 50;
   console.log(`🏆 Final taste score: ${finalScore}% (${score}/${maxScore})`);
 
-  // FIXED: Allow scores to go higher than previous caps
-  return Math.max(finalScore, 10); // Minimum 10% to avoid 0 scores, but no maximum cap
+  return Math.max(finalScore, 10); // Minimum 10% to avoid 0 scores
 }
 
 /**
@@ -657,8 +573,7 @@ function deduplicateEvents(events) {
   const deduplicated = [];
 
   for (const event of events) {
-    const venueName = typeof event.venue === 'object' ? event.venue.name : event.venue;
-    const key = `${event.name}_${venueName || 'unknown'}_${event.date || 'unknown'}`;
+    const key = `${event.name}_${event.venue || 'unknown'}_${event.date || 'unknown'}`;
     
     if (!seen.has(key)) {
       seen.add(key);
