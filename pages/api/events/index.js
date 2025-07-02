@@ -252,7 +252,15 @@ async function processEventsWithTasteFiltering(events, city, session) {
       }
       
       filteredEvents = await enhancedRecommendationSystem.processEventsWithEnhancedScoring(filteredEvents, userTaste);
+      
+      // CRITICAL FIX: Map enhanced tasteScore to matchScore for frontend display
+      filteredEvents = filteredEvents.map(event => ({
+        ...event,
+        matchScore: event.tasteScore // FIXED: Ensure frontend gets enhanced scores
+      }));
+      
       console.log('✅ Phase 2 enhanced scoring applied successfully');
+      console.log(`🎯 Sample enhanced scores: ${filteredEvents.slice(0, 3).map(e => `${e.name}: ${e.matchScore}%`).join(', ')}`);
     } catch (error) {
       console.error('❌ Phase 2 enhanced scoring failed, using original results:', error);
       // Continue with original results if Phase 2 fails
