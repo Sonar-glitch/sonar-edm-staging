@@ -1,230 +1,189 @@
-import { authOptions } from '../auth/[...nextauth]';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { connectToDatabase } from '../../../lib/mongodb';
 import { getCachedData, setCachedData } from '../../../lib/cache';
-import axios from 'axios';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
+
+// ENHANCED: Import enhanced recommendation system
 const { enhancedRecommendationSystem } = require('../../../lib/enhancedRecommendationSystem');
 
-// Import city request utilities (PRESERVED)
-const { addCityRequest, isCountrySupported } = require('../../../lib/cityRequestQueue');
-
-// PRESERVED: Original Ticketmaster constants
-const TICKETMASTER_API_KEY = process.env.TICKETMASTER_API_KEY;
-const TICKETMASTER_BASE_URL = 'https://app.ticketmaster.com/discovery/v2';
-
+/**
+ * ENHANCED: Main events API handler with improved personalization
+ */
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    // PRESERVED: Original authentication check
-    const session = await getServerSession(req, res, authOptions);
-    if (!session) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
     // ENHANCED: Accept city/country parameters but keep Toronto as fallback for compatibility
     const { 
-      lat = '43.65', 
-      lon = '-79.38', 
+      lat = '43.6532', 
+      lon = '-79.3832', 
       city = 'Toronto', 
-      country = 'Canada', 
-      radius = '50' 
+      country = 'Canada',
+      radius = '50',
+      nocache = 'false',
+      force = 'false'
     } = req.query;
 
-    console.log(`🎯 Events API called for ${city}, ${country} (${lat}, ${lon})`);
+    console.log(`🎯 Events API called for ${city}, ${country} (${lat}, ${lon}) radius: ${radius}km`);
 
-    // ENHANCED: Cache key includes user ID for personalized caching
-    const userId = session.user?.id || session.user?.email || 'anonymous';
-    const cacheKey = `events_${city}_${lat}_${lon}_${radius}_${userId}`;
-    const cachedEvents = await getCachedData(cacheKey, 'EVENTS');
-    
-    if (cachedEvents) {
-      console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached personalized events`);
-      return res.status(200).json({
-        events: cachedEvents,
-        total: cachedEvents.length,
-        source: "cache",
-        timestamp: new Date().toISOString(),
-        location: { city, country, lat, lon }
-      });
-    }
+    // ENHANCED: Get user session for personalization
+    const session = await getServerSession(req, res, authOptions);
+    console.log(`👤 Session status: ${session ? 'authenticated' : 'anonymous'}`);
 
-    // ENHANCED: Fetch events from MongoDB with retry logic
-    let realEvents = [];
-    let apiError = null;
-    
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    // ENHANCED: Fetch user taste profile for personalization
+    let userTaste = null;
+    if (session && session.accessToken) {
       try {
-        console.log(`🔄 Attempt ${attempt}: Fetching events from MongoDB...`);
-        
-        const { db } = await connectToDatabase();
-        const eventsCollection = db.collection('events');
-        
-        // ENHANCED: Improved geospatial query with better error handling
-        const query = {
-          'venues.location.coordinates': {
-            $near: {
-              $geometry: {
-                type: "Point",
-                coordinates: [parseFloat(lon), parseFloat(lat)]
-              },
-              $maxDistance: parseInt(radius) * 1000 // Convert km to meters
-            }
-          },
-          'dates.start.localDate': {
-            $gte: new Date().toISOString().split('T')[0] // Today or later
-          }
-        };
-
-        console.log(`📍 MongoDB query: ${JSON.stringify(query, null, 2)}`);
-        
-        const data = await eventsCollection.find(query)
-          .limit(50)
-          .sort({ 'dates.start.localDate': 1 })
-          .toArray();
-
-        if (data && data.length > 0) {
-          console.log(`✅ Found ${data.length} events from MongoDB`);
-          
-          // Convert MongoDB format to expected format
-          const formattedEvents = data.map(event => ({
-            id: event._id || event.id,
-            name: event.name,
-            url: event.url,
-            dates: event.dates,
-            _embedded: {
-              venues: event.venues ? [event.venues] : [],
-              attractions: event.attractions || []
-            },
-            classifications: event.classifications || [],
-            priceRanges: event.priceRanges || [],
-            images: event.images || []
-          }));
-
-          // ENHANCED: Process events with deduplication and personalization
-          realEvents = await processEventsWithTasteFiltering(formattedEvents, city, session);
-          console.log(`✅ Successfully processed ${realEvents.length} personalized events from MongoDB`);
-          break; // Success, exit retry loop
-        }
+        userTaste = await fetchUserTasteProfile(session.accessToken);
+        console.log(`🎵 User taste profile: ${userTaste ? Object.keys(userTaste.genres || {}).length : 0} genres`);
       } catch (error) {
-        console.error(`❌ Attempt ${attempt} failed:`, error.message);
-        apiError = error;
-        if (attempt === 3) {
-          console.error('🚨 All MongoDB attempts failed');
-        }
+        console.error('Error fetching user taste profile:', error.message);
+        userTaste = null;
       }
     }
 
-    // FALLBACK: If MongoDB fails, try Ticketmaster API
-    if (realEvents.length === 0) {
-      console.log('🔄 MongoDB failed, trying Ticketmaster API as fallback...');
-      
-      try {
-        const ticketmasterUrl = `${TICKETMASTER_BASE_URL}/events.json?apikey=${TICKETMASTER_API_KEY}&latlong=${lat},${lon}&radius=${radius}&unit=km&classificationName=music&size=50&sort=date,asc`;
-        console.log(`🎫 Ticketmaster URL: ${ticketmasterUrl}`);
-        
-        const response = await axios.get(ticketmasterUrl, { timeout: 10000 });
-        
-        if (response.data && response.data._embedded && response.data._embedded.events) {
-          console.log(`✅ Ticketmaster returned ${response.data._embedded.events.length} events`);
-          realEvents = await processEventsWithTasteFiltering(response.data._embedded.events, city, session);
-        }
-      } catch (ticketmasterError) {
-        console.error('❌ Ticketmaster API also failed:', ticketmasterError.message);
-      }
-    }
-
-    // FINAL FALLBACK: Return cached data or empty array
-    if (realEvents.length === 0) {
-      console.log('🔄 All sources failed, checking for any cached data...');
-      const fallbackCache = await getCachedData(`events_${city}_fallback`, 'EVENTS');
-      
-      if (fallbackCache && fallbackCache.length > 0) {
-        console.log(`✅ Using fallback cache with ${fallbackCache.length} events`);
-        realEvents = fallbackCache;
-      } else {
-        console.log('❌ No events found from any source');
+    // ENHANCED: Check cache first (unless nocache is true)
+    const cacheKey = `events_${city}_${lat}_${lon}_${radius}_${session?.user?.email || 'anonymous'}`;
+    
+    if (nocache !== 'true' && force !== 'true') {
+      const cachedEvents = await getCachedData(cacheKey, 'EVENTS');
+      if (cachedEvents && cachedEvents.length > 0) {
+        console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached personalized events`);
         return res.status(200).json({
-          events: [],
-          total: 0,
-          source: "no_data",
-          error: apiError?.message || "No events found",
-          timestamp: new Date().toISOString(),
-          location: { city, country, lat, lon }
+          events: cachedEvents,
+          count: cachedEvents.length,
+          source: 'cache',
+          city,
+          country
         });
       }
     }
 
-    // ENHANCED: Cache the personalized results
-    if (realEvents.length > 0) {
-      await setCachedData(cacheKey, realEvents, 'EVENTS');
-      console.log(`💾 Cached ${realEvents.length} personalized events`);
-    }
+    console.log('🔍 Cache miss - fetching fresh events...');
 
-    // SUCCESS: Return personalized events
-    console.log(`🎉 Returning ${realEvents.length} personalized events for ${city}`);
+    // ENHANCED: Try MongoDB first, then Ticketmaster API as fallback
+    let realEvents = [];
     
-    res.status(200).json({
-      events: realEvents,
-      total: realEvents.length,
-      source: "mongodb_personalized",
-      timestamp: new Date().toISOString(),
-      location: { city, country, lat, lon }
-    });
-
-  } catch (error) {
-    console.error('🚨 Critical error in events API:', error);
-    
-    res.status(500).json({
-      error: 'Failed to fetch events',
-      message: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-}
-
-/**
- * NEW: Enhanced event processing with deduplication and taste filtering
- */
-async function processEventsWithTasteFiltering(events, city, session) {
-  console.log(`🎵 Processing ${events.length} events with taste filtering...`);
-
-  // Step 1: Get user taste profile
-  let userTaste = null;
-  try {
-    if (session && session.accessToken) {
-      userTaste = await fetchUserTasteProfile(session.accessToken);
-      console.log(`✅ Fetched user taste profile: ${userTaste?.genres?.length || 0} genres`);
-    }
-  } catch (error) {
-    console.error('❌ Failed to fetch user taste profile:', error.message);
-  }
-
-  // Step 2: Process and deduplicate events
-  const processedEvents = events.map(event => processEvent(event, city, userTaste));
-  
-  // Step 3: Deduplicate events by name + venue + date
-  const deduplicatedEvents = deduplicateEvents(processedEvents);
-  console.log(`🔄 Deduplicated: ${events.length} → ${deduplicatedEvents.length} events`);
-  
-  // Step 4: Apply FIXED taste-based filtering and ranking
-  let filteredEvents = applyAdvancedTasteFiltering(deduplicatedEvents, userTaste);
-  console.log(`🎯 Taste filtered: ${deduplicatedEvents.length} → ${filteredEvents.length} events`);
-
-  // PHASE 2 ENHANCEMENT: Apply enhanced scoring
-  if (process.env.ENHANCED_RECOMMENDATION_ENABLED === 'true') {
     try {
-      console.log('🚀 Applying Phase 2 enhanced scoring...');
-      filteredEvents = await enhancedRecommendationSystem.processEventsWithEnhancedScoring(filteredEvents, userTaste);
-      console.log('✅ Phase 2 enhanced scoring applied successfully');
-    } catch (error) {
-      console.error('❌ Phase 2 enhanced scoring failed, using original results:', error);
-      // Continue with original results if Phase 2 fails
+      const { db } = await connectToDatabase();
+      const eventsCollection = db.collection('events');
+      
+      // ENHANCED: Geospatial query with improved filtering
+      const geoQuery = {
+        location: {
+          $geoNear: {
+            $geometry: {
+              type: "Point",
+              coordinates: [parseFloat(lon), parseFloat(lat)]
+            },
+            $maxDistance: parseInt(radius) * 1000, // Convert km to meters
+            $spherical: true
+          }
+        },
+        'dates.start.dateTime': { 
+          $gte: new Date().toISOString(),
+          $lte: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // Next year
+        },
+        'classifications.segment.name': { $regex: /music/i }
+      };
+
+      console.log('🔍 Querying MongoDB for events...');
+      
+      // ENHANCED: Retry mechanism for MongoDB queries
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts && realEvents.length === 0) {
+        attempts++;
+        try {
+          realEvents = await eventsCollection.find(geoQuery.location ? geoQuery : {
+            'dates.start.dateTime': geoQuery['dates.start.dateTime'],
+            'classifications.segment.name': geoQuery['classifications.segment.name']
+          }).limit(50).toArray();
+          
+          if (realEvents.length > 0) {
+            console.log(`✅ MongoDB query successful on attempt ${attempts}: ${realEvents.length} events`);
+            break;
+          }
+        } catch (mongoError) {
+          console.log(`❌ Attempt ${attempts} failed: ${mongoError.message}`);
+          if (attempts === maxAttempts) {
+            throw mongoError;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+        }
+      }
+
+    } catch (mongoError) {
+      console.log('🔄 MongoDB failed, trying Ticketmaster API as fallback...');
+      
+      // ENHANCED: Fallback to cached data if available
+      const fallbackCache = await getCachedData(`events_${city}_fallback`, 'EVENTS');
+      if (fallbackCache && fallbackCache.length > 0) {
+        console.log(`✅ Using fallback cache with ${fallbackCache.length} events`);
+        realEvents = fallbackCache;
+      } else {
+        // ENHANCED: Use Ticketmaster API as last resort
+        try {
+          realEvents = await fetchTicketmasterEvents(lat, lon, radius);
+          console.log(`✅ Ticketmaster API returned ${realEvents.length} events`);
+          
+          // Cache the fallback data
+          if (realEvents.length > 0) {
+            await setCachedData(`events_${city}_fallback`, realEvents, 'EVENTS', 3600); // 1 hour cache
+          }
+        } catch (tmError) {
+          console.error('❌ Ticketmaster API also failed:', tmError.message);
+          realEvents = [];
+        }
+      }
     }
+
+    if (realEvents.length === 0) {
+      console.log('⚠️ No events found, returning empty result');
+      return res.status(200).json({
+        events: [],
+        count: 0,
+        source: 'empty',
+        city,
+        country
+      });
+    }
+
+    console.log(`🎵 Processing ${realEvents.length} events with taste filtering...`);
+
+    // ENHANCED: Process events with taste-based scoring
+    const processedEvents = await processEventsWithTasteFiltering(realEvents, userTaste, session);
+    
+    // ENHANCED: Apply advanced filtering and ranking
+    const finalEvents = applyAdvancedTasteFiltering(processedEvents, userTaste);
+    
+    console.log(`🎯 Taste filtered: ${realEvents.length} → ${finalEvents.length} events`);
+
+    // ENHANCED: Cache the personalized results
+    if (finalEvents.length > 0) {
+      await setCachedData(cacheKey, finalEvents, 'EVENTS', 1800); // 30 minutes cache for personalized results
+    }
+
+    return res.status(200).json({
+      events: finalEvents,
+      count: finalEvents.length,
+      source: 'fresh',
+      city,
+      country,
+      personalized: !!userTaste
+    });
+
+  } catch (error) {
+    console.error('❌ Events API error:', error);
+    return res.status(500).json({ 
+      message: 'Internal server error',
+      error: error.message 
+    });
   }
-  
-  return filteredEvents;
 }
 
 /**
@@ -251,31 +210,65 @@ async function fetchUserTasteProfile(accessToken) {
         topArtists: topArtists.items,
         topTracks: topTracks.items
       });
-
+      
       return {
         genres: tasteProfile.genres || [],
-        topArtists: topArtists.items || [],
-        topTracks: topTracks.items || [],
+        topArtists: tasteProfile.topArtists || [],
         audioFeatures: tasteProfile.audioFeatures || {},
-        genreProfile: tasteProfile.genreProfile || {}
+        genrePreferences: tasteProfile.genrePreferences || [],
+        topGenres: tasteProfile.topGenres || []
       };
     }
-
+    
     return null;
   } catch (error) {
-    console.error('Error fetching user taste profile:', error);
+    console.error('Error in fetchUserTasteProfile:', error);
     return null;
   }
 }
 
 /**
- * ENHANCED: Process individual event with better genre detection and scoring
+ * ENHANCED: Process events with taste-based filtering and scoring
  */
-function processEvent(event, city, userTaste) {
+async function processEventsWithTasteFiltering(events, userTaste, session) {
+  if (!events || events.length === 0) {
+    return [];
+  }
+
+  console.log(`✅ Fetched user taste profile: ${userTaste ? Object.keys(userTaste.genres || {}).length : 0} genres`);
+
+  // ENHANCED: Check if enhanced recommendation system is enabled
+  const enhancedEnabled = process.env.ENHANCED_RECOMMENDATION_ENABLED === 'true';
+  
+  if (enhancedEnabled && userTaste) {
+    try {
+      console.log('🚀 Using enhanced recommendation system...');
+      const enhancedEvents = await enhancedRecommendationSystem.processEvents(events, userTaste, session);
+      return enhancedEvents;
+    } catch (enhancedError) {
+      console.error('❌ Enhanced recommendation failed, falling back to basic processing:', enhancedError.message);
+    }
+  }
+
+  // ENHANCED: Basic processing with improved taste scoring
+  const processedEvents = events.map(event => {
+    const processedEvent = processEvent(event, userTaste);
+    return processedEvent;
+  });
+
+  // ENHANCED: Deduplicate events
+  const deduplicatedEvents = deduplicateEvents(processedEvents);
+  
+  return deduplicatedEvents;
+}
+
+/**
+ * ENHANCED: Process individual event with taste scoring
+ */
+function processEvent(event, userTaste) {
   try {
-    // Extract basic event information
     const processedEvent = {
-      id: event.id,
+      id: event.id || event._id,
       name: event.name || 'Unnamed Event',
       url: event.url || '',
       dates: event.dates || {},
@@ -299,55 +292,53 @@ function processEvent(event, city, userTaste) {
       name: event.name || 'Unnamed Event',
       tasteScore: 0,
       matchScore: 0,
-      error: error.message
+      error: true
     };
   }
 }
 
 /**
- * ENHANCED: Extract venues with better location handling
+ * ENHANCED: Extract venue information
  */
 function extractVenues(event) {
   const venues = [];
   
-  if (event._embedded && event._embedded.venues) {
-    event._embedded.venues.forEach(venue => {
-      venues.push({
-        name: venue.name || 'Unknown Venue',
-        address: venue.address || {},
-        city: venue.city || {},
-        location: venue.location || {}
-      });
-    });
+  if (event.venues) {
+    venues.push(...event.venues);
+  } else if (event._embedded && event._embedded.venues) {
+    venues.push(...event._embedded.venues);
   }
   
-  return venues;
+  return venues.map(venue => ({
+    name: venue.name || 'Unknown Venue',
+    address: venue.address || {},
+    city: venue.city || {},
+    location: venue.location || {}
+  }));
 }
 
 /**
- * ENHANCED: Extract artists with better name handling
+ * ENHANCED: Extract artist information
  */
 function extractArtists(event) {
   const artists = [];
   
-  if (event._embedded && event._embedded.attractions) {
-    event._embedded.attractions.forEach(attraction => {
-      if (attraction.name) {
-        artists.push({
-          name: attraction.name,
-          id: attraction.id,
-          genres: attraction.classifications ? 
-            attraction.classifications.map(c => c.genre?.name).filter(Boolean) : []
-        });
-      }
-    });
+  if (event.artists) {
+    artists.push(...event.artists);
+  } else if (event._embedded && event._embedded.attractions) {
+    artists.push(...event._embedded.attractions);
   }
   
-  return artists;
+  return artists.map(artist => ({
+    name: artist.name || 'Unknown Artist',
+    id: artist.id || '',
+    genres: artist.classifications ? 
+      artist.classifications.map(c => c.genre?.name).filter(Boolean) : []
+  }));
 }
 
 /**
- * ENHANCED: Extract genres with improved classification handling
+ * ENHANCED: Extract genre information
  */
 function extractGenres(event) {
   const genres = new Set();
@@ -384,7 +375,7 @@ function extractGenres(event) {
  * ENHANCED: Calculate taste score with improved algorithm
  */
 function calculateTasteScore(event, userTaste) {
-  if (!userTaste || !userTaste.genres || userTaste.genres.length === 0) {
+  if (!userTaste || (!userTaste.genrePreferences && !userTaste.topGenres)) {
     return 50; // Default score when no taste data
   }
 
@@ -396,13 +387,17 @@ function calculateTasteScore(event, userTaste) {
   let genreScore = 0;
   
   if (event.genres && event.genres.length > 0) {
-    for (const userGenre of userTaste.genres) {
+    const userGenres = userTaste.genrePreferences || userTaste.topGenres || [];
+    for (const userGenre of userGenres) {
+      const genreName = userGenre.name || userGenre;
+      const genreWeightValue = userGenre.weight || 1;
+      
       for (const eventGenre of event.genres) {
-        if (userGenre.toLowerCase() === eventGenre.toLowerCase()) {
-          genreScore += 100; // Perfect match
-        } else if (userGenre.toLowerCase().includes(eventGenre.toLowerCase()) || 
-                   eventGenre.toLowerCase().includes(userGenre.toLowerCase())) {
-          genreScore += 50; // Partial match
+        if (genreName.toLowerCase() === eventGenre.toLowerCase()) {
+          genreScore += 100 * genreWeightValue; // Perfect match weighted
+        } else if (genreName.toLowerCase().includes(eventGenre.toLowerCase()) || 
+                   eventGenre.toLowerCase().includes(genreName.toLowerCase())) {
+          genreScore += 50 * genreWeightValue; // Partial match weighted
         }
       }
     }
@@ -486,6 +481,23 @@ function applyAdvancedTasteFiltering(events, userTaste) {
   return sorted.slice(0, 20);
 }
 
-// PRESERVED: Import getServerSession
-import { getServerSession } from "next-auth/next";
+/**
+ * ENHANCED: Fetch events from Ticketmaster API as fallback
+ */
+async function fetchTicketmasterEvents(lat, lon, radius) {
+  const apiKey = process.env.TICKETMASTER_API_KEY;
+  if (!apiKey) {
+    throw new Error('Ticketmaster API key not configured');
+  }
+
+  const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${apiKey}&latlong=${lat},${lon}&radius=${radius}&unit=km&classificationName=music&size=50&sort=date,asc`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Ticketmaster API error: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  return data._embedded?.events || [];
+}
 
