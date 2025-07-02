@@ -94,15 +94,20 @@ export default async function handler(req, res) {
         if (data && data.length > 0) {
           console.log(`✅ Found ${data.length} events from MongoDB`);
 
-          // FIXED: Convert MongoDB format to expected format with correct venue structure AND source field
+          // FIXED: Convert MongoDB format to frontend-expected format with ALL field mappings
           const formattedEvents = data.map(event => ({
             id: event._id || event.id,
             name: event.name,
             url: event.url,
-            source: 'mongodb', // FIXED: Add missing source field for frontend
-            dates: { start: { localDate: event.date } }, // Convert date format
+            ticketUrl: event.url, // FIXED: Map url to ticketUrl for frontend
+            source: 'mongodb', // FIXED: Add source field
+            date: event.date, // FIXED: Map date directly for frontend
+            dates: { start: { localDate: event.date } }, // Keep for API compatibility
+            venue: event.venue?.name || 'Venue TBA', // FIXED: Map venue.name directly for frontend
+            venues: event.venue ? [event.venue] : [], // Keep for API compatibility
+            artists: event.artists ? event.artists.map(artist => ({ name: artist.name, id: artist.id })) : [],
             _embedded: {
-              venues: event.venue ? [event.venue] : [], // Use singular 'venue' from MongoDB
+              venues: event.venue ? [event.venue] : [],
               attractions: event.artists ? event.artists.map(artist => ({ name: artist.name, id: artist.id })) : []
             },
             classifications: event.classifications || [],
@@ -137,10 +142,13 @@ export default async function handler(req, res) {
         if (response.data && response.data._embedded && response.data._embedded.events) {
           console.log(`✅ Ticketmaster returned ${response.data._embedded.events.length} events`);
           
-          // Add source field to Ticketmaster events too
+          // FIXED: Add proper field mapping for Ticketmaster events too
           const ticketmasterEvents = response.data._embedded.events.map(event => ({
             ...event,
-            source: 'ticketmaster' // Add source field for Ticketmaster events
+            source: 'ticketmaster',
+            ticketUrl: event.url, // FIXED: Map url to ticketUrl
+            date: event.dates?.start?.localDate, // FIXED: Extract date for frontend
+            venue: event._embedded?.venues?.[0]?.name || 'Venue TBA' // FIXED: Extract venue name
           }));
           
           realEvents = await processEventsWithTasteFiltering(ticketmasterEvents, city, session);
@@ -350,17 +358,20 @@ async function fetchUserTasteProfile(accessToken) {
 }
 
 /**
- * ENHANCED: Process individual event with better genre detection and scoring
+ * FIXED: Process individual event with correct field mapping for frontend
  */
 function processEvent(event, city, userTaste) {
   try {
-    // Extract basic event information
+    // Extract basic event information with FRONTEND FIELD MAPPING
     const processedEvent = {
       id: event.id,
       name: event.name || 'Unnamed Event',
       url: event.url || '',
-      source: event.source || 'unknown', // FIXED: Preserve source field
+      ticketUrl: event.url || '', // FIXED: Map url to ticketUrl for frontend
+      source: event.source || 'unknown',
+      date: event.date || event.dates?.start?.localDate, // FIXED: Map date for frontend
       dates: event.dates || {},
+      venue: event.venue || event._embedded?.venues?.[0]?.name || 'Venue TBA', // FIXED: Map venue for frontend
       venues: extractVenues(event),
       artists: extractArtists(event),
       genres: extractGenres(event),
@@ -370,8 +381,9 @@ function processEvent(event, city, userTaste) {
     };
 
     // Calculate taste match score
-    processedEvent.tasteScore = calculateTasteScore(processedEvent, userTaste);
-    processedEvent.matchScore = processedEvent.tasteScore; // For compatibility
+    const tasteScore = calculateTasteScore(processedEvent, userTaste);
+    processedEvent.tasteScore = tasteScore;
+    processedEvent.matchScore = tasteScore; // FIXED: Map tasteScore to matchScore for frontend
 
     return processedEvent;
   } catch (error) {
@@ -379,9 +391,12 @@ function processEvent(event, city, userTaste) {
     return {
       id: event.id,
       name: event.name || 'Unnamed Event',
-      source: event.source || 'unknown', // FIXED: Preserve source field even in error case
+      source: event.source || 'unknown',
+      ticketUrl: event.url || '', // FIXED: Even in error case
+      date: event.date || 'Date TBA', // FIXED: Even in error case
+      venue: 'Venue TBA', // FIXED: Even in error case
       tasteScore: 0,
-      matchScore: 0,
+      matchScore: 0, // FIXED: Even in error case
       error: error.message
     };
   }
@@ -550,7 +565,7 @@ function deduplicateEvents(events) {
   const deduplicated = [];
 
   for (const event of events) {
-    const key = `${event.name}_${event.venues?.[0]?.name || 'unknown'}_${event.dates?.start?.localDate || 'unknown'}`;
+    const key = `${event.name}_${event.venue || 'unknown'}_${event.date || 'unknown'}`;
     
     if (!seen.has(key)) {
       seen.add(key);
@@ -570,7 +585,7 @@ function applyAdvancedTasteFiltering(events, userTaste) {
     return events.map(event => ({
       ...event,
       tasteScore: event.tasteScore || 50,
-      matchScore: event.matchScore || 50
+      matchScore: event.matchScore || event.tasteScore || 50 // FIXED: Ensure matchScore is set
     }));
   }
 
