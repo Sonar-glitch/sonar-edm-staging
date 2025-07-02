@@ -1,4 +1,5 @@
 import { authOptions } from '../auth/[...nextauth]';
+import { getServerSession } from 'next-auth/next';
 import { connectToDatabase } from '../../../lib/mongodb';
 import { getCachedData, setCachedData } from '../../../lib/cache';
 import axios from 'axios';
@@ -17,11 +18,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    // PRESERVED: Original authentication check
+    // FIXED: Proper authentication check with correct imports
     const session = await getServerSession(req, res, authOptions);
     if (!session) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
+
+    console.log('🔐 Session verified:', {
+      hasAccessToken: !!session.accessToken,
+      userEmail: session.user?.email,
+      tokenExpiry: session.accessToken ? 'present' : 'missing'
+    });
 
     // ENHANCED: Accept city/country parameters but keep Toronto as fallback for compatibility
     const {
@@ -61,9 +68,9 @@ export default async function handler(req, res) {
         const { db } = await connectToDatabase();
         const eventsCollection = db.collection('events');
 
-        // ENHANCED: Improved geospatial query with better error handling
+        // FIXED: Corrected geospatial query path from 'venues.location.coordinates' to 'location.coordinates'
         const query = {
-          'venues.location.coordinates': {
+          'location.coordinates': {
             $near: {
               $geometry: {
                 type: "Point",
@@ -72,7 +79,7 @@ export default async function handler(req, res) {
               $maxDistance: parseInt(radius) * 1000 // Convert km to meters
             }
           },
-          'dates.start.localDate': {
+          'date': {
             $gte: new Date().toISOString().split('T')[0] // Today or later
           }
         };
@@ -81,21 +88,21 @@ export default async function handler(req, res) {
 
         const data = await eventsCollection.find(query)
           .limit(50)
-          .sort({ 'dates.start.localDate': 1 })
+          .sort({ 'date': 1 })
           .toArray();
 
         if (data && data.length > 0) {
           console.log(`✅ Found ${data.length} events from MongoDB`);
 
-          // Convert MongoDB format to expected format
+          // FIXED: Convert MongoDB format to expected format with correct venue structure
           const formattedEvents = data.map(event => ({
             id: event._id || event.id,
             name: event.name,
             url: event.url,
-            dates: event.dates,
+            dates: { start: { localDate: event.date } }, // Convert date format
             _embedded: {
-              venues: event.venues ? [event.venues] : [],
-              attractions: event.attractions || []
+              venues: event.venue ? [event.venue] : [], // Use singular 'venue' from MongoDB
+              attractions: event.artists ? event.artists.map(artist => ({ name: artist.name, id: artist.id })) : []
             },
             classifications: event.classifications || [],
             priceRanges: event.priceRanges || [],
@@ -195,8 +202,9 @@ async function processEventsWithTasteFiltering(events, city, session) {
   try {
     console.log('🎯 Enhanced taste processing started...');
     if (session && session.accessToken) {
+      console.log('🔑 Access token available, fetching taste profile...');
       userTaste = await fetchUserTasteProfile(session.accessToken);
-      console.log(`✅ Fetched user taste profile: ${userTaste?.genres?.length || 0} genres`);
+      console.log(`✅ Fetched user taste profile: ${userTaste?.genrePreferences?.length || 0} genre preferences`);
     } else {
       console.log('❌ No session or access token available');
     }
@@ -216,10 +224,17 @@ async function processEventsWithTasteFiltering(events, city, session) {
   let filteredEvents = applyAdvancedTasteFiltering(deduplicatedEvents, userTaste);
   console.log(`🎯 Taste filtered: ${deduplicatedEvents.length} → ${filteredEvents.length} events`);
 
-  // PHASE 2 ENHANCEMENT: Apply enhanced scoring
+  // PHASE 2 ENHANCEMENT: Apply enhanced scoring with FIXED data structure
   if (process.env.ENHANCED_RECOMMENDATION_ENABLED === 'true') {
     try {
       console.log('🚀 Applying Phase 2 enhanced scoring...');
+      
+      // FIXED: Convert userTaste structure to match Phase 2 expectations
+      if (userTaste && userTaste.genrePreferences) {
+        userTaste.genres = userTaste.genrePreferences.map(pref => pref.name);
+        console.log('🔧 Converted genrePreferences to genres for Phase 2 compatibility');
+      }
+      
       filteredEvents = await enhancedRecommendationSystem.processEventsWithEnhancedScoring(filteredEvents, userTaste);
       console.log('✅ Phase 2 enhanced scoring applied successfully');
     } catch (error) {
@@ -238,14 +253,37 @@ async function fetchUserTasteProfile(accessToken) {
   try {
     console.log('🔍 fetchUserTasteProfile called with accessToken:', !!accessToken);
     
+    if (!accessToken) {
+      console.log('❌ No access token provided');
+      return null;
+    }
+    
     // Get user's top artists and tracks directly from Spotify
-    const [topArtists, topTracks] = await Promise.all([
+    const [topArtistsResponse, topTracksResponse] = await Promise.all([
       fetch('https://api.spotify.com/v1/me/top/artists?limit=20&time_range=medium_term', {
         headers: { 'Authorization': `Bearer ${accessToken}` }
-      }).then(res => res.json()),
+      }),
       fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=medium_term', {
         headers: { 'Authorization': `Bearer ${accessToken}` }
-      }).then(res => res.json())
+      })
+    ]);
+
+    console.log('🎵 Spotify API response status:', {
+      artists: topArtistsResponse.status,
+      tracks: topTracksResponse.status
+    });
+
+    if (!topArtistsResponse.ok || !topTracksResponse.ok) {
+      console.error('❌ Spotify API error:', {
+        artistsError: topArtistsResponse.status,
+        tracksError: topTracksResponse.status
+      });
+      return null;
+    }
+
+    const [topArtists, topTracks] = await Promise.all([
+      topArtistsResponse.json(),
+      topTracksResponse.json()
     ]);
 
     console.log('🎵 Spotify API responses:', {
@@ -266,12 +304,14 @@ async function fetchUserTasteProfile(accessToken) {
       
       // Convert to weighted preferences
       const totalGenres = Object.values(genreCount).reduce((a, b) => a + b, 0);
-      Object.entries(genreCount).forEach(([genre, count]) => {
-        genrePreferences.push({
-          name: genre,
-          weight: count / totalGenres
+      if (totalGenres > 0) {
+        Object.entries(genreCount).forEach(([genre, count]) => {
+          genrePreferences.push({
+            name: genre,
+            weight: count / totalGenres
+          });
         });
-      });
+      }
       
       // Sort by weight descending
       genrePreferences.sort((a, b) => b.weight - a.weight);
@@ -286,7 +326,8 @@ async function fetchUserTasteProfile(accessToken) {
       console.log('✅ Generated taste profile:', {
         genrePreferences: result.genrePreferences.length,
         topGenres: result.topGenres.length,
-        topArtists: result.topArtists.length
+        topArtists: result.topArtists.length,
+        sampleGenres: result.genrePreferences.slice(0, 3).map(g => g.name)
       });
       
       return result;
