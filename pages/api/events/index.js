@@ -94,7 +94,7 @@ export default async function handler(req, res) {
         if (data && data.length > 0) {
           console.log(`✅ Found ${data.length} events from MongoDB`);
 
-          // FIXED: Convert MongoDB format to frontend-expected format with ALL field mappings
+          // SURGICAL FIX 2 & 3: Enhanced field mapping with venue data preservation and time extraction
           const formattedEvents = data.map(event => ({
             id: event._id || event.id,
             name: event.name,
@@ -102,8 +102,18 @@ export default async function handler(req, res) {
             ticketUrl: event.url, // FIXED: Map url to ticketUrl for frontend
             source: 'mongodb', // FIXED: Add source field
             date: event.date, // FIXED: Map date directly for frontend
-            dates: { start: { localDate: event.date } }, // Keep for API compatibility
-            venue: event.venue?.name || 'Venue TBA', // FIXED: Map venue.name directly for frontend
+            // SURGICAL FIX 3: Time extraction from multiple sources
+            time: event.dates?.start?.localTime || event.startTime || extractTimeFromDate(event.date),
+            startTime: event.dates?.start?.localTime || event.startTime || extractTimeFromDate(event.date),
+            doorTime: event.doorTime,
+            dates: { 
+              start: { 
+                localDate: event.date,
+                localTime: event.dates?.start?.localTime || event.startTime || extractTimeFromDate(event.date)
+              } 
+            }, // Keep for API compatibility
+            // SURGICAL FIX 2: Venue data preservation - keep complete venue object
+            venue: event.venue || 'Venue TBA', // FIXED: Preserve complete venue object instead of just name
             venues: event.venue ? [event.venue] : [], // Keep for API compatibility
             artists: event.artists ? event.artists.map(artist => ({ name: artist.name, id: artist.id })) : [],
             _embedded: {
@@ -198,12 +208,24 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('🚨 Critical error in events API:', error);
-
     res.status(500).json({
       error: 'Failed to fetch events',
       message: error.message,
       timestamp: new Date().toISOString()
     });
+  }
+}
+
+/**
+ * SURGICAL FIX 3: Helper function to extract time from date string
+ */
+function extractTimeFromDate(dateString) {
+  if (!dateString) return undefined;
+  try {
+    const date = new Date(dateString);
+    return date.toTimeString().split(' ')[0]; // Returns HH:MM:SS format
+  } catch (error) {
+    return undefined;
   }
 }
 
@@ -240,10 +262,10 @@ async function processEventsWithTasteFiltering(events, city, session) {
   let filteredEvents = applyAdvancedTasteFiltering(deduplicatedEvents, userTaste);
   console.log(`🎯 Taste filtered: ${deduplicatedEvents.length} → ${filteredEvents.length} events`);
 
-  // PHASE 2 ENHANCEMENT: Apply enhanced scoring with FIXED data structure
+  // SURGICAL FIX 4: Enhanced Phase 2 integration with proper component usage
   if (process.env.ENHANCED_RECOMMENDATION_ENABLED === 'true') {
     try {
-      console.log('🚀 Applying Phase 2 enhanced scoring...');
+      console.log('🚀 Applying Phase 2 enhanced scoring with full component integration...');
       
       // FIXED: Convert userTaste structure to match Phase 2 expectations
       if (userTaste && userTaste.genrePreferences) {
@@ -251,15 +273,16 @@ async function processEventsWithTasteFiltering(events, city, session) {
         console.log('🔧 Converted genrePreferences to genres for Phase 2 compatibility');
       }
       
-      filteredEvents = await enhancedRecommendationSystem.processEventsWithEnhancedScoring(filteredEvents, userTaste);
+      // SURGICAL FIX 4: Enhanced Phase 2 processing with component integration
+      filteredEvents = await enhancedRecommendationSystemWithPhase2Components(filteredEvents, userTaste);
       
-      // CRITICAL FIX: Map enhanced tasteScore to matchScore for frontend display
+      // SURGICAL FIX 1: Correct score mapping - use enhancedScore instead of tasteScore
       filteredEvents = filteredEvents.map(event => ({
         ...event,
-        matchScore: event.tasteScore // FIXED: Ensure frontend gets enhanced scores
+        matchScore: event.enhancedScore || event.tasteScore || event.matchScore // FIXED: Priority to enhancedScore
       }));
       
-      console.log('✅ Phase 2 enhanced scoring applied successfully');
+      console.log('✅ Phase 2 enhanced scoring with full component integration applied successfully');
       console.log(`🎯 Sample enhanced scores: ${filteredEvents.slice(0, 3).map(e => `${e.name}: ${e.matchScore}%`).join(', ')}`);
     } catch (error) {
       console.error('❌ Phase 2 enhanced scoring failed, using original results:', error);
@@ -268,6 +291,111 @@ async function processEventsWithTasteFiltering(events, city, session) {
   }
 
   return filteredEvents;
+}
+
+/**
+ * SURGICAL FIX 4: Enhanced recommendation system with proper Phase 2 component integration
+ */
+async function enhancedRecommendationSystemWithPhase2Components(events, userTaste) {
+  try {
+    // Import Phase 2 components
+    const { ExpandedGenreMatrix } = require('../../../lib/expandedGenreMatrix');
+    const { AlternativeArtistRelationships } = require('../../../lib/alternativeArtistRelationships');
+    
+    // Initialize Phase 2 components
+    const genreMatrix = new ExpandedGenreMatrix();
+    const artistRelationships = new AlternativeArtistRelationships();
+    
+    console.log(`🎯 Phase 2 components initialized: ${genreMatrix.genreList.length} genres, artist relationships ready`);
+    
+    // Process each event with Phase 2 enhancements
+    const enhancedEvents = await Promise.all(events.map(async (event) => {
+      let enhancedScore = event.tasteScore || 0;
+      let genreMatches = [];
+      let artistMatches = [];
+      
+      // Enhanced genre matching using expanded matrix
+      if (userTaste?.genres && event.genres) {
+        for (const userGenre of userTaste.genres) {
+          for (const eventGenre of event.genres) {
+            const similarity = genreMatrix.getSimilarity(userGenre.toLowerCase(), eventGenre.toLowerCase());
+            if (similarity > 0) {
+              genreMatches.push({
+                userGenre,
+                eventGenre,
+                similarity: Math.round(similarity * 100)
+              });
+              enhancedScore += similarity * 20; // Boost score based on similarity
+            }
+          }
+        }
+      }
+      
+      // Enhanced artist matching with relationships for unknown artists
+      if (userTaste?.topArtists && event.artists) {
+        for (const userArtist of userTaste.topArtists) {
+          for (const eventArtist of event.artists) {
+            // Direct match
+            if (userArtist.name.toLowerCase() === eventArtist.name.toLowerCase()) {
+              artistMatches.push({
+                userArtist: userArtist.name,
+                eventArtist: eventArtist.name,
+                similarity: 100
+              });
+              enhancedScore += 30;
+            } else {
+              // Use artist relationships for unknown/different artists
+              try {
+                const relatedArtists = await artistRelationships.getSimilarArtists(userArtist.name);
+                const relatedMatch = relatedArtists.find(related => 
+                  related.name.toLowerCase().includes(eventArtist.name.toLowerCase()) ||
+                  eventArtist.name.toLowerCase().includes(related.name.toLowerCase())
+                );
+                
+                if (relatedMatch) {
+                  const similarity = Math.round(relatedMatch.similarity * 100);
+                  artistMatches.push({
+                    userArtist: userArtist.name,
+                    eventArtist: eventArtist.name,
+                    similarity,
+                    relatedVia: relatedMatch.name
+                  });
+                  enhancedScore += similarity * 0.4; // 40% of related artist score as per Phase 2 spec
+                }
+              } catch (error) {
+                console.log(`⚠️ Artist relationship lookup failed for ${userArtist.name}:`, error.message);
+              }
+            }
+          }
+        }
+      }
+      
+      // Cap the enhanced score at reasonable maximum
+      enhancedScore = Math.min(Math.round(enhancedScore), 100);
+      
+      return {
+        ...event,
+        enhancedScore,
+        originalScore: event.tasteScore || 0,
+        confidence: enhancedScore > 50 ? 'high' : enhancedScore > 30 ? 'medium' : 'low',
+        enhancementApplied: true,
+        enhancementDetails: [
+          `Genre: ${Math.max(...genreMatches.map(m => m.similarity), 0)}% (${genreMatches.length} matches)`,
+          `Artist: ${Math.max(...artistMatches.map(m => m.similarity), 0)}% (${artistMatches.length} matches)`
+        ],
+        genreMatches,
+        artistMatches
+      };
+    }));
+    
+    console.log(`✅ Phase 2 enhanced processing complete for ${enhancedEvents.length} events`);
+    return enhancedEvents;
+    
+  } catch (error) {
+    console.error('❌ Phase 2 component integration failed:', error);
+    // Fallback to original enhanced recommendation system
+    return await enhancedRecommendationSystem.processEventsWithEnhancedScoring(events, userTaste);
+  }
 }
 
 /**
@@ -378,8 +506,11 @@ function processEvent(event, city, userTaste) {
       ticketUrl: event.url || '', // FIXED: Map url to ticketUrl for frontend
       source: event.source || 'unknown',
       date: event.date || event.dates?.start?.localDate, // FIXED: Map date for frontend
+      time: event.time, // SURGICAL FIX 3: Include extracted time
+      startTime: event.startTime, // SURGICAL FIX 3: Include extracted startTime
+      doorTime: event.doorTime,
       dates: event.dates || {},
-      venue: event.venue || event._embedded?.venues?.[0]?.name || 'Venue TBA', // FIXED: Map venue for frontend
+      venue: event.venue || event._embedded?.venues?.[0]?.name || 'Venue TBA', // SURGICAL FIX 2: Preserve venue object or fallback to name
       venues: extractVenues(event),
       artists: extractArtists(event),
       genres: extractGenres(event),
@@ -391,7 +522,7 @@ function processEvent(event, city, userTaste) {
     // Calculate taste match score
     const tasteScore = calculateTasteScore(processedEvent, userTaste);
     processedEvent.tasteScore = tasteScore;
-    processedEvent.matchScore = tasteScore; // FIXED: Map tasteScore to matchScore for frontend
+    processedEvent.matchScore = tasteScore; // Will be updated by Phase 2 if enabled
 
     return processedEvent;
   } catch (error) {
