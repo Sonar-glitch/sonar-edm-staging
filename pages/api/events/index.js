@@ -46,7 +46,7 @@ export default async function handler(req, res) {
     const cacheKey = `events_${city}_${lat}_${lon}_${radius}_${userId}`;
     const cachedEvents = await getCachedData(cacheKey, 'EVENTS');
 
-    if (cachedEvents) {
+    if (cachedEvents && !req.query.nocache) {
       console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached personalized events`);
       return res.status(200).json({
         events: cachedEvents,
@@ -94,11 +94,12 @@ export default async function handler(req, res) {
         if (data && data.length > 0) {
           console.log(`✅ Found ${data.length} events from MongoDB`);
 
-          // FIXED: Convert MongoDB format to expected format with correct venue structure
+          // FIXED: Convert MongoDB format to expected format with correct venue structure AND source field
           const formattedEvents = data.map(event => ({
             id: event._id || event.id,
             name: event.name,
             url: event.url,
+            source: 'mongodb', // FIXED: Add missing source field for frontend
             dates: { start: { localDate: event.date } }, // Convert date format
             _embedded: {
               venues: event.venue ? [event.venue] : [], // Use singular 'venue' from MongoDB
@@ -135,7 +136,14 @@ export default async function handler(req, res) {
 
         if (response.data && response.data._embedded && response.data._embedded.events) {
           console.log(`✅ Ticketmaster returned ${response.data._embedded.events.length} events`);
-          realEvents = await processEventsWithTasteFiltering(response.data._embedded.events, city, session);
+          
+          // Add source field to Ticketmaster events too
+          const ticketmasterEvents = response.data._embedded.events.map(event => ({
+            ...event,
+            source: 'ticketmaster' // Add source field for Ticketmaster events
+          }));
+          
+          realEvents = await processEventsWithTasteFiltering(ticketmasterEvents, city, session);
         }
       } catch (ticketmasterError) {
         console.error('❌ Ticketmaster API also failed:', ticketmasterError.message);
@@ -351,6 +359,7 @@ function processEvent(event, city, userTaste) {
       id: event.id,
       name: event.name || 'Unnamed Event',
       url: event.url || '',
+      source: event.source || 'unknown', // FIXED: Preserve source field
       dates: event.dates || {},
       venues: extractVenues(event),
       artists: extractArtists(event),
@@ -370,6 +379,7 @@ function processEvent(event, city, userTaste) {
     return {
       id: event.id,
       name: event.name || 'Unnamed Event',
+      source: event.source || 'unknown', // FIXED: Preserve source field even in error case
       tasteScore: 0,
       matchScore: 0,
       error: error.message
