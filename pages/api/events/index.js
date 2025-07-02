@@ -1,4 +1,5 @@
 import { authOptions } from '../auth/[...nextauth]';
+import { getServerSession } from 'next-auth/next';
 import { connectToDatabase } from '../../../lib/mongodb';
 import { getCachedData, setCachedData } from '../../../lib/cache';
 import axios from 'axios';
@@ -17,19 +18,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    // PRESERVED: Original authentication check
+    // FIXED: Proper authentication check with correct import
     const session = await getServerSession(req, res, authOptions);
     if (!session) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
+    console.log('🔐 Session verified:', {
+      hasAccessToken: !!session.accessToken,
+      userEmail: session.user?.email,
+      tokenExpiry: session.accessToken ? 'present' : 'missing'
+    });
+
     // ENHANCED: Accept city/country parameters but keep Toronto as fallback for compatibility
-    const { 
-      lat = '43.65', 
-      lon = '-79.38', 
-      city = 'Toronto', 
-      country = 'Canada', 
-      radius = '50' 
+    const {
+      lat = '43.65',
+      lon = '-79.38',
+      city = 'Toronto',
+      country = 'Canada',
+      radius = '50'
     } = req.query;
 
     console.log(`🎯 Events API called for ${city}, ${country} (${lat}, ${lon})`);
@@ -38,7 +45,7 @@ export default async function handler(req, res) {
     const userId = session.user?.id || session.user?.email || 'anonymous';
     const cacheKey = `events_${city}_${lat}_${lon}_${radius}_${userId}`;
     const cachedEvents = await getCachedData(cacheKey, 'EVENTS');
-    
+
     if (cachedEvents) {
       console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached personalized events`);
       return res.status(200).json({
@@ -53,14 +60,14 @@ export default async function handler(req, res) {
     // ENHANCED: Fetch events from MongoDB with retry logic
     let realEvents = [];
     let apiError = null;
-    
+
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         console.log(`🔄 Attempt ${attempt}: Fetching events from MongoDB...`);
-        
+
         const { db } = await connectToDatabase();
         const eventsCollection = db.collection('events');
-        
+
         // ENHANCED: Improved geospatial query with better error handling
         const query = {
           'venues.location.coordinates': {
@@ -78,7 +85,7 @@ export default async function handler(req, res) {
         };
 
         console.log(`📍 MongoDB query: ${JSON.stringify(query, null, 2)}`);
-        
+
         const data = await eventsCollection.find(query)
           .limit(50)
           .sort({ 'dates.start.localDate': 1 })
@@ -86,7 +93,7 @@ export default async function handler(req, res) {
 
         if (data && data.length > 0) {
           console.log(`✅ Found ${data.length} events from MongoDB`);
-          
+
           // Convert MongoDB format to expected format
           const formattedEvents = data.map(event => ({
             id: event._id || event.id,
@@ -119,13 +126,13 @@ export default async function handler(req, res) {
     // FALLBACK: If MongoDB fails, try Ticketmaster API
     if (realEvents.length === 0) {
       console.log('🔄 MongoDB failed, trying Ticketmaster API as fallback...');
-      
+
       try {
         const ticketmasterUrl = `${TICKETMASTER_BASE_URL}/events.json?apikey=${TICKETMASTER_API_KEY}&latlong=${lat},${lon}&radius=${radius}&unit=km&classificationName=music&size=50&sort=date,asc`;
         console.log(`🎫 Ticketmaster URL: ${ticketmasterUrl}`);
-        
+
         const response = await axios.get(ticketmasterUrl, { timeout: 10000 });
-        
+
         if (response.data && response.data._embedded && response.data._embedded.events) {
           console.log(`✅ Ticketmaster returned ${response.data._embedded.events.length} events`);
           realEvents = await processEventsWithTasteFiltering(response.data._embedded.events, city, session);
@@ -139,7 +146,7 @@ export default async function handler(req, res) {
     if (realEvents.length === 0) {
       console.log('🔄 All sources failed, checking for any cached data...');
       const fallbackCache = await getCachedData(`events_${city}_fallback`, 'EVENTS');
-      
+
       if (fallbackCache && fallbackCache.length > 0) {
         console.log(`✅ Using fallback cache with ${fallbackCache.length} events`);
         realEvents = fallbackCache;
@@ -164,7 +171,7 @@ export default async function handler(req, res) {
 
     // SUCCESS: Return personalized events
     console.log(`🎉 Returning ${realEvents.length} personalized events for ${city}`);
-    
+
     res.status(200).json({
       events: realEvents,
       total: realEvents.length,
@@ -175,7 +182,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('🚨 Critical error in events API:', error);
-    
+
     res.status(500).json({
       error: 'Failed to fetch events',
       message: error.message,
@@ -193,21 +200,26 @@ async function processEventsWithTasteFiltering(events, city, session) {
   // Step 1: Get user taste profile
   let userTaste = null;
   try {
+    console.log('🎯 Enhanced taste processing started...');
     if (session && session.accessToken) {
+      console.log('🔑 Access token available, fetching taste profile...');
       userTaste = await fetchUserTasteProfile(session.accessToken);
-      console.log(`✅ Fetched user taste profile: ${userTaste?.genres?.length || 0} genres`);
+      console.log(`✅ Fetched user taste profile: ${userTaste?.genrePreferences?.length || 0} genre preferences`);
+    } else {
+      console.log('❌ No session or access token available');
     }
   } catch (error) {
-    console.error('❌ Failed to fetch user taste profile:', error.message);
+    console.error('❌ Enhanced taste processing failed:', error);
+    console.error('Error fetching user taste profile:', error);
   }
 
   // Step 2: Process and deduplicate events
   const processedEvents = events.map(event => processEvent(event, city, userTaste));
-  
+
   // Step 3: Deduplicate events by name + venue + date
   const deduplicatedEvents = deduplicateEvents(processedEvents);
   console.log(`🔄 Deduplicated: ${events.length} → ${deduplicatedEvents.length} events`);
-  
+
   // Step 4: Apply FIXED taste-based filtering and ranking
   let filteredEvents = applyAdvancedTasteFiltering(deduplicatedEvents, userTaste);
   console.log(`🎯 Taste filtered: ${deduplicatedEvents.length} → ${filteredEvents.length} events`);
@@ -223,47 +235,101 @@ async function processEventsWithTasteFiltering(events, city, session) {
       // Continue with original results if Phase 2 fails
     }
   }
-  
+
   return filteredEvents;
 }
 
 /**
- * ENHANCED: Fetch user taste profile from Spotify
+ * FIXED: Fetch user taste profile from Spotify with proper error handling
  */
 async function fetchUserTasteProfile(accessToken) {
   try {
-    // Import the taste processor
-    const { processUserTaste } = require('../../../lib/spotifyTasteProcessor');
+    console.log('🔍 fetchUserTasteProfile called with accessToken:', !!accessToken);
     
-    // Get user's top artists and tracks
-    const [topArtists, topTracks] = await Promise.all([
+    if (!accessToken) {
+      console.log('❌ No access token provided');
+      return null;
+    }
+    
+    // Get user's top artists and tracks directly from Spotify
+    const [topArtistsResponse, topTracksResponse] = await Promise.all([
       fetch('https://api.spotify.com/v1/me/top/artists?limit=20&time_range=medium_term', {
         headers: { 'Authorization': `Bearer ${accessToken}` }
-      }).then(res => res.json()),
+      }),
       fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=medium_term', {
         headers: { 'Authorization': `Bearer ${accessToken}` }
-      }).then(res => res.json())
+      })
     ]);
 
-    if (topArtists.items && topTracks.items) {
-      // Process the taste profile
-      const tasteProfile = await processUserTaste({
-        topArtists: topArtists.items,
-        topTracks: topTracks.items
-      });
+    console.log('🎵 Spotify API response status:', {
+      artists: topArtistsResponse.status,
+      tracks: topTracksResponse.status
+    });
 
-      return {
-        genres: tasteProfile.genres || [],
-        topArtists: topArtists.items || [],
-        topTracks: topTracks.items || [],
-        audioFeatures: tasteProfile.audioFeatures || {},
-        genreProfile: tasteProfile.genreProfile || {}
-      };
+    if (!topArtistsResponse.ok || !topTracksResponse.ok) {
+      console.error('❌ Spotify API error:', {
+        artistsError: topArtistsResponse.status,
+        tracksError: topTracksResponse.status
+      });
+      return null;
     }
 
+    const [topArtists, topTracks] = await Promise.all([
+      topArtistsResponse.json(),
+      topTracksResponse.json()
+    ]);
+
+    console.log('🎵 Spotify API responses:', {
+      artists: topArtists.items?.length || 0,
+      tracks: topTracks.items?.length || 0
+    });
+
+    if (topArtists.items && topTracks.items) {
+      // Extract genres from artists
+      const genrePreferences = [];
+      const genreCount = {};
+      
+      topArtists.items.forEach(artist => {
+        artist.genres?.forEach(genre => {
+          genreCount[genre] = (genreCount[genre] || 0) + 1;
+        });
+      });
+      
+      // Convert to weighted preferences
+      const totalGenres = Object.values(genreCount).reduce((a, b) => a + b, 0);
+      if (totalGenres > 0) {
+        Object.entries(genreCount).forEach(([genre, count]) => {
+          genrePreferences.push({
+            name: genre,
+            weight: count / totalGenres
+          });
+        });
+      }
+      
+      // Sort by weight descending
+      genrePreferences.sort((a, b) => b.weight - a.weight);
+
+      const result = {
+        genrePreferences: genrePreferences.slice(0, 10), // Top 10 genres
+        topGenres: genrePreferences.slice(0, 5), // Top 5 for compatibility
+        topArtists: topArtists.items || [],
+        topTracks: topTracks.items || []
+      };
+      
+      console.log('✅ Generated taste profile:', {
+        genrePreferences: result.genrePreferences.length,
+        topGenres: result.topGenres.length,
+        topArtists: result.topArtists.length,
+        sampleGenres: result.genrePreferences.slice(0, 3).map(g => g.name)
+      });
+      
+      return result;
+    }
+
+    console.log('❌ No Spotify data available');
     return null;
   } catch (error) {
-    console.error('Error fetching user taste profile:', error);
+    console.error('❌ Error fetching user taste profile:', error);
     return null;
   }
 }
@@ -309,7 +375,7 @@ function processEvent(event, city, userTaste) {
  */
 function extractVenues(event) {
   const venues = [];
-  
+
   if (event._embedded && event._embedded.venues) {
     event._embedded.venues.forEach(venue => {
       venues.push({
@@ -320,7 +386,7 @@ function extractVenues(event) {
       });
     });
   }
-  
+
   return venues;
 }
 
@@ -329,20 +395,20 @@ function extractVenues(event) {
  */
 function extractArtists(event) {
   const artists = [];
-  
+
   if (event._embedded && event._embedded.attractions) {
     event._embedded.attractions.forEach(attraction => {
       if (attraction.name) {
         artists.push({
           name: attraction.name,
           id: attraction.id,
-          genres: attraction.classifications ? 
+          genres: attraction.classifications ?
             attraction.classifications.map(c => c.genre?.name).filter(Boolean) : []
         });
       }
     });
   }
-  
+
   return artists;
 }
 
@@ -351,7 +417,7 @@ function extractArtists(event) {
  */
 function extractGenres(event) {
   const genres = new Set();
-  
+
   // From classifications
   if (event.classifications) {
     event.classifications.forEach(classification => {
@@ -363,7 +429,7 @@ function extractGenres(event) {
       }
     });
   }
-  
+
   // From artist classifications
   if (event._embedded && event._embedded.attractions) {
     event._embedded.attractions.forEach(attraction => {
@@ -376,17 +442,16 @@ function extractGenres(event) {
       }
     });
   }
-  
+
   return Array.from(genres);
 }
 
 /**
- * ENHANCED: Calculate taste score with improved algorithm
+ * FIXED: Calculate taste score with improved algorithm and debug logging
  */
 function calculateTasteScore(event, userTaste) {
-  // Add debug logging to see what userTaste looks like
-  console.log('🔍 calculateTasteScore called with userTaste:', JSON.stringify(userTaste, null, 2));
-  
+  console.log('🔍 calculateTasteScore called with userTaste:', userTaste ? 'valid object' : 'null');
+
   if (!userTaste || (!userTaste.genrePreferences && !userTaste.topGenres)) {
     console.log('❌ No taste data available, returning 50');
     return 50; // Default score when no taste data
@@ -398,21 +463,21 @@ function calculateTasteScore(event, userTaste) {
   // Genre matching (60% weight)
   const genreWeight = 0.6;
   let genreScore = 0;
-  
+
   if (event.genres && event.genres.length > 0) {
     const userGenres = userTaste.genrePreferences || userTaste.topGenres || [];
-    console.log('🎵 User genres:', userGenres);
+    console.log('🎵 User genres:', userGenres.length);
     console.log('🎪 Event genres:', event.genres);
-    
+
     for (const userGenre of userGenres) {
       const genreName = userGenre.name || userGenre;
       const genreWeightValue = userGenre.weight || 1;
-      
+
       for (const eventGenre of event.genres) {
         if (genreName.toLowerCase() === eventGenre.toLowerCase()) {
           genreScore += 100 * genreWeightValue; // Perfect match weighted
           console.log(`✅ Perfect match: ${genreName} = ${eventGenre} (weight: ${genreWeightValue})`);
-        } else if (genreName.toLowerCase().includes(eventGenre.toLowerCase()) || 
+        } else if (genreName.toLowerCase().includes(eventGenre.toLowerCase()) ||
                    eventGenre.toLowerCase().includes(genreName.toLowerCase())) {
           genreScore += 50 * genreWeightValue; // Partial match weighted
           console.log(`🔶 Partial match: ${genreName} ~ ${eventGenre} (weight: ${genreWeightValue})`);
@@ -422,24 +487,24 @@ function calculateTasteScore(event, userTaste) {
     genreScore = Math.min(genreScore, 100); // Cap at 100
     console.log(`🎯 Final genre score: ${genreScore}`);
   }
-  
+
   score += genreScore * genreWeight;
   maxScore += 100 * genreWeight;
 
   // Artist matching (40% weight)
   const artistWeight = 0.4;
   let artistScore = 0;
-  
+
   if (event.artists && event.artists.length > 0 && userTaste.topArtists) {
-    console.log('🎤 User artists:', userTaste.topArtists.map(a => a.name));
+    console.log('🎤 User artists:', userTaste.topArtists.length);
     console.log('🎭 Event artists:', event.artists.map(a => a.name));
-    
+
     for (const userArtist of userTaste.topArtists) {
       for (const eventArtist of event.artists) {
         if (userArtist.name.toLowerCase() === eventArtist.name.toLowerCase()) {
           artistScore += 100; // Perfect match
           console.log(`✅ Perfect artist match: ${userArtist.name} = ${eventArtist.name}`);
-        } else if (userArtist.name.toLowerCase().includes(eventArtist.name.toLowerCase()) || 
+        } else if (userArtist.name.toLowerCase().includes(eventArtist.name.toLowerCase()) ||
                    eventArtist.name.toLowerCase().includes(userArtist.name.toLowerCase())) {
           artistScore += 30; // Partial match
           console.log(`🔶 Partial artist match: ${userArtist.name} ~ ${eventArtist.name}`);
@@ -449,35 +514,33 @@ function calculateTasteScore(event, userTaste) {
     artistScore = Math.min(artistScore, 100); // Cap at 100
     console.log(`🎯 Final artist score: ${artistScore}`);
   }
-  
+
   score += artistScore * artistWeight;
   maxScore += 100 * artistWeight;
 
   // Calculate final percentage
   const finalScore = maxScore > 0 ? Math.round((score / maxScore) * 100) : 50;
-  console.log(`🏆 Final taste score: ${finalScore} (genre: ${genreScore}, artist: ${artistScore})`);
-  return Math.max(0, Math.min(100, finalScore));
+  console.log(`🏆 Final taste score: ${finalScore}% (${score}/${maxScore})`);
+
+  return Math.max(finalScore, 10); // Minimum 10% to avoid 0 scores
 }
 
 /**
- * ENHANCED: Deduplicate events by name, venue, and date
+ * ENHANCED: Deduplicate events by name + venue + date
  */
 function deduplicateEvents(events) {
   const seen = new Set();
   const deduplicated = [];
-  
+
   for (const event of events) {
-    // Create a unique key based on name, venue, and date
-    const venueName = event.venues?.[0]?.name || 'unknown';
-    const eventDate = event.dates?.start?.localDate || 'unknown';
-    const key = `${event.name.toLowerCase()}_${venueName.toLowerCase()}_${eventDate}`;
+    const key = `${event.name}_${event.venues?.[0]?.name || 'unknown'}_${event.dates?.start?.localDate || 'unknown'}`;
     
     if (!seen.has(key)) {
       seen.add(key);
       deduplicated.push(event);
     }
   }
-  
+
   return deduplicated;
 }
 
@@ -485,28 +548,19 @@ function deduplicateEvents(events) {
  * ENHANCED: Apply advanced taste-based filtering and ranking
  */
 function applyAdvancedTasteFiltering(events, userTaste) {
-  if (!events || events.length === 0) {
-    return [];
+  if (!userTaste) {
+    console.log('⚠️ No user taste data, returning all events with default scores');
+    return events.map(event => ({
+      ...event,
+      tasteScore: event.tasteScore || 50,
+      matchScore: event.matchScore || 50
+    }));
   }
 
-  // Filter out events with very low taste scores (below 20%)
-  const filtered = events.filter(event => (event.tasteScore || 0) >= 20);
-  
-  // Sort by taste score (descending) and then by date (ascending)
-  const sorted = filtered.sort((a, b) => {
-    const scoreDiff = (b.tasteScore || 0) - (a.tasteScore || 0);
-    if (scoreDiff !== 0) return scoreDiff;
-    
-    // If scores are equal, sort by date
-    const dateA = new Date(a.dates?.start?.localDate || '9999-12-31');
-    const dateB = new Date(b.dates?.start?.localDate || '9999-12-31');
-    return dateA - dateB;
-  });
+  // Sort by taste score (highest first)
+  const sortedEvents = events.sort((a, b) => (b.tasteScore || 0) - (a.tasteScore || 0));
 
-  // Return top 20 events
-  return sorted.slice(0, 20);
+  // Return top events (limit to reasonable number)
+  return sortedEvents.slice(0, 50);
 }
-
-// PRESERVED: Import getServerSession
-import { getServerSession } from "next-auth/next";
 
