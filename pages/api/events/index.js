@@ -256,7 +256,7 @@ async function processEventsWithTasteFiltering(events, city, session) {
       // CRITICAL FIX: Map enhanced tasteScore to matchScore for frontend display
       filteredEvents = filteredEvents.map(event => ({
         ...event,
-        matchScore: event.tasteScore // FIXED: Ensure frontend gets enhanced scores
+        matchScore: event.enhancedScore || event.tasteScore // FIXED: Ensure frontend gets enhanced scores
       }));
       
       console.log('✅ Phase 2 enhanced scoring applied successfully');
