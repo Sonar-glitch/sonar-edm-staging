@@ -8,6 +8,9 @@ const { enhancedRecommendationSystem } = require('../../../lib/enhancedRecommend
 // Import city request utilities (PRESERVED)
 const { addCityRequest, isCountrySupported } = require('../../../lib/cityRequestQueue');
 
+// ENHANCED: Import artist-based genre enhancement
+const { AlternativeArtistRelationships } = require('../../../lib/alternativeArtistRelationships');
+
 // PRESERVED: Original Ticketmaster constants
 const TICKETMASTER_API_KEY = process.env.TICKETMASTER_API_KEY;
 const TICKETMASTER_BASE_URL = 'https://app.ticketmaster.com/discovery/v2';
@@ -382,7 +385,7 @@ function processEvent(event, city, userTaste) {
       venue: event.venue || event._embedded?.venues?.[0]?.name || 'Venue TBA', // FIXED: Map venue for frontend
       venues: extractVenues(event),
       artists: extractArtists(event),
-      genres: extractGenres(event),
+      genres: await extractGenres(event), // ENHANCED: Now async for artist-based genre enhancement
       images: event.images || [],
       priceRanges: event.priceRanges || [],
       classifications: event.classifications || []
@@ -455,10 +458,14 @@ function extractArtists(event) {
 /**
  * ENHANCED: Extract genres with improved classification handling
  */
-function extractGenres(event) {
+/**
+ * ENHANCED: Extract genres with artist-based enhancement for generic classifications
+ */
+async function extractGenres(event) {
   const genres = new Set();
+  const genericGenres = ['dance/electronic', 'electronic', 'music', 'other', 'undefined'];
 
-  // From classifications
+  // Step 1: Extract initial genres from classifications
   if (event.classifications) {
     event.classifications.forEach(classification => {
       if (classification.genre && classification.genre.name) {
@@ -470,7 +477,7 @@ function extractGenres(event) {
     });
   }
 
-  // From artist classifications
+  // Step 2: Extract genres from artist classifications
   if (event._embedded && event._embedded.attractions) {
     event._embedded.attractions.forEach(attraction => {
       if (attraction.classifications) {
@@ -481,6 +488,53 @@ function extractGenres(event) {
         });
       }
     });
+  }
+
+  const initialGenres = Array.from(genres);
+  
+  // Step 3: ENHANCED - Check if we have only generic genres
+  const hasOnlyGenericGenres = initialGenres.length === 0 || 
+    initialGenres.every(genre => genericGenres.includes(genre));
+
+  // Step 4: ENHANCED - If generic genres, enhance with artist-based genres
+  if (hasOnlyGenericGenres && event._embedded && event._embedded.attractions) {
+    console.log('🎵 Generic genres detected, enhancing with artist-based genres...');
+    
+    try {
+      const artistRelationships = new AlternativeArtistRelationships();
+      const enhancedGenres = new Set();
+      
+      // Get genres from each artist
+      for (const attraction of event._embedded.attractions) {
+        if (attraction.name) {
+          const artistGenres = artistRelationships.inferGenresFromArtist(attraction.name);
+          artistGenres.forEach(genre => enhancedGenres.add(genre.toLowerCase()));
+          
+          // Also try to get similar artists and their genres
+          try {
+            const similarArtists = await artistRelationships.getSimilarArtists(attraction.name, 2);
+            similarArtists.forEach(similar => {
+              if (similar.genres) {
+                similar.genres.forEach(genre => enhancedGenres.add(genre.toLowerCase()));
+              }
+            });
+          } catch (error) {
+            console.log(`⚠️ Could not get similar artists for ${attraction.name}:`, error.message);
+          }
+        }
+      }
+      
+      if (enhancedGenres.size > 0) {
+        console.log('✅ Enhanced genres from artists:', Array.from(enhancedGenres));
+        // Replace generic genres with enhanced ones
+        genres.clear();
+        enhancedGenres.forEach(genre => genres.add(genre));
+      } else {
+        console.log('⚠️ No enhanced genres found, keeping original genres');
+      }
+    } catch (error) {
+      console.log('❌ Error enhancing genres with artist data:', error.message);
+    }
   }
 
   return Array.from(genres);
