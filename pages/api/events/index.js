@@ -83,7 +83,7 @@ export default async function handler(req, res) {
             }
           },
           'date': {
-            $gte: new Date().toISOString().split('T')[0] // Today or later
+            $gte: new Date() // Today or later
           }
         };
 
@@ -239,14 +239,11 @@ async function processEventsWithTasteFiltering(events, city, session) {
   const deduplicatedEvents = deduplicateEvents(processedEvents);
   console.log(`🔄 Deduplicated: ${events.length} → ${deduplicatedEvents.length} events`);
 
-  // Step 4: Apply FIXED taste-based filtering and ranking
-  let filteredEvents = applyAdvancedTasteFiltering(deduplicatedEvents, userTaste);
-  console.log(`🎯 Taste filtered: ${deduplicatedEvents.length} → ${filteredEvents.length} events`);
-
-  // PHASE 2 ENHANCEMENT: Apply enhanced scoring with FIXED data structure
+  // PHASE 2 ENHANCEMENT: Apply enhanced scoring BEFORE filtering (REORDERED)
+  let enhancedEvents = deduplicatedEvents;
   if (process.env.ENHANCED_RECOMMENDATION_ENABLED === 'true') {
     try {
-      console.log('🚀 Applying Phase 2 enhanced scoring...');
+      console.log('🚀 Applying Phase 2 enhanced scoring BEFORE filtering...');
       
       // FIXED: Convert userTaste structure to match Phase 2 expectations
       if (userTaste && userTaste.genrePreferences) {
@@ -254,21 +251,25 @@ async function processEventsWithTasteFiltering(events, city, session) {
         console.log('🔧 Converted genrePreferences to genres for Phase 2 compatibility');
       }
       
-      filteredEvents = await enhancedRecommendationSystem.processEventsWithEnhancedScoring(filteredEvents, userTaste);
+      enhancedEvents = await enhancedRecommendationSystem.processEventsWithEnhancedScoring(deduplicatedEvents, userTaste);
       
       // CRITICAL FIX: Map enhanced tasteScore to matchScore for frontend display
-      filteredEvents = filteredEvents.map(event => ({
+      enhancedEvents = enhancedEvents.map(event => ({
         ...event,
         matchScore: event.enhancedScore || event.tasteScore // FIXED: Ensure frontend gets enhanced scores
       }));
       
       console.log('✅ Phase 2 enhanced scoring applied successfully');
-      console.log(`🎯 Sample enhanced scores: ${filteredEvents.slice(0, 3).map(e => `${e.name}: ${e.matchScore}%`).join(', ')}`);
+      console.log(`🎯 Sample enhanced scores: ${enhancedEvents.slice(0, 3).map(e => `${e.name}: ${e.matchScore}%`).join(', ')}`);
     } catch (error) {
       console.error('❌ Phase 2 enhanced scoring failed, using original results:', error);
       // Continue with original results if Phase 2 fails
     }
   }
+
+  // Step 4: Apply taste-based filtering AFTER enhancement (REORDERED)
+  let filteredEvents = applyAdvancedTasteFiltering(enhancedEvents, userTaste);
+  console.log(`🎯 Taste filtered: ${enhancedEvents.length} → ${filteredEvents.length} events`);
 
   return filteredEvents;
 }
