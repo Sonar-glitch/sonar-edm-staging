@@ -234,7 +234,7 @@ async function processEventsWithTasteFiltering(events, city, session) {
   }
 
   // Step 2: Process and deduplicate events
-  const processedEvents = events.map(event => processEvent(event, city, userTaste));
+  const processedEvents = await Promise.all(events.map(event => processEvent(event, city, userTaste)));
 
   // Step 3: Deduplicate events by name + venue + date
   const deduplicatedEvents = deduplicateEvents(processedEvents);
