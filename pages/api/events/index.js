@@ -369,9 +369,9 @@ async function fetchUserTasteProfile(accessToken) {
 }
 
 /**
- * FIXED: Process individual event with correct field mapping for frontend
+ * ENHANCED: Process individual event with async genre extraction
  */
-function processEvent(event, city, userTaste) {
+async function processEvent(event, city, userTaste) {
   try {
     // Extract basic event information with FRONTEND FIELD MAPPING
     const processedEvent = {
