@@ -507,7 +507,7 @@ async function extractGenres(event) {
       // Get genres from each artist
       for (const attraction of event._embedded.attractions) {
         if (attraction.name) {
-          const artistGenres = artistRelationships.inferGenresFromArtist(attraction.name);
+          const artistGenres = await artistRelationships.inferGenresFromArtist(attraction.name);
           artistGenres.forEach(genre => enhancedGenres.add(genre.toLowerCase()));
           
           // Also try to get similar artists and their genres
