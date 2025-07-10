@@ -47,9 +47,10 @@ export default async function handler(req, res) {
     // ENHANCED: Cache key includes user ID for personalized caching
     const userId = session.user?.id || session.user?.email || 'anonymous';
     const cacheKey = `events_${city}_${lat}_${lon}_${radius}_${userId}`;
-    const cachedEvents = await getCachedData(cacheKey, 'EVENTS');
+    const cacheDisabled = process.env.DISABLE_CACHE === 'true';
+    const cachedEvents = !cacheDisabled ? await getCachedData(cacheKey, 'EVENTS') : null;
 
-    if (cachedEvents && !req.query.nocache) {
+    if (!cacheDisabled && cachedEvents && !req.query.nocache) {
       console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached personalized events`);
       return res.status(200).json({
         events: cachedEvents,
@@ -183,7 +184,7 @@ export default async function handler(req, res) {
     }
 
     // ENHANCED: Cache the personalized results
-    if (realEvents.length > 0) {
+    if (!cacheDisabled && realEvents.length > 0) {
       await setCachedData(cacheKey, realEvents, 'EVENTS');
       console.log(`💾 Cached ${realEvents.length} personalized events`);
     }
