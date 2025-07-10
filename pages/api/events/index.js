@@ -234,7 +234,7 @@ async function processEventsWithTasteFiltering(events, city, session) {
   }
 
   // Step 2: Process and deduplicate events
-  const processedEvents = await Promise.all(events.map(event => processEvent(event, city, userTaste)));
+  const processedEvents = events.map(event => processEvent(event, city, userTaste));
 
   // Step 3: Deduplicate events by name + venue + date
   const deduplicatedEvents = deduplicateEvents(processedEvents);
@@ -629,8 +629,7 @@ function deduplicateEvents(events) {
   const deduplicated = [];
 
   for (const event of events) {
-    // FIXED: Use more specific deduplication key to prevent over-aggressive deduplication
-    const key = `${event.name}_${event.venue?.name || event.venue || 'unknown'}_${event.venue?.address || 'no-address'}_${event.date || 'unknown'}_${event.id || event.sourceId || 'no-id'}`;
+    const key = `${event.name}_${event.venue || 'unknown'}_${event.date || 'unknown'}`;
     
     if (!seen.has(key)) {
       seen.add(key);
@@ -660,4 +659,3 @@ function applyAdvancedTasteFiltering(events, userTaste) {
   // Return top events (limit to reasonable number)
   return sortedEvents.slice(0, 50);
 }
-
