@@ -1,40 +1,16 @@
 import { connectToDatabase } from '../../../lib/mongodb';
-
-// PRESERVED: Original complex authentication import logic
-let authOptions;
-try {
-  authOptions = require('../../../pages/api/auth/[...nextauth]').authOptions;
-} catch (e1) {
-  try {
-    authOptions = require('../../auth/[...nextauth]').authOptions;
-  } catch (e2) {
-    try {
-      authOptions = require('../auth/[...nextauth]').authOptions;
-    } catch (e3) {
-      console.warn('Could not import authOptions, using fallback authentication');
-      authOptions = null;
-    }
-  }
-}
-
-// PRESERVED: Original getServerSession import logic
-let getServerSession;
-try {
-  getServerSession = require('next-auth/next').getServerSession;
-} catch (error) {
-  console.warn('Could not import getServerSession, using fallback');
-  getServerSession = null;
-}
+import { authOptions } from '../auth/[...nextauth]'; // CORRECTED: Single, direct import
+import { getServerSession } from 'next-auth/next';
 
 export default async function handler(req, res) {
   const timestamp = new Date().toISOString();
-  
+
   try {
     // Handle CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
+
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
     }
@@ -42,7 +18,7 @@ export default async function handler(req, res) {
     // PRESERVED: Original authentication logic
     let session = null;
     let userId = 'demo-user-' + Date.now(); // Fallback user ID
-    
+
     if (getServerSession && authOptions) {
       try {
         session = await getServerSession(req, res, authOptions);
@@ -54,14 +30,13 @@ export default async function handler(req, res) {
       }
     }
 
-    // ONLY CHANGE: Use connectToDatabase instead of getCollection
     const { db } = await connectToDatabase();
     const collection = db.collection('interested_events');
 
     if (req.method === 'GET') {
       try {
         const interestedEvents = await collection.find({ userId }).toArray();
-        
+
         return res.status(200).json({
           success: true,
           events: interestedEvents || [],
@@ -88,7 +63,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST') {
       const { eventId, eventData } = req.body;
-      
+
       if (!eventId) {
         return res.status(400).json({
           success: false,
@@ -110,7 +85,7 @@ export default async function handler(req, res) {
         };
 
         const result = await collection.insertOne(eventToSave);
-        
+
         return res.status(200).json({
           success: true,
           message: 'Event saved successfully',
@@ -133,7 +108,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'DELETE') {
       const { eventId } = req.query;
-      
+
       if (!eventId) {
         return res.status(400).json({
           success: false,
@@ -145,7 +120,7 @@ export default async function handler(req, res) {
 
       try {
         const result = await collection.deleteOne({ userId, eventId });
-        
+
         return res.status(200).json({
           success: true,
           message: 'Event removed successfully',
