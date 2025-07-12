@@ -55,7 +55,7 @@
 }
 
 /* ZERO GAPS BETWEEN ROWS */
-.informationalRow, .dataInsightsRow, .functionalRow {
+.informationalRow, .dataInsightsRow, .functionalRow, .fullWidthRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem; /* Only small gap between left/right columns */
@@ -65,7 +65,7 @@
   padding: 1rem 0; /* Internal padding instead of margins */
 }
 
-.dataInsightsRow {
+.dataInsightsRow, .fullWidthRow {
   grid-template-columns: 1fr; /* Full width for unified sound characteristics */
 }
 
@@ -118,6 +118,60 @@
   border-radius: 8px;
   background: rgba(0, 212, 255, 0.1);
   border: 1px solid rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+  font-weight: 500;
+}
+
+/* HOVER TOOLTIP STYLES - NEW FEATURE */
+.hoverTooltip {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid #4A5568;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #E2E8F0;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  margin-top: 4px;
+}
+
+.hoverTooltip p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.hoverTooltip p:not(:last-child) {
+  margin-bottom: 4px;
+}
+
+.dataVerification {
+  position: relative;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 4px;
+}
+
+.dataVerification:hover .hoverTooltip {
+  display: block;
+}
+
+.verifyIcon {
+  color: #00d4ff;
+  margin-right: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.verifyText {
+  font-size: 0.7rem;
   color: #00d4ff;
   font-weight: 500;
 }
@@ -450,6 +504,7 @@
   margin-left: auto;
   margin-right: auto;
 }
+
 /* MUSIC TASTE TAB STYLES */
 .genreChartContainer {
   padding: 1rem 0;
@@ -607,30 +662,6 @@
   background: rgba(255, 0, 110, 0.3);
   transform: translateY(-1px);
 }
-/* DATA VERIFICATION STYLES */
-.dataVerification {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  background: rgba(0, 212, 255, 0.1);
-  border: 1px solid rgba(0, 212, 255, 0.3);
-  border-radius: 4px;
-  cursor: pointer;
-  position: relative;
-}
-
-.verifyIcon {
-  color: #00d4ff;
-  margin-right: 0.25rem;
-  font-size: 0.8rem;
-}
-
-.verifyText {
-  font-size: 0.7rem;
-  color: #00d4ff;
-  font-weight: 500;
-}
 
 .verificationDetails {
   position: absolute;
@@ -682,11 +713,6 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .errorTitle {
   color: #ff006e;
   margin-bottom: 0.5rem;
@@ -695,100 +721,6 @@
 .errorMessage {
   margin-bottom: 1rem;
   opacity: 0.8;
-}
-
-.retryButton {
-  background: linear-gradient(90deg, #ff006e 0%, #00d4ff 100%);
-  border: none;
-  border-radius: 25px;
-  padding: 0.5rem 1.5rem;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.retryButton:hover {
-  transform: translateY(-2px);
-}
-
-.emptyStateTitle {
-  margin-bottom: 0.5rem;
-  background: linear-gradient(90deg, #ff006e 0%, #00d4ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.emptyStateMessage {
-  opacity: 0.8;
-  line-height: 1.5;
-}
-
-.dataSourceIndicator {
-  font-size: 0.7rem;
-  opacity: 0.5;
-  text-align: right;
-  margin-bottom: 0.5rem;
-}
-
-/* MongoDB Fix: Loading, Error, and Empty States (preserving theme) */
-.loadingContainer, .errorContainer, .emptyStateContainer {
-  width: 100%;
-  padding: 2rem 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.glassmorphicCard {
-  background: rgba(15, 15, 25, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 1.5rem;
-  text-align: center;
-  max-width: 500px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-
-.loadingSpinner {
-  width: 40px;
-  height: 40px;
-  margin: 0 auto 1rem;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid #ff006e;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.errorTitle {
-  color: #ff006e;
-  margin-bottom: 0.5rem;
-}
-
-.errorMessage {
-  margin-bottom: 1rem;
-  opacity: 0.8;
-}
-
-.retryButton {
-  background: linear-gradient(90deg, #ff006e 0%, #00d4ff 100%);
-  border: none;
-  border-radius: 25px;
-  padding: 0.5rem 1.5rem;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.retryButton:hover {
-  transform: translateY(-2px);
 }
 
 .emptyStateTitle {
@@ -820,25 +752,10 @@
   text-align: center;
 }
 
-.loadingSpinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid #ff006e;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
 .loadingText {
   color: rgba(255, 255, 255, 0.8);
   font-size: 1rem;
   margin: 0;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 /* Error States */
@@ -873,23 +790,6 @@
   font-size: 1rem;
   margin: 0 0 2rem 0;
   max-width: 400px;
-}
-
-.retryButton {
-  background: linear-gradient(135deg, #ff006e, #00d4ff);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 25px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.retryButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 0, 110, 0.3);
 }
 
 /* Empty States */
@@ -955,3 +855,4 @@
   font-size: 0.875rem;
   font-weight: 500;
 }
+
