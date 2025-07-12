@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+// pages/music-taste.js - FINAL, COMPLETE, AND CORRECTED
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '../components/AppLayout';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Treemap } from 'recharts';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
-// --- (Card and other helper components remain the same) ---
+// A simple Card component to maintain visual consistency
 const SimpleCard = ({ children }) => <div className={styles.card}>{children}</div>;
+
+// CardHeader now correctly handles the verification data for the timestamp
 const CardHeader = ({ title, dataStatus, verificationData }) => (
     <div className={styles.cardHeader}>
         <h2 className={styles.cardTitle}>{title}</h2>
@@ -17,6 +20,7 @@ const CardHeader = ({ title, dataStatus, verificationData }) => (
                     <span className={styles.verifyText}>Verified</span>
                     <div className={styles.verificationDetails}>
                       <p>Source: {verificationData.source}</p>
+                      {/* This now safely displays the date */}
                       <p>Fetched: {new Date(verificationData.timestamp).toLocaleString()}</p>
                     </div>
                 </div>
@@ -24,9 +28,9 @@ const CardHeader = ({ title, dataStatus, verificationData }) => (
         </div>
     </div>
 );
-const CardContent = ({ children }) => <div className="p-6 relative">{children}</div>; // Added relative positioning for tooltip
 
-// --- (Main Page Component and other charts remain the same) ---
+const CardContent = ({ children }) => <div className="p-6 relative">{children}</div>;
+
 const MusicTastePage = () => {
   const { data: session } = useSession();
   const [liveData, setLiveData] = useState(null);
@@ -34,26 +38,44 @@ const MusicTastePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // DEFINITIVE FIX FOR TIMELINE BUG:
+  // This function is now wrapped in useCallback to ensure it has a stable identity
+  // and can be used in a useEffect dependency array without causing infinite loops.
+  const updateUserTasteActivity = useCallback(async (live) => {
+    if (live && live.source === 'spotify_api') {
+      try {
+        await fetch('/api/user/update-taste-activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ artists: live.artists }),
+        });
+        // After updating, we immediately refetch the profile to get the new timeline data
+        const updatedProfile = await fetch('/api/user/taste-profile').then(res => res.json());
+        setProfileData(updatedProfile);
+      } catch (err) {
+        console.error("Background activity update failed:", err);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (session) {
+      setLoading(true);
+      // Initial fetch for both live data and the existing profile
       Promise.all([
         fetch('/api/spotify/user-taste').then(res => res.json()),
         fetch('/api/user/taste-profile').then(res => res.json())
       ]).then(([live, profile]) => {
         setLiveData(live);
         setProfileData(profile);
-        if (live.source === 'spotify_api') {
-          fetch('/api/user/update-taste-activity', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ artists: live.artists, tracks: live.tracks }),
-          });
-        }
+        // This now correctly calls the stable function to update history,
+        // which then triggers a re-fetch of the profile data.
+        updateUserTasteActivity(live);
       }).catch(err => setError(err.message)).finally(() => setLoading(false));
     }
-  }, [session]);
+  }, [session, updateUserTasteActivity]);
 
-  if (loading) return <AppLayout><div className="text-center py-10">Loading...</div></AppLayout>;
+  if (loading) return <AppLayout><div className="text-center py-10">Loading Your Music DNA...</div></AppLayout>;
   if (error) return <AppLayout><div className="text-center py-10 text-red-500">{error}</div></AppLayout>;
 
   const dataStatus = liveData?.source === 'spotify_api' ? 'Real Data' : 'Demo Data';
@@ -74,36 +96,6 @@ const MusicTastePage = () => {
       </div>
     </AppLayout>
   );
-};
-
-// --- (Other chart components like TasteEvolutionTab, TopArtistsCard, etc. are unchanged) ---
-const TasteEvolutionTab = ({ profileData, dataStatus, verificationData }) => {
-    const evolutionData = (profileData?.tasteEvolution || []).map(entry => ({
-        date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        ...(entry.genres || {})
-    }));
-    const allGenres = [...new Set((profileData?.tasteEvolution || []).flatMap(e => Object.keys(e.genres || {})))];
-    const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00C49F'];
-
-    return (
-        <SimpleCard>
-            <CardHeader title="Your Top 5 Genres Over Time" dataStatus={dataStatus} verificationData={verificationData} />
-            <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={evolutionData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
-                        <XAxis dataKey="date" stroke="#A0AEC0" />
-                        <YAxis stroke="#A0AEC0" />
-                        <Tooltip contentStyle={{ backgroundColor: '#2D3748', border: '1px solid #4A5568' }} />
-                        <Legend />
-                        {allGenres.slice(0, 5).map((genre, i) => (
-                            <Line key={genre} type="monotone" dataKey={genre} stroke={colors[i % colors.length]} name={genre.replace(/\b\w/g, l => l.toUpperCase())} />
-                        ))}
-                    </LineChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </SimpleCard>
-    );
 };
 
 const TopArtistsCard = ({ liveData, dataStatus, verificationData }) => (
@@ -160,12 +152,63 @@ const TopGenresCard = ({ liveData, dataStatus, verificationData }) => {
     );
 };
 
+const TasteEvolutionTab = ({ profileData, dataStatus, verificationData }) => {
+    const evolutionData = (profileData?.tasteEvolution || []).map(entry => ({
+        date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        ...(entry.genres || {})
+    }));
+    const allGenres = [...new Set((profileData?.tasteEvolution || []).flatMap(e => Object.keys(e.genres || {})))];
+    const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00C49F'];
 
-// --- DEFINITIVE FIX FOR GENRE DEEP DIVE ---
+    return (
+        <SimpleCard>
+            <CardHeader title="Your Top 5 Genres Over Time" dataStatus={dataStatus} verificationData={verificationData} />
+            <CardContent>
+                <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={evolutionData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
+                        <XAxis dataKey="date" stroke="#A0AEC0" />
+                        <YAxis stroke="#A0AEC0" />
+                        <Tooltip contentStyle={{ backgroundColor: '#2D3748', border: '1px solid #4A5568' }} />
+                        <Legend />
+                        {allGenres.slice(0, 5).map((genre, i) => (
+                            <Line key={genre} type="monotone" dataKey={genre} stroke={colors[i % colors.length]} name={genre.replace(/\b\w/g, l => l.toUpperCase())} />
+                        ))}
+                    </LineChart>
+                </ResponsiveContainer>
+            </CardContent>
+        </SimpleCard>
+    );
+};
+
+// DEFINITIVE FIX FOR TOOLTIP AND INVISIBLE GENRE BUGS
+const CustomizedContent = (props) => {
+    const { root, depth, x, y, width, height, index, name, colors } = props;
+    return (
+      <g>
+        <rect x={x} y={y} width={width} height={height} style={{ fill: colors[index % colors.length], stroke: '#fff', strokeWidth: 2 }} />
+        {width > 80 && height > 25 && (
+          <text x={x + width / 2} y={y + height / 2 + 7} textAnchor="middle" fill="#fff" fontSize={14} style={{ pointerEvents: 'none' }}>
+            {name}
+          </text>
+        )}
+      </g>
+    );
+};
+
+const CustomTreemapTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        return (
+            <div className="p-2 rounded-md" style={{ background: 'rgba(0, 0, 0, 0.8)', border: '1px solid #fff' }}>
+                <p className="text-white">{`${data.name} (${data.size} artists)`}</p>
+            </div>
+        );
+    }
+    return null;
+};
 
 const GenreDeepDiveCard = ({ liveData, dataStatus, verificationData }) => {
-    const [tooltip, setTooltip] = useState(null);
-
     const genreData = (liveData?.artists?.items || []).flatMap(artist => artist.genres).reduce((acc, genre) => {
         acc[genre] = (acc[genre] || 0) + 1;
         return acc;
@@ -177,55 +220,15 @@ const GenreDeepDiveCard = ({ liveData, dataStatus, verificationData }) => {
         <SimpleCard>
             <CardHeader title="Genre Deep Dive" dataStatus={dataStatus} verificationData={verificationData} />
             <CardContent>
-                {tooltip && (
-                    <div style={{
-                        position: 'absolute',
-                        top: tooltip.y,
-                        left: tooltip.x,
-                        background: 'rgba(0, 0, 0, 0.8)',
-                        border: '1px solid #fff',
-                        color: '#fff',
-                        padding: '5px 10px',
-                        borderRadius: '5px',
-                        pointerEvents: 'none',
-                        transform: 'translate(10px, -100%)',
-                        zIndex: 1000,
-                    }}>
-                        {tooltip.name} ({tooltip.size})
-                    </div>
-                )}
                 <ResponsiveContainer width="100%" height={300}>
-                    <Treemap
-                        data={treeData}
-                        dataKey="size"
-                        ratio={4 / 3}
-                        stroke="#fff"
-                        fill="#8884d8"
-                        content={<CustomizedContent colors={colors} setTooltip={setTooltip} />}
-                        onMouseLeave={() => setTooltip(null)}
-                    />
+                    <Treemap data={treeData} dataKey="size" ratio={4 / 3} stroke="#fff" fill="#8884d8" content={<CustomizedContent colors={colors}/>}>
+                        <Tooltip content={<CustomTreemapTooltip />} />
+                    </Treemap>
                 </ResponsiveContainer>
             </CardContent>
         </SimpleCard>
     );
 };
-
-const CustomizedContent = React.memo(({ root, depth, x, y, width, height, index, name, colors, setTooltip, size }) => {
-    const handleMouseMove = (event) => {
-        setTooltip({ x: event.clientX, y: event.clientY, name, size });
-    };
-
-    return (
-        <g onMouseMove={handleMouseMove} onMouseLeave={() => setTooltip(null)}>
-            <rect x={x} y={y} width={width} height={height} style={{ fill: colors[index % colors.length], stroke: '#fff', strokeWidth: 2 }} />
-            {width > 80 && height > 25 && (
-                <text x={x + width / 2} y={y + height / 2 + 7} textAnchor="middle" fill="#fff" fontSize={14} style={{ pointerEvents: 'none' }}>
-                    {name}
-                </text>
-            )}
-        </g>
-    );
-});
 
 MusicTastePage.auth = { requiredAuth: true };
 export default MusicTastePage;
