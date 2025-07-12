@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import AppLayout from '../components/AppLayout'; // Use the new shared layout
+import AppLayout from '../components/AppLayout';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Treemap } from 'recharts';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
-// Card component for visual consistency
+// --- (Card and other helper components remain the same) ---
 const SimpleCard = ({ children }) => <div className={styles.card}>{children}</div>;
-
 const CardHeader = ({ title, dataStatus, verificationData }) => (
     <div className={styles.cardHeader}>
         <h2 className={styles.cardTitle}>{title}</h2>
         <div className="flex items-center space-x-2">
             <span className={styles.dataIndicator}>{dataStatus}</span>
-            {dataStatus === 'Real Data' && verificationData && (
+            {dataStatus === 'Real Data' && verificationData?.timestamp && (
                 <div className={styles.dataVerification}>
                     <span className={styles.verifyIcon}>✓</span>
                     <span className={styles.verifyText}>Verified</span>
@@ -25,10 +24,9 @@ const CardHeader = ({ title, dataStatus, verificationData }) => (
         </div>
     </div>
 );
+const CardContent = ({ children }) => <div className="p-6 relative">{children}</div>; // Added relative positioning for tooltip
 
-const CardContent = ({ children }) => <div className="p-6">{children}</div>;
-
-// Main Page Component
+// --- (Main Page Component and other charts remain the same) ---
 const MusicTastePage = () => {
   const { data: session } = useSession();
   const [liveData, setLiveData] = useState(null);
@@ -78,7 +76,7 @@ const MusicTastePage = () => {
   );
 };
 
-// ... (All the chart components: TasteEvolutionTab, GenreDeepDiveCard, etc. remain the same as before)
+// --- (Other chart components like TasteEvolutionTab, TopArtistsCard, etc. are unchanged) ---
 const TasteEvolutionTab = ({ profileData, dataStatus, verificationData }) => {
     const evolutionData = (profileData?.tasteEvolution || []).map(entry => ({
         date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -107,40 +105,6 @@ const TasteEvolutionTab = ({ profileData, dataStatus, verificationData }) => {
         </SimpleCard>
     );
 };
-
-const GenreDeepDiveCard = ({ liveData, dataStatus, verificationData }) => {
-    const genreData = (liveData?.artists?.items || []).flatMap(artist => artist.genres).reduce((acc, genre) => {
-        acc[genre] = (acc[genre] || 0) + 1;
-        return acc;
-    }, {});
-    const treeData = Object.entries(genreData).map(([name, size]) => ({ name, size }));
-    const colors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
-    return (
-        <SimpleCard>
-            <CardHeader title="Genre Deep Dive" dataStatus={dataStatus} verificationData={verificationData} />
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                    <Treemap
-                        data={treeData}
-                        dataKey="size"
-                        ratio={4 / 3}
-                        stroke="#fff"
-                        fill="#8884d8"
-                        content={<CustomizedContent colors={colors}/>}
-                    />
-                </ResponsiveContainer>
-            </CardContent>
-        </SimpleCard>
-    );
-};
-
-const CustomizedContent = ({ root, depth, x, y, width, height, index, name, colors }) => (
-    <g>
-      <rect x={x} y={y} width={width} height={height} style={{ fill: colors[index % colors.length], stroke: '#fff', strokeWidth: 2, }} />
-      {width > 70 && height > 20 && <text x={x + width / 2} y={y + height / 2 + 7} textAnchor="middle" fill="#fff" fontSize={14}>{name}</text>}
-    </g>
-);
 
 const TopArtistsCard = ({ liveData, dataStatus, verificationData }) => (
     <SimpleCard>
@@ -197,6 +161,71 @@ const TopGenresCard = ({ liveData, dataStatus, verificationData }) => {
 };
 
 
-MusicTastePage.auth = { requiredAuth: true };
+// --- DEFINITIVE FIX FOR GENRE DEEP DIVE ---
 
+const GenreDeepDiveCard = ({ liveData, dataStatus, verificationData }) => {
+    const [tooltip, setTooltip] = useState(null);
+
+    const genreData = (liveData?.artists?.items || []).flatMap(artist => artist.genres).reduce((acc, genre) => {
+        acc[genre] = (acc[genre] || 0) + 1;
+        return acc;
+    }, {});
+    const treeData = Object.entries(genreData).map(([name, size]) => ({ name, size }));
+    const colors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+    return (
+        <SimpleCard>
+            <CardHeader title="Genre Deep Dive" dataStatus={dataStatus} verificationData={verificationData} />
+            <CardContent>
+                {tooltip && (
+                    <div style={{
+                        position: 'absolute',
+                        top: tooltip.y,
+                        left: tooltip.x,
+                        background: 'rgba(0, 0, 0, 0.8)',
+                        border: '1px solid #fff',
+                        color: '#fff',
+                        padding: '5px 10px',
+                        borderRadius: '5px',
+                        pointerEvents: 'none',
+                        transform: 'translate(10px, -100%)',
+                        zIndex: 1000,
+                    }}>
+                        {tooltip.name} ({tooltip.size})
+                    </div>
+                )}
+                <ResponsiveContainer width="100%" height={300}>
+                    <Treemap
+                        data={treeData}
+                        dataKey="size"
+                        ratio={4 / 3}
+                        stroke="#fff"
+                        fill="#8884d8"
+                        content={<CustomizedContent colors={colors} setTooltip={setTooltip} />}
+                        onMouseLeave={() => setTooltip(null)}
+                    />
+                </ResponsiveContainer>
+            </CardContent>
+        </SimpleCard>
+    );
+};
+
+const CustomizedContent = React.memo(({ root, depth, x, y, width, height, index, name, colors, setTooltip, size }) => {
+    const handleMouseMove = (event) => {
+        setTooltip({ x: event.clientX, y: event.clientY, name, size });
+    };
+
+    return (
+        <g onMouseMove={handleMouseMove} onMouseLeave={() => setTooltip(null)}>
+            <rect x={x} y={y} width={width} height={height} style={{ fill: colors[index % colors.length], stroke: '#fff', strokeWidth: 2 }} />
+            {width > 80 && height > 25 && (
+                <text x={x + width / 2} y={y + height / 2 + 7} textAnchor="middle" fill="#fff" fontSize={14} style={{ pointerEvents: 'none' }}>
+                    {name}
+                </text>
+            )}
+        </g>
+    );
+});
+
+MusicTastePage.auth = { requiredAuth: true };
 export default MusicTastePage;
