@@ -1,9 +1,53 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import Layout from '../components/layout'; // CORRECTED: Path changed from ../../ to ../
+import Layout from '../components/Layout'; // CORRECTED: Path is now correct
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Treemap } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// CORRECTED: Removed imports for Card and Tabs as they don't exist in a /ui subfolder.
+// We will rely on standard components or assume they are globally available if needed.
+
+// A simple Card component to replace the missing UI library component
+const SimpleCard = ({ children, className }) => (
+  <div className={`bg-gray-800 border border-gray-700 rounded-lg shadow-lg ${className}`}>
+    {children}
+  </div>
+);
+
+const CardHeader = ({ children }) => <div className="p-6 border-b border-gray-700">{children}</div>;
+const CardTitle = ({ children }) => <h3 className="text-lg font-semibold text-white">{children}</h3>;
+const CardContent = ({ children }) => <div className="p-6">{children}</div>;
+
+// A simple Tabs component replacement
+const SimpleTabs = ({ defaultValue, children }) => {
+  const [activeTab, setActiveTab] = useState(defaultValue);
+  const tabs = React.Children.toArray(children).filter(c => c.type === SimpleTabsList || c.type === SimpleTabsContent);
+  const list = tabs.find(c => c.type === SimpleTabsList);
+  const content = tabs.filter(c => c.type === SimpleTabsContent);
+
+  return (
+    <div>
+      {React.cloneElement(list, { activeTab, setActiveTab })}
+      {content.find(c => c.props.value === activeTab)}
+    </div>
+  );
+};
+
+const SimpleTabsList = ({ children, activeTab, setActiveTab }) => (
+  <div className="grid grid-cols-4 border-b border-gray-700">
+    {React.Children.map(children, (child) => React.cloneElement(child, { activeTab, setActiveTab }))}
+  </div>
+);
+
+const SimpleTabsTrigger = ({ value, children, activeTab, setActiveTab }) => (
+  <button
+    onClick={() => setActiveTab(value)}
+    className={`px-4 py-2 text-sm font-medium text-center ${activeTab === value ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400'}`}
+  >
+    {children}
+  </button>
+);
+
+const SimpleTabsContent = ({ children }) => <div className="mt-6">{children}</div>;
+
 
 // Helper to provide a default structure for profile data to prevent errors
 const getEmptyProfile = () => ({
@@ -76,27 +120,27 @@ const MusicTastePage = () => {
           <p className="text-lg text-gray-400 mt-2">An evolving snapshot of your unique sound.</p>
         </header>
 
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="evolution">Taste Evolution</TabsTrigger>
-            <TabsTrigger value="activity">Recent Activity</TabsTrigger>
-            <TabsTrigger value="playlists">Playlists</TabsTrigger>
-          </TabsList>
+        <SimpleTabs defaultValue="overview">
+          <SimpleTabsList>
+            <SimpleTabsTrigger value="overview">Overview</SimpleTabsTrigger>
+            <SimpleTabsTrigger value="evolution">Taste Evolution</SimpleTabsTrigger>
+            <SimpleTabsTrigger value="activity">Recent Activity</SimpleTabsTrigger>
+            <SimpleTabsTrigger value="playlists">Playlists</SimpleTabsTrigger>
+          </SimpleTabsList>
 
-          <TabsContent value="overview" className="mt-6">
+          <SimpleTabsContent value="overview">
             <OverviewTab liveData={liveData} />
-          </TabsContent>
-          <TabsContent value="evolution" className="mt-6">
+          </SimpleTabsContent>
+          <SimpleTabsContent value="evolution">
             <TasteEvolutionTab profileData={profileData} />
-          </TabsContent>
-          <TabsContent value="activity" className="mt-6">
+          </SimpleTabsContent>
+          <SimpleTabsContent value="activity">
             <RecentActivityTab profileData={profileData} />
-          </TabsContent>
-          <TabsContent value="playlists" className="mt-6">
+          </SimpleTabsContent>
+          <SimpleTabsContent value="playlists">
             <PlaylistsTab profileData={profileData} />
-          </TabsContent>
-        </Tabs>
+          </SimpleTabsContent>
+        </SimpleTabs>
       </div>
     </Layout>
   );
@@ -122,8 +166,8 @@ const TasteEvolutionTab = ({ profileData }) => {
     const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00C49F'];
 
     return (
-        <Card className="bg-gray-800 border-gray-700">
-            <CardHeader><CardTitle className="text-white">Your Top 5 Genres Over Time</CardTitle></CardHeader>
+        <SimpleCard>
+            <CardHeader><CardTitle>Your Top 5 Genres Over Time</CardTitle></CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={400}>
                     <LineChart data={evolutionData}>
@@ -138,14 +182,14 @@ const TasteEvolutionTab = ({ profileData }) => {
                     </LineChart>
                 </ResponsiveContainer>
             </CardContent>
-        </Card>
+        </SimpleCard>
     );
 };
 
 const RecentActivityTab = ({ profileData }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card className="bg-gray-800 border-gray-700">
-            <CardHeader><CardTitle className="text-white">Recently Added Tracks</CardTitle></CardHeader>
+        <SimpleCard>
+            <CardHeader><CardTitle>Recently Added Tracks</CardTitle></CardHeader>
             <CardContent>
                 <ul className="space-y-3">
                     {(profileData?.recentActivity?.added || []).slice(0, 5).map(track => (
@@ -156,9 +200,9 @@ const RecentActivityTab = ({ profileData }) => (
                     ))}
                 </ul>
             </CardContent>
-        </Card>
-        <Card className="bg-gray-800 border-gray-700">
-            <CardHeader><CardTitle className="text-white">Recently Liked Tracks</CardTitle></CardHeader>
+        </SimpleCard>
+        <SimpleCard>
+            <CardHeader><CardTitle>Recently Liked Tracks</CardTitle></CardHeader>
             <CardContent>
                 <ul className="space-y-3">
                     {(profileData?.recentActivity?.liked || []).slice(0, 5).map(track => (
@@ -169,15 +213,15 @@ const RecentActivityTab = ({ profileData }) => (
                     ))}
                 </ul>
             </CardContent>
-        </Card>
+        </SimpleCard>
     </div>
 );
 
 const PlaylistsTab = ({ profileData }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {(profileData?.playlists || []).map(p => (
-            <Card key={p.id} className="bg-gray-800 border-gray-700">
-                <CardHeader><CardTitle className="text-white">{p.name}</CardTitle></CardHeader>
+            <SimpleCard key={p.id}>
+                <CardHeader><CardTitle>{p.name}</CardTitle></CardHeader>
                 <CardContent>
                     <p className="text-gray-400">{p.characteristics}</p>
                     <div className="text-sm text-gray-500 mt-4">
@@ -185,7 +229,7 @@ const PlaylistsTab = ({ profileData }) => (
                         <p>Last updated: {new Date(p.lastUpdated).toLocaleDateString()}</p>
                     </div>
                 </CardContent>
-            </Card>
+            </SimpleCard>
         ))}
     </div>
 );
@@ -199,8 +243,8 @@ const GenreDeepDiveCard = ({ liveData }) => {
     const treeData = Object.entries(genreData).map(([name, size]) => ({ name, size }));
 
     return (
-        <Card className="bg-gray-800 border-gray-700">
-            <CardHeader><CardTitle className="text-white">Genre Deep Dive</CardTitle></CardHeader>
+        <SimpleCard>
+            <CardHeader><CardTitle>Genre Deep Dive</CardTitle></CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                     <Treemap
@@ -213,7 +257,7 @@ const GenreDeepDiveCard = ({ liveData }) => {
                     />
                 </ResponsiveContainer>
             </CardContent>
-        </Card>
+        </SimpleCard>
     );
 };
 
@@ -243,8 +287,8 @@ const CustomizedContent = ({ root, depth, x, y, width, height, index, payload, r
 
 
 const TopArtistsCard = ({ liveData }) => (
-    <Card className="bg-gray-800 border-gray-700">
-        <CardHeader><CardTitle className="text-white">Your Top Artists (Last 4 Weeks)</CardTitle></CardHeader>
+    <SimpleCard>
+        <CardHeader><CardTitle>Your Top Artists (Last 4 Weeks)</CardTitle></CardHeader>
         <CardContent>
             <ul className="space-y-4">
                 {(liveData?.artists?.items || []).slice(0, 5).map((artist, i) => (
@@ -258,29 +302,29 @@ const TopArtistsCard = ({ liveData }) => (
                 ))}
             </ul>
         </CardContent>
-    </Card>
+    </SimpleCard>
 );
 
 const TopTracksCard = ({ liveData }) => (
-    <Card className="bg-gray-800 border-gray-700">
-        <CardHeader><CardTitle className="text-white">Your Top Tracks (Last 4 Weeks)</CardTitle></CardHeader>
+    <SimpleCard>
+        <CardHeader><CardTitle>Your Top Tracks (Last 4 Weeks)</CardTitle></CardHeader>
         <CardContent>
             <ul className="space-y-3">
-                {(liveData?.tracks?.items || []).slice(0, 5).map((track, i) => (
+                {(live_data?.tracks?.items || []).slice(0, 5).map((track, i) => (
                     <li key={track.id} className="text-gray-300">
                         {i + 1}. {track.name} - <span className="text-gray-500">{(track.artists || []).map(a => a.name).join(', ')}</span>
                     </li>
                 ))}
             </ul>
         </CardContent>
-    </Card>
+    </SimpleCard>
 );
 
 const TopGenresCard = ({ liveData }) => {
     const genreData = Object.entries(liveData?.genreProfile || {}).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
     return (
-        <Card className="bg-gray-800 border-gray-700">
-            <CardHeader><CardTitle className="text-white">Your Top Genres</CardTitle></CardHeader>
+        <SimpleCard>
+            <CardHeader><CardTitle>Your Top Genres</CardTitle></CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={genreData} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
@@ -292,7 +336,7 @@ const TopGenresCard = ({ liveData }) => {
                     </BarChart>
                 </ResponsiveContainer>
             </CardContent>
-        </Card>
+        </SimpleCard>
     );
 };
 
