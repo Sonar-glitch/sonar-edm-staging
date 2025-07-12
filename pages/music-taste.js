@@ -1,126 +1,85 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import Layout from '../components/Layout'; // CORRECTED: Path is now correct for a page
+import AppLayout from '../components/AppLayout'; // Use the new shared layout
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Treemap } from 'recharts';
-import styles from '../styles/EnhancedPersonalizedDashboard.module.css'; // CORRECTED: Path to styles
+import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
-// A simple Card component to maintain visual consistency
-const SimpleCard = ({ children, className }) => (
-  <div className={`${styles.card} ${className || ''}`}>
-    {children}
-  </div>
-);
+// Card component for visual consistency
+const SimpleCard = ({ children }) => <div className={styles.card}>{children}</div>;
 
-const CardHeader = ({ children, title, dataStatus }) => (
+const CardHeader = ({ title, dataStatus, verificationData }) => (
     <div className={styles.cardHeader}>
         <h2 className={styles.cardTitle}>{title}</h2>
-        <span className={styles.dataIndicator}>{dataStatus}</span>
+        <div className="flex items-center space-x-2">
+            <span className={styles.dataIndicator}>{dataStatus}</span>
+            {dataStatus === 'Real Data' && verificationData && (
+                <div className={styles.dataVerification}>
+                    <span className={styles.verifyIcon}>✓</span>
+                    <span className={styles.verifyText}>Verified</span>
+                    <div className={styles.verificationDetails}>
+                      <p>Source: {verificationData.source}</p>
+                      <p>Fetched: {new Date(verificationData.timestamp).toLocaleString()}</p>
+                    </div>
+                </div>
+            )}
+        </div>
     </div>
 );
 
 const CardContent = ({ children }) => <div className="p-6">{children}</div>;
 
-// Helper to provide a default structure for profile data to prevent errors
-const getEmptyProfile = () => ({
-  tasteEvolution: [],
-  recentActivity: { added: [], liked: [] },
-  playlists: [],
-});
-
-// Main Component
+// Main Page Component
 const MusicTastePage = () => {
   const { data: session } = useSession();
   const [liveData, setLiveData] = useState(null);
-  const [profileData, setProfileData] = useState(getEmptyProfile());
+  const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (session) {
-        try {
-          setLoading(true);
-          setError(null);
-
-          const [liveRes, profileRes] = await Promise.all([
-            fetch('/api/spotify/user-taste'),
-            fetch('/api/user/taste-profile')
-          ]);
-
-          if (!liveRes.ok) throw new Error(`Spotify API failed: ${liveRes.statusText}`);
-          if (!profileRes.ok) throw new Error(`Profile API failed: ${profileRes.statusText}`);
-
-          const liveJson = await liveRes.json();
-          const profileJson = await profileRes.json();
-
-          setLiveData(liveJson);
-          setProfileData(profileJson || getEmptyProfile());
-
-          if (liveJson && liveJson.source === 'spotify_api') {
-            fetch('/api/user/update-taste-activity', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                artists: liveJson.artists,
-                tracks: liveJson.tracks,
-              }),
-            }).catch(err => console.error("Background activity update failed:", err));
-          }
-
-        } catch (e) {
-          setError(e.message);
-          console.error(e);
-        } finally {
-          setLoading(false);
+    if (session) {
+      Promise.all([
+        fetch('/api/spotify/user-taste').then(res => res.json()),
+        fetch('/api/user/taste-profile').then(res => res.json())
+      ]).then(([live, profile]) => {
+        setLiveData(live);
+        setProfileData(profile);
+        if (live.source === 'spotify_api') {
+          fetch('/api/user/update-taste-activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ artists: live.artists, tracks: live.tracks }),
+          });
         }
-      }
-    };
-
-    fetchData();
+      }).catch(err => setError(err.message)).finally(() => setLoading(false));
+    }
   }, [session]);
 
-  if (loading) return <Layout><div className="text-center py-10">Loading your music DNA...</div></Layout>;
-  if (error) return <Layout><div className="text-center py-10 text-red-500">Error: {error}</div></Layout>;
-  if (!liveData) return <Layout><div className="text-center py-10">Could not load your music profile.</div></Layout>;
+  if (loading) return <AppLayout><div className="text-center py-10">Loading...</div></AppLayout>;
+  if (error) return <AppLayout><div className="text-center py-10 text-red-500">{error}</div></AppLayout>;
 
-  const dataStatus = liveData.source === 'spotify_api' ? 'Real Data' : 'Demo Data';
+  const dataStatus = liveData?.source === 'spotify_api' ? 'Real Data' : 'Demo Data';
+  const verificationData = { source: liveData?.source, timestamp: liveData?.timestamp };
 
   return (
-    <Layout>
-        <div className="container mx-auto px-4 py-8">
-            <header className="text-center mb-12">
-              <h1 className="text-4xl font-bold text-white tracking-tight">Your Music DNA</h1>
-              <p className="text-lg text-gray-400 mt-2">An evolving snapshot of your unique sound.</p>
-            </header>
-            <div className={styles.mainContent}>
-                <div className={styles.informationalRow}>
-                    <div className={styles.leftColumn}>
-                        <TopArtistsCard liveData={liveData} dataStatus={dataStatus} />
-                    </div>
-                    <div className={styles.rightColumn}>
-                        <TopGenresCard liveData={liveData} dataStatus={dataStatus} />
-                    </div>
-                </div>
-                <div className={styles.informationalRow}>
-                    <div className={styles.leftColumn}>
-                        <TopTracksCard liveData={liveData} dataStatus={dataStatus} />
-                    </div>
-                    <div className={styles.rightColumn}>
-                        <GenreDeepDiveCard liveData={liveData} dataStatus={dataStatus} />
-                    </div>
-                </div>
-                <div className={styles.fullWidthRow}>
-                     <TasteEvolutionTab profileData={profileData} dataStatus={dataStatus} />
-                </div>
-            </div>
+    <AppLayout>
+      <div className={styles.mainContent}>
+        <div className={styles.informationalRow}>
+          <div className={styles.leftColumn}><TopArtistsCard liveData={liveData} dataStatus={dataStatus} verificationData={verificationData} /></div>
+          <div className={styles.rightColumn}><TopGenresCard liveData={liveData} dataStatus={dataStatus} verificationData={verificationData} /></div>
         </div>
-    </Layout>
+        <div className={styles.informationalRow}>
+          <div className={styles.leftColumn}><TopTracksCard liveData={liveData} dataStatus={dataStatus} verificationData={verificationData} /></div>
+          <div className={styles.rightColumn}><GenreDeepDiveCard liveData={liveData} dataStatus={dataStatus} verificationData={verificationData} /></div>
+        </div>
+        <div className={styles.fullWidthRow}><TasteEvolutionTab profileData={profileData} dataStatus={dataStatus} verificationData={verificationData} /></div>
+      </div>
+    </AppLayout>
   );
 };
 
-// --- NEW, FUNCTIONAL CARDS ---
-
-const TasteEvolutionTab = ({ profileData, dataStatus }) => {
+// ... (All the chart components: TasteEvolutionTab, GenreDeepDiveCard, etc. remain the same as before)
+const TasteEvolutionTab = ({ profileData, dataStatus, verificationData }) => {
     const evolutionData = (profileData?.tasteEvolution || []).map(entry => ({
         date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         ...(entry.genres || {})
@@ -130,7 +89,7 @@ const TasteEvolutionTab = ({ profileData, dataStatus }) => {
 
     return (
         <SimpleCard>
-            <CardHeader title="Your Top 5 Genres Over Time" dataStatus={dataStatus} />
+            <CardHeader title="Your Top 5 Genres Over Time" dataStatus={dataStatus} verificationData={verificationData} />
             <CardContent>
                 <ResponsiveContainer width="100%" height={400}>
                     <LineChart data={evolutionData}>
@@ -149,7 +108,7 @@ const TasteEvolutionTab = ({ profileData, dataStatus }) => {
     );
 };
 
-const GenreDeepDiveCard = ({ liveData, dataStatus }) => {
+const GenreDeepDiveCard = ({ liveData, dataStatus, verificationData }) => {
     const genreData = (liveData?.artists?.items || []).flatMap(artist => artist.genres).reduce((acc, genre) => {
         acc[genre] = (acc[genre] || 0) + 1;
         return acc;
@@ -159,7 +118,7 @@ const GenreDeepDiveCard = ({ liveData, dataStatus }) => {
 
     return (
         <SimpleCard>
-            <CardHeader title="Genre Deep Dive" dataStatus={dataStatus} />
+            <CardHeader title="Genre Deep Dive" dataStatus={dataStatus} verificationData={verificationData} />
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                     <Treemap
@@ -183,9 +142,9 @@ const CustomizedContent = ({ root, depth, x, y, width, height, index, name, colo
     </g>
 );
 
-const TopArtistsCard = ({ liveData, dataStatus }) => (
+const TopArtistsCard = ({ liveData, dataStatus, verificationData }) => (
     <SimpleCard>
-        <CardHeader title="Your Top Artists (Last 4 Weeks)" dataStatus={dataStatus} />
+        <CardHeader title="Your Top Artists (Last 4 Weeks)" dataStatus={dataStatus} verificationData={verificationData} />
         <CardContent>
             <ul className="space-y-4">
                 {(liveData?.artists?.items || []).slice(0, 5).map((artist, i) => (
@@ -202,9 +161,9 @@ const TopArtistsCard = ({ liveData, dataStatus }) => (
     </SimpleCard>
 );
 
-const TopTracksCard = ({ liveData, dataStatus }) => (
+const TopTracksCard = ({ liveData, dataStatus, verificationData }) => (
     <SimpleCard>
-        <CardHeader title="Your Top Tracks (Last 4 Weeks)" dataStatus={dataStatus} />
+        <CardHeader title="Your Top Tracks (Last 4 Weeks)" dataStatus={dataStatus} verificationData={verificationData} />
         <CardContent>
             <ul className="space-y-3">
                 {(liveData?.tracks?.items || []).slice(0, 5).map((track, i) => (
@@ -217,11 +176,11 @@ const TopTracksCard = ({ liveData, dataStatus }) => (
     </SimpleCard>
 );
 
-const TopGenresCard = ({ liveData, dataStatus }) => {
+const TopGenresCard = ({ liveData, dataStatus, verificationData }) => {
     const genreData = Object.entries(liveData?.genreProfile || {}).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
     return (
         <SimpleCard>
-            <CardHeader title="Your Top Genres" dataStatus={dataStatus} />
+            <CardHeader title="Your Top Genres" dataStatus={dataStatus} verificationData={verificationData} />
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={genreData} layout="vertical" margin={{ left: 20 }}>
@@ -236,5 +195,8 @@ const TopGenresCard = ({ liveData, dataStatus }) => {
         </SimpleCard>
     );
 };
+
+
+MusicTastePage.auth = { requiredAuth: true };
 
 export default MusicTastePage;
