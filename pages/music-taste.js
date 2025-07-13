@@ -1,4 +1,4 @@
-// pages/music-taste.js - CORRECTED VERSION
+// pages/music-taste.js - FIXED DATA MAPPING VERSION
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '../components/AppLayout';
@@ -28,11 +28,13 @@ const MusicTastePage = () => {
 
       if (spotifyResponse.ok) {
         const spotifyResult = await spotifyResponse.json();
+        console.log('Spotify Data:', spotifyResult);
         setSpotifyData(spotifyResult);
       }
 
       if (profileResponse.ok) {
         const profileResult = await profileResponse.json();
+        console.log('Profile Data:', profileResult);
         setProfileData(profileResult);
       }
     } catch (err) {
@@ -77,7 +79,7 @@ const MusicTastePage = () => {
     );
   };
 
-  // CORRECTED: Similar Artists Component (Horizontal Layout)
+  // FIXED: Similar Artists Component (Horizontal Layout)
   const SimilarArtistsHorizontal = ({ artist, userTopArtists }) => {
     const similarArtists = userTopArtists
       .filter(ua => ua.name !== artist.name)
@@ -102,14 +104,14 @@ const MusicTastePage = () => {
     );
   };
 
-  // CORRECTED: Similar Tracks Component (Horizontal Layout)
+  // FIXED: Similar Tracks Component (Horizontal Layout)
   const SimilarTracksHorizontal = ({ track, recentTracks }) => {
     const similarTracks = recentTracks
-      ?.filter(rt => rt.track?.name !== track.name)
+      ?.filter(rt => rt.name !== track.name)
       ?.slice(0, 2)
       ?.map(rt => ({
-        name: rt.track?.name || 'Unknown Track',
-        artist: rt.track?.artists?.[0]?.name || 'Unknown Artist',
+        name: rt.name || 'Unknown Track',
+        artist: rt.artists?.[0] || 'Unknown Artist',
         similarity: Math.floor(Math.random() * 25) + 75
       })) || [];
 
@@ -128,7 +130,7 @@ const MusicTastePage = () => {
     );
   };
 
-  // CORRECTED: Timeline Chart Component
+  // FIXED: Timeline Chart Component
   const TimelineChart = ({ genreEvolution }) => {
     if (!genreEvolution || genreEvolution.length === 0) {
       return <div style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.6)' }}>
@@ -218,7 +220,7 @@ const MusicTastePage = () => {
     );
   };
 
-  // CORRECTED: Real Playlists Component
+  // FIXED: Real Playlists Component
   const RealPlaylistsCard = ({ profileData }) => {
     const realPlaylists = profileData?.playlists || [];
     
@@ -259,7 +261,7 @@ const MusicTastePage = () => {
                   <div>
                     <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{playlist.name}</div>
                     <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                      {playlist.description || 'No description'}
+                      {playlist.characteristics || 'No description'}
                     </div>
                   </div>
                   <div style={{ fontSize: '0.8rem', color: '#00d4ff' }}>
@@ -282,12 +284,13 @@ const MusicTastePage = () => {
     );
   };
 
-  // CORRECTED: Recent Activity Tab
+  // FIXED: Recent Activity Tab
   const RecentActivityTab = ({ profileData }) => {
     const recentActivity = profileData?.recentActivity || {};
-    const recentlyLiked = recentActivity.recentlyLiked || [];
-    const recentlyAdded = recentActivity.recentlyAdded || [];
-    const recentlyRemoved = recentActivity.recentlyRemoved || [];
+    // FIXED: Use correct field names from API
+    const recentlyLiked = recentActivity.liked || [];
+    const recentlyAdded = recentActivity.added || [];
+    const recentlyRemoved = recentActivity.removed || [];
 
     return (
       <div className={styles.fullWidth}>
@@ -308,12 +311,12 @@ const MusicTastePage = () => {
                   borderBottom: '1px solid rgba(255,255,255,0.1)',
                   fontSize: '0.9rem'
                 }}>
-                  <div style={{ fontWeight: '500' }}>{item.track?.name || 'Unknown Track'}</div>
+                  <div style={{ fontWeight: '500' }}>{item.name || 'Unknown Track'}</div>
                   <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                    {item.track?.artists?.[0]?.name || 'Unknown Artist'}
+                    {item.artists?.[0] || 'Unknown Artist'}
                   </div>
                   <div style={{ fontSize: '0.7rem', color: '#22c55e' }}>
-                    {formatTimeAgo(item.added_at)}
+                    {formatTimeAgo(item.date)}
                   </div>
                 </div>
               ))}
@@ -335,12 +338,12 @@ const MusicTastePage = () => {
                   borderBottom: '1px solid rgba(255,255,255,0.1)',
                   fontSize: '0.9rem'
                 }}>
-                  <div style={{ fontWeight: '500' }}>{item.track?.name || 'Unknown Track'}</div>
+                  <div style={{ fontWeight: '500' }}>{item.name || 'Unknown Track'}</div>
                   <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                    {item.track?.artists?.[0]?.name || 'Unknown Artist'}
+                    {item.artists?.[0] || 'Unknown Artist'}
                   </div>
                   <div style={{ fontSize: '0.7rem', color: '#3b82f6' }}>
-                    {formatTimeAgo(item.added_at)}
+                    {formatTimeAgo(item.date)}
                   </div>
                 </div>
               ))}
@@ -363,9 +366,9 @@ const MusicTastePage = () => {
                     borderBottom: '1px solid rgba(255,255,255,0.1)',
                     fontSize: '0.9rem'
                   }}>
-                    <div style={{ fontWeight: '500' }}>{item.track?.name || 'Unknown Track'}</div>
+                    <div style={{ fontWeight: '500' }}>{item.name || 'Unknown Track'}</div>
                     <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                      {item.track?.artists?.[0]?.name || 'Unknown Artist'}
+                      {item.artists?.[0] || 'Unknown Artist'}
                     </div>
                     <div style={{ fontSize: '0.7rem', color: '#ef4444' }}>
                       {formatTimeAgo(item.removed_at)}
@@ -499,12 +502,13 @@ const MusicTastePage = () => {
                       <h3 className={styles.cardTitle}>Your Top Artists + Similar Artists</h3>
                       <DataVerification 
                         source="spotify_api" 
-                        fetchedAt={spotifyData?.fetchedAt}
+                        fetchedAt={spotifyData?.timestamp}
                         apiStatus="200"
                       />
                     </div>
                     <div>
-                      {spotifyData?.topArtists?.slice(0, 5).map((artist, idx) => (
+                      {/* FIXED: Use artists.items from API response */}
+                      {spotifyData?.artists?.items?.slice(0, 5).map((artist, idx) => (
                         <div key={idx} style={{ 
                           display: 'flex', 
                           alignItems: 'center', 
@@ -534,7 +538,7 @@ const MusicTastePage = () => {
                             </div>
                             <SimilarArtistsHorizontal 
                               artist={artist} 
-                              userTopArtists={spotifyData?.topArtists || []} 
+                              userTopArtists={spotifyData?.artists?.items || []} 
                             />
                           </div>
                         </div>
@@ -549,7 +553,7 @@ const MusicTastePage = () => {
                       <h3 className={styles.cardTitle}>Your Top Genres</h3>
                       <DataVerification 
                         source="spotify_api" 
-                        fetchedAt={spotifyData?.fetchedAt}
+                        fetchedAt={spotifyData?.timestamp}
                         apiStatus="200"
                       />
                     </div>
@@ -557,11 +561,11 @@ const MusicTastePage = () => {
                       Listening frequency (% of total plays)
                     </div>
                     <div style={{ height: '200px' }}>
-                      {spotifyData?.topGenres && (
+                      {/* FIXED: Use genreProfile from API response */}
+                      {spotifyData?.genreProfile && (
                         <svg width="100%" height="100%" viewBox="0 0 300 180">
-                          {spotifyData.topGenres.slice(0, 5).map((genre, idx) => {
-                            const percentage = Math.max(5, 60 - idx * 12 + Math.random() * 10);
-                            const barWidth = (percentage / 60) * 200;
+                          {Object.entries(spotifyData.genreProfile).slice(0, 5).map(([genre, percentage], idx) => {
+                            const barWidth = (percentage / 100) * 200;
                             const colors = ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444'];
                             
                             return (
@@ -609,12 +613,13 @@ const MusicTastePage = () => {
                       <h3 className={styles.cardTitle}>Your Top Tracks + Similar Tracks</h3>
                       <DataVerification 
                         source="spotify_api" 
-                        fetchedAt={spotifyData?.fetchedAt}
+                        fetchedAt={spotifyData?.timestamp}
                         apiStatus="200"
                       />
                     </div>
                     <div>
-                      {spotifyData?.topTracks?.slice(0, 5).map((track, idx) => (
+                      {/* FIXED: Use tracks.items from API response */}
+                      {spotifyData?.tracks?.items?.slice(0, 5).map((track, idx) => (
                         <div key={idx} style={{ 
                           padding: '0.5rem 0',
                           borderBottom: idx < 4 ? '1px solid rgba(255,255,255,0.1)' : 'none'
@@ -627,7 +632,7 @@ const MusicTastePage = () => {
                           </div>
                           <SimilarTracksHorizontal 
                             track={track} 
-                            recentTracks={profileData?.recentActivity?.recentlyAdded || []} 
+                            recentTracks={profileData?.recentActivity?.added || []} 
                           />
                         </div>
                       ))}
@@ -641,7 +646,7 @@ const MusicTastePage = () => {
                       <h3 className={styles.cardTitle}>Genre Deep Dive</h3>
                       <DataVerification 
                         source="spotify_api" 
-                        fetchedAt={spotifyData?.fetchedAt}
+                        fetchedAt={spotifyData?.timestamp}
                         apiStatus="200"
                       />
                     </div>
@@ -701,11 +706,11 @@ const MusicTastePage = () => {
                       <h3 className={styles.cardTitle}>Your Top 5 Genres Over Time</h3>
                       <DataVerification 
                         source="spotify_api" 
-                        fetchedAt={spotifyData?.fetchedAt}
+                        fetchedAt={spotifyData?.timestamp}
                         apiStatus="200"
                       />
                     </div>
-                    <TimelineChart genreEvolution={profileData?.genreEvolution} />
+                    <TimelineChart genreEvolution={profileData?.tasteEvolution} />
                   </div>
                 </div>
               </div>
