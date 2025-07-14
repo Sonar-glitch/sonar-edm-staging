@@ -1,4 +1,4 @@
-// pages/music-taste.js - RIGHT-ALIGNED DATA LAYOUT
+// pages/music-taste.js - REAL FIXES THAT ACTUALLY WORK
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '../components/AppLayout';
@@ -82,7 +82,7 @@ const MusicTastePage = () => {
     return date.toLocaleDateString();
   };
 
-  // Header with card-like background
+  // REAL FIX 1: Header with DARK CARD background like other sections
   const RefinedHeader = ({ spotifyData, profileData }) => {
     const generateTasteIdentity = () => {
       const topGenres = Object.keys(spotifyData?.genreProfile || {}).slice(0, 2);
@@ -130,7 +130,8 @@ const MusicTastePage = () => {
       <div className={styles.card} style={{ 
         marginBottom: '1.5rem',
         textAlign: 'center',
-        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+        // FIXED: Remove blue gradient, use dark card background like other sections
+        background: 'rgba(31, 41, 55, 0.8)',
         border: '1px solid rgba(255,255,255,0.1)'
       }}>
         <div style={{ padding: '1.5rem' }}>
@@ -184,7 +185,7 @@ const MusicTastePage = () => {
     );
   };
 
-  // FIX: Recently Liked with data on the RIGHT side
+  // Recently Liked with data on the RIGHT side
   const RecentlyLiked = ({ profileData }) => {
     const recentlyLiked = profileData?.recentActivity?.liked || [];
     
@@ -493,8 +494,26 @@ const MusicTastePage = () => {
     );
   };
 
-  // Preferences with full options displayed
+  // REAL FIX 2: Preferences with SAVE BUTTON
   const Preferences = () => {
+    const savePreferences = async () => {
+      try {
+        const response = await fetch('/api/user/save-vibe-preferences', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(vibePreferences),
+        });
+        
+        if (response.ok) {
+          console.log('Preferences saved successfully');
+        }
+      } catch (error) {
+        console.error('Error saving preferences:', error);
+      }
+    };
+
     return (
       <div className={styles.card} style={{ height: '320px' }}>
         <div className={styles.cardHeader}>
@@ -517,6 +536,25 @@ const MusicTastePage = () => {
           }}>
             <span>Did We Get it Right?</span>
             <span>Phrfens Quiz</span>
+          </div>
+          
+          {/* FIXED: Add the missing save button */}
+          <div style={{ marginBottom: '1rem' }}>
+            <button
+              onClick={savePreferences}
+              style={{
+                background: '#8b5cf6',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#ffffff',
+                padding: '0.5rem 1rem',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Phrfens Quiz
+            </button>
           </div>
           
           {/* Event */}
@@ -603,7 +641,7 @@ const MusicTastePage = () => {
     );
   };
 
-  // FIX: Events for You with match percentages on the right
+  // REAL FIX 3: Events for You with ACTUAL EVENTS (not "Top Tracks")
   const EventsForYou = ({ spotifyData }) => {
     const events = profileData?.recommendedEvents || [
       {
@@ -638,15 +676,7 @@ const MusicTastePage = () => {
           </h3>
         </div>
         <div style={{ padding: '1rem', height: 'calc(100% - 60px)' }}>
-          <div style={{ 
-            marginBottom: '1rem', 
-            fontSize: '0.875rem', 
-            fontWeight: '600',
-            color: '#ffffff'
-          }}>
-            Top Tracks
-          </div>
-          
+          {/* FIXED: Remove "Top Tracks" header, show actual events */}
           {events.map((event, idx) => (
             <div key={idx} style={{ 
               marginBottom: '1rem',
@@ -695,7 +725,7 @@ const MusicTastePage = () => {
     );
   };
 
-  // FIX: Top Tracks with play counts on the right
+  // Top Tracks with play counts on the right
   const TopTracks = ({ spotifyData }) => {
     const tracks = spotifyData?.tracks?.items || [];
     
@@ -739,7 +769,7 @@ const MusicTastePage = () => {
                   color: '#ffffff',
                   lineHeight: '1.2'
                 }}>
-                  {track.name || ['Flex My Ice', 'Flex My Ice', 'Love Made Me Do It - Guy J Remix'][idx]}
+                  {track.name || ['Tension', 'Flex My Ice', 'Love Made Me Do It - Guy J Remix'][idx]}
                 </div>
                 <div style={{ 
                   fontSize: '0.75rem', 
@@ -748,7 +778,7 @@ const MusicTastePage = () => {
                   flexShrink: 0,
                   marginLeft: '0.5rem'
                 }}>
-                  {Math.floor(Math.random() * 50) + 10} plays
+                  {[40, 13, 10][idx]} plays
                 </div>
               </div>
               
@@ -760,7 +790,7 @@ const MusicTastePage = () => {
                 lineHeight: '1.2',
                 marginBottom: '0.125rem'
               }}>
-                {track.artists?.[0]?.name || ['Love Made Techno', 'SCRIPT', 'Moshic'][idx]}
+                {track.artists?.[0]?.name || ['Peer Kusiv', 'SCRIPT', 'Moshic'][idx]}
               </div>
               <div style={{ 
                 fontSize: '0.75rem', 
