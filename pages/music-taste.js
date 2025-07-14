@@ -1,4 +1,4 @@
-// pages/music-taste.js - HYBRID VERSION: Preserves ALL comprehensive functionality + new layout
+// pages/music-taste.js - SURGICAL IMPROVEMENTS: All hover details, interactions, and layout fixes
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '../components/AppLayout';
@@ -18,6 +18,7 @@ const MusicTastePage = () => {
   
   // Artist Connections state
   const [showHiddenConnections, setShowHiddenConnections] = useState(false);
+  const [expandedArtists, setExpandedArtists] = useState(new Set());
   
   // Vibe Quiz state
   const [showVibeQuiz, setShowVibeQuiz] = useState(false);
@@ -33,6 +34,7 @@ const MusicTastePage = () => {
   
   // NEW: GenreTimelineModal state
   const [showGenreModal, setShowGenreModal] = useState(false);
+  const [selectedGenreForTimeline, setSelectedGenreForTimeline] = useState(null);
   
   // NEW: Preferences state for new layout
   const [preferences, setPreferences] = useState({
@@ -42,6 +44,7 @@ const MusicTastePage = () => {
     distance: []
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -164,6 +167,9 @@ const MusicTastePage = () => {
       
       if (response.ok) {
         console.log('Preferences saved successfully');
+        // Show toast notification
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
       } else {
         console.error('Failed to save preferences');
       }
@@ -172,6 +178,33 @@ const MusicTastePage = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // NEW: Toast notification component
+  const Toast = ({ show, message }) => {
+    if (!show) return null;
+    
+    return (
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        background: 'rgba(16, 185, 129, 0.9)',
+        color: '#ffffff',
+        padding: '12px 20px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+        zIndex: 1001,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(16, 185, 129, 0.3)'
+      }}>
+        <span>✅</span>
+        <span>{message}</span>
+      </div>
+    );
   };
 
   // HEADER ZONE: All 4 fixes implemented
@@ -301,7 +334,7 @@ const MusicTastePage = () => {
     );
   };
 
-  // RECENTLY LIKED: All 3 fixes implemented
+  // RECENTLY LIKED: Enhanced with hover details
   const RecentlyLiked = ({ profileData }) => {
     const recentTracks = profileData?.recentActivity?.liked || [];
     
@@ -313,6 +346,36 @@ const MusicTastePage = () => {
         '+6% Techno Edge'
       ];
       return insights[idx] || '+10% Genre Boost';
+    };
+
+    const getTrackDetails = (track, idx) => {
+      const mockDetails = [
+        { duration: '3:45', album: 'Afterlife Presents', year: '2023', popularity: 85 },
+        { duration: '4:12', album: 'Progressive Sessions', year: '2023', popularity: 78 },
+        { duration: '5:23', album: 'Deep Cuts Vol. 2', year: '2022', popularity: 92 },
+        { duration: '3:58', album: 'Underground Classics', year: '2023', popularity: 71 }
+      ];
+      return mockDetails[idx] || mockDetails[0];
+    };
+
+    const getArtistDetails = (track, idx) => {
+      const mockArtists = [
+        { genre: 'Melodic Techno', followers: '2.1M', monthlyListeners: '850K' },
+        { genre: 'Progressive House', followers: '1.8M', monthlyListeners: '720K' },
+        { genre: 'Deep House', followers: '3.2M', monthlyListeners: '1.2M' },
+        { genre: 'Techno', followers: '1.5M', monthlyListeners: '680K' }
+      ];
+      return mockArtists[idx] || mockArtists[0];
+    };
+
+    const getBoostExplanation = (track, idx) => {
+      const explanations = [
+        'This track increased your Melodic Techno preference by 15% based on audio features and listening patterns',
+        'Progressive elements in this track enhanced your taste profile flow characteristics',
+        'Deep House vibes from this track strengthened your underground music preferences',
+        'Techno edge in this track sharpened your high-energy music taste profile'
+      ];
+      return explanations[idx] || explanations[0];
     };
 
     // RECENTLY LIKED FIX 1: Fallback text
@@ -341,66 +404,96 @@ const MusicTastePage = () => {
         
         <div>
           {/* RECENTLY LIKED FIX 2: Layout with gap: 8px */}
-          {recentTracks.slice(0, 4).map((track, idx) => (
-            <div key={idx} style={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '12px', // RECENTLY LIKED FIX 3: 12px between rows
-              paddingBottom: '12px',
-              borderBottom: idx < 3 ? '1px solid rgba(255,255,255,0.1)' : 'none'
-            }}>
+          {recentTracks.slice(0, 4).map((track, idx) => {
+            const trackDetails = getTrackDetails(track, idx);
+            const artistDetails = getArtistDetails(track, idx);
+            const boostExplanation = getBoostExplanation(track, idx);
+            
+            return (
+              <div key={idx} style={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '12px', // RECENTLY LIKED FIX 3: 12px between rows
+                paddingBottom: '12px',
+                borderBottom: idx < 3 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)';
+                e.currentTarget.style.borderRadius = '8px';
+                e.currentTarget.style.padding = '8px';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.borderRadius = '0';
+                e.currentTarget.style.padding = '0';
+              }}
+            >
               {/* Track thumbnail placeholder */}
-              <div style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '4px',
-                background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)',
-                flexShrink: 0
-              }}></div>
+              <div 
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '4px',
+                  background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)',
+                  flexShrink: 0
+                }}
+                title={`Duration: ${trackDetails.duration} • Album: ${trackDetails.album} • Released: ${trackDetails.year} • Popularity: ${trackDetails.popularity}/100`}
+              ></div>
               
               <div style={{ flex: 1 }}>
                 {/* Name (bold) */}
-                <div style={{ 
-                  fontWeight: '600', 
-                  fontSize: '14px', // RECENTLY LIKED FIX 3: 14px font
-                  lineHeight: '20px',
-                  color: '#ffffff',
-                  marginBottom: '2px'
-                }}>
+                <div 
+                  style={{ 
+                    fontWeight: '600', 
+                    fontSize: '14px', // RECENTLY LIKED FIX 3: 14px font
+                    lineHeight: '20px',
+                    color: '#ffffff',
+                    marginBottom: '2px'
+                  }}
+                  title={`Duration: ${trackDetails.duration} • Album: ${trackDetails.album} • Released: ${trackDetails.year} • Popularity: ${trackDetails.popularity}/100`}
+                >
                   {track.name || ['Tension', 'Flex My Ice', 'Love Made Me Do It - Guy J Remix', 'Can\'t Do It Like Me'][idx]}
                 </div>
                 
                 {/* Sub (artist) */}
-                <div style={{ 
-                  fontSize: '12px', 
-                  color: 'rgba(255,255,255,0.7)',
-                  lineHeight: '16px'
-                }}>
+                <div 
+                  style={{ 
+                    fontSize: '12px', 
+                    color: 'rgba(255,255,255,0.7)',
+                    lineHeight: '16px'
+                  }}
+                  title={`Genre: ${artistDetails.genre} • Followers: ${artistDetails.followers} • Monthly Listeners: ${artistDetails.monthlyListeners}`}
+                >
                   {track.artists?.[0] || ['Peer Kusiv', 'SCRIPT', 'Moshic', 'Alexandre Delanios'][idx]}
                 </div>
               </div>
               
               {/* Boost Label */}
-              <div style={{ 
-                fontSize: '11px', 
-                color: '#06b6d4',
-                fontWeight: '600',
-                flexShrink: 0,
-                background: 'rgba(6, 182, 212, 0.1)',
-                padding: '2px 6px',
-                borderRadius: '4px'
-              }}>
+              <div 
+                style={{ 
+                  fontSize: '11px', 
+                  color: '#06b6d4',
+                  fontWeight: '600',
+                  flexShrink: 0,
+                  background: 'rgba(6, 182, 212, 0.1)',
+                  padding: '2px 6px',
+                  borderRadius: '4px'
+                }}
+                title={boostExplanation}
+              >
                 {getBoostInsight(track, idx)}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       </div>
     );
   };
 
-  // GENRE COMPASS: All 3 fixes implemented
+  // GENRE COMPASS: Enhanced with colors, hover details, and click interactions
   const GenreCompass = ({ spotifyData }) => {
     const genreData = spotifyData?.genreProfile || {};
     const genres = Object.entries(genreData).slice(0, 4);
@@ -412,6 +505,16 @@ const MusicTastePage = () => {
       ['techno', 34]
     ];
     
+    const getSubGenres = (genre) => {
+      const subGenreMap = {
+        'house': ['Deep House (25%)', 'Tech House (20%)', 'Progressive House (13%)'],
+        'techno': ['Melodic Techno (18%)', 'Progressive Techno (10%)', 'Minimal Techno (6%)'],
+        'trance': ['Progressive Trance (2%)', 'Uplifting Trance (1%)'],
+        'indie dance': ['Nu-Disco (3%)', 'Electronica (2%)']
+      };
+      return subGenreMap[genre] || ['Various sub-genres'];
+    };
+
     let currentAngle = 0;
     const genreArcs = displayGenres.map(([genre, percentage]) => {
       const angle = (percentage / 100) * 360;
@@ -427,7 +530,8 @@ const MusicTastePage = () => {
         percentage: Math.round(percentage),
         startAngle,
         endAngle,
-        color: colors[displayGenres.indexOf([genre, percentage])]
+        color: colors[displayGenres.indexOf([genre, percentage])],
+        subGenres: getSubGenres(genre)
       };
     });
 
@@ -454,6 +558,11 @@ const MusicTastePage = () => {
         x: centerX + (radius * Math.cos(angleInRadians)),
         y: centerY + (radius * Math.sin(angleInRadians))
       };
+    };
+
+    const handleGenreClick = (genre) => {
+      setSelectedGenreForTimeline(genre);
+      setShowGenreModal(true);
     };
 
     return (
@@ -486,6 +595,17 @@ const MusicTastePage = () => {
                   fill={arc.color}
                   stroke="rgba(255,255,255,0.1)"
                   strokeWidth="1"
+                  style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                  onClick={() => handleGenreClick(arc.genre)}
+                  onMouseEnter={(e) => {
+                    e.target.style.filter = 'brightness(1.2)';
+                    e.target.style.strokeWidth = '2';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.filter = 'brightness(1)';
+                    e.target.style.strokeWidth = '1';
+                  }}
+                  title={`${arc.genre}: ${arc.percentage}% • Sub-genres: ${arc.subGenres.join(', ')}`}
                 />
               </g>
             ))}
@@ -502,12 +622,29 @@ const MusicTastePage = () => {
           {/* Legend */}
           <div>
             {genreArcs.map((arc, index) => (
-              <div key={arc.genre} style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                marginBottom: '8px',
-                fontSize: '14px'
-              }}>
+              <div 
+                key={arc.genre} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  marginBottom: '8px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onClick={() => handleGenreClick(arc.genre)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                  e.currentTarget.style.borderRadius = '4px';
+                  e.currentTarget.style.padding = '4px';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderRadius = '0';
+                  e.currentTarget.style.padding = '0';
+                }}
+                title={`${arc.genre}: ${arc.percentage}% • Sub-genres: ${arc.subGenres.join(', ')} • Click to see weekly change`}
+              >
                 <div style={{
                   width: '12px',
                   height: '12px',
@@ -522,34 +659,56 @@ const MusicTastePage = () => {
           </div>
         </div>
         
-        {/* GENRE COMPASS FIX 2: Interactive tooltip */}
+        {/* Instructions */}
         <div style={{ textAlign: 'center', marginTop: '16px' }}>
-          <button 
-            className={styles.exploreButton}
-            onClick={() => setShowGenreModal(true)}
-            style={{
-              background: 'rgba(139, 92, 246, 0.2)',
-              border: '1px solid #8B5CF6',
-              color: '#8B5CF6',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            See weekly change →
-          </button>
+          <p style={{ 
+            fontSize: '12px', 
+            color: 'rgba(255,255,255,0.6)',
+            margin: 0
+          }}>
+            Click any genre to see weekly change trends
+          </p>
         </div>
       </div>
     );
   };
 
-  // ARTIST CONSTELLATION MAP: All 4 fixes implemented
+  // ARTIST CONSTELLATION MAP: Enhanced with expandable branches
   const ArtistConstellationMap = ({ spotifyData }) => {
     const artists = spotifyData?.artists?.items || [];
     
+    const getSimilarArtists = (artistIndex) => {
+      const similarArtistsMap = [
+        ['Stephan Bodzin', 'Mind Against', 'Agents of Time'],
+        ['Solomun', 'Tale of Us', 'Maceo Plex'],
+        ['Ben Böhmer', 'Nils Hoffmann', 'Tinlicker'],
+        ['Charlotte de Witte', 'Amelie Lens', 'I Hate Models'],
+        ['Adriatique', 'Mathame', 'Fideles']
+      ];
+      return similarArtistsMap[artistIndex] || similarArtistsMap[0];
+    };
+
+    const getArtistDetails = (artist, index) => {
+      const mockDetails = [
+        { similarity: 94, sharedGenres: ['Melodic Techno', 'Progressive House'], sharedTracks: 15 },
+        { similarity: 89, sharedGenres: ['Deep House', 'Techno'], sharedTracks: 12 },
+        { similarity: 92, sharedGenres: ['Progressive House', 'Melodic Techno'], sharedTracks: 18 },
+        { similarity: 87, sharedGenres: ['Techno', 'Minimal'], sharedTracks: 9 },
+        { similarity: 91, sharedGenres: ['Melodic Techno', 'Progressive'], sharedTracks: 14 }
+      ];
+      return mockDetails[index] || mockDetails[0];
+    };
+
+    const toggleArtistExpansion = (artistIndex) => {
+      const newExpanded = new Set(expandedArtists);
+      if (newExpanded.has(artistIndex)) {
+        newExpanded.delete(artistIndex);
+      } else {
+        newExpanded.add(artistIndex);
+      }
+      setExpandedArtists(newExpanded);
+    };
+
     if (artists.length === 0) {
       return (
         <div className={styles.card} style={{ 
@@ -574,7 +733,8 @@ const MusicTastePage = () => {
       <div className={styles.card} style={{ 
         background: 'rgba(0, 0, 0, 0.25)',
         backdropFilter: 'blur(12px)',
-        padding: '16px 24px'
+        padding: '16px 24px',
+        minHeight: '300px'
       }}>
         <h2 className={styles.cardTitle} style={{ 
           fontSize: '18px', 
@@ -587,10 +747,11 @@ const MusicTastePage = () => {
         
         <div style={{ 
           position: 'relative', 
-          height: '200px', 
+          height: expandedArtists.size > 0 ? '250px' : '200px', 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'center' 
+          justifyContent: 'center',
+          transition: 'height 0.3s ease'
         }}>
           {/* ARTIST CONSTELLATION FIX 2: Central "You" node */}
           <div style={{
@@ -616,9 +777,12 @@ const MusicTastePage = () => {
             const radius = 80;
             const x = Math.cos(angle) * radius;
             const y = Math.sin(angle) * radius;
+            const isExpanded = expandedArtists.has(index);
+            const similarArtists = getSimilarArtists(index);
+            const artistDetails = getArtistDetails(artist, index);
             
             // ARTIST CONSTELLATION FIX 3: Line thickness based on similarity
-            const similarity = Math.floor(Math.random() * 20) + 80; // 80-100%
+            const similarity = artistDetails.similarity;
             const strokeWidth = Math.max(2, Math.floor(similarity / 25)); // 2-4px
             
             return (
@@ -635,7 +799,7 @@ const MusicTastePage = () => {
                   />
                 </svg>
                 
-                {/* ARTIST CONSTELLATION FIX 4: Artist node with tooltip */}
+                {/* ARTIST CONSTELLATION FIX 4: Artist node with tooltip and click expansion */}
                 <div 
                   style={{
                     position: 'absolute',
@@ -644,7 +808,7 @@ const MusicTastePage = () => {
                     width: '50px',
                     height: '50px',
                     borderRadius: '50%',
-                    background: 'rgba(139, 92, 246, 0.8)',
+                    background: isExpanded ? 'rgba(139, 92, 246, 1)' : 'rgba(139, 92, 246, 0.8)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -654,38 +818,96 @@ const MusicTastePage = () => {
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     zIndex: 2,
-                    color: '#ffffff'
+                    color: '#ffffff',
+                    border: isExpanded ? '2px solid #00d4ff' : 'none'
                   }}
-                  title={`${artist.name} • ${similarity}% match • ${artist.genres?.[0] || 'Electronic'}`} // ARTIST CONSTELLATION FIX 4: Tooltip
+                  title={`${artist.name} • ${similarity}% similarity • Shared genres: ${artistDetails.sharedGenres.join(', ')} • ${artistDetails.sharedTracks} shared tracks in your library • Click to expand`}
+                  onClick={() => toggleArtistExpansion(index)}
                   onMouseEnter={(e) => {
-                    e.target.style.transform = 'scale(1.1)';
-                    e.target.style.background = 'rgba(139, 92, 246, 1)';
+                    if (!isExpanded) {
+                      e.target.style.transform = 'scale(1.1)';
+                      e.target.style.background = 'rgba(139, 92, 246, 1)';
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.transform = 'scale(1)';
-                    e.target.style.background = 'rgba(139, 92, 246, 0.8)';
+                    if (!isExpanded) {
+                      e.target.style.transform = 'scale(1)';
+                      e.target.style.background = 'rgba(139, 92, 246, 0.8)';
+                    }
                   }}
                 >
                   {artist.name?.split(' ')[0] || `Artist ${index + 1}`}
                 </div>
+
+                {/* Expanded similar artists */}
+                {isExpanded && similarArtists.map((similarArtist, simIndex) => {
+                  const simAngle = angle + ((simIndex - 1) * 30) * (Math.PI / 180); // Spread around main artist
+                  const simRadius = 40;
+                  const simX = x + Math.cos(simAngle) * simRadius;
+                  const simY = y + Math.sin(simAngle) * simRadius;
+                  
+                  return (
+                    <div key={`${index}-${simIndex}`}>
+                      {/* Connection line to similar artist */}
+                      <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
+                        <line
+                          x1={`calc(50% + ${x}px)`}
+                          y1={`calc(50% + ${y}px)`}
+                          x2={`calc(50% + ${simX}px)`}
+                          y2={`calc(50% + ${simY}px)`}
+                          stroke="rgba(0, 212, 255, 0.4)"
+                          strokeWidth="1"
+                          strokeDasharray="3,3"
+                        />
+                      </svg>
+                      
+                      {/* Similar artist node */}
+                      <div 
+                        style={{
+                          position: 'absolute',
+                          left: `calc(50% + ${simX - 15}px)`,
+                          top: `calc(50% + ${simY - 15}px)`,
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '50%',
+                          background: 'rgba(0, 212, 255, 0.8)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '8px',
+                          fontWeight: '500',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          zIndex: 2,
+                          color: '#ffffff'
+                        }}
+                        title={`${similarArtist} • Similar to ${artist.name}`}
+                      >
+                        {similarArtist.split(' ')[0]}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
         </div>
         
-        <p className={styles.exploreHint} style={{ 
+        <p style={{ 
           textAlign: 'center', 
           fontSize: '12px', 
           color: 'rgba(255,255,255,0.6)',
-          marginTop: '16px'
+          marginTop: '16px',
+          margin: '16px 0 0 0'
         }}>
-          Hover over artist nodes to view similarity and genre info
+          Hover for details • Click to expand similar artists
         </p>
       </div>
     );
   };
 
-  // NEW: Simple Preferences Component for new layout
+  // NEW: Simple Preferences Component with improved layout and toast
   const SimplePreferences = () => {
     const preferenceOptions = {
       venue: ['Club', 'Festival', 'Open Air', 'Warehouse'],
@@ -700,14 +922,41 @@ const MusicTastePage = () => {
         backdropFilter: 'blur(12px)',
         padding: '16px 24px'
       }}>
-        <h2 className={styles.cardTitle} style={{ 
-          fontSize: '18px', 
-          fontWeight: '600', 
-          color: '#E9D6FF',
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
           marginBottom: '16px'
         }}>
-          Preferences
-        </h2>
+          <h2 className={styles.cardTitle} style={{ 
+            fontSize: '18px', 
+            fontWeight: '600', 
+            color: '#E9D6FF',
+            margin: 0
+          }}>
+            Preferences
+          </h2>
+          
+          {/* Info dot */}
+          <div 
+            style={{
+              width: '16px',
+              height: '16px',
+              borderRadius: '50%',
+              background: 'rgba(139, 92, 246, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '10px',
+              color: '#8B5CF6',
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+            title="These filters don't affect match score but help surface better events"
+          >
+            ℹ️
+          </div>
+        </div>
         
         {Object.entries(preferenceOptions).map(([category, options]) => (
           <div key={category} className={styles.preferenceGroup} style={{ marginBottom: '16px' }}>
@@ -752,35 +1001,29 @@ const MusicTastePage = () => {
           </div>
         ))}
         
-        <button
-          onClick={savePreferences}
-          disabled={isSaving}
-          className={styles.updateBtn}
-          style={{
-            width: '100%',
-            padding: '10px',
-            borderRadius: '8px',
-            border: 'none',
-            background: 'linear-gradient(to right, #FF80AB, #B388FF)',
-            color: '#ffffff',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: isSaving ? 'not-allowed' : 'pointer',
-            opacity: isSaving ? 0.7 : 1,
-            transition: 'all 0.3s ease'
-          }}
-        >
-          {isSaving ? 'Saving...' : 'Update Preferences'}
-        </button>
-        
-        <p style={{ 
-          fontSize: '11px', 
-          color: 'rgba(255,255,255,0.5)', 
-          textAlign: 'center',
-          marginTop: '8px'
-        }}>
-          These filters don't affect match score but help surface better events.
-        </p>
+        {/* Improved button layout - 60% width */}
+        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <button
+            onClick={savePreferences}
+            disabled={isSaving}
+            className={styles.updateBtn}
+            style={{
+              width: '60%',
+              padding: '10px',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'linear-gradient(to right, #FF80AB, #B388FF)',
+              color: '#ffffff',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.7 : 1,
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {isSaving ? 'Saving...' : 'Update Preferences'}
+          </button>
+        </div>
       </div>
     );
   };
@@ -829,6 +1072,9 @@ const MusicTastePage = () => {
         
         if (response.ok) {
           console.log('Vibe preferences saved successfully');
+          // Show toast notification
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 3000);
         }
       } catch (error) {
         console.error('Error saving vibe preferences:', error);
@@ -855,22 +1101,44 @@ const MusicTastePage = () => {
             Preferences {/* PREFERENCES FIX 2: Fixed typo */}
           </h2>
           
-          <button
-            onClick={() => setShowVibeQuiz(!showVibeQuiz)}
-            style={{
-              background: showVibeQuiz ? 'linear-gradient(to right, #FF80AB, #B388FF)' : 'rgba(139, 92, 246, 0.2)', // PREFERENCES FIX 3: Gradient button
-              border: '1px solid #8B5CF6',
-              color: showVibeQuiz ? '#ffffff' : '#8B5CF6',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {showVibeQuiz ? 'Hide Quiz' : 'Take Quiz'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Info dot */}
+            <div 
+              style={{
+                width: '16px',
+                height: '16px',
+                borderRadius: '50%',
+                background: 'rgba(139, 92, 246, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+                color: '#8B5CF6',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+              title="These filters don't affect match score but help surface better events"
+            >
+              ℹ️
+            </div>
+            
+            <button
+              onClick={() => setShowVibeQuiz(!showVibeQuiz)}
+              style={{
+                background: showVibeQuiz ? 'linear-gradient(to right, #FF80AB, #B388FF)' : 'rgba(139, 92, 246, 0.2)', // PREFERENCES FIX 3: Gradient button
+                border: '1px solid #8B5CF6',
+                color: showVibeQuiz ? '#ffffff' : '#8B5CF6',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {showVibeQuiz ? 'Hide Quiz' : 'Take Quiz'}
+            </button>
+          </div>
         </div>
 
         {showVibeQuiz && (
@@ -926,8 +1194,7 @@ const MusicTastePage = () => {
             
             <div style={{ 
               display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
+              justifyContent: 'flex-start',
               marginTop: '20px',
               paddingTop: '16px',
               borderTop: '1px solid rgba(255,255,255,0.1)'
@@ -943,22 +1210,12 @@ const MusicTastePage = () => {
                   fontSize: '12px',
                   fontWeight: '600',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  width: '60%'
                 }}
               >
                 Save Preferences
               </button>
-              
-              {/* PREFERENCES FIX 4: Clarification tip */}
-              <p style={{ 
-                fontSize: '10px', 
-                color: 'rgba(255,255,255,0.5)',
-                margin: 0,
-                maxWidth: '200px',
-                textAlign: 'right'
-              }}>
-                These filters don't affect match score but help surface better events.
-              </p>
             </div>
           </div>
         )}
@@ -966,13 +1223,15 @@ const MusicTastePage = () => {
     );
   };
 
-  // EVENTS FOR YOU: All 4 fixes implemented
+  // EVENTS FOR YOU: Enhanced with real links and proper location format
   const EventsForYou = ({ spotifyData }) => {
-    // Mock events data with all required details
+    // Enhanced events data with real links and proper location format
     const mockEvents = [
       {
         name: 'Afterlife presents Tale Of Us',
-        venue: 'Printworks London',
+        venue: 'Printworks',
+        city: 'London',
+        country: 'UK',
         date: 'This Saturday',
         matchScore: 94,
         venueType: 'Open Air',
@@ -980,11 +1239,15 @@ const MusicTastePage = () => {
         distance: '3km',
         capacity: '2,500',
         genre: 'Melodic Techno',
-        ageRange: '21+'
+        ageRange: '21+',
+        dressCode: 'Smart casual',
+        link: '/events/afterlife-tale-of-us-london'
       },
       {
         name: 'Melodic Techno Night',
         venue: 'Warehouse Project',
+        city: 'Manchester',
+        country: 'UK',
         date: 'Next Friday',
         matchScore: 87,
         venueType: 'Club',
@@ -992,11 +1255,15 @@ const MusicTastePage = () => {
         distance: '8km',
         capacity: '1,200',
         genre: 'Progressive House',
-        ageRange: '18+'
+        ageRange: '18+',
+        dressCode: 'Casual',
+        link: '/events/melodic-techno-manchester'
       },
       {
         name: 'ARTBAT Live',
         venue: 'Ministry of Sound',
+        city: 'London',
+        country: 'UK',
         date: 'Next month',
         matchScore: 85,
         venueType: 'Club',
@@ -1004,11 +1271,15 @@ const MusicTastePage = () => {
         distance: '12km',
         capacity: '1,800',
         genre: 'Techno',
-        ageRange: '21+'
+        ageRange: '21+',
+        dressCode: 'Smart casual',
+        link: '/events/artbat-ministry-london'
       },
       {
         name: 'Progressive House Sessions',
         venue: 'Fabric Room 1',
+        city: 'London',
+        country: 'UK',
         date: 'Two weeks',
         matchScore: 82,
         venueType: 'Underground',
@@ -1016,7 +1287,9 @@ const MusicTastePage = () => {
         distance: '5km',
         capacity: '900',
         genre: 'Progressive House',
-        ageRange: '18+'
+        ageRange: '18+',
+        dressCode: 'Casual',
+        link: '/events/progressive-house-fabric'
       }
     ];
 
@@ -1061,6 +1334,8 @@ const MusicTastePage = () => {
                 e.currentTarget.style.borderRadius = '0';
                 e.currentTarget.style.padding = '16px 0';
               }}
+              onClick={() => window.location.href = event.link}
+              title={`Click to view event details • Venue capacity: ${event.capacity} • Age restriction: ${event.ageRange} • Dress code: ${event.dressCode}`}
             >
               <div style={{ flex: 1 }}>
                 <div style={{ 
@@ -1072,13 +1347,13 @@ const MusicTastePage = () => {
                   {event.name}
                 </div>
                 
-                {/* EVENTS FOR YOU FIX 3: Format with all details */}
+                {/* Enhanced location format: City, Country */}
                 <div style={{ 
                   fontSize: '14px', 
                   color: 'rgba(255,255,255,0.7)',
                   marginBottom: '4px'
                 }}>
-                  {event.venue} • {event.date}
+                  {event.venue} • {event.city}, {event.country} • {event.date}
                 </div>
                 
                 {/* EVENTS FOR YOU FIX 2: All details */}
@@ -1118,7 +1393,7 @@ const MusicTastePage = () => {
     );
   };
 
-  // TOP TRACKS: All 4 fixes implemented
+  // TOP TRACKS: Enhanced with Smart Matches explanation and better layout
   const TopTracks = ({ spotifyData }) => {
     const tracks = spotifyData?.tracks?.items || [];
     
@@ -1160,75 +1435,121 @@ const MusicTastePage = () => {
           Top Tracks
         </h2>
         
-        <h3 style={{ 
-          marginBottom: '16px', 
-          color: '#8B5CF6',
-          fontSize: '16px',
-          fontWeight: '500'
-        }}>
-          Smart Matches
-        </h3>
-        
-        {/* TOP TRACKS FIX 4: Overflow container */}
-        <div style={{ 
-          maxHeight: '180px', 
-          overflowY: 'auto',
-          // GLOBAL: Scroll clarity
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(139, 92, 246, 0.5) transparent'
-        }}>
-          {tracks.slice(0, 8).map((track, index) => (
-            <div 
-              key={track.id || index} 
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '12px 0',
-                borderBottom: index < 7 ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-              // TOP TRACKS FIX 2: Hover interaction
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)';
-                e.currentTarget.style.borderRadius = '6px';
-                e.currentTarget.style.padding = '12px 8px';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.borderRadius = '0';
-                e.currentTarget.style.padding = '12px 0';
-              }}
-              title={`Genre: ${track.genres?.[0] || 'Electronic'} • Match: ${85 + Math.floor(Math.random() * 15)}%`} // TOP TRACKS FIX 2: Preview
-            >
-              <div style={{ flex: 1 }}>
-                <div style={{ 
-                  fontWeight: '600', 
-                  fontSize: '14px', 
-                  marginBottom: '4px',
-                  color: '#ffffff'
-                }}>
-                  {track.name || `Track ${index + 1}`}
-                </div>
-                <div style={{ 
-                  fontSize: '12px', 
-                  color: 'rgba(255,255,255,0.7)'
-                }}>
-                  {track.artists?.[0]?.name || 'Unknown Artist'}
-                </div>
-              </div>
-              
-              <div style={{
-                fontSize: '12px',
-                color: 'rgba(255,255,255,0.6)',
-                fontFamily: 'Menlo, monospace', // TOP TRACKS FIX 3: Monospace font
-                textAlign: 'right'
-              }}>
-                {Math.floor(Math.random() * 100) + 50} plays
-              </div>
+        {/* Layout: Main content (70%) + Smart Matches Info (30%) */}
+        <div style={{ display: 'flex', gap: '20px' }}>
+          {/* Main tracks list */}
+          <div style={{ flex: '0 0 70%' }}>
+            {/* TOP TRACKS FIX 4: Overflow container */}
+            <div style={{ 
+              maxHeight: '180px', 
+              overflowY: 'auto',
+              // GLOBAL: Scroll clarity
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(139, 92, 246, 0.5) transparent'
+            }}>
+              {tracks.slice(0, 8).map((track, index) => {
+                const playCount = Math.floor(Math.random() * 100) + 50;
+                const similarity = 85 + Math.floor(Math.random() * 15);
+                
+                return (
+                  <div 
+                    key={track.id || index} 
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 0',
+                      borderBottom: index < 7 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                    // TOP TRACKS FIX 2: Hover interaction
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)';
+                      e.currentTarget.style.borderRadius = '6px';
+                      e.currentTarget.style.padding = '12px 8px';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.borderRadius = '0';
+                      e.currentTarget.style.padding = '12px 0';
+                    }}
+                    title={`Genre: ${track.genres?.[0] || 'Electronic'} • Match: ${similarity}% • This track ranks high due to ${similarity > 90 ? 'exceptional' : 'strong'} similarity to your taste profile`}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div style={{ 
+                        fontWeight: '600', 
+                        fontSize: '14px', 
+                        marginBottom: '4px',
+                        color: '#ffffff'
+                      }}>
+                        {track.name || `Track ${index + 1}`}
+                      </div>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: 'rgba(255,255,255,0.7)'
+                      }}>
+                        {track.artists?.[0]?.name || 'Unknown Artist'}
+                      </div>
+                    </div>
+                    
+                    <div style={{
+                      fontSize: '12px',
+                      color: 'rgba(255,255,255,0.6)',
+                      fontFamily: 'Menlo, monospace', // TOP TRACKS FIX 3: Monospace font
+                      textAlign: 'right'
+                    }}>
+                      {playCount} plays
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          </div>
+          
+          {/* Smart Matches Info Panel */}
+          <div style={{ 
+            flex: '0 0 30%',
+            background: 'rgba(139, 92, 246, 0.05)',
+            borderRadius: '8px',
+            padding: '16px',
+            border: '1px solid rgba(139, 92, 246, 0.2)'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              marginBottom: '12px'
+            }}>
+              <span style={{ fontSize: '16px' }}>🎯</span>
+              <h3 style={{ 
+                fontSize: '14px', 
+                fontWeight: '600', 
+                color: '#8B5CF6',
+                margin: 0
+              }}>
+                Smart Matches
+              </h3>
+            </div>
+            
+            <p style={{ 
+              fontSize: '12px', 
+              color: 'rgba(255,255,255,0.8)',
+              lineHeight: '1.4',
+              margin: '0 0 12px 0'
+            }}>
+              Tracks ranked by similarity to your taste profile, not just play count.
+            </p>
+            
+            <p style={{ 
+              fontSize: '11px', 
+              color: 'rgba(255,255,255,0.6)',
+              lineHeight: '1.3',
+              margin: 0
+            }}>
+              <strong>Why some tracks rank higher despite fewer plays:</strong> High similarity to your taste profile indicates discovery potential and musical alignment.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -1281,7 +1602,7 @@ const MusicTastePage = () => {
               color: '#E9D6FF',
               margin: 0
             }}>
-              Genre Evolution Timeline
+              {selectedGenreForTimeline ? `${selectedGenreForTimeline.charAt(0).toUpperCase() + selectedGenreForTimeline.slice(1)} Evolution Timeline` : 'Genre Evolution Timeline'}
             </h2>
             <button
               onClick={onClose}
@@ -1535,15 +1856,14 @@ const MusicTastePage = () => {
           </section>
         </div>
 
-        {/* === 6. Events For You (Full Width) === */}
-        <section style={{ gridColumn: '1 / -1' }}>
+        {/* === 6 & 7. Events For You + Top Tracks (Side by Side) === */}
+        <div style={{ gridColumn: '1 / 8' }}>
           <EventsForYou spotifyData={spotifyData} />
-        </section>
-
-        {/* === 7. Top Tracks (Full Width) === */}
-        <section style={{ gridColumn: '1 / -1' }}>
+        </div>
+        
+        <div style={{ gridColumn: '8 / -1' }}>
           <TopTracks spotifyData={spotifyData} />
-        </section>
+        </div>
 
         {/* === Modals === */}
         {showGenreModal && (
@@ -1556,6 +1876,9 @@ const MusicTastePage = () => {
             onClose={() => setShowTimelineView(false)} 
           />
         )}
+
+        {/* === Toast Notification === */}
+        <Toast show={showToast} message="Preferences updated successfully!" />
       </div>
     </AppLayout>
   );
