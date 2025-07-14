@@ -257,7 +257,7 @@ const MusicTastePage = () => {
       <div style={{ 
         textAlign: 'center',
         padding: '40px 20px',
-        marginBottom: '15px'  // Reduced from 30px to 15px
+        marginBottom: '30px'
         // Removed: background, backdropFilter, borderRadius - blends with page
       }}>
         <div style={{ 
@@ -450,11 +450,10 @@ const MusicTastePage = () => {
           </h2>
           <span style={{ 
             fontSize: '9px', 
-            color: getDataSourceLabel() === 'LIVE' ? '#00FFFF' : '#DADADA',  // Theme colors: cyan for live, light gray for fallback
-            background: getDataSourceLabel() === 'LIVE' ? 'rgba(0, 255, 255, 0.1)' : 'rgba(218, 218, 218, 0.05)',
+            color: getDataSourceLabel() === 'LIVE' ? 'rgba(16, 185, 129, 0.8)' : 'rgba(255,255,255,0.4)',
+            background: getDataSourceLabel() === 'LIVE' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
             padding: '2px 6px',
-            borderRadius: '3px',
-            border: getDataSourceLabel() === 'LIVE' ? '1px solid rgba(0, 255, 255, 0.3)' : '1px solid rgba(218, 218, 218, 0.1)'
+            borderRadius: '3px'
           }}>
             {getDataSourceLabel()}
           </span>
@@ -548,7 +547,6 @@ const MusicTastePage = () => {
                 {specificBoost}
               </div>
             </div>
-          );
           })}
         </div>
         
@@ -698,20 +696,14 @@ const MusicTastePage = () => {
           </div>
         </div>
         
-        {/* CENTER ALIGNED CHART WITH RIGHT-ALIGNED LEGEND */}
         <div style={{ 
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: '30px',
+          gap: '20px',
           height: '300px'
         }}>
-          {/* CENTERED CHART: Larger size with proper centering */}
-          <div style={{ 
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
+          {/* LARGER CHART: Increased from 200x200 to 260x260 */}
+          <div style={{ flex: '0 0 260px' }}>
             <svg width="260" height="260" style={{ cursor: 'pointer' }}>
               <defs>
                 {genreArcs.map((arc, index) => (
@@ -785,13 +777,8 @@ const MusicTastePage = () => {
             </svg>
           </div>
           
-          {/* RIGHT-ALIGNED LEGEND: Proper alignment and spacing */}
-          <div style={{ 
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            minWidth: '150px'
-          }}>
+          {/* COMPACT LEGEND: Space optimized */}
+          <div style={{ flex: 1 }}>
             {genreArcs.map((arc, index) => (
               <div 
                 key={index}
@@ -902,8 +889,8 @@ const MusicTastePage = () => {
     const mainArtists = artists.slice(0, 6).map((artist, index) => {
       const angle = (index * 60) * (Math.PI / 180); // 60 degrees apart
       const radius = 80;
-      const x = 175 + radius * Math.cos(angle);  // Updated center from 150 to 175
-      const y = 175 + radius * Math.sin(angle);  // Updated center from 150 to 175
+      const x = 150 + radius * Math.cos(angle);
+      const y = 150 + radius * Math.sin(angle);
       
       return {
         ...artist,
@@ -942,33 +929,33 @@ const MusicTastePage = () => {
           Connected to You
         </h2>
         
-        {/* INFO BUTTON FIX: Top-right position to match other sections */}
+        {/* INFO BUTTON FIX: Adjacent to cluster, in empty space */}
         <div 
           style={{
             position: 'absolute',
-            top: '12px',
-            right: '20px',
+            top: '60px',
+            right: '30px',
             width: '18px',
             height: '18px',
             borderRadius: '50%',
-            background: 'rgba(0, 255, 255, 0.1)',  // Theme cyan background
+            background: 'rgba(139, 92, 246, 0.4)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '11px',
-            color: '#00FFFF',  // Theme cyan color
+            color: '#8B5CF6',
             cursor: 'pointer',
             fontWeight: '600',
-            border: '1px solid rgba(0, 255, 255, 0.3)',  // Theme cyan border
+            border: '1px solid rgba(139, 92, 246, 0.3)',
             transition: 'all 0.3s ease'
           }}
           title="Hover for details • Click to expand similar artists"
           onMouseEnter={(e) => {
-            e.target.style.background = 'rgba(0, 255, 255, 0.2)';
+            e.target.style.background = 'rgba(139, 92, 246, 0.6)';
             e.target.style.transform = 'scale(1.1)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.background = 'rgba(0, 255, 255, 0.1)';
+            e.target.style.background = 'rgba(139, 92, 246, 0.4)';
             e.target.style.transform = 'scale(1)';
           }}
         >
@@ -977,15 +964,15 @@ const MusicTastePage = () => {
         
         <div style={{ 
           position: 'relative',
-          width: '350px',  // Increased from 300px to accommodate expanded bubbles
-          height: '350px',  // Increased from 300px to accommodate expanded bubbles
+          width: '300px',
+          height: '300px',
           margin: '0 auto'
         }}>
-          <svg width="350" height="350" style={{ overflow: 'visible' }}>  {/* Added overflow visible */}
+          <svg width="300" height="300">
             {/* YOU node in center */}
             <circle
-              cx="175"  // Updated center for larger SVG
-              cy="175"  // Updated center for larger SVG
+              cx="150"
+              cy="150"
               r="25"
               fill="linear-gradient(135deg, #8B5CF6, #06B6D4)"
               stroke="rgba(255,255,255,0.3)"
@@ -1037,12 +1024,7 @@ const MusicTastePage = () => {
                     e.target.style.fill = 'rgba(139, 92, 246, 0.8)';
                     e.target.style.transform = 'scale(1)';
                   }}
-                >
-                  {/* HOVER DETAILS: Add title for hover information */}
-                  <title>
-                    {artist.name} • {artist.popularity || 85}% similarity • Shared genres: {artist.genres?.slice(0, 2).join(', ') || 'Melodic Techno, Progressive House'} • 15 shared tracks in your library • Click to expand similar artists
-                  </title>
-                </circle>
+                />
                 
                 {/* LARGER TEXT: Increased from 9px to 11px */}
                 <text
@@ -1147,54 +1129,45 @@ const MusicTastePage = () => {
       {
         category: 'venue',
         title: 'Venue',
-        options: ['Any', 'Club', 'Festival', 'Open Air', 'Warehouse']  // Added Any option
+        options: ['Club', 'Festival', 'Open Air', 'Warehouse']
       },
       {
         category: 'eventType',
         title: 'Event Type',
-        options: ['Any', 'DJ Set', 'Live Performance', 'B2B', 'Showcase']  // Added Any option
+        options: ['DJ Set', 'Live Performance', 'B2B', 'Showcase']
       },
       {
         category: 'ticketPrice',
         title: 'Ticket Price',
-        options: ['Any', '$', '$-$$', '$$-$$$', '$$$+']  // Added Any option
+        options: ['$', '$-$$', '$$-$$$', '$$$+']
       },
       {
         category: 'distance',
         title: 'Distance',
-        options: ['Any', '5 km', '10 km', '25 km', '50+ km']  // Added Any option
+        options: ['5 km', '10 km', '25 km', '50+ km']
       }
     ];
 
     const handleVibePreferenceChange = (category, option) => {
-      if (option === 'Any') {
-        // If Any is selected, clear all other selections and select only Any
-        setVibePreferences(prev => ({
-          ...prev,
-          [category]: ['Any']
-        }));
-      } else {
-        // If any other option is selected, remove Any and toggle the option
-        setVibePreferences(prev => {
-          const currentSelections = prev[category] || [];
-          const withoutAny = currentSelections.filter(o => o !== 'Any');
-          
-          if (withoutAny.includes(option)) {
-            // Remove the option
-            const newSelections = withoutAny.filter(o => o !== option);
-            return {
-              ...prev,
-              [category]: newSelections.length === 0 ? ['Any'] : newSelections  // Default to Any if nothing selected
-            };
-          } else {
-            // Add the option
-            return {
-              ...prev,
-              [category]: [...withoutAny, option]
-            };
-          }
-        });
-      }
+      setVibePreferences(prev => ({
+        ...prev,
+        [category]: prev[category]?.includes(option)
+          ? prev[category].filter(o => o !== option)
+          : [...(prev[category] || []), option],
+      }));
+    };
+
+    // SELECT ALL FIX: Add select all functionality
+    const handleSelectAll = (category) => {
+      const config = vibePreferenceConfig.find(c => c.category === category);
+      const allSelected = config.options.every(option => 
+        vibePreferences[category]?.includes(option)
+      );
+      
+      setVibePreferences(prev => ({
+        ...prev,
+        [category]: allSelected ? [] : [...config.options]
+      }));
     };
 
     const saveVibePreferences = async () => {
@@ -1207,12 +1180,15 @@ const MusicTastePage = () => {
         });
         
         if (response.ok) {
-          // TOAST FIX: Show success notification
+          console.log('Vibe preferences saved successfully');
+          // SAVE CONFIRMATION FIX: Show toast notification
           setShowToast(true);
           setTimeout(() => setShowToast(false), 3000);
+        } else {
+          console.error('Failed to save vibe preferences');
         }
       } catch (error) {
-        console.error('Error saving preferences:', error);
+        console.error('Error saving vibe preferences:', error);
       } finally {
         setIsSaving(false);
       }
@@ -1235,33 +1211,33 @@ const MusicTastePage = () => {
           Preferences
         </h2>
         
-        {/* INFO BUTTON FIX: Top-right position with theme colors */}
+        {/* INFO BUTTON FIX: Top-right corner, more prominent */}
         <div 
           style={{
             position: 'absolute',
-            top: '12px',
+            top: '20px',
             right: '20px',
-            width: '18px',
-            height: '18px',
+            width: '20px', // MORE PROMINENT: Increased from 18px
+            height: '20px',
             borderRadius: '50%',
-            background: 'rgba(0, 255, 255, 0.1)',  // Theme cyan background
+            background: 'rgba(139, 92, 246, 0.5)', // MORE PROMINENT: Increased opacity
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '12px',
-            color: '#00FFFF',  // Theme cyan color
+            fontSize: '12px', // MORE PROMINENT: Increased from 11px
+            color: '#8B5CF6',
             cursor: 'pointer',
             fontWeight: '600',
-            border: '1px solid rgba(0, 255, 255, 0.3)',  // Theme cyan border
+            border: '1px solid rgba(139, 92, 246, 0.4)',
             transition: 'all 0.3s ease'
           }}
           title="These filters don't affect match score but help surface better events"
           onMouseEnter={(e) => {
-            e.target.style.background = 'rgba(0, 255, 255, 0.2)';
+            e.target.style.background = 'rgba(139, 92, 246, 0.7)';
             e.target.style.transform = 'scale(1.1)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.background = 'rgba(0, 255, 255, 0.1)';
+            e.target.style.background = 'rgba(139, 92, 246, 0.5)';
             e.target.style.transform = 'scale(1)';
           }}
         >
@@ -1288,6 +1264,25 @@ const MusicTastePage = () => {
                 }}>
                   {config.title}
                 </div>
+                
+                {/* SELECT ALL FIX: Add select all button */}
+                <button
+                  onClick={() => handleSelectAll(config.category)}
+                  style={{
+                    fontSize: '10px',
+                    color: '#06b6d4',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: '0'
+                  }}
+                >
+                  {config.options.every(option => vibePreferences[config.category]?.includes(option)) 
+                    ? 'Deselect All' 
+                    : 'Select All'
+                  }
+                </button>
               </div>
               
               <div style={{ 
@@ -1302,13 +1297,11 @@ const MusicTastePage = () => {
                     style={{
                       padding: '5px 10px',
                       borderRadius: '12px',
-                      border: vibePreferences[config.category]?.includes(option) 
-                        ? '1px solid #FF00CC'  // Theme neon pink border for selected
-                        : '1px solid rgba(0, 255, 255, 0.3)',  // Theme cyan border for unselected
+                      border: '1px solid rgba(139, 92, 246, 0.3)',
                       background: vibePreferences[config.category]?.includes(option) 
-                        ? 'linear-gradient(to right, #00FFFF, #FF00CC)'  // Theme gradient: cyan to pink
-                        : 'rgba(0, 255, 255, 0.1)',  // Theme cyan background for unselected
-                      color: vibePreferences[config.category]?.includes(option) ? '#ffffff' : '#DADADA',  // Theme text colors
+                        ? 'linear-gradient(to right, #FF80AB, #B388FF)' 
+                        : 'rgba(139, 92, 246, 0.1)',
+                      color: vibePreferences[config.category]?.includes(option) ? '#ffffff' : '#9BB4FF',
                       fontSize: '11px',
                       fontWeight: '500',
                       cursor: 'pointer',
@@ -1337,8 +1330,8 @@ const MusicTastePage = () => {
               borderRadius: '6px',
               border: 'none',
               background: isSaving 
-                ? 'rgba(0, 255, 255, 0.5)'  // Theme cyan when saving
-                : 'linear-gradient(to right, #00FFFF, #FF00CC)',  // Theme gradient: cyan to pink
+                ? 'rgba(139, 92, 246, 0.5)' 
+                : 'linear-gradient(to right, #FF80AB, #B388FF)',
               color: '#ffffff',
               fontSize: '12px',
               fontWeight: '600',
