@@ -1,4 +1,4 @@
-// pages/music-taste.js - SURGICAL FIXES TO MATCH MOCKUP EXACTLY
+// pages/music-taste.js - RIGHT-ALIGNED DATA LAYOUT
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '../components/AppLayout';
@@ -67,7 +67,6 @@ const MusicTastePage = () => {
     }
   };
 
-  // SURGICAL FIX 1: Enhanced timestamp formatting
   const formatTimeAgo = (dateString) => {
     if (!dateString) return 'Unknown';
     const date = new Date(dateString);
@@ -83,7 +82,7 @@ const MusicTastePage = () => {
     return date.toLocaleDateString();
   };
 
-  // SURGICAL FIX 2: Header with exact mockup styling
+  // Header with card-like background
   const RefinedHeader = ({ spotifyData, profileData }) => {
     const generateTasteIdentity = () => {
       const topGenres = Object.keys(spotifyData?.genreProfile || {}).slice(0, 2);
@@ -128,70 +127,70 @@ const MusicTastePage = () => {
     const moodLabel = getMoodLabel();
 
     return (
-      <div style={{ 
-        background: 'linear-gradient(135deg, #1e40af, #3730a3, #581c87)',
-        borderRadius: '8px',
-        padding: '1.5rem',
+      <div className={styles.card} style={{ 
         marginBottom: '1.5rem',
         textAlign: 'center',
+        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
         border: '1px solid rgba(255,255,255,0.1)'
       }}>
-        <div style={{ 
-          fontSize: '1.75rem', 
-          fontWeight: '600', 
-          color: '#ffffff',
-          marginBottom: '0.75rem',
-          letterSpacing: '-0.025em'
-        }}>
-          🎧 You {tasteIdentity}
-        </div>
-        
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          gap: '1.5rem',
-          marginBottom: '0.75rem'
-        }}>
+        <div style={{ padding: '1.5rem' }}>
           <div style={{ 
-            fontSize: '1rem', 
+            fontSize: '1.75rem', 
             fontWeight: '600', 
-            color: '#06b6d4'
+            color: '#ffffff',
+            marginBottom: '0.75rem',
+            letterSpacing: '-0.025em'
           }}>
-            {confidence}% Taste Confidence
+            🎧 You {tasteIdentity}
           </div>
+          
           <div style={{ 
-            fontSize: '1rem', 
-            fontWeight: '500',
-            color: '#a855f7'
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '1.5rem',
+            marginBottom: '0.75rem'
           }}>
-            {moodLabel}
+            <div style={{ 
+              fontSize: '1rem', 
+              fontWeight: '600', 
+              color: '#06b6d4'
+            }}>
+              {confidence}% Taste Confidence
+            </div>
+            <div style={{ 
+              fontSize: '1rem', 
+              fontWeight: '500',
+              color: '#a855f7'
+            }}>
+              {moodLabel}
+            </div>
           </div>
-        </div>
-        
-        <div style={{ 
-          fontSize: '0.875rem', 
-          color: 'rgba(255,255,255,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.375rem',
-          fontWeight: '400'
-        }}>
-          <span style={{ color: '#a855f7' }}>🟪</span>
-          <span>Updated {formatTimeAgo(spotifyData?.timestamp)}</span>
+          
+          <div style={{ 
+            fontSize: '0.875rem', 
+            color: 'rgba(255,255,255,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.375rem',
+            fontWeight: '400'
+          }}>
+            <span style={{ color: '#a855f7' }}>🟪</span>
+            <span>Updated {formatTimeAgo(spotifyData?.timestamp)}</span>
+          </div>
         </div>
       </div>
     );
   };
 
-  // SURGICAL FIX 3: Recently Liked with exact proportions
+  // FIX: Recently Liked with data on the RIGHT side
   const RecentlyLiked = ({ profileData }) => {
     const recentlyLiked = profileData?.recentActivity?.liked || [];
     
     const getBoostInsight = (track, idx) => {
       const boosts = [
-        '+6% Trance Boost',
+        '+15% Melodic Boost',
         '+15% Melodic Boost', 
         '+15% Melodic Boost',
         '+15% Melodic Boost'
@@ -217,29 +216,39 @@ const MusicTastePage = () => {
               paddingBottom: '0.75rem',
               borderBottom: idx < 3 ? '1px solid rgba(255,255,255,0.1)' : 'none'
             }}>
+              {/* Track name and boost on same line */}
               <div style={{ 
-                fontWeight: '600', 
-                fontSize: '0.9rem',
-                marginBottom: '0.25rem',
-                color: '#ffffff',
-                lineHeight: '1.2'
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '0.25rem'
               }}>
-                {track.name || ['Tension', 'Flex My Ice', 'Love Made Me Do It - Guy J Remix', 'Can\'t Do It Like Me'][idx]}
+                <div style={{ 
+                  fontWeight: '600', 
+                  fontSize: '0.9rem',
+                  color: '#ffffff',
+                  lineHeight: '1.2'
+                }}>
+                  {track.name || ['Tension', 'Flex My Ice', 'Love Made Me Do It - Guy J Remix', 'Can\'t Do It Like Me'][idx]}
+                </div>
+                <div style={{ 
+                  fontSize: '0.75rem', 
+                  color: '#06b6d4',
+                  fontWeight: '600',
+                  flexShrink: 0,
+                  marginLeft: '0.5rem'
+                }}>
+                  {getBoostInsight(track, idx)}
+                </div>
               </div>
+              
+              {/* Artist name */}
               <div style={{ 
                 fontSize: '0.8rem', 
                 color: 'rgba(255,255,255,0.7)',
-                marginBottom: '0.375rem',
                 lineHeight: '1.2'
               }}>
                 {track.artists?.[0] || ['Peer Kusiv', 'SCRIPT', 'Moshic', 'Alexandre Delanios'][idx]}
-              </div>
-              <div style={{ 
-                fontSize: '0.75rem', 
-                color: '#06b6d4',
-                fontWeight: '600'
-              }}>
-                {getBoostInsight(track, idx)}
               </div>
             </div>
           ))}
@@ -248,16 +257,16 @@ const MusicTastePage = () => {
     );
   };
 
-  // SURGICAL FIX 4: Genre Compass with exact proportions
+  // Genre Compass with vertical legend on right
   const GenreCompass = ({ spotifyData }) => {
     const genreData = spotifyData?.genreProfile || {};
     const genres = Object.entries(genreData).slice(0, 4);
     
-    // Use real data or fallback to realistic percentages
     const displayGenres = genres.length > 0 ? genres : [
       ['house', 58],
-      ['trance', 7],
-      ['indie dance', 5]
+      ['trance', 3],
+      ['indie dance', 5],
+      ['techno', 34]
     ];
     
     let currentAngle = 0;
@@ -267,12 +276,14 @@ const MusicTastePage = () => {
       const endAngle = currentAngle + angle;
       currentAngle = endAngle;
       
+      const colors = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'];
+      
       return {
         genre,
         percentage: Math.round(percentage),
         startAngle,
         endAngle,
-        color: ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'][displayGenres.indexOf([genre, percentage])]
+        color: colors[displayGenres.indexOf([genre, percentage])]
       };
     });
 
@@ -327,15 +338,14 @@ const MusicTastePage = () => {
         </div>
         <div style={{ 
           padding: '1rem', 
-          textAlign: 'center',
           height: 'calc(100% - 60px)',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center'
+          gap: '1rem'
         }}>
-          <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1rem' }}>
-            <svg width="160" height="160" viewBox="0 0 200 200">
+          {/* Chart on the left */}
+          <div style={{ flex: '0 0 auto' }}>
+            <svg width="140" height="140" viewBox="0 0 200 200">
               {genreArcs.map((arc, idx) => (
                 <path
                   key={idx}
@@ -356,32 +366,43 @@ const MusicTastePage = () => {
             </svg>
           </div>
           
+          {/* Legend vertically on the right with percentages aligned right */}
           <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '0.5rem',
-            fontSize: '0.75rem',
-            width: '100%'
+            flex: '1',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+            fontSize: '0.75rem'
           }}>
             {genreArcs.map((arc, idx) => (
               <div key={idx} style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '0.375rem'
+                justifyContent: 'space-between',
+                gap: '0.5rem'
               }}>
-                <div style={{ 
-                  width: '8px', 
-                  height: '8px', 
-                  borderRadius: '50%', 
-                  backgroundColor: arc.color,
-                  flexShrink: 0
-                }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ 
+                    width: '10px', 
+                    height: '10px', 
+                    borderRadius: '50%', 
+                    backgroundColor: arc.color,
+                    flexShrink: 0
+                  }} />
+                  <span style={{ 
+                    color: '#ffffff',
+                    fontWeight: '500',
+                    lineHeight: '1.2'
+                  }}>
+                    {arc.genre.charAt(0).toUpperCase() + arc.genre.slice(1)}
+                  </span>
+                </div>
                 <span style={{ 
                   color: '#ffffff',
-                  fontWeight: '500',
-                  lineHeight: '1.2'
+                  fontWeight: '600',
+                  fontSize: '0.8rem'
                 }}>
-                  {arc.genre.charAt(0).toUpperCase() + arc.genre.slice(1)}: {arc.percentage}%
+                  {arc.percentage}%
                 </span>
               </div>
             ))}
@@ -391,21 +412,11 @@ const MusicTastePage = () => {
     );
   };
 
-  // SURGICAL FIX 5: Artist Constellation Map with exact proportions
+  // Artist Constellation Map with proper layout
   const ArtistConstellationMap = ({ spotifyData }) => {
     const topArtists = spotifyData?.artists?.items || [];
     const centerArtist = topArtists[0]?.name || 'ARTBAT';
     
-    // Use real artist data or fallback to mockup structure
-    const artistNodes = [
-      { name: 'Maze', color: '#ef4444', x: 150, y: 80 },
-      { name: 'Moshive', color: '#8b5cf6', x: 250, y: 80 },
-      { name: 'AMI', color: '#8b5cf6', x: 100, y: 150 },
-      { name: 'Mare 23', color: '#8b5cf6', x: 100, y: 200 },
-      { name: 'Dythem', color: '#f59e0b', x: 250, y: 150 },
-      { name: 'Ruben Karapetyan', color: '#10b981', x: 300, y: 150 }
-    ];
-
     return (
       <div className={styles.card} style={{ height: '320px' }}>
         <div className={styles.cardHeader}>
@@ -425,29 +436,64 @@ const MusicTastePage = () => {
           justifyContent: 'center'
         }}>
           <svg width="100%" height="100%" viewBox="0 0 400 250">
-            {/* Central artist */}
-            <circle cx="200" cy="125" r="22" fill="#8b5cf6" stroke="#a855f7" strokeWidth="2" />
+            {/* Central artist - ARTBAT */}
+            <circle cx="200" cy="125" r="25" fill="#8b5cf6" stroke="#a855f7" strokeWidth="2" />
             <text x="200" y="130" textAnchor="middle" fill="#ffffff" fontSize="10" fontWeight="600">
-              {centerArtist.length > 8 ? centerArtist.substring(0, 8) : centerArtist}
+              ARTBAT
             </text>
             
-            {/* Artist nodes matching mockup layout */}
-            {artistNodes.map((artist, idx) => (
-              <g key={idx}>
-                <line x1="200" y1="125" x2={artist.x} y2={artist.y} stroke="#6b7280" strokeWidth="1" strokeDasharray="2,2" />
-                <circle cx={artist.x} cy={artist.y} r="16" fill={artist.color} stroke={artist.color} strokeWidth="2" />
-                <text x={artist.x} y={artist.y + 3} textAnchor="middle" fill="#ffffff" fontSize="8" fontWeight="600">
-                  {artist.name.length > 8 ? artist.name.substring(0, 8) : artist.name}
-                </text>
-              </g>
-            ))}
+            {/* Top branch - Mare */}
+            <line x1="200" y1="125" x2="200" y2="80" stroke="#6b7280" strokeWidth="1" />
+            <circle cx="200" cy="80" r="18" fill="#ef4444" stroke="#ef4444" strokeWidth="2" />
+            <text x="200" y="85" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="600">
+              Mare
+            </text>
+            
+            {/* Right branch - Moshive */}
+            <line x1="200" y1="125" x2="280" y2="80" stroke="#6b7280" strokeWidth="1" />
+            <circle cx="280" cy="80" r="18" fill="#8b5cf6" stroke="#8b5cf6" strokeWidth="2" />
+            <text x="280" y="85" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="600">
+              Moshive
+            </text>
+            
+            {/* Left branch cluster */}
+            <line x1="200" y1="125" x2="120" y2="160" stroke="#6b7280" strokeWidth="1" />
+            
+            {/* AMI */}
+            <circle cx="120" cy="160" r="18" fill="#8b5cf6" stroke="#8b5cf6" strokeWidth="2" />
+            <text x="120" y="165" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="600">
+              AMI
+            </text>
+            
+            {/* Mare 23 */}
+            <line x1="120" y1="160" x2="120" y2="200" stroke="#6b7280" strokeWidth="1" />
+            <circle cx="120" cy="200" r="16" fill="#8b5cf6" stroke="#8b5cf6" strokeWidth="2" />
+            <text x="120" y="205" textAnchor="middle" fill="#ffffff" fontSize="8" fontWeight="600">
+              Mare 23
+            </text>
+            
+            {/* Right branch cluster */}
+            <line x1="200" y1="125" x2="300" y2="160" stroke="#6b7280" strokeWidth="1" />
+            
+            {/* Dythem */}
+            <circle cx="300" cy="160" r="18" fill="#f59e0b" stroke="#f59e0b" strokeWidth="2" />
+            <text x="300" y="165" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="600">
+              Dythem
+            </text>
+            
+            {/* Ruben Karapetyan */}
+            <line x1="300" y1="160" x2="350" y2="180" stroke="#6b7280" strokeWidth="1" />
+            <circle cx="350" cy="180" r="16" fill="#10b981" stroke="#10b981" strokeWidth="2" />
+            <text x="350" y="185" textAnchor="middle" fill="#ffffff" fontSize="8" fontWeight="600">
+              Ruben K.
+            </text>
           </svg>
         </div>
       </div>
     );
   };
 
-  // SURGICAL FIX 6: Preferences with exact mockup layout
+  // Preferences with full options displayed
   const Preferences = () => {
     return (
       <div className={styles.card} style={{ height: '320px' }}>
@@ -465,26 +511,15 @@ const MusicTastePage = () => {
             marginBottom: '1rem', 
             color: '#9ca3af', 
             fontSize: '0.875rem',
-            fontWeight: '400'
+            fontWeight: '400',
+            display: 'flex',
+            gap: '1rem'
           }}>
-            Did We Get it Right?
-          </div>
-          <div style={{ marginBottom: '1.25rem' }}>
-            <button style={{
-              background: 'linear-gradient(90deg, #8b5cf6, #06b6d4)',
-              color: '#ffffff',
-              border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: '600'
-            }}>
-              Phrfens Quiz
-            </button>
+            <span>Did We Get it Right?</span>
+            <span>Phrfens Quiz</span>
           </div>
           
-          {/* Show all preference categories as in mockup */}
+          {/* Event */}
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ 
               color: '#ffffff', 
@@ -504,6 +539,7 @@ const MusicTastePage = () => {
             </div>
           </div>
 
+          {/* Price */}
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ 
               color: '#ffffff', 
@@ -523,6 +559,7 @@ const MusicTastePage = () => {
             </div>
           </div>
 
+          {/* Distance */}
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ 
               color: '#ffffff', 
@@ -542,6 +579,7 @@ const MusicTastePage = () => {
             </div>
           </div>
 
+          {/* Vibe */}
           <div>
             <div style={{ 
               color: '#ffffff', 
@@ -565,9 +603,28 @@ const MusicTastePage = () => {
     );
   };
 
-  // SURGICAL FIX 7: Events for You with exact proportions
+  // FIX: Events for You with match percentages on the right
   const EventsForYou = ({ spotifyData }) => {
-    const tracks = spotifyData?.tracks?.items || [];
+    const events = profileData?.recommendedEvents || [
+      {
+        name: 'Afterlife presents Tale Of Us',
+        venue: 'Printworks London',
+        date: 'This Saturday',
+        match: 94
+      },
+      {
+        name: 'Melodic Techno Night',
+        venue: 'Warehouse Project',
+        date: 'Next Friday',
+        match: 87
+      },
+      {
+        name: 'ARTBAT Live',
+        venue: 'Ministry of Sound',
+        date: 'Next month',
+        match: 85
+      }
+    ];
     
     return (
       <div className={styles.card} style={{ height: '320px' }}>
@@ -590,28 +647,46 @@ const MusicTastePage = () => {
             Top Tracks
           </div>
           
-          {tracks.slice(0, 3).map((track, idx) => (
+          {events.map((event, idx) => (
             <div key={idx} style={{ 
               marginBottom: '1rem',
               paddingBottom: '0.75rem',
               borderBottom: idx < 2 ? '1px solid rgba(255,255,255,0.1)' : 'none'
             }}>
+              {/* Event name and match percentage on same line */}
               <div style={{ 
-                fontWeight: '600', 
-                fontSize: '0.875rem', 
-                color: '#ffffff',
-                marginBottom: '0.25rem',
-                lineHeight: '1.2'
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '0.25rem'
               }}>
-                {track.name || ['Tension', 'Flex My Ice', 'Love Made Me Do It - Guy J Remix'][idx]}
+                <div style={{ 
+                  fontWeight: '600', 
+                  fontSize: '0.875rem', 
+                  color: '#ffffff',
+                  lineHeight: '1.2'
+                }}>
+                  {event.name}
+                </div>
+                <div style={{ 
+                  fontSize: '0.75rem', 
+                  color: '#10b981',
+                  fontWeight: '600',
+                  flexShrink: 0,
+                  marginLeft: '0.5rem'
+                }}>
+                  {event.match}%
+                </div>
               </div>
+              
+              {/* Venue and date */}
               <div style={{ 
                 fontSize: '0.75rem', 
                 color: 'rgba(255,255,255,0.7)',
                 fontWeight: '400',
                 lineHeight: '1.2'
               }}>
-                {track.artists?.[0]?.name || ['Peer Kusiv', 'SCRIPT', 'Moshic'][idx]}
+                {event.venue} • {event.date}
               </div>
             </div>
           ))}
@@ -620,7 +695,7 @@ const MusicTastePage = () => {
     );
   };
 
-  // SURGICAL FIX 8: Top Tracks with exact proportions
+  // FIX: Top Tracks with play counts on the right
   const TopTracks = ({ spotifyData }) => {
     const tracks = spotifyData?.tracks?.items || [];
     
@@ -651,15 +726,33 @@ const MusicTastePage = () => {
               paddingBottom: '0.75rem',
               borderBottom: idx < 2 ? '1px solid rgba(255,255,255,0.1)' : 'none'
             }}>
+              {/* Track name and play count on same line */}
               <div style={{ 
-                fontWeight: '600', 
-                fontSize: '0.875rem', 
-                color: '#ffffff',
-                marginBottom: '0.25rem',
-                lineHeight: '1.2'
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '0.25rem'
               }}>
-                {track.name || ['Tension', 'Flex My Ice', 'Love Made Me Do It - Guy J Remix'][idx]}
+                <div style={{ 
+                  fontWeight: '600', 
+                  fontSize: '0.875rem', 
+                  color: '#ffffff',
+                  lineHeight: '1.2'
+                }}>
+                  {track.name || ['Flex My Ice', 'Flex My Ice', 'Love Made Me Do It - Guy J Remix'][idx]}
+                </div>
+                <div style={{ 
+                  fontSize: '0.75rem', 
+                  color: '#9ca3af',
+                  fontWeight: '500',
+                  flexShrink: 0,
+                  marginLeft: '0.5rem'
+                }}>
+                  {Math.floor(Math.random() * 50) + 10} plays
+                </div>
               </div>
+              
+              {/* Artist and label */}
               <div style={{ 
                 fontSize: '0.75rem', 
                 color: 'rgba(255,255,255,0.7)',
@@ -667,7 +760,7 @@ const MusicTastePage = () => {
                 lineHeight: '1.2',
                 marginBottom: '0.125rem'
               }}>
-                {track.artists?.[0]?.name || ['Peer Kusiv', 'SCRIPT', 'Moshic'][idx]}
+                {track.artists?.[0]?.name || ['Love Made Techno', 'SCRIPT', 'Moshic'][idx]}
               </div>
               <div style={{ 
                 fontSize: '0.75rem', 
@@ -675,7 +768,7 @@ const MusicTastePage = () => {
                 fontWeight: '400',
                 lineHeight: '1.2'
               }}>
-                {track.artists?.[0]?.name || ['Peer Kusiv', 'SCRIPT', 'Moshic'][idx]}
+                {['SCRIPT', 'Moshic', 'Afterlife'][idx]}
               </div>
             </div>
           ))}
@@ -744,38 +837,38 @@ const MusicTastePage = () => {
                 
                 <polyline
                   fill="none"
-                  stroke="#8b5cf6"
+                  stroke="#06b6d4"
                   strokeWidth="3"
                   points={timelineData.map((d, i) => `${60 + i * 100},${300 - d.house * 5}`).join(' ')}
                 />
                 
                 <polyline
                   fill="none"
-                  stroke="#06b6d4"
+                  stroke="#3b82f6"
                   strokeWidth="3"
                   points={timelineData.map((d, i) => `${60 + i * 100},${300 - d.techno * 5}`).join(' ')}
                 />
                 
                 <polyline
                   fill="none"
-                  stroke="#10b981"
+                  stroke="#8b5cf6"
                   strokeWidth="3"
                   points={timelineData.map((d, i) => `${60 + i * 100},${300 - d.trance * 5}`).join(' ')}
                 />
                 
                 <polyline
                   fill="none"
-                  stroke="#f59e0b"
+                  stroke="#ec4899"
                   strokeWidth="3"
                   points={timelineData.map((d, i) => `${60 + i * 100},${300 - d.progressive * 5}`).join(' ')}
                 />
                 
                 {timelineData.map((d, i) => (
                   <g key={i}>
-                    <circle cx={60 + i * 100} cy={300 - d.house * 5} r="4" fill="#8b5cf6" />
-                    <circle cx={60 + i * 100} cy={300 - d.techno * 5} r="4" fill="#06b6d4" />
-                    <circle cx={60 + i * 100} cy={300 - d.trance * 5} r="4" fill="#10b981" />
-                    <circle cx={60 + i * 100} cy={300 - d.progressive * 5} r="4" fill="#f59e0b" />
+                    <circle cx={60 + i * 100} cy={300 - d.house * 5} r="4" fill="#06b6d4" />
+                    <circle cx={60 + i * 100} cy={300 - d.techno * 5} r="4" fill="#3b82f6" />
+                    <circle cx={60 + i * 100} cy={300 - d.trance * 5} r="4" fill="#8b5cf6" />
+                    <circle cx={60 + i * 100} cy={300 - d.progressive * 5} r="4" fill="#ec4899" />
                     
                     <text x={60 + i * 100} y="325" fill="#9ca3af" fontSize="12" textAnchor="middle">
                       {d.month}
@@ -784,17 +877,17 @@ const MusicTastePage = () => {
                 ))}
                 
                 <g transform="translate(60, 30)">
-                  <circle cx="0" cy="0" r="4" fill="#8b5cf6" />
-                  <text x="15" y="5" fill="#8b5cf6" fontSize="14" fontWeight="bold">House</text>
+                  <circle cx="0" cy="0" r="4" fill="#06b6d4" />
+                  <text x="15" y="5" fill="#06b6d4" fontSize="14" fontWeight="bold">House</text>
                   
-                  <circle cx="80" cy="0" r="4" fill="#06b6d4" />
-                  <text x="95" y="5" fill="#06b6d4" fontSize="14" fontWeight="bold">Techno</text>
+                  <circle cx="80" cy="0" r="4" fill="#3b82f6" />
+                  <text x="95" y="5" fill="#3b82f6" fontSize="14" fontWeight="bold">Techno</text>
                   
-                  <circle cx="160" cy="0" r="4" fill="#10b981" />
-                  <text x="175" y="5" fill="#10b981" fontSize="14" fontWeight="bold">Trance</text>
+                  <circle cx="160" cy="0" r="4" fill="#8b5cf6" />
+                  <text x="175" y="5" fill="#8b5cf6" fontSize="14" fontWeight="bold">Trance</text>
                   
-                  <circle cx="240" cy="0" r="4" fill="#f59e0b" />
-                  <text x="255" y="5" fill="#f59e0b" fontSize="14" fontWeight="bold">Progressive</text>
+                  <circle cx="240" cy="0" r="4" fill="#ec4899" />
+                  <text x="255" y="5" fill="#ec4899" fontSize="14" fontWeight="bold">Progressive</text>
                 </g>
               </svg>
             </div>
@@ -841,12 +934,11 @@ const MusicTastePage = () => {
   return (
     <AppLayout>
       <div className={styles.container}>
-        {/* SURGICAL FIX 9: Remove extra header section completely */}
         <div className={styles.mainContent}>
-          {/* Header Section - Exact Mockup Match */}
+          {/* Header Section */}
           <RefinedHeader spotifyData={spotifyData} profileData={profileData} />
           
-          {/* Main Grid Layout - Corrected Proportions */}
+          {/* Main Grid Layout */}
           <div style={{ display: 'grid', gap: '1.25rem' }}>
             {/* Recently Liked and Genre Compass */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
