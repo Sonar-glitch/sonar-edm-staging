@@ -547,7 +547,7 @@ const MusicTastePage = () => {
                 {specificBoost}
               </div>
             </div>
-          ))}
+          })}
         </div>
         
         {/* EXPAND MORE: Show all functionality */}
