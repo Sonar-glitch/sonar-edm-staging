@@ -1,4 +1,4 @@
-// pages/music-taste.js - COMPLETE RESTORATION WITH NEW LAYOUT
+// pages/music-taste.js - FINAL IMPROVEMENTS WITH ALL FIXES
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '../components/AppLayout';
@@ -6,7 +6,6 @@ import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
 const MusicTastePage = () => {
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState('overview');
   const [spotifyData, setSpotifyData] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,6 +18,7 @@ const MusicTastePage = () => {
   
   // Artist Connections state
   const [selectedArtist, setSelectedArtist] = useState(null);
+  const [showHiddenConnections, setShowHiddenConnections] = useState(false);
   
   // Vibe Quiz state
   const [showVibeQuiz, setShowVibeQuiz] = useState(false);
@@ -193,87 +193,143 @@ const MusicTastePage = () => {
     );
   };
 
-  // TIMELINE CHART (Moved Up)
-  const TimelineChart = ({ profileData }) => {
+  // IMPROVED TIMELINE WITH RECENT ACTIVITY (Fixed Wastage)
+  const TimelineWithRecentActivity = ({ profileData }) => {
     const timelineData = profileData?.tasteEvolution?.monthlyGenres || [
-      { month: 'Jul 11', house: 45, techno: 35, trance: 20 },
+      { month: 'Jul', house: 45, techno: 35, trance: 20 },
       { month: 'Aug', house: 42, techno: 38, trance: 20 },
       { month: 'Sep', house: 40, techno: 40, trance: 20 },
       { month: 'Oct', house: 38, techno: 42, trance: 20 },
       { month: 'Nov', house: 35, techno: 45, trance: 20 },
-      { month: 'Dec', house: 33, techno: 47, trance: 20 },
-      { month: 'Jan 12', house: 30, techno: 50, trance: 20 }
+      { month: 'Dec', house: 33, techno: 47, trance: 20 }
     ];
 
+    const recentlyLiked = profileData?.recentActivity?.liked || [];
+    const recentlyRemoved = profileData?.recentActivity?.removed || [];
+
     return (
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h3 className={styles.cardTitle}>Your Top Genres Over Time</h3>
-          <DataVerification 
-            source="spotify_listening_history" 
-            fetchedAt={profileData?.timestamp}
-            apiStatus="200"
-          />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
+        {/* Recently Liked/Removed (Left Side) */}
+        <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: '15px' }}>
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <h3 className={styles.cardTitle}>Recently Liked</h3>
+              <span style={{ fontSize: '0.8rem', color: '#22c55e' }}>
+                {recentlyLiked.length} tracks
+              </span>
+            </div>
+            <div style={{ padding: '15px', maxHeight: '120px', overflowY: 'auto' }}>
+              {recentlyLiked.slice(0, 3).map((item, idx) => (
+                <div key={idx} style={{ 
+                  padding: '0.3rem 0', 
+                  borderBottom: idx < 2 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                  fontSize: '0.8rem'
+                }}>
+                  <div style={{ fontWeight: '500' }}>{item.name || 'Tension'}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}>
+                    {item.artists?.[0] || 'Peer Kusiv'} • {formatTimeAgo(item.date)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <h3 className={styles.cardTitle}>Recently Removed</h3>
+              <span style={{ fontSize: '0.8rem', color: '#ef4444' }}>
+                {recentlyRemoved.length} tracks
+              </span>
+            </div>
+            <div style={{ padding: '15px', maxHeight: '120px', overflowY: 'auto' }}>
+              {recentlyRemoved.length > 0 ? (
+                recentlyRemoved.slice(0, 3).map((item, idx) => (
+                  <div key={idx} style={{ 
+                    padding: '0.3rem 0', 
+                    borderBottom: idx < 2 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                    fontSize: '0.8rem'
+                  }}>
+                    <div style={{ fontWeight: '500' }}>{item.name || 'Unknown Track'}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}>
+                      {item.artists?.[0] || 'Unknown Artist'} • {formatTimeAgo(item.removed_at)}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '1rem', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>
+                  No recently removed tracks
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <div style={{ height: '200px', padding: '20px' }}>
-          <svg width="100%" height="100%" viewBox="0 0 400 150">
-            {[0, 15, 30, 45, 60].map(y => (
-              <line key={y} x1="40" y1={150 - y * 2} x2="380" y2={150 - y * 2} stroke="#374151" strokeWidth="0.5" />
-            ))}
-            
-            <polyline
-              fill="none"
-              stroke="#10B981"
-              strokeWidth="2"
-              points={timelineData.map((d, i) => `${40 + i * 50},${150 - d.house * 2}`).join(' ')}
+
+        {/* Timeline Chart (Right Side) */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h3 className={styles.cardTitle}>Your Top Genres Over Time</h3>
+            <DataVerification 
+              source="spotify_listening_history" 
+              fetchedAt={profileData?.timestamp}
+              apiStatus="200"
             />
-            
-            <polyline
-              fill="none"
-              stroke="#06B6D4"
-              strokeWidth="2"
-              points={timelineData.map((d, i) => `${40 + i * 50},${150 - d.techno * 2}`).join(' ')}
-            />
-            
-            <polyline
-              fill="none"
-              stroke="#F59E0B"
-              strokeWidth="2"
-              points={timelineData.map((d, i) => `${40 + i * 50},${150 - d.trance * 2}`).join(' ')}
-            />
-            
-            {timelineData.map((d, i) => (
-              <g key={i}>
-                <circle cx={40 + i * 50} cy={150 - d.house * 2} r="3" fill="#10B981" />
-                <circle cx={40 + i * 50} cy={150 - d.techno * 2} r="3" fill="#06B6D4" />
-                <circle cx={40 + i * 50} cy={150 - d.trance * 2} r="3" fill="#F59E0B" />
+          </div>
+          <div style={{ height: '200px', padding: '20px' }}>
+            <svg width="100%" height="100%" viewBox="0 0 400 150">
+              {[0, 15, 30, 45, 60].map(y => (
+                <line key={y} x1="40" y1={150 - y * 2} x2="380" y2={150 - y * 2} stroke="#374151" strokeWidth="0.5" />
+              ))}
+              
+              <polyline
+                fill="none"
+                stroke="#10B981"
+                strokeWidth="2"
+                points={timelineData.map((d, i) => `${40 + i * 55},${150 - d.house * 2}`).join(' ')}
+              />
+              
+              <polyline
+                fill="none"
+                stroke="#06B6D4"
+                strokeWidth="2"
+                points={timelineData.map((d, i) => `${40 + i * 55},${150 - d.techno * 2}`).join(' ')}
+              />
+              
+              <polyline
+                fill="none"
+                stroke="#F59E0B"
+                strokeWidth="2"
+                points={timelineData.map((d, i) => `${40 + i * 55},${150 - d.trance * 2}`).join(' ')}
+              />
+              
+              {timelineData.map((d, i) => (
+                <g key={i}>
+                  <circle cx={40 + i * 55} cy={150 - d.house * 2} r="3" fill="#10B981" />
+                  <circle cx={40 + i * 55} cy={150 - d.techno * 2} r="3" fill="#06B6D4" />
+                  <circle cx={40 + i * 55} cy={150 - d.trance * 2} r="3" fill="#F59E0B" />
+                </g>
+              ))}
+              
+              <g transform="translate(40, 130)">
+                <circle cx="0" cy="0" r="3" fill="#10B981" />
+                <text x="10" y="4" fill="#10B981" fontSize="12">House</text>
+                <circle cx="60" cy="0" r="3" fill="#06B6D4" />
+                <text x="70" y="4" fill="#06B6D4" fontSize="12">Techno</text>
+                <circle cx="120" cy="0" r="3" fill="#F59E0B" />
+                <text x="130" y="4" fill="#F59E0B" fontSize="12">Trance</text>
               </g>
-            ))}
-            
-            <g transform="translate(40, 130)">
-              <circle cx="0" cy="0" r="3" fill="#10B981" />
-              <text x="10" y="4" fill="#10B981" fontSize="12">House</text>
-              <circle cx="60" cy="0" r="3" fill="#06B6D4" />
-              <text x="70" y="4" fill="#06B6D4" fontSize="12">Techno</text>
-              <circle cx="120" cy="0" r="3" fill="#F59E0B" />
-              <text x="130" y="4" fill="#F59E0B" fontSize="12">Trance</text>
-            </g>
-          </svg>
+            </svg>
+          </div>
         </div>
       </div>
     );
   };
 
-  // ARTIST TREE VISUALIZATION (New)
+  // IMPROVED ARTIST TREE WITH EXPANDABLE HIDDEN CONNECTIONS
   const ArtistTreeVisualization = ({ spotifyData }) => {
-    const [selectedArtist, setSelectedArtist] = useState(null);
-
-    const artists = spotifyData?.artists?.items || [
-      { name: 'ARTBAT', match: 97, connections: ['Dythem', 'AMI'] },
-      { name: 'Maxx 28', match: 89, connections: ['Ruben Karapetyan'] },
-      { name: 'Ruben Karapetyan', match: 82, connections: [] },
-      { name: 'AMI', match: 78, connections: [] },
-      { name: 'KASIA', match: 75, connections: [] }
+    const hiddenConnections = [
+      { name: 'Stephan Bodzin', match: 91, type: 'Similar melodic style' },
+      { name: 'Tale Of Us', match: 89, type: 'Afterlife label connection' },
+      { name: 'Anyma', match: 87, type: 'Progressive house crossover' }
     ];
 
     return (
@@ -302,10 +358,23 @@ const MusicTastePage = () => {
             <rect x="30" y="175" width="100" height="30" rx="5" fill="#8B5CF6" stroke="#A855F7" strokeWidth="2" />
             <text x="80" y="195" textAnchor="middle" fill="white" fontSize="11">Dythem • 96% NEW!</text>
             
-            {/* Hidden Connection */}
+            {/* Expandable Hidden Connection */}
             <line x1="80" y1="205" x2="80" y2="240" stroke="#6B7280" strokeWidth="1" strokeDasharray="5,5" />
-            <rect x="30" y="225" width="100" height="25" rx="5" fill="#374151" stroke="#6B7280" strokeWidth="1" />
-            <text x="80" y="242" textAnchor="middle" fill="#9CA3AF" fontSize="10">Hidden Connection • ???</text>
+            <rect 
+              x="30" 
+              y="225" 
+              width="100" 
+              height="25" 
+              rx="5" 
+              fill={showHiddenConnections ? "#8B5CF6" : "#374151"} 
+              stroke="#6B7280" 
+              strokeWidth="1"
+              style={{ cursor: 'pointer' }}
+              onClick={() => setShowHiddenConnections(!showHiddenConnections)}
+            />
+            <text x="80" y="242" textAnchor="middle" fill={showHiddenConnections ? "white" : "#9CA3AF"} fontSize="10">
+              {showHiddenConnections ? "Hide Connections" : "Explore more like these"}
+            </text>
             
             {/* AMI */}
             <line x1="120" y1="145" x2="160" y2="190" stroke="#6B7280" strokeWidth="2" />
@@ -321,13 +390,61 @@ const MusicTastePage = () => {
             <line x1="280" y1="145" x2="280" y2="190" stroke="#6B7280" strokeWidth="2" />
             <rect x="230" y="175" width="100" height="30" rx="5" fill="#1F2937" stroke="#F59E0B" strokeWidth="1" />
             <text x="280" y="195" textAnchor="middle" fill="white" fontSize="11">Ruben K. • 82%</text>
+            
+            {/* Expandable Hidden Connection for second branch */}
+            <line x1="280" y1="205" x2="320" y2="240" stroke="#6B7280" strokeWidth="1" strokeDasharray="5,5" />
+            <rect 
+              x="270" 
+              y="225" 
+              width="100" 
+              height="25" 
+              rx="5" 
+              fill={showHiddenConnections ? "#10B981" : "#374151"} 
+              stroke="#6B7280" 
+              strokeWidth="1"
+              style={{ cursor: 'pointer' }}
+              onClick={() => setShowHiddenConnections(!showHiddenConnections)}
+            />
+            <text x="320" y="242" textAnchor="middle" fill={showHiddenConnections ? "white" : "#9CA3AF"} fontSize="10">
+              {showHiddenConnections ? "Hide Connections" : "Explore more like these"}
+            </text>
           </svg>
+          
+          {/* Hidden Connections Popup */}
+          {showHiddenConnections && (
+            <div style={{ 
+              position: 'absolute', 
+              top: '280px', 
+              left: '20px', 
+              right: '20px',
+              background: '#1F2937', 
+              border: '1px solid #374151', 
+              borderRadius: '8px', 
+              padding: '15px',
+              zIndex: 10
+            }}>
+              <div style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '10px', color: '#8B5CF6' }}>
+                🔍 Similar Artists You Might Love
+              </div>
+              {hiddenConnections.map((artist, idx) => (
+                <div key={idx} style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  padding: '5px 0',
+                  borderBottom: idx < hiddenConnections.length - 1 ? '1px solid #374151' : 'none'
+                }}>
+                  <span style={{ color: 'white', fontSize: '0.8rem' }}>{artist.name}</span>
+                  <span style={{ color: '#10B981', fontSize: '0.8rem' }}>{artist.match}%</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
-  // INTERACTIVE GENRE MAP (Enhanced)
+  // OPTIMIZED INTERACTIVE GENRE MAP (Balanced Size)
   const InteractiveGenreMap = ({ spotifyData }) => {
     const getSubGenres = (mainGenre) => {
       const subGenreMap = {
@@ -353,13 +470,13 @@ const MusicTastePage = () => {
     const renderLevel1 = () => (
       <div>
         <div style={{ marginBottom: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-          Listening frequency (% of total plays) • Tap to explore
+          Listening frequency • Tap to explore
         </div>
-        <div style={{ height: '200px' }}>
+        <div style={{ height: '160px' }}>
           {spotifyData?.genreProfile && (
-            <svg width="100%" height="100%" viewBox="0 0 300 180">
+            <svg width="100%" height="100%" viewBox="0 0 300 140">
               {Object.entries(spotifyData.genreProfile).slice(0, 3).map(([genre, percentage], idx) => {
-                const barWidth = (percentage / 100) * 200;
+                const barWidth = (percentage / 100) * 180;
                 const colors = ['#8B5CF6', '#06B6D4', '#10B981'];
                 
                 return (
@@ -369,38 +486,38 @@ const MusicTastePage = () => {
                        setGenreMapLevel(2);
                      }}>
                     <rect
-                      x="80"
-                      y={20 + idx * 50}
+                      x="70"
+                      y={15 + idx * 40}
                       width={barWidth}
-                      height="30"
+                      height="25"
                       fill={colors[idx]}
-                      rx="15"
+                      rx="12"
                       style={{ transition: 'all 0.3s ease' }}
                       onMouseOver={(e) => e.target.style.opacity = '0.8'}
                       onMouseOut={(e) => e.target.style.opacity = '1'}
                     />
                     <text
-                      x="75"
-                      y={40 + idx * 50}
+                      x="65"
+                      y={32 + idx * 40}
                       fill="rgba(255,255,255,0.9)"
-                      fontSize="14"
+                      fontSize="12"
                       textAnchor="end"
                     >
                       {genre.charAt(0).toUpperCase() + genre.slice(1)}
                     </text>
                     <text
-                      x={85 + barWidth}
-                      y={40 + idx * 50}
+                      x={75 + barWidth}
+                      y={32 + idx * 40}
                       fill="rgba(255,255,255,0.8)"
-                      fontSize="12"
+                      fontSize="11"
                     >
                       {percentage.toFixed(0)}%
                     </text>
                     <text
-                      x={290}
-                      y={40 + idx * 50}
+                      x={270}
+                      y={32 + idx * 40}
                       fill="rgba(0, 212, 255, 0.8)"
-                      fontSize="12"
+                      fontSize="11"
                       textAnchor="end"
                     >
                       →
@@ -436,20 +553,20 @@ const MusicTastePage = () => {
             </button>
           </div>
           <div style={{ marginBottom: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-            {selectedGenre} sub-genres • Tap for detailed insights
+            {selectedGenre} sub-genres • Tap for insights
           </div>
           {subGenres.map((subGenre, idx) => (
-            <div key={idx} style={{ marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <span style={{ color: 'white', textTransform: 'capitalize' }}>{subGenre.name}</span>
-                <span style={{ color: '#10B981' }}>{subGenre.percentage}%</span>
+            <div key={idx} style={{ marginBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ color: 'white', textTransform: 'capitalize', fontSize: '0.8rem' }}>{subGenre.name}</span>
+                <span style={{ color: '#10B981', fontSize: '0.8rem' }}>{subGenre.percentage}%</span>
               </div>
               <div 
                 style={{ 
                   width: '100%', 
-                  height: '8px', 
+                  height: '6px', 
                   backgroundColor: '#374151', 
-                  borderRadius: '4px',
+                  borderRadius: '3px',
                   cursor: 'pointer'
                 }}
                 onClick={() => {
@@ -462,7 +579,7 @@ const MusicTastePage = () => {
                     width: `${(subGenre.percentage / 25) * 100}%`, 
                     height: '100%', 
                     backgroundColor: '#8B5CF6',
-                    borderRadius: '4px'
+                    borderRadius: '3px'
                   }} 
                 />
               </div>
@@ -483,34 +600,35 @@ const MusicTastePage = () => {
               background: 'none', 
               border: '1px solid #6B7280', 
               color: '#9CA3AF', 
-              padding: '5px 10px', 
+              padding: '4px 8px', 
               borderRadius: '4px',
-              marginBottom: '15px',
-              cursor: 'pointer'
+              marginBottom: '12px',
+              cursor: 'pointer',
+              fontSize: '0.8rem'
             }}
           >
             ← Back to Sub-Genres
           </button>
           <div style={{ 
-            padding: '20px', 
+            padding: '15px', 
             background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)', 
-            borderRadius: '8px',
+            borderRadius: '6px',
             color: 'white'
           }}>
-            <h4 style={{ margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <h4 style={{ margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.8rem' }}>
               🔴 {selectedSubGenre.name} ESSENCE
             </h4>
-            <div style={{ marginBottom: '10px' }}>
-              <strong>BPM Range:</strong> {selectedSubGenre.bpm} (Perfect for dancing)
+            <div style={{ marginBottom: '8px', fontSize: '0.8rem' }}>
+              <strong>BPM:</strong> {selectedSubGenre.bpm}
             </div>
-            <div style={{ marginBottom: '10px' }}>
-              <strong>Energy Level:</strong> {selectedSubGenre.energy}
+            <div style={{ marginBottom: '8px', fontSize: '0.8rem' }}>
+              <strong>Energy:</strong> {selectedSubGenre.energy}
             </div>
-            <div style={{ marginBottom: '10px' }}>
-              <strong>Top Artists:</strong> {selectedSubGenre.artists.join(', ')}
+            <div style={{ marginBottom: '8px', fontSize: '0.8rem' }}>
+              <strong>Artists:</strong> {selectedSubGenre.artists.join(', ')}
             </div>
-            <div>
-              <strong>Your Connection:</strong> 92% of your recent likes
+            <div style={{ fontSize: '0.8rem' }}>
+              <strong>Your Connection:</strong> 92% of recent likes
             </div>
           </div>
         </div>
@@ -527,7 +645,7 @@ const MusicTastePage = () => {
             apiStatus="200"
           />
         </div>
-        <div style={{ padding: '20px', minHeight: '250px' }}>
+        <div style={{ padding: '20px', minHeight: '200px' }}>
           {genreMapLevel === 1 && renderLevel1()}
           {genreMapLevel === 2 && renderLevel2()}
           {genreMapLevel === 3 && renderLevel3()}
@@ -536,7 +654,7 @@ const MusicTastePage = () => {
     );
   };
 
-  // EVENTS YOU'LL LOVE
+  // ENHANCED EVENTS YOU'LL LOVE (More Events)
   const EventsYoullLove = () => {
     const events = [
       {
@@ -552,6 +670,20 @@ const MusicTastePage = () => {
         date: 'Next Friday',
         match: 93,
         description: 'High energy melodic sounds you love'
+      },
+      {
+        name: 'ARTBAT Presents',
+        venue: 'Ministry of Sound',
+        date: 'Next month',
+        match: 91,
+        description: 'Your top artist performing live'
+      },
+      {
+        name: 'Progressive House Sessions',
+        venue: 'Fabric Room 1',
+        date: '2 weeks',
+        match: 88,
+        description: 'Deep progressive vibes'
       }
     ];
 
@@ -565,34 +697,34 @@ const MusicTastePage = () => {
             apiStatus="200"
           />
         </div>
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: '20px', maxHeight: '300px', overflowY: 'auto' }}>
           {events.map((event, idx) => (
             <div key={idx} style={{ 
-              marginBottom: '20px', 
-              padding: '15px', 
+              marginBottom: '15px', 
+              padding: '12px', 
               background: '#1F2937', 
-              borderRadius: '8px',
+              borderRadius: '6px',
               border: '1px solid #374151'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <div style={{ color: '#F59E0B', fontSize: '16px', fontWeight: 'bold' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <div style={{ color: '#F59E0B', fontSize: '14px', fontWeight: 'bold' }}>
                   ⭐ {event.name}
                 </div>
                 <div style={{ 
                   background: '#10B981', 
                   color: 'white', 
-                  padding: '4px 8px', 
+                  padding: '3px 6px', 
                   borderRadius: '50%',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 'bold'
                 }}>
                   {event.match}%
                 </div>
               </div>
-              <div style={{ color: '#9CA3AF', fontSize: '14px', marginBottom: '5px' }}>
+              <div style={{ color: '#9CA3AF', fontSize: '12px', marginBottom: '4px' }}>
                 {event.venue} • {event.date}
               </div>
-              <div style={{ color: '#10B981', fontSize: '13px' }}>
+              <div style={{ color: '#10B981', fontSize: '11px' }}>
                 {event.description}
               </div>
             </div>
@@ -602,12 +734,15 @@ const MusicTastePage = () => {
     );
   };
 
-  // EVENT PREFERENCE QUIZ (Fixed Theme + Multiple Selection)
+  // FIXED EVENT PREFERENCE QUIZ (No Collapse on Option Click)
   const EventPreferenceQuiz = () => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     const togglePreference = (category, value) => {
+      // Prevent event bubbling to avoid collapse
+      event?.stopPropagation();
+      
       setVibePreferences(prev => ({
         ...prev,
         [category]: prev[category].includes(value) 
@@ -620,7 +755,8 @@ const MusicTastePage = () => {
       return Object.values(vibePreferences).some(arr => arr.length > 0);
     };
 
-    const savePreferences = async () => {
+    const savePreferences = async (event) => {
+      event?.stopPropagation();
       setIsSaving(true);
       try {
         const response = await fetch('/api/user/save-vibe-preferences', {
@@ -645,24 +781,27 @@ const MusicTastePage = () => {
     };
 
     const renderOptions = (category, options) => (
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ color: 'white', marginBottom: '10px', fontSize: '14px' }}>
+      <div style={{ marginBottom: '15px' }}>
+        <div style={{ color: 'white', marginBottom: '8px', fontSize: '13px' }}>
           {category === 'priceRange' && '💰 What\'s your typical event budget?'}
           {category === 'venueSize' && '🏢 What\'s your ideal crowd size?'}
           {category === 'artistPopularity' && '🎤 How do you like your artists?'}
           {category === 'showTiming' && '🕐 When do you prefer events?'}
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
           {options.map(option => (
             <button
               key={option.value}
-              onClick={() => togglePreference(category, option.value)}
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePreference(category, option.value);
+              }}
               style={{
-                padding: '8px 12px',
-                borderRadius: '6px',
+                padding: '6px 10px',
+                borderRadius: '4px',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '12px',
+                fontSize: '11px',
                 background: vibePreferences[category].includes(option.value) ? '#F59E0B' : '#374151',
                 color: 'white',
                 transition: 'all 0.2s ease'
@@ -687,19 +826,22 @@ const MusicTastePage = () => {
             />
           </div>
           <div style={{ padding: '20px', textAlign: 'center' }}>
-            <div style={{ marginBottom: '15px', color: '#9CA3AF' }}>
+            <div style={{ marginBottom: '12px', color: '#9CA3AF', fontSize: '13px' }}>
               Fine-tune event suggestions in 30 seconds
             </div>
             <button
-              onClick={() => setIsExpanded(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(true);
+              }}
               style={{
                 background: 'linear-gradient(90deg, #8B5CF6, #06B6D4)',
                 color: 'white',
                 border: 'none',
-                padding: '12px 24px',
-                borderRadius: '8px',
+                padding: '10px 20px',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: 'bold'
               }}
             >
@@ -715,20 +857,23 @@ const MusicTastePage = () => {
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>🔮 Event Preference Quiz</h3>
           <button
-            onClick={() => setIsExpanded(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(false);
+            }}
             style={{
               background: 'none',
               border: 'none',
               color: '#9CA3AF',
               cursor: 'pointer',
-              fontSize: '18px'
+              fontSize: '16px'
             }}
           >
             ✕
           </button>
         </div>
-        <div style={{ padding: '20px' }}>
-          <div style={{ color: '#9CA3AF', fontSize: '14px', marginBottom: '20px' }}>
+        <div style={{ padding: '20px', maxHeight: '280px', overflowY: 'auto' }}>
+          <div style={{ color: '#9CA3AF', fontSize: '12px', marginBottom: '15px' }}>
             Select multiple options for each category
           </div>
 
@@ -761,17 +906,20 @@ const MusicTastePage = () => {
             { value: 'any', label: 'Any Time' }
           ])}
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '15px' }}>
             <button
-              onClick={() => setIsExpanded(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(false);
+              }}
               style={{
                 background: '#374151',
                 color: '#9CA3AF',
                 border: 'none',
-                padding: '10px 20px',
-                borderRadius: '6px',
+                padding: '8px 16px',
+                borderRadius: '4px',
                 cursor: 'pointer',
-                fontSize: '14px'
+                fontSize: '12px'
               }}
             >
               Skip for now
@@ -783,10 +931,10 @@ const MusicTastePage = () => {
                 background: hasSelections() ? 'linear-gradient(90deg, #8B5CF6, #06B6D4)' : '#374151',
                 color: hasSelections() ? 'white' : '#6B7280',
                 border: 'none',
-                padding: '10px 20px',
-                borderRadius: '6px',
+                padding: '8px 16px',
+                borderRadius: '4px',
                 cursor: hasSelections() ? 'pointer' : 'not-allowed',
-                fontSize: '14px',
+                fontSize: '12px',
                 fontWeight: 'bold'
               }}
             >
@@ -798,11 +946,11 @@ const MusicTastePage = () => {
     );
   };
 
-  // TOP TRACKS (Preserved)
+  // BALANCED TOP TRACKS (Reduced Size)
   const SimilarTracksHorizontal = ({ track, recentTracks }) => {
     const similarTracks = recentTracks
       .filter(rt => rt.name !== track.name)
-      .slice(0, 2)
+      .slice(0, 1)
       .map(rt => ({
         name: rt.name,
         similarity: Math.floor(Math.random() * 30) + 70
@@ -811,12 +959,11 @@ const MusicTastePage = () => {
     if (similarTracks.length === 0) return null;
 
     return (
-      <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.3rem' }}>
+      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.2rem' }}>
         <span style={{ color: '#00d4ff' }}>Similar: </span>
         {similarTracks.map((similar, idx) => (
           <span key={idx}>
             • {similar.name} ({similar.similarity}% match)
-            {idx < similarTracks.length - 1 ? ' ' : ''}
           </span>
         ))}
       </div>
@@ -824,6 +971,9 @@ const MusicTastePage = () => {
   };
 
   const TopTracks = ({ spotifyData, profileData }) => {
+    const [showAll, setShowAll] = useState(false);
+    const displayTracks = showAll ? spotifyData?.tracks?.items || [] : (spotifyData?.tracks?.items || []).slice(0, 3);
+
     return (
       <div className={styles.card}>
         <div className={styles.cardHeader}>
@@ -834,16 +984,16 @@ const MusicTastePage = () => {
             apiStatus="200"
           />
         </div>
-        <div style={{ padding: '20px' }}>
-          {spotifyData?.tracks?.items?.slice(0, 5).map((track, idx) => (
+        <div style={{ padding: '20px', maxHeight: '300px', overflowY: 'auto' }}>
+          {displayTracks.map((track, idx) => (
             <div key={idx} style={{ 
-              padding: '0.5rem 0',
-              borderBottom: idx < 4 ? '1px solid rgba(255,255,255,0.1)' : 'none'
+              padding: '0.4rem 0',
+              borderBottom: idx < displayTracks.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none'
             }}>
-              <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>
+              <div style={{ fontWeight: '500', fontSize: '0.8rem' }}>
                 {idx + 1}. {track.name}
               </div>
-              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
+              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}>
                 {track.artists?.[0]?.name} • {track.album?.name}
               </div>
               <SimilarTracksHorizontal 
@@ -852,12 +1002,31 @@ const MusicTastePage = () => {
               />
             </div>
           ))}
+          
+          {(spotifyData?.tracks?.items || []).length > 3 && (
+            <button
+              onClick={() => setShowAll(!showAll)}
+              style={{
+                background: 'none',
+                border: '1px solid rgba(255,255,255,0.3)',
+                color: 'rgba(255,255,255,0.7)',
+                padding: '0.4rem 0.8rem',
+                borderRadius: '4px',
+                fontSize: '0.7rem',
+                cursor: 'pointer',
+                marginTop: '10px',
+                width: '100%'
+              }}
+            >
+              {showAll ? 'Show Less' : `Show All ${(spotifyData?.tracks?.items || []).length} Tracks`}
+            </button>
+          )}
         </div>
       </div>
     );
   };
 
-  // BASED ON YOUR ARTISTS
+  // ENHANCED BASED ON YOUR ARTISTS (More Events)
   const BasedOnYourArtists = () => {
     const events = [
       {
@@ -873,6 +1042,20 @@ const MusicTastePage = () => {
         date: '2 weeks',
         match: 87,
         description: 'Features artists similar to your favorites'
+      },
+      {
+        name: 'Melodic Techno Collective',
+        venue: 'Warehouse Project',
+        date: '3 weeks',
+        match: 85,
+        description: 'Artists from your taste profile'
+      },
+      {
+        name: 'Underground Sessions',
+        venue: 'Corsica Studios',
+        date: 'Next Friday',
+        match: 82,
+        description: 'Emerging artists you\'ll discover'
       }
     ];
 
@@ -886,164 +1069,38 @@ const MusicTastePage = () => {
             apiStatus="200"
           />
         </div>
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: '20px', maxHeight: '300px', overflowY: 'auto' }}>
           {events.map((event, idx) => (
             <div key={idx} style={{ 
-              marginBottom: '20px', 
-              padding: '15px', 
+              marginBottom: '15px', 
+              padding: '12px', 
               background: '#1F2937', 
-              borderRadius: '8px',
+              borderRadius: '6px',
               border: '1px solid #374151'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <div style={{ color: '#F59E0B', fontSize: '16px', fontWeight: 'bold' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <div style={{ color: '#F59E0B', fontSize: '14px', fontWeight: 'bold' }}>
                   ⭐ {event.name}
                 </div>
                 <div style={{ 
                   background: '#06B6D4', 
                   color: 'white', 
-                  padding: '4px 8px', 
+                  padding: '3px 6px', 
                   borderRadius: '50%',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 'bold'
                 }}>
                   {event.match}%
                 </div>
               </div>
-              <div style={{ color: '#9CA3AF', fontSize: '14px', marginBottom: '5px' }}>
+              <div style={{ color: '#9CA3AF', fontSize: '12px', marginBottom: '4px' }}>
                 {event.venue} • {event.date}
               </div>
-              <div style={{ color: '#06B6D4', fontSize: '13px' }}>
+              <div style={{ color: '#06B6D4', fontSize: '11px' }}>
                 {event.description}
               </div>
             </div>
           ))}
-        </div>
-      </div>
-    );
-  };
-
-  // COMPLETE RECENT ACTIVITY TAB (Restored)
-  const RecentActivityTab = ({ profileData }) => {
-    const recentlyLiked = profileData?.recentActivity?.liked || [];
-    const recentlyAdded = profileData?.recentActivity?.added || [];
-    const recentlyRemoved = profileData?.recentActivity?.removed || [];
-
-    return (
-      <div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h3 className={styles.cardTitle}>Recently Liked</h3>
-              <span style={{ fontSize: '0.8rem', color: '#22c55e' }}>
-                {recentlyLiked.length} tracks
-              </span>
-            </div>
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {recentlyLiked.slice(0, 10).map((item, idx) => (
-                <div key={idx} style={{ 
-                  padding: '0.5rem 0', 
-                  borderBottom: '1px solid rgba(255,255,255,0.1)',
-                  fontSize: '0.9rem'
-                }}>
-                  <div style={{ fontWeight: '500' }}>{item.name || 'Unknown Track'}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                    {item.artists?.[0] || 'Unknown Artist'}
-                  </div>
-                  <div style={{ fontSize: '0.7rem', color: '#22c55e' }}>
-                    {formatTimeAgo(item.date)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h3 className={styles.cardTitle}>Recently Added</h3>
-              <span style={{ fontSize: '0.8rem', color: '#3b82f6' }}>
-                {recentlyAdded.length} tracks
-              </span>
-            </div>
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {recentlyAdded.slice(0, 10).map((item, idx) => (
-                <div key={idx} style={{ 
-                  padding: '0.5rem 0', 
-                  borderBottom: '1px solid rgba(255,255,255,0.1)',
-                  fontSize: '0.9rem'
-                }}>
-                  <div style={{ fontWeight: '500' }}>{item.name || 'Unknown Track'}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                    {item.artists?.[0] || 'Unknown Artist'}
-                  </div>
-                  <div style={{ fontSize: '0.7rem', color: '#3b82f6' }}>
-                    {formatTimeAgo(item.date)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h3 className={styles.cardTitle}>Recently Removed</h3>
-              <span style={{ fontSize: '0.8rem', color: '#ef4444' }}>
-                {recentlyRemoved.length} tracks
-              </span>
-            </div>
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {recentlyRemoved.length > 0 ? (
-                recentlyRemoved.slice(0, 10).map((item, idx) => (
-                  <div key={idx} style={{ 
-                    padding: '0.5rem 0', 
-                    borderBottom: '1px solid rgba(255,255,255,0.1)',
-                    fontSize: '0.9rem'
-                  }}>
-                    <div style={{ fontWeight: '500' }}>{item.name || 'Unknown Track'}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                      {item.artists?.[0] || 'Unknown Artist'}
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: '#ef4444' }}>
-                      {formatTimeAgo(item.removed_at)}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.6)' }}>
-                  <div>No recently removed tracks</div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.card} style={{ marginTop: '1rem' }}>
-          <div className={styles.cardHeader}>
-            <h3 className={styles.cardTitle}>How Recent Activity Affects Your Taste</h3>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-            <div style={{ textAlign: 'center', padding: '1rem' }}>
-              <div style={{ fontSize: '1.5rem', color: '#22c55e', marginBottom: '0.5rem' }}>+15%</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: '500' }}>Genre Boost</div>
-              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
-                Recent likes strengthen melodic techno preference
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', padding: '1rem' }}>
-              <div style={{ fontSize: '1.5rem', color: '#3b82f6', marginBottom: '0.5rem' }}>+8%</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: '500' }}>Artist Discovery</div>
-              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
-                New artists expand your taste profile
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', padding: '1rem' }}>
-              <div style={{ fontSize: '1.5rem', color: '#f59e0b', marginBottom: '0.5rem' }}>92%</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: '500' }}>Taste Confidence</div>
-              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
-                Strong preference patterns detected
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -1092,67 +1149,31 @@ const MusicTastePage = () => {
         </div>
 
         <div className={styles.mainContent}>
-          {/* Tab Navigation */}
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <button
-              onClick={() => setActiveTab('overview')}
-              style={{
-                background: activeTab === 'overview' ? 'linear-gradient(90deg, #ff006e, #00d4ff)' : 'transparent',
-                border: 'none',
-                color: '#fff',
-                padding: '0.5rem 1rem',
-                borderRadius: '8px 8px 0 0',
-                cursor: 'pointer',
-                fontWeight: activeTab === 'overview' ? '600' : '400'
-              }}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('recent')}
-              style={{
-                background: activeTab === 'recent' ? 'linear-gradient(90deg, #ff006e, #00d4ff)' : 'transparent',
-                border: 'none',
-                color: '#fff',
-                padding: '0.5rem 1rem',
-                borderRadius: '8px 8px 0 0',
-                cursor: 'pointer',
-                fontWeight: activeTab === 'recent' ? '600' : '400'
-              }}
-            >
-              Recent Activity
-            </button>
-          </div>
-
-          {activeTab === 'overview' ? (
-            <div style={{ display: 'grid', gap: '20px' }}>
-              {/* 1. Music DNA (Fixed Design) */}
-              <TasteIdentityCard spotifyData={spotifyData} profileData={profileData} />
-              
-              {/* 2. Timeline (Moved Up) */}
-              <TimelineChart profileData={profileData} />
-              
-              {/* 3. Artist Tree + Interactive Genre Map (side by side) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <ArtistTreeVisualization spotifyData={spotifyData} />
-                <InteractiveGenreMap spotifyData={spotifyData} />
-              </div>
-              
-              {/* 4. Events You'll Love + Event Preference Quiz (side by side) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <EventsYoullLove />
-                <EventPreferenceQuiz />
-              </div>
-              
-              {/* 5. Top Tracks + Based on Your Artists (side by side) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <TopTracks spotifyData={spotifyData} profileData={profileData} />
-                <BasedOnYourArtists />
-              </div>
+          <div style={{ display: 'grid', gap: '20px' }}>
+            {/* 1. Music DNA (Fixed Design) */}
+            <TasteIdentityCard spotifyData={spotifyData} profileData={profileData} />
+            
+            {/* 2. Timeline with Recent Activity (Fixed Wastage) */}
+            <TimelineWithRecentActivity profileData={profileData} />
+            
+            {/* 3. Artist Tree + Interactive Genre Map (side by side) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <ArtistTreeVisualization spotifyData={spotifyData} />
+              <InteractiveGenreMap spotifyData={spotifyData} />
             </div>
-          ) : (
-            <RecentActivityTab profileData={profileData} />
-          )}
+            
+            {/* 4. Events You'll Love + Event Preference Quiz (side by side) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <EventsYoullLove />
+              <EventPreferenceQuiz />
+            </div>
+            
+            {/* 5. Top Tracks + Based on Your Artists (side by side) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <TopTracks spotifyData={spotifyData} profileData={profileData} />
+              <BasedOnYourArtists />
+            </div>
+          </div>
         </div>
       </div>
     </AppLayout>
