@@ -328,7 +328,7 @@ const MusicTastePage = () => {
     console.log('=== END DEBUG ===');
     
     // REAL DATA: Check if we have actual Spotify data
-    const hasRealData = recentTracks.length > 0 && recentTracks[0]?.name && recentTracks[0]?.artists?.[0]?.name;
+    const hasRealData = recentTracks.length > 0 && recentTracks[0]?.name && recentTracks[0]?.artists?.[0];
     
     // REAL DATA: Get specific genre boost based on actual track data
     const getSpecificGenreBoost = (track, idx) => {
@@ -414,49 +414,40 @@ const MusicTastePage = () => {
 
     // FALLBACK ANALYSIS: Investigate why FALLBACK data is being used
     const getFallbackAnalysis = () => {
-      if (hasRealData) return 'Real-time data from Spotify API';
+      const checks = [];
       
-      // Detailed investigation of why FALLBACK is triggered
-      const analysis = [];
-      
-      // Check profileData existence
       if (!profileData) {
-        analysis.push('profileData is null/undefined');
+        checks.push("profileData missing");
       } else {
-        analysis.push('profileData exists');
+        checks.push("profileData exists");
         
-        // Check recentActivity existence
         if (!profileData.recentActivity) {
-          analysis.push('recentActivity is missing');
+          checks.push("recentActivity missing");
         } else {
-          analysis.push('recentActivity exists');
+          checks.push("recentActivity exists");
           
-          // Check liked array existence and length
-          if (!profileData.recentActivity.liked) {
-            analysis.push('liked array is missing');
-          } else if (profileData.recentActivity.liked.length === 0) {
-            analysis.push('liked array is empty');
+          if (!profileData.recentActivity.liked || profileData.recentActivity.liked.length === 0) {
+            checks.push("liked array empty or missing");
           } else {
-            analysis.push(`liked array has ${profileData.recentActivity.liked.length} items`);
+            checks.push(`liked array has ${profileData.recentActivity.liked.length} items`);
             
-            // Check first track structure
             const firstTrack = profileData.recentActivity.liked[0];
             if (!firstTrack?.name) {
-              analysis.push('first track missing name property');
+              checks.push("first track missing name");
             } else {
-              analysis.push('first track has name');
-            }
-            
-            if (!firstTrack?.artists?.[0]?.name) {
-              analysis.push('first track missing artist name');
-            } else {
-              analysis.push('first track has artist name');
+              checks.push("first track has name");
+              
+              if (!firstTrack?.artists?.[0]) {
+                checks.push("first track missing artist");
+              } else {
+                checks.push("first track has artist");
+              }
             }
           }
         }
       }
       
-      return `FALLBACK Analysis: ${analysis.join(' → ')}`;
+      return `FALLBACK Analysis: ${checks.join(' → ')}`;
     };
 
     // Display tracks with expand functionality
