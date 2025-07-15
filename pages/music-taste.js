@@ -346,7 +346,9 @@ const MusicTastePage = () => {
       
       // REAL: Use actual genre from track
       const primaryGenre = track.artists[0].genres[0] || 'Electronic';
-      const boostValue = Math.floor(Math.random() * 10) + 10; // 10-20%
+      // Generate consistent boost value based on track name
+      const seed = track.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      const boostValue = 10 + (seed % 10); // 10-19% but consistent
       return `+${boostValue}% ${primaryGenre} Boost`;
     };
 
@@ -931,6 +933,12 @@ const MusicTastePage = () => {
     const artists = spotifyData?.artists?.items || [];
     const [selectedArtist, setSelectedArtist] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [isClient, setIsClient] = useState(false);
+    
+    // Prevent hydration mismatch
+    useEffect(() => {
+      setIsClient(true);
+    }, []);
     
     // Modal handler for artist clicks
     const handleArtistClick = (artist) => {
@@ -943,6 +951,37 @@ const MusicTastePage = () => {
       setShowModal(false);
       setSelectedArtist(null);
     };
+    
+    if (!isClient) {
+      return (
+        <div className={styles.card} style={{ 
+          background: 'radial-gradient(circle at center, #0D0C1D 0%, #060512 100%)',
+          backdropFilter: 'blur(20px)',
+          padding: '32px',
+          minHeight: '400px',
+          position: 'relative',
+          border: '1px solid rgba(139, 92, 246, 0.2)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          borderRadius: '16px',
+          overflow: 'hidden'
+        }}>
+          <h2 className={styles.cardTitle} style={{ 
+            fontSize: '18px',
+            fontWeight: '700', 
+            color: '#E9D6FF',
+            marginBottom: '20px',
+            textShadow: '0 2px 10px rgba(139, 92, 246, 0.3)',
+            position: 'relative',
+            zIndex: 2
+          }}>
+            Connected to You
+          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px' }}>
+            <div style={{ color: '#DADADA' }}>Loading constellation...</div>
+          </div>
+        </div>
+      );
+    }
     
     if (artists.length === 0) {
       return (
@@ -965,7 +1004,7 @@ const MusicTastePage = () => {
       );
     }
 
-    // Generate similar artists for expansion
+    // Generate similar artists for expansion (consistent values to prevent hydration mismatch)
     const getSimilarArtists = (mainArtist) => {
       const similarArtistsPool = [
         'Stephan Bodzin', 'Mind Against', 'Agents of Time', 'Mathame',
@@ -973,14 +1012,17 @@ const MusicTastePage = () => {
         'Lane 8', 'Marsh', 'Spencer Brown', 'Grum'
       ];
       
+      // Use artist name as seed for consistent values
+      const seed = mainArtist.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      
       return similarArtistsPool
         .filter(artist => artist !== mainArtist)
         .slice(0, 3)
-        .map(name => ({
+        .map((name, index) => ({
           name,
-          similarity: Math.floor(Math.random() * 20) + 80, // 80-99%
+          similarity: 80 + ((seed + index) % 20), // 80-99% but consistent
           sharedGenres: ['Melodic Techno', 'Progressive House'],
-          sharedTracks: Math.floor(Math.random() * 20) + 5
+          sharedTracks: 5 + ((seed + index) % 20) // 5-24 but consistent
         }));
     };
 
@@ -1980,7 +2022,7 @@ const MusicTastePage = () => {
             }}
             title={
               getDataSourceLabel() === 'LIVE' 
-                ? `Last updated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`
+                ? `Last updated: Data refreshed recently`
                 : `FALLBACK Analysis: ${!eventsData || eventsData.length === 0 ? 'No events data available' : 'Events data incomplete or invalid'}`
             }
           >
@@ -2079,9 +2121,12 @@ const MusicTastePage = () => {
   const TopTracks = ({ spotifyData }) => {
     const tracks = spotifyData?.tracks?.items || [];
     
-    const getUserPlayCounts = (track, index) => {
-      const userPlayCounts = [45, 38, 52, 29, 41, 33, 47, 25, 39, 44];
-      return userPlayCounts[index] || Math.floor(Math.random() * 50) + 20;
+    // Get play count with consistent values to prevent hydration mismatch
+    const getPlayCount = (track, index) => {
+      if (!track) return 0;
+      // Use track name as seed for consistent values
+      const seed = track.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      return userPlayCounts[index] || (20 + (seed % 50)); // 20-69 but consistent
     };
 
     const getSmartMatchExplanation = (track, playCount, index) => {
@@ -2171,8 +2216,8 @@ const MusicTastePage = () => {
               }}
               title={
                 getDataSourceLabel() === 'LIVE' 
-                  ? `Last updated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`
-                  : `FALLBACK Analysis: ${!tracks || tracks.length === 0 ? 'No tracks data available' : 'Tracks data incomplete or invalid'}`
+                  ? `Last updated: Data refreshed recently`
+                  : `FALLBACK Analysis: No top tracks data available from Spotify API`
               }
             >
               {getDataSourceLabel()}
