@@ -926,9 +926,23 @@ const MusicTastePage = () => {
     );
   };
 
-  // CONNECTED TO YOU FIX: Info button in empty space + Smooth transitions + Thematic colors
+  // CONNECTED TO YOU FIX: Info button in empty space + Smooth transitions + Thematic colors + Modal interactions
   const ArtistConstellationMap = ({ spotifyData }) => {
     const artists = spotifyData?.artists?.items || [];
+    const [selectedArtist, setSelectedArtist] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+    
+    // Modal handler for artist clicks
+    const handleArtistClick = (artist) => {
+      setSelectedArtist(artist);
+      setShowModal(true);
+    };
+    
+    // Close modal handler
+    const closeModal = () => {
+      setShowModal(false);
+      setSelectedArtist(null);
+    };
     
     if (artists.length === 0) {
       return (
@@ -999,9 +1013,9 @@ const MusicTastePage = () => {
 
     return (
       <div className={styles.card} style={{ 
-        background: 'linear-gradient(135deg, rgba(15, 15, 30, 0.9), rgba(30, 20, 40, 0.8))',
+        background: 'radial-gradient(circle at center, #0D0C1D 0%, #060512 100%)',
         backdropFilter: 'blur(20px)',
-        padding: '20px',
+        padding: '32px',
         minHeight: '400px',
         position: 'relative',
         border: '1px solid rgba(139, 92, 246, 0.2)',
@@ -1087,6 +1101,14 @@ const MusicTastePage = () => {
                 <stop offset="100%" stopColor="#1E1B4B" stopOpacity="0.8" />
               </radialGradient>
               
+              {/* Elegant YOU node gradient with soft cyan core and muted halo */}
+              <radialGradient id="elegantYouGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#00FFFF" stopOpacity="0.8" />
+                <stop offset="40%" stopColor="rgba(0, 255, 255, 0.4)" stopOpacity="0.6" />
+                <stop offset="80%" stopColor="rgba(0, 255, 255, 0.2)" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="rgba(0, 255, 255, 0)" stopOpacity="0" />
+              </radialGradient>
+              
               {/* Main artist gradient */}
               <radialGradient id="artistGradient" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#E879F9" stopOpacity="0.9" />
@@ -1130,7 +1152,7 @@ const MusicTastePage = () => {
               </filter>
             </defs>
             
-            {/* Connection lines with enhanced styling */}
+            {/* Elegant faded connection lines */}
             {mainArtists.map((artist, index) => (
               <line
                 key={`line-${index}`}
@@ -1138,25 +1160,24 @@ const MusicTastePage = () => {
                 y1="180"
                 x2={artist.x}
                 y2={artist.y}
-                stroke="url(#connectionGradient)"
-                strokeWidth="1.5"
-                strokeDasharray="3,2"
-                opacity="0.6"
-                filter="url(#softGlow)"
+                stroke="rgba(255, 255, 255, 0.1)"
+                strokeWidth="1"
+                strokeDasharray="2,3"
+                opacity="0.4"
               />
             ))}
             
-            {/* YOU node with enhanced styling */}
+            {/* YOU node with elegant soft cyan core and muted halo */}
             <circle
               cx="180"
               cy="180"
               r="30"
-              fill="url(#youGradient)"
-              stroke="rgba(255,255,255,0.6)"
-              strokeWidth="2"
-              filter="url(#glow)"
+              fill="url(#elegantYouGradient)"
+              stroke="rgba(0, 255, 255, 0.3)"
+              strokeWidth="1.5"
               style={{
-                animation: 'pulseGlow 3s ease-in-out infinite'
+                animation: 'elegantPulse 1.5s infinite ease-in-out',
+                filter: 'drop-shadow(0 0 8px rgba(0, 255, 255, 0.2))'
               }}
             />
             
@@ -1178,36 +1199,36 @@ const MusicTastePage = () => {
             {/* Main artist nodes with enhanced styling */}
             {mainArtists.map((artist, index) => (
               <g key={artist.id || index}>
-                {/* Artist bubble with enhanced effects */}
+                {/* Primary artist bubble with elegant violet core and neon-pink glow */}
                 <circle
                   cx={artist.x}
                   cy={artist.y}
                   r="32"
-                  fill="url(#artistGradient)"
-                  stroke="rgba(255,255,255,0.4)"
-                  strokeWidth="2"
-                  filter="url(#glow)"
+                  fill="#7F00FF"
+                  stroke="rgba(255, 0, 204, 0.4)"
+                  strokeWidth="1.5"
                   style={{ 
                     cursor: 'pointer',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transformOrigin: `${artist.x}px ${artist.y}px`
+                    transition: 'transform 0.2s ease, filter 0.2s ease',
+                    transformOrigin: `${artist.x}px ${artist.y}px`,
+                    filter: 'drop-shadow(0 0 6px rgba(255, 0, 204, 0.3))'
                   }}
-                  onClick={() => toggleArtistExpansion(artist.name)}
+                  onClick={() => handleArtistClick(artist)}
                   onMouseEnter={(e) => {
-                    e.target.style.filter = 'url(#glow) brightness(1.2)';
-                    e.target.style.transform = 'scale(1.15)';
-                    e.target.style.strokeWidth = '3';
-                    e.target.style.stroke = 'rgba(255,255,255,0.8)';
+                    e.target.style.filter = 'drop-shadow(0 0 12px rgba(255, 0, 204, 0.5))';
+                    e.target.style.transform = 'scale(1.1)';
+                    e.target.style.strokeWidth = '2';
+                    e.target.style.stroke = 'rgba(255, 0, 204, 0.6)';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.filter = 'url(#glow)';
+                    e.target.style.filter = 'drop-shadow(0 0 6px rgba(255, 0, 204, 0.3))';
                     e.target.style.transform = 'scale(1)';
-                    e.target.style.strokeWidth = '2';
-                    e.target.style.stroke = 'rgba(255,255,255,0.4)';
+                    e.target.style.strokeWidth = '1.5';
+                    e.target.style.stroke = 'rgba(255, 0, 204, 0.4)';
                   }}
                 >
                   <title>
-                    {artist.name} • {artist.popularity || 85}% similarity • Shared genres: {artist.genres?.slice(0, 2).join(', ') || 'Melodic Techno, Progressive House'} • 15 shared tracks in your library • Click to expand similar artists
+                    {artist.name} • {artist.genres?.slice(0, 2).join(', ') || 'Melodic Techno, Progressive House'} • {artist.followers || '2.1M'} followers • Click for similar artists & events
                   </title>
                 </circle>
                 
@@ -1226,7 +1247,7 @@ const MusicTastePage = () => {
                     transition: 'all 0.3s ease'
                   }}
                   filter="url(#softGlow)"
-                  onClick={() => toggleArtistExpansion(artist.name)}
+                  onClick={() => handleArtistClick(artist)}
                 >
                   {artist.name.length > 9 ? artist.name.substring(0, 9) + '...' : artist.name}
                 </text>
@@ -1248,36 +1269,87 @@ const MusicTastePage = () => {
                   {artist.name.length > 10 ? artist.name.substring(0, 10) + '...' : artist.name}
                 </text>
                 
-                {/* FIXED: Expanded similar artists with proper positioning */}
+                {/* Secondary similar artists with visual hierarchy */}
                 {expandedArtists.has(artist.name) && artist.similarArtists.map((similar, simIndex) => {
-                  // FIXED: Better radial positioning to avoid overlaps
                   const baseAngle = (index * 60) * (Math.PI / 180);
-                  const spreadAngle = 40; // Increased spread
+                  const spreadAngle = 45;
                   const simAngle = baseAngle + ((simIndex - 1) * spreadAngle * (Math.PI / 180));
-                  const simRadius = 150; // Increased radius for better spacing
-                  const simX = 175 + simRadius * Math.cos(simAngle);
-                  const simY = 175 + simRadius * Math.sin(simAngle);
+                  const simRadius = 160;
+                  const simX = 180 + simRadius * Math.cos(simAngle);
+                  const simY = 180 + simRadius * Math.sin(simAngle);
                   
                   return (
                     <g key={`${artist.name}-${simIndex}`} style={{ 
-                      animation: 'fadeInScale 0.5s ease-out',
+                      animation: 'expandFade 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
                       transformOrigin: `${simX}px ${simY}px`
                     }}>
-                      {/* Connection to main artist */}
+                      {/* Elegant faded connection line */}
                       <line
                         x1={artist.x}
                         y1={artist.y}
                         x2={simX}
                         y2={simY}
-                        stroke="rgba(6, 182, 212, 0.4)"
+                        stroke="rgba(255, 255, 255, 0.1)"
                         strokeWidth="1"
-                        strokeDasharray="1,1"
+                        strokeDasharray="1,2"
+                        opacity="0.5"
                       />
                       
-                      {/* Similar artist bubble */}
+                      {/* Secondary artist bubble with desaturated indigo and minimal glow */}
                       <circle
                         cx={simX}
                         cy={simY}
+                        r="20"
+                        fill="#395B9C"
+                        stroke="rgba(57, 91, 156, 0.3)"
+                        strokeWidth="1"
+                        style={{ 
+                          cursor: 'pointer',
+                          transition: 'transform 0.2s ease, filter 0.2s ease',
+                          transformOrigin: `${simX}px ${simY}px`,
+                          filter: 'drop-shadow(0 0 2px rgba(57, 91, 156, 0.2))'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = 'scale(1.05)';
+                          e.target.style.filter = 'drop-shadow(0 0 4px rgba(57, 91, 156, 0.4))';
+                          e.target.style.strokeWidth = '1.5';
+                          e.target.style.stroke = 'rgba(57, 91, 156, 0.5)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = 'scale(1)';
+                          e.target.style.filter = 'drop-shadow(0 0 2px rgba(57, 91, 156, 0.2))';
+                          e.target.style.strokeWidth = '1';
+                          e.target.style.stroke = 'rgba(57, 91, 156, 0.3)';
+                        }}
+                      >
+                        <title>
+                          {similar.name} • {similar.sharedGenres?.join(', ') || 'Progressive House'} • {similar.followers || '850K'} followers
+                        </title>
+                      </circle>
+                      
+                      {/* Secondary artist text with lighter styling */}
+                      <text
+                        x={simX}
+                        y={simY}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fill="#ffffff"
+                        fontSize="12"
+                        fontWeight="400"
+                        style={{ 
+                          cursor: 'pointer',
+                          textShadow: '0 1px 6px rgba(0, 0, 0, 0.9)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                        filter="url(#softGlow)"
+                      >
+                        {similar.name.length > 7 ? similar.name.substring(0, 7) + '...' : similar.name}
+                      </text>
+                    </g>
+                  );
+                })}
                         r="20"
                         fill="url(#similarGradient)"
                         stroke="rgba(255,255,255,0.2)"
@@ -1322,8 +1394,23 @@ const MusicTastePage = () => {
             ))}
           </svg>
           
-          {/* Enhanced animation styles */}
+          {/* Enhanced animation styles with YOU pulse */}
           <style jsx>{`
+            @keyframes elegantPulse {
+              0% { 
+                transform: scale(1); 
+                filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.2)); 
+              }
+              50% { 
+                transform: scale(1.03); 
+                filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.3)); 
+              }
+              100% { 
+                transform: scale(1); 
+                filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.2)); 
+              }
+            }
+            
             @keyframes expandFade {
               0% {
                 opacity: 0;
@@ -1355,6 +1442,140 @@ const MusicTastePage = () => {
             }
           `}</style>
         </div>
+        
+        {/* Artist Modal */}
+        {showModal && selectedArtist && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            animation: 'fadeIn 0.3s ease-out'
+          }} onClick={closeModal}>
+            <div style={{
+              background: 'linear-gradient(135deg, #0D0C1D 0%, #1A1B3A 100%)',
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '500px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+              position: 'relative'
+            }} onClick={(e) => e.stopPropagation()}>
+              {/* Close button */}
+              <button
+                onClick={closeModal}
+                style={{
+                  position: 'absolute',
+                  top: '16px',
+                  right: '16px',
+                  background: 'none',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '50%',
+                  transition: 'background 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
+                onMouseLeave={(e) => e.target.style.background = 'none'}
+              >
+                ×
+              </button>
+              
+              {/* Artist info */}
+              <h3 style={{
+                color: '#E9D6FF',
+                fontSize: '24px',
+                fontWeight: '700',
+                marginBottom: '16px',
+                textShadow: '0 2px 10px rgba(139, 92, 246, 0.3)'
+              }}>
+                {selectedArtist.name}
+              </h3>
+              
+              <div style={{ marginBottom: '24px' }}>
+                <p style={{ color: '#ffffff', marginBottom: '8px' }}>
+                  <strong>Genres:</strong> {selectedArtist.genres?.join(', ') || 'Melodic Techno, Progressive House'}
+                </p>
+                <p style={{ color: '#ffffff', marginBottom: '8px' }}>
+                  <strong>Followers:</strong> {selectedArtist.followers?.total?.toLocaleString() || '2.1M'}
+                </p>
+                <p style={{ color: '#ffffff' }}>
+                  <strong>Popularity:</strong> {selectedArtist.popularity || 85}/100
+                </p>
+              </div>
+              
+              {/* Similar artists section */}
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ color: '#E9D6FF', fontSize: '18px', marginBottom: '12px' }}>
+                  Similar Artists
+                </h4>
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  {getSimilarArtists(selectedArtist.name).map((similar, index) => (
+                    <div key={index} style={{
+                      background: 'rgba(139, 92, 246, 0.1)',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(139, 92, 246, 0.2)'
+                    }}>
+                      <div style={{ color: '#ffffff', fontWeight: '600' }}>{similar.name}</div>
+                      <div style={{ color: '#DADADA', fontSize: '12px' }}>
+                        {similar.similarity}% similarity • {similar.sharedTracks} shared tracks
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Events section */}
+              <div>
+                <h4 style={{ color: '#E9D6FF', fontSize: '18px', marginBottom: '12px' }}>
+                  Upcoming Events
+                </h4>
+                <div style={{
+                  background: 'rgba(6, 182, 212, 0.1)',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(6, 182, 212, 0.2)',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ color: '#00FFFF', fontWeight: '600', marginBottom: '8px' }}>
+                    {selectedArtist.name} Live at Printworks
+                  </div>
+                  <div style={{ color: '#DADADA', fontSize: '14px', marginBottom: '8px' }}>
+                    Saturday, March 15th • 10pm - 6am
+                  </div>
+                  <button style={{
+                    background: 'linear-gradient(135deg, #00FFFF, #8B5CF6)',
+                    border: 'none',
+                    color: '#ffffff',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'transform 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                  >
+                    Get Tickets
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
