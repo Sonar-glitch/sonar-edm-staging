@@ -999,49 +999,71 @@ const MusicTastePage = () => {
 
     return (
       <div className={styles.card} style={{ 
-        background: 'rgba(0, 0, 0, 0.25)',
-        backdropFilter: 'blur(12px)',
-        padding: '12px 20px',
-        minHeight: '380px',
-        position: 'relative'
+        background: 'linear-gradient(135deg, rgba(15, 15, 30, 0.9), rgba(30, 20, 40, 0.8))',
+        backdropFilter: 'blur(20px)',
+        padding: '20px',
+        minHeight: '400px',
+        position: 'relative',
+        border: '1px solid rgba(139, 92, 246, 0.2)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+        borderRadius: '16px',
+        overflow: 'hidden'
       }}>
+        {/* Ambient background effect */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'radial-gradient(circle at 30% 30%, rgba(139, 92, 246, 0.1) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(6, 182, 212, 0.08) 0%, transparent 50%)',
+          pointerEvents: 'none'
+        }} />
+        
         <h2 className={styles.cardTitle} style={{ 
-          fontSize: '16px',
-          fontWeight: '600', 
+          fontSize: '18px',
+          fontWeight: '700', 
           color: '#E9D6FF',
-          marginBottom: '16px'
+          marginBottom: '20px',
+          textShadow: '0 2px 10px rgba(139, 92, 246, 0.3)',
+          position: 'relative',
+          zIndex: 2
         }}>
           Connected to You
         </h2>
         
-        {/* INFO BUTTON FIX: Top-right position to match other sections */}
+        {/* Enhanced info button */}
         <div 
           style={{
             position: 'absolute',
-            top: '12px',
+            top: '20px',
             right: '20px',
-            width: '18px',
-            height: '18px',
+            width: '22px',
+            height: '22px',
             borderRadius: '50%',
-            background: 'rgba(0, 255, 255, 0.1)',  // Theme cyan background
+            background: 'linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(139, 92, 246, 0.2))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '11px',
-            color: '#00FFFF',  // Theme cyan color
+            fontSize: '12px',
+            color: '#00FFFF',
             cursor: 'pointer',
             fontWeight: '600',
-            border: '1px solid rgba(0, 255, 255, 0.3)',  // Theme cyan border
-            transition: 'all 0.3s ease'
+            border: '1px solid rgba(0, 255, 255, 0.4)',
+            transition: 'all 0.3s ease',
+            zIndex: 10,
+            boxShadow: '0 4px 15px rgba(0, 255, 255, 0.2)'
           }}
           title="Hover for details • Click to expand similar artists"
           onMouseEnter={(e) => {
-            e.target.style.background = 'rgba(0, 255, 255, 0.2)';
+            e.target.style.background = 'linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(139, 92, 246, 0.4))';
             e.target.style.transform = 'scale(1.1)';
+            e.target.style.boxShadow = '0 6px 20px rgba(0, 255, 255, 0.4)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.background = 'rgba(0, 255, 255, 0.1)';
+            e.target.style.background = 'linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(139, 92, 246, 0.2))';
             e.target.style.transform = 'scale(1)';
+            e.target.style.boxShadow = '0 4px 15px rgba(0, 255, 255, 0.2)';
           }}
         >
           ℹ️
@@ -1049,85 +1071,139 @@ const MusicTastePage = () => {
         
         <div style={{ 
           position: 'relative',
-          width: '350px',
-          height: '350px',
-          margin: '0 auto'
+          width: '360px',
+          height: '360px',
+          margin: '0 auto',
+          zIndex: 1
         }}>
-          <svg width="350" height="350" style={{ overflow: 'visible' }}>
-            {/* YOU node in center - FIXED: Proper centering */}
+          <svg width="360" height="360" style={{ overflow: 'visible', filter: 'drop-shadow(0 4px 20px rgba(139, 92, 246, 0.1))' }}>
+            {/* Enhanced gradients with multiple stops */}
+            <defs>
+              {/* Animated gradient for YOU node */}
+              <radialGradient id="youGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+                <stop offset="30%" stopColor="#8B5CF6" stopOpacity="1" />
+                <stop offset="70%" stopColor="#06B6D4" stopOpacity="1" />
+                <stop offset="100%" stopColor="#1E1B4B" stopOpacity="0.8" />
+              </radialGradient>
+              
+              {/* Main artist gradient */}
+              <radialGradient id="artistGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#E879F9" stopOpacity="0.9" />
+                <stop offset="50%" stopColor="#8B5CF6" stopOpacity="1" />
+                <stop offset="100%" stopColor="#581C87" stopOpacity="0.9" />
+              </radialGradient>
+              
+              {/* Similar artist gradient */}
+              <radialGradient id="similarGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#67E8F9" stopOpacity="0.9" />
+                <stop offset="50%" stopColor="#06B6D4" stopOpacity="1" />
+                <stop offset="100%" stopColor="#155E75" stopOpacity="0.9" />
+              </radialGradient>
+              
+              {/* Connection gradients */}
+              <linearGradient id="connectionGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#06B6D4" stopOpacity="0.4" />
+              </linearGradient>
+              
+              <linearGradient id="similarConnection" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="#06B6D4" stopOpacity="0.8" />
+              </linearGradient>
+              
+              {/* Glow effects */}
+              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge> 
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+              
+              <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                <feMerge> 
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            
+            {/* Connection lines with enhanced styling */}
+            {mainArtists.map((artist, index) => (
+              <line
+                key={`line-${index}`}
+                x1="180"
+                y1="180"
+                x2={artist.x}
+                y2={artist.y}
+                stroke="url(#connectionGradient)"
+                strokeWidth="1.5"
+                strokeDasharray="3,2"
+                opacity="0.6"
+                filter="url(#softGlow)"
+              />
+            ))}
+            
+            {/* YOU node with enhanced styling */}
             <circle
-              cx="175"
-              cy="175"
-              r="25"
+              cx="180"
+              cy="180"
+              r="30"
               fill="url(#youGradient)"
-              stroke="rgba(255,255,255,0.3)"
+              stroke="rgba(255,255,255,0.6)"
               strokeWidth="2"
+              filter="url(#glow)"
+              style={{
+                animation: 'pulseGlow 3s ease-in-out infinite'
+              }}
             />
             
-            {/* FIXED: YOU text properly centered */}
+            {/* YOU text with enhanced styling */}
             <text
-              x="175"
-              y="181"
+              x="180"
+              y="186"
               textAnchor="middle"
               dominantBaseline="central"
               fill="#ffffff"
-              fontSize="12"
-              fontWeight="600"
+              fontSize="14"
+              fontWeight="700"
+              textShadow="0 2px 8px rgba(0, 0, 0, 0.8)"
+              filter="url(#softGlow)"
             >
               YOU
             </text>
             
-            {/* Define gradients */}
-            <defs>
-              <linearGradient id="youGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#8B5CF6" />
-                <stop offset="100%" stopColor="#06B6D4" />
-              </linearGradient>
-              <linearGradient id="artistGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#8B5CF6" />
-                <stop offset="100%" stopColor="#A855F7" />
-              </linearGradient>
-              <linearGradient id="similarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#06B6D4" />
-                <stop offset="100%" stopColor="#0891B2" />
-              </linearGradient>
-            </defs>
-            
-            {/* Main artist nodes */}
+            {/* Main artist nodes with enhanced styling */}
             {mainArtists.map((artist, index) => (
               <g key={artist.id || index}>
-                {/* Connection line */}
-                <line
-                  x1="175"
-                  y1="175"
-                  x2={artist.x}
-                  y2={artist.y}
-                  stroke="rgba(139, 92, 246, 0.3)"
-                  strokeWidth="1"
-                  strokeDasharray="2,2"
-                />
-                
-                {/* Artist bubble */}
+                {/* Artist bubble with enhanced effects */}
                 <circle
                   cx={artist.x}
                   cy={artist.y}
-                  r="28"
+                  r="32"
                   fill="url(#artistGradient)"
-                  stroke="rgba(255,255,255,0.3)"
-                  strokeWidth="1"
+                  stroke="rgba(255,255,255,0.4)"
+                  strokeWidth="2"
+                  filter="url(#glow)"
                   style={{ 
                     cursor: 'pointer',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transformOrigin: `${artist.x}px ${artist.y}px`
                   }}
                   onClick={() => toggleArtistExpansion(artist.name)}
                   onMouseEnter={(e) => {
-                    e.target.style.fill = 'rgba(139, 92, 246, 1)';
-                    e.target.style.transform = `scale(1.1)`;
-                    e.target.style.transformOrigin = `${artist.x}px ${artist.y}px`;
+                    e.target.style.filter = 'url(#glow) brightness(1.2)';
+                    e.target.style.transform = 'scale(1.15)';
+                    e.target.style.strokeWidth = '3';
+                    e.target.style.stroke = 'rgba(255,255,255,0.8)';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.fill = 'url(#artistGradient)';
+                    e.target.style.filter = 'url(#glow)';
                     e.target.style.transform = 'scale(1)';
+                    e.target.style.strokeWidth = '2';
+                    e.target.style.stroke = 'rgba(255,255,255,0.4)';
                   }}
                 >
                   <title>
@@ -1135,7 +1211,25 @@ const MusicTastePage = () => {
                   </title>
                 </circle>
                 
-                {/* FIXED: Artist text with proper alignment and responsive sizing */}
+                {/* Artist text with enhanced styling */}
+                <text
+                  x={artist.x}
+                  y={artist.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="#ffffff"
+                  fontSize="11"
+                  fontWeight="600"
+                  style={{ 
+                    cursor: 'pointer',
+                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.8)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  filter="url(#softGlow)"
+                  onClick={() => toggleArtistExpansion(artist.name)}
+                >
+                  {artist.name.length > 9 ? artist.name.substring(0, 9) + '...' : artist.name}
+                </text>
                 <text
                   x={artist.x}
                   y={artist.y}
@@ -1228,17 +1322,36 @@ const MusicTastePage = () => {
             ))}
           </svg>
           
-          {/* Animation styles */}
+          {/* Enhanced animation styles */}
           <style jsx>{`
-            @keyframes fadeInScale {
-              from {
+            @keyframes expandFade {
+              0% {
                 opacity: 0;
-                transform: scale(0.5);
+                transform: scale(0.3) rotate(-180deg);
               }
-              to {
+              60% {
+                opacity: 0.8;
+                transform: scale(1.1) rotate(0deg);
+              }
+              100% {
                 opacity: 1;
+                transform: scale(1) rotate(0deg);
+              }
+            }
+            
+            @keyframes pulseGlow {
+              0%, 100% {
+                filter: url(#glow);
                 transform: scale(1);
               }
+              50% {
+                filter: url(#glow) brightness(1.1);
+                transform: scale(1.05);
+              }
+            }
+            
+            svg {
+              filter: drop-shadow(0 4px 20px rgba(139, 92, 246, 0.1));
             }
           `}</style>
         </div>
@@ -1675,13 +1788,21 @@ const MusicTastePage = () => {
           }}>
             🎪 Events You'll Love
           </h2>
-          <span style={{ 
-            fontSize: '9px', 
-            color: getDataSourceLabel() === 'LIVE' ? 'rgba(16, 185, 129, 0.8)' : 'rgba(255,255,255,0.4)',
-            background: getDataSourceLabel() === 'LIVE' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-            padding: '2px 6px',
-            borderRadius: '3px'
-          }}>
+          <span 
+            style={{ 
+              fontSize: '9px', 
+              color: getDataSourceLabel() === 'LIVE' ? 'rgba(16, 185, 129, 0.8)' : 'rgba(255,255,255,0.4)',
+              background: getDataSourceLabel() === 'LIVE' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
+              padding: '2px 6px',
+              borderRadius: '3px',
+              cursor: 'pointer'
+            }}
+            title={
+              getDataSourceLabel() === 'LIVE' 
+                ? `Last updated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`
+                : `FALLBACK Analysis: ${!events || events.length === 0 ? 'No events data available' : 'Events data incomplete or invalid'}`
+            }
+          >
             {getDataSourceLabel()}
           </span>
         </div>
@@ -1816,13 +1937,17 @@ const MusicTastePage = () => {
             }}>
               🔝 Top Tracks
             </h2>
-            <span style={{ 
-              fontSize: '9px', 
-              color: 'rgba(255,255,255,0.4)',
-              background: 'rgba(255,255,255,0.05)',
-              padding: '2px 6px',
-              borderRadius: '3px'
-            }}>
+            <span 
+              style={{ 
+                fontSize: '9px', 
+                color: 'rgba(255,255,255,0.4)',
+                background: 'rgba(255,255,255,0.05)',
+                padding: '2px 6px',
+                borderRadius: '3px',
+                cursor: 'pointer'
+              }}
+              title="FALLBACK Analysis: No top tracks data available from Spotify API"
+            >
               FALLBACK
             </span>
           </div>
@@ -1854,13 +1979,21 @@ const MusicTastePage = () => {
           </h2>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ 
-              fontSize: '9px', 
-              color: getDataSourceLabel() === 'LIVE' ? 'rgba(16, 185, 129, 0.8)' : 'rgba(255,255,255,0.4)',
-              background: getDataSourceLabel() === 'LIVE' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-              padding: '2px 6px',
-              borderRadius: '3px'
-            }}>
+            <span 
+              style={{ 
+                fontSize: '9px', 
+                color: getDataSourceLabel() === 'LIVE' ? 'rgba(16, 185, 129, 0.8)' : 'rgba(255,255,255,0.4)',
+                background: getDataSourceLabel() === 'LIVE' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
+                padding: '2px 6px',
+                borderRadius: '3px',
+                cursor: 'pointer'
+              }}
+              title={
+                getDataSourceLabel() === 'LIVE' 
+                  ? `Last updated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`
+                  : `FALLBACK Analysis: ${!tracks || tracks.length === 0 ? 'No tracks data available' : 'Tracks data incomplete or invalid'}`
+              }
+            >
               {getDataSourceLabel()}
             </span>
             
