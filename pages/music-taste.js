@@ -48,9 +48,6 @@ const MusicTastePage = () => {
 
   // Recently Liked expand state
   const [showAllRecentlyLiked, setShowAllRecentlyLiked] = useState(false);
-  
-  // Connected to You hover state
-  const [hoveredArtist, setHoveredArtist] = useState(null);
 
   useEffect(() => {
     if (session) {
@@ -400,6 +397,53 @@ const MusicTastePage = () => {
       return hasRealData ? 'LIVE' : 'FALLBACK';
     };
 
+    // FALLBACK ANALYSIS: Investigate why FALLBACK data is being used
+    const getFallbackAnalysis = () => {
+      if (hasRealData) return 'Real-time data from Spotify API';
+      
+      // Detailed investigation of why FALLBACK is triggered
+      const analysis = [];
+      
+      // Check profileData existence
+      if (!profileData) {
+        analysis.push('profileData is null/undefined');
+      } else {
+        analysis.push('profileData exists');
+        
+        // Check recentActivity existence
+        if (!profileData.recentActivity) {
+          analysis.push('recentActivity is missing');
+        } else {
+          analysis.push('recentActivity exists');
+          
+          // Check liked array existence and length
+          if (!profileData.recentActivity.liked) {
+            analysis.push('liked array is missing');
+          } else if (profileData.recentActivity.liked.length === 0) {
+            analysis.push('liked array is empty');
+          } else {
+            analysis.push(`liked array has ${profileData.recentActivity.liked.length} items`);
+            
+            // Check first track structure
+            const firstTrack = profileData.recentActivity.liked[0];
+            if (!firstTrack?.name) {
+              analysis.push('first track missing name property');
+            } else {
+              analysis.push('first track has name');
+            }
+            
+            if (!firstTrack?.artists?.[0]?.name) {
+              analysis.push('first track missing artist name');
+            } else {
+              analysis.push('first track has artist name');
+            }
+          }
+        }
+      }
+      
+      return `FALLBACK Analysis: ${analysis.join(' → ')}`;
+    };
+
     // Display tracks with expand functionality
     const displayTracks = showAllRecentlyLiked ? recentTracks : recentTracks.slice(0, 5);
     
@@ -451,78 +495,35 @@ const MusicTastePage = () => {
           }}>
             Recently Liked
           </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ 
+          <span 
+            style={{ 
               fontSize: '9px', 
               color: getDataSourceLabel() === 'LIVE' ? '#00FFFF' : '#DADADA',  // Theme colors: cyan for live, light gray for fallback
               background: getDataSourceLabel() === 'LIVE' ? 'rgba(0, 255, 255, 0.1)' : 'rgba(218, 218, 218, 0.05)',
               padding: '2px 6px',
               borderRadius: '3px',
-              border: getDataSourceLabel() === 'LIVE' ? '1px solid rgba(0, 255, 255, 0.3)' : '1px solid rgba(218, 218, 218, 0.1)'
-            }}>
-              {getDataSourceLabel()}
-            </span>
-            
-            {/* MYSTERY ANALYSIS: Only show for FALLBACK data */}
-            {getDataSourceLabel() === 'FALLBACK' && (
-              <div
-                style={{
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                  background: 'rgba(255, 215, 0, 0.1)',
-                  border: '1px solid rgba(255, 215, 0, 0.3)',
-                  borderRadius: '4px',
-                  fontSize: '10px',
-                  color: '#FFD700',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(255, 215, 0, 0.2)';
-                  e.target.style.transform = 'scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(255, 215, 0, 0.1)';
-                  e.target.style.transform = 'scale(1)';
-                }}
-                onClick={() => {
-                  const recentTracks = profileData?.recentActivity?.liked || [];
-                  const hasRealData = recentTracks.length > 0 && recentTracks[0]?.name && recentTracks[0]?.artists?.[0]?.name;
-                  
-                  let analysisMessage = "🔍 FALLBACK MYSTERY ANALYSIS:\n\n";
-                  
-                  if (!profileData) {
-                    analysisMessage += "❌ No profile data loaded\n• API call to /api/user/taste-profile failed or returned null";
-                  } else if (!profileData.recentActivity) {
-                    analysisMessage += "❌ No recentActivity in profile data\n• profileData exists but missing recentActivity object";
-                  } else if (!profileData.recentActivity.liked) {
-                    analysisMessage += "❌ No liked tracks in recentActivity\n• recentActivity exists but liked array is missing";
-                  } else if (profileData.recentActivity.liked.length === 0) {
-                    analysisMessage += "❌ Empty liked tracks array\n• recentActivity.liked exists but contains no tracks";
-                  } else if (!recentTracks[0]?.name) {
-                    analysisMessage += "❌ First track missing name property\n• Track exists but has no 'name' field";
-                  } else if (!recentTracks[0]?.artists?.[0]?.name) {
-                    analysisMessage += "❌ First track missing artist name\n• Track has name but artists[0].name is missing";
-                  } else {
-                    analysisMessage += "✅ Data structure looks correct\n• This shouldn't be FALLBACK - possible logic error";
-                  }
-                  
-                  analysisMessage += "\n\n📊 CURRENT DATA STATE:";
-                  analysisMessage += `\n• profileData: ${profileData ? 'EXISTS' : 'NULL'}`;
-                  analysisMessage += `\n• recentActivity: ${profileData?.recentActivity ? 'EXISTS' : 'MISSING'}`;
-                  analysisMessage += `\n• liked array: ${profileData?.recentActivity?.liked ? `${profileData.recentActivity.liked.length} items` : 'MISSING'}`;
-                  
-                  if (recentTracks.length > 0) {
-                    analysisMessage += `\n• First track name: ${recentTracks[0]?.name || 'MISSING'}`;
-                    analysisMessage += `\n• First track artist: ${recentTracks[0]?.artists?.[0]?.name || 'MISSING'}`;
-                  }
-                  
-                  alert(analysisMessage);
-                }}
-              >
-                🔍 Why FALLBACK?
-              </div>
-            )}
-          </div>
+              border: getDataSourceLabel() === 'LIVE' ? '1px solid rgba(0, 255, 255, 0.3)' : '1px solid rgba(218, 218, 218, 0.1)',
+              cursor: getDataSourceLabel() === 'FALLBACK' ? 'help' : 'default',
+              transition: 'all 0.3s ease'
+            }}
+            title={getDataSourceLabel() === 'FALLBACK' ? getFallbackAnalysis() : 'Real-time data from Spotify API'}
+            onMouseEnter={(e) => {
+              if (getDataSourceLabel() === 'FALLBACK') {
+                e.target.style.background = 'rgba(255, 215, 0, 0.1)';  // Mustard color on hover
+                e.target.style.color = '#FFD700';  // Mustard text color
+                e.target.style.border = '1px solid rgba(255, 215, 0, 0.3)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (getDataSourceLabel() === 'FALLBACK') {
+                e.target.style.background = 'rgba(218, 218, 218, 0.05)';
+                e.target.style.color = '#DADADA';
+                e.target.style.border = '1px solid rgba(218, 218, 218, 0.1)';
+              }
+            }}
+          >
+            {getDataSourceLabel()}
+          </span>
         </div>
         
         <div style={{ 
@@ -1128,9 +1129,9 @@ const MusicTastePage = () => {
                 {expandedArtists.has(artist.name) && artist.similarArtists.map((similar, simIndex) => {
                   // FIXED POSITIONING: Proper radial expansion outward from main artist
                   const baseAngle = (index * 60) * (Math.PI / 180); // Main artist angle
-                  const spreadAngle = 40; // Increased spread to prevent overlap
+                  const spreadAngle = 30; // Degrees to spread similar artists
                   const simAngle = baseAngle + ((simIndex - 1) * spreadAngle * (Math.PI / 180)); // Spread around main artist
-                  const simRadius = 150; // Increased radius for better spacing
+                  const simRadius = 140; // Increased radius to avoid overlap
                   const simX = 175 + simRadius * Math.cos(simAngle); // Updated center coordinates
                   const simY = 175 + simRadius * Math.sin(simAngle); // Updated center coordinates
                   
@@ -1150,7 +1151,7 @@ const MusicTastePage = () => {
                         strokeDasharray="1,1"
                       />
                       
-                      {/* SYNCHRONIZED BUBBLE: Moves with text */}
+                      {/* THEMATIC COLORS: Using brand colors */}
                       <circle
                         cx={simX}
                         cy={simY}
@@ -1165,24 +1166,20 @@ const MusicTastePage = () => {
                         onMouseEnter={(e) => {
                           e.target.style.fill = 'rgba(6, 182, 212, 1)';
                           e.target.style.transform = 'scale(1.1)';
-                          // Also scale the corresponding text
-                          const textElement = e.target.nextElementSibling;
-                          if (textElement && textElement.tagName === 'text') {
-                            textElement.style.transform = 'scale(1.1)';
-                          }
+                          // Show positioned tooltip
+                          const tooltip = document.querySelector(`.tooltip-${artist.name}-${simIndex}`);
+                          if (tooltip) tooltip.style.opacity = '1';
                         }}
                         onMouseLeave={(e) => {
                           e.target.style.fill = 'rgba(6, 182, 212, 0.8)';
                           e.target.style.transform = 'scale(1)';
-                          // Also reset the corresponding text
-                          const textElement = e.target.nextElementSibling;
-                          if (textElement && textElement.tagName === 'text') {
-                            textElement.style.transform = 'scale(1)';
-                          }
+                          // Hide positioned tooltip
+                          const tooltip = document.querySelector(`.tooltip-${artist.name}-${simIndex}`);
+                          if (tooltip) tooltip.style.opacity = '0';
                         }}
                       />
                       
-                      {/* SYNCHRONIZED TEXT: Exact same coordinates as bubble */}
+                      {/* FIXED TEXT POSITIONING: Text moves with bubble */}
                       <text
                         x={simX}
                         y={simY + 2}
@@ -1192,73 +1189,46 @@ const MusicTastePage = () => {
                         fontWeight="500"
                         style={{ 
                           cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          transformOrigin: `${simX}px ${simY + 2}px` // Ensure transform origin matches position
-                        }}
-                        title=""
-                        onMouseEnter={(e) => {
-                          // Synchronize with bubble hover
-                          const bubbleElement = e.target.previousElementSibling;
-                          if (bubbleElement && bubbleElement.tagName === 'circle') {
-                            bubbleElement.style.fill = 'rgba(6, 182, 212, 1)';
-                            bubbleElement.style.transform = 'scale(1.1)';
-                          }
-                          e.target.style.transform = 'scale(1.1)';
-                          
-                          // Show positioned tooltip
-                          setHoveredArtist({
-                            name: similar.name,
-                            similarity: similar.similarity,
-                            sharedGenres: similar.sharedGenres,
-                            sharedTracks: similar.sharedTracks,
-                            x: simX,
-                            y: simY
-                          });
-                        }}
-                        onMouseLeave={(e) => {
-                          // Synchronize with bubble hover
-                          const bubbleElement = e.target.previousElementSibling;
-                          if (bubbleElement && bubbleElement.tagName === 'circle') {
-                            bubbleElement.style.fill = 'rgba(6, 182, 212, 0.8)';
-                            bubbleElement.style.transform = 'scale(1)';
-                          }
-                          e.target.style.transform = 'scale(1)';
-                          
-                          // Hide tooltip
-                          setHoveredArtist(null);
+                          transition: 'all 0.3s ease' // Smooth movement with bubble
                         }}
                       >
                         {similar.name.length > 6 ? similar.name.substring(0, 6) + '...' : similar.name}
                       </text>
+                      
+                      {/* POSITIONED TOOLTIP: Custom tooltip that follows bubble position */}
+                      <foreignObject
+                        x={simX - 80}
+                        y={simY - 45}
+                        width="160"
+                        height="30"
+                        style={{ 
+                          pointerEvents: 'none',
+                          opacity: 0,
+                          transition: 'opacity 0.3s ease'
+                        }}
+                        className={`tooltip-${artist.name}-${simIndex}`}
+                      >
+                        <div style={{
+                          background: 'rgba(0, 0, 0, 0.9)',
+                          color: '#DADADA',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          textAlign: 'center',
+                          border: '1px solid rgba(0, 255, 255, 0.3)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {similar.name} • {similar.similarity}% similarity • {similar.sharedGenres.join(', ')}
+                        </div>
+                      </foreignObject>
                     </g>
                   );
                 })}
               </g>
             ))}
           </svg>
-          
-          {/* POSITIONED TOOLTIP: Replaces HTML title attribute */}
-          {hoveredArtist && (
-            <div
-              style={{
-                position: 'absolute',
-                left: hoveredArtist.x + 20,
-                top: hoveredArtist.y - 30,
-                background: 'rgba(0, 0, 0, 0.9)',
-                color: '#DADADA',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                whiteSpace: 'nowrap',
-                zIndex: 1000,
-                border: '1px solid rgba(0, 255, 255, 0.3)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                pointerEvents: 'none'
-              }}
-            >
-              {hoveredArtist.name} • {hoveredArtist.similarity}% similarity • Shared genres: {hoveredArtist.sharedGenres.join(', ')} • {hoveredArtist.sharedTracks} shared tracks
-            </div>
-          )}
           
           {/* SMOOTH TRANSITIONS: CSS animation */}
           <style jsx>{`
@@ -2088,3 +2058,4 @@ const MusicTastePage = () => {
 };
 
 export default MusicTastePage;
+
