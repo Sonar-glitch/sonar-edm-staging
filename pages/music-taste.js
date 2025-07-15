@@ -48,6 +48,9 @@ const MusicTastePage = () => {
 
   // Recently Liked expand state
   const [showAllRecentlyLiked, setShowAllRecentlyLiked] = useState(false);
+  
+  // Connected to You hover state
+  const [hoveredArtist, setHoveredArtist] = useState(null);
 
   useEffect(() => {
     if (session) {
@@ -461,6 +464,64 @@ const MusicTastePage = () => {
             </span>
             
             {/* MYSTERY ANALYSIS: Only show for FALLBACK data */}
+            {getDataSourceLabel() === 'FALLBACK' && (
+              <div
+                style={{
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  background: 'rgba(255, 215, 0, 0.1)',
+                  border: '1px solid rgba(255, 215, 0, 0.3)',
+                  borderRadius: '4px',
+                  fontSize: '10px',
+                  color: '#FFD700',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(255, 215, 0, 0.2)';
+                  e.target.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(255, 215, 0, 0.1)';
+                  e.target.style.transform = 'scale(1)';
+                }}
+                onClick={() => {
+                  const recentTracks = profileData?.recentActivity?.liked || [];
+                  const hasRealData = recentTracks.length > 0 && recentTracks[0]?.name && recentTracks[0]?.artists?.[0]?.name;
+                  
+                  let analysisMessage = "🔍 FALLBACK MYSTERY ANALYSIS:\n\n";
+                  
+                  if (!profileData) {
+                    analysisMessage += "❌ No profile data loaded\n• API call to /api/user/taste-profile failed or returned null";
+                  } else if (!profileData.recentActivity) {
+                    analysisMessage += "❌ No recentActivity in profile data\n• profileData exists but missing recentActivity object";
+                  } else if (!profileData.recentActivity.liked) {
+                    analysisMessage += "❌ No liked tracks in recentActivity\n• recentActivity exists but liked array is missing";
+                  } else if (profileData.recentActivity.liked.length === 0) {
+                    analysisMessage += "❌ Empty liked tracks array\n• recentActivity.liked exists but contains no tracks";
+                  } else if (!recentTracks[0]?.name) {
+                    analysisMessage += "❌ First track missing name property\n• Track exists but has no 'name' field";
+                  } else if (!recentTracks[0]?.artists?.[0]?.name) {
+                    analysisMessage += "❌ First track missing artist name\n• Track has name but artists[0].name is missing";
+                  } else {
+                    analysisMessage += "✅ Data structure looks correct\n• This shouldn't be FALLBACK - possible logic error";
+                  }
+                  
+                  analysisMessage += "\n\n📊 CURRENT DATA STATE:";
+                  analysisMessage += `\n• profileData: ${profileData ? 'EXISTS' : 'NULL'}`;
+                  analysisMessage += `\n• recentActivity: ${profileData?.recentActivity ? 'EXISTS' : 'MISSING'}`;
+                  analysisMessage += `\n• liked array: ${profileData?.recentActivity?.liked ? `${profileData.recentActivity.liked.length} items` : 'MISSING'}`;
+                  
+                  if (recentTracks.length > 0) {
+                    analysisMessage += `\n• First track name: ${recentTracks[0]?.name || 'MISSING'}`;
+                    analysisMessage += `\n• First track artist: ${recentTracks[0]?.artists?.[0]?.name || 'MISSING'}`;
+                  }
+                  
+                  alert(analysisMessage);
+                }}
+              >
+                🔍 Why FALLBACK?
+              </div>
+            )}
           </div>
         </div>
         
@@ -1134,7 +1195,7 @@ const MusicTastePage = () => {
                           transition: 'all 0.3s ease',
                           transformOrigin: `${simX}px ${simY + 2}px` // Ensure transform origin matches position
                         }}
-                        title={`${similar.name} • ${similar.similarity}% similarity • Shared genres: ${similar.sharedGenres.join(', ')} • ${similar.sharedTracks} shared tracks in your library`}
+                        title=""
                         onMouseEnter={(e) => {
                           // Synchronize with bubble hover
                           const bubbleElement = e.target.previousElementSibling;
@@ -1143,6 +1204,16 @@ const MusicTastePage = () => {
                             bubbleElement.style.transform = 'scale(1.1)';
                           }
                           e.target.style.transform = 'scale(1.1)';
+                          
+                          // Show positioned tooltip
+                          setHoveredArtist({
+                            name: similar.name,
+                            similarity: similar.similarity,
+                            sharedGenres: similar.sharedGenres,
+                            sharedTracks: similar.sharedTracks,
+                            x: simX,
+                            y: simY
+                          });
                         }}
                         onMouseLeave={(e) => {
                           // Synchronize with bubble hover
@@ -1152,6 +1223,9 @@ const MusicTastePage = () => {
                             bubbleElement.style.transform = 'scale(1)';
                           }
                           e.target.style.transform = 'scale(1)';
+                          
+                          // Hide tooltip
+                          setHoveredArtist(null);
                         }}
                       >
                         {similar.name.length > 6 ? similar.name.substring(0, 6) + '...' : similar.name}
@@ -1162,6 +1236,29 @@ const MusicTastePage = () => {
               </g>
             ))}
           </svg>
+          
+          {/* POSITIONED TOOLTIP: Replaces HTML title attribute */}
+          {hoveredArtist && (
+            <div
+              style={{
+                position: 'absolute',
+                left: hoveredArtist.x + 20,
+                top: hoveredArtist.y - 30,
+                background: 'rgba(0, 0, 0, 0.9)',
+                color: '#DADADA',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                whiteSpace: 'nowrap',
+                zIndex: 1000,
+                border: '1px solid rgba(0, 255, 255, 0.3)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                pointerEvents: 'none'
+              }}
+            >
+              {hoveredArtist.name} • {hoveredArtist.similarity}% similarity • Shared genres: {hoveredArtist.sharedGenres.join(', ')} • {hoveredArtist.sharedTracks} shared tracks
+            </div>
+          )}
           
           {/* SMOOTH TRANSITIONS: CSS animation */}
           <style jsx>{`
