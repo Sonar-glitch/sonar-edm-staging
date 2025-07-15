@@ -1350,46 +1350,6 @@ const MusicTastePage = () => {
                     </g>
                   );
                 })}
-                        r="20"
-                        fill="url(#similarGradient)"
-                        stroke="rgba(255,255,255,0.2)"
-                        strokeWidth="1"
-                        style={{ 
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.fill = 'rgba(6, 182, 212, 1)';
-                          e.target.style.transform = `scale(1.1)`;
-                          e.target.style.transformOrigin = `${simX}px ${simY}px`;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.fill = 'url(#similarGradient)';
-                          e.target.style.transform = 'scale(1)';
-                        }}
-                      >
-                        <title>
-                          {similar.name} • {similar.similarity}% similarity • Shared genres: {similar.sharedGenres.join(', ')} • {similar.sharedTracks} shared tracks
-                        </title>
-                      </circle>
-                      
-                      {/* FIXED: Similar artist text with perfect centering */}
-                      <text
-                        x={simX}
-                        y={simY}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fill="#ffffff"
-                        fontSize="8"
-                        fontWeight="500"
-                        style={{ cursor: 'pointer' }}
-                      >
-                        {/* FIXED: Better truncation for smaller bubbles */}
-                        {similar.name.length > 8 ? similar.name.substring(0, 8) + '...' : similar.name}
-                      </text>
-                    </g>
-                  );
-                })}
               </g>
             ))}
           </svg>
