@@ -2121,6 +2121,9 @@ const MusicTastePage = () => {
   const TopTracks = ({ spotifyData }) => {
     const tracks = spotifyData?.tracks?.items || [];
     
+    // Mock user play counts for demonstration
+    const userPlayCounts = [45, 32, 67, 23, 89, 12, 56, 78];
+    
     // Get play count with consistent values to prevent hydration mismatch
     const getPlayCount = (track, index) => {
       if (!track) return 0;
@@ -2256,7 +2259,7 @@ const MusicTastePage = () => {
           overflowY: 'auto'
         }}>
           {tracks.slice(0, 8).map((track, index) => {
-            const userPlayCount = getUserPlayCounts(track, index);
+            const userPlayCount = getPlayCount(track.name || `track-${index}`, index);
             const smartMatchExplanation = getSmartMatchExplanation(track, userPlayCount, index);
             
             return (
