@@ -312,6 +312,21 @@ const MusicTastePage = () => {
   const RecentlyLiked = ({ profileData }) => {
     const recentTracks = profileData?.recentActivity?.liked || [];
     
+    // DEBUG: Log actual data structure to understand why FALLBACK is triggered
+    console.log('=== RECENTLY LIKED DEBUG ===');
+    console.log('profileData:', profileData);
+    console.log('recentActivity:', profileData?.recentActivity);
+    console.log('liked array:', profileData?.recentActivity?.liked);
+    console.log('liked array length:', profileData?.recentActivity?.liked?.length);
+    if (profileData?.recentActivity?.liked?.length > 0) {
+      console.log('First track:', profileData.recentActivity.liked[0]);
+      console.log('First track name:', profileData.recentActivity.liked[0]?.name);
+      console.log('First track artists:', profileData.recentActivity.liked[0]?.artists);
+      console.log('First track artist[0]:', profileData.recentActivity.liked[0]?.artists?.[0]);
+      console.log('First track artist[0].name:', profileData.recentActivity.liked[0]?.artists?.[0]?.name);
+    }
+    console.log('=== END DEBUG ===');
+    
     // REAL DATA: Check if we have actual Spotify data
     const hasRealData = recentTracks.length > 0 && recentTracks[0]?.name && recentTracks[0]?.artists?.[0]?.name;
     
@@ -1043,24 +1058,27 @@ const MusicTastePage = () => {
         
         <div style={{ 
           position: 'relative',
-          width: '350px',  // Increased from 300px to accommodate expanded bubbles
-          height: '350px',  // Increased from 300px to accommodate expanded bubbles
+          width: '350px',
+          height: '350px',
           margin: '0 auto'
         }}>
-          <svg width="350" height="350" style={{ overflow: 'visible' }}>  {/* Added overflow visible */}
-            {/* YOU node in center */}
+          <svg width="350" height="350" style={{ overflow: 'visible' }}>
+            {/* YOU node in center - FIXED: Proper centering */}
             <circle
-              cx="175"  // Updated center for larger SVG
-              cy="175"  // Updated center for larger SVG
+              cx="175"
+              cy="175"
               r="25"
-              fill="linear-gradient(135deg, #8B5CF6, #06B6D4)"
+              fill="url(#youGradient)"
               stroke="rgba(255,255,255,0.3)"
               strokeWidth="2"
             />
+            
+            {/* FIXED: YOU text properly centered */}
             <text
-              x="150"
-              y="155"
+              x="175"
+              y="181"
               textAnchor="middle"
+              dominantBaseline="central"
               fill="#ffffff"
               fontSize="12"
               fontWeight="600"
@@ -1068,13 +1086,29 @@ const MusicTastePage = () => {
               YOU
             </text>
             
+            {/* Define gradients */}
+            <defs>
+              <linearGradient id="youGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8B5CF6" />
+                <stop offset="100%" stopColor="#06B6D4" />
+              </linearGradient>
+              <linearGradient id="artistGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8B5CF6" />
+                <stop offset="100%" stopColor="#A855F7" />
+              </linearGradient>
+              <linearGradient id="similarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#06B6D4" />
+                <stop offset="100%" stopColor="#0891B2" />
+              </linearGradient>
+            </defs>
+            
             {/* Main artist nodes */}
             {mainArtists.map((artist, index) => (
               <g key={artist.id || index}>
                 {/* Connection line */}
                 <line
-                  x1="150"
-                  y1="150"
+                  x1="175"
+                  y1="175"
                   x2={artist.x}
                   y2={artist.y}
                   stroke="rgba(139, 92, 246, 0.3)"
@@ -1082,12 +1116,12 @@ const MusicTastePage = () => {
                   strokeDasharray="2,2"
                 />
                 
-                {/* LARGER BUBBLES: Increased from 44px to 56px */}
+                {/* Artist bubble */}
                 <circle
                   cx={artist.x}
                   cy={artist.y}
                   r="28"
-                  fill="rgba(139, 92, 246, 0.8)"
+                  fill="url(#artistGradient)"
                   stroke="rgba(255,255,255,0.3)"
                   strokeWidth="1"
                   style={{ 
@@ -1097,43 +1131,47 @@ const MusicTastePage = () => {
                   onClick={() => toggleArtistExpansion(artist.name)}
                   onMouseEnter={(e) => {
                     e.target.style.fill = 'rgba(139, 92, 246, 1)';
-                    e.target.style.transform = 'scale(1.1)';
+                    e.target.style.transform = `scale(1.1)`;
+                    e.target.style.transformOrigin = `${artist.x}px ${artist.y}px`;
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.fill = 'rgba(139, 92, 246, 0.8)';
+                    e.target.style.fill = 'url(#artistGradient)';
                     e.target.style.transform = 'scale(1)';
                   }}
                 >
-                  {/* HOVER DETAILS: Add title for hover information */}
                   <title>
                     {artist.name} • {artist.popularity || 85}% similarity • Shared genres: {artist.genres?.slice(0, 2).join(', ') || 'Melodic Techno, Progressive House'} • 15 shared tracks in your library • Click to expand similar artists
                   </title>
                 </circle>
                 
-                {/* LARGER TEXT: Increased from 9px to 11px */}
+                {/* FIXED: Artist text with proper alignment and responsive sizing */}
                 <text
                   x={artist.x}
-                  y={artist.y + 2}
+                  y={artist.y}
                   textAnchor="middle"
+                  dominantBaseline="central"
                   fill="#ffffff"
-                  fontSize="11"
+                  fontSize="10"
                   fontWeight="600"
-                  style={{ cursor: 'pointer' }}
+                  style={{ 
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
                   onClick={() => toggleArtistExpansion(artist.name)}
-                  title={`${artist.name} • ${artist.popularity || 85}% popularity • Shared genres: ${artist.genres?.slice(0, 2).join(', ') || 'Electronic, Dance'} • Click to expand similar artists`}
                 >
-                  {artist.name.length > 8 ? artist.name.substring(0, 8) + '...' : artist.name}
+                  {/* FIXED: Better text truncation logic */}
+                  {artist.name.length > 10 ? artist.name.substring(0, 10) + '...' : artist.name}
                 </text>
                 
-                {/* EXPANDED SIMILAR ARTISTS: Fixed radial positioning */}
+                {/* FIXED: Expanded similar artists with proper positioning */}
                 {expandedArtists.has(artist.name) && artist.similarArtists.map((similar, simIndex) => {
-                  // FIXED POSITIONING: Proper radial expansion outward from main artist
-                  const baseAngle = (index * 60) * (Math.PI / 180); // Main artist angle
-                  const spreadAngle = 30; // Degrees to spread similar artists
-                  const simAngle = baseAngle + ((simIndex - 1) * spreadAngle * (Math.PI / 180)); // Spread around main artist
-                  const simRadius = 140; // Increased radius to avoid overlap
-                  const simX = 175 + simRadius * Math.cos(simAngle); // Updated center coordinates
-                  const simY = 175 + simRadius * Math.sin(simAngle); // Updated center coordinates
+                  // FIXED: Better radial positioning to avoid overlaps
+                  const baseAngle = (index * 60) * (Math.PI / 180);
+                  const spreadAngle = 40; // Increased spread
+                  const simAngle = baseAngle + ((simIndex - 1) * spreadAngle * (Math.PI / 180));
+                  const simRadius = 150; // Increased radius for better spacing
+                  const simX = 175 + simRadius * Math.cos(simAngle);
+                  const simY = 175 + simRadius * Math.sin(simAngle);
                   
                   return (
                     <g key={`${artist.name}-${simIndex}`} style={{ 
@@ -1151,12 +1189,12 @@ const MusicTastePage = () => {
                         strokeDasharray="1,1"
                       />
                       
-                      {/* THEMATIC COLORS: Using brand colors */}
+                      {/* Similar artist bubble */}
                       <circle
                         cx={simX}
                         cy={simY}
                         r="20"
-                        fill="rgba(6, 182, 212, 0.8)"
+                        fill="url(#similarGradient)"
                         stroke="rgba(255,255,255,0.2)"
                         strokeWidth="1"
                         style={{ 
@@ -1165,64 +1203,33 @@ const MusicTastePage = () => {
                         }}
                         onMouseEnter={(e) => {
                           e.target.style.fill = 'rgba(6, 182, 212, 1)';
-                          e.target.style.transform = 'scale(1.1)';
-                          // Show positioned tooltip
-                          const tooltip = document.querySelector(`.tooltip-${artist.name}-${simIndex}`);
-                          if (tooltip) tooltip.style.opacity = '1';
+                          e.target.style.transform = `scale(1.1)`;
+                          e.target.style.transformOrigin = `${simX}px ${simY}px`;
                         }}
                         onMouseLeave={(e) => {
-                          e.target.style.fill = 'rgba(6, 182, 212, 0.8)';
+                          e.target.style.fill = 'url(#similarGradient)';
                           e.target.style.transform = 'scale(1)';
-                          // Hide positioned tooltip
-                          const tooltip = document.querySelector(`.tooltip-${artist.name}-${simIndex}`);
-                          if (tooltip) tooltip.style.opacity = '0';
                         }}
-                      />
+                      >
+                        <title>
+                          {similar.name} • {similar.similarity}% similarity • Shared genres: {similar.sharedGenres.join(', ')} • {similar.sharedTracks} shared tracks
+                        </title>
+                      </circle>
                       
-                      {/* FIXED TEXT POSITIONING: Text moves with bubble */}
+                      {/* FIXED: Similar artist text with perfect centering */}
                       <text
                         x={simX}
-                        y={simY + 2}
+                        y={simY}
                         textAnchor="middle"
+                        dominantBaseline="central"
                         fill="#ffffff"
-                        fontSize="9"
+                        fontSize="8"
                         fontWeight="500"
-                        style={{ 
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease' // Smooth movement with bubble
-                        }}
+                        style={{ cursor: 'pointer' }}
                       >
-                        {similar.name.length > 6 ? similar.name.substring(0, 6) + '...' : similar.name}
+                        {/* FIXED: Better truncation for smaller bubbles */}
+                        {similar.name.length > 8 ? similar.name.substring(0, 8) + '...' : similar.name}
                       </text>
-                      
-                      {/* POSITIONED TOOLTIP: Custom tooltip that follows bubble position */}
-                      <foreignObject
-                        x={simX - 80}
-                        y={simY - 45}
-                        width="160"
-                        height="30"
-                        style={{ 
-                          pointerEvents: 'none',
-                          opacity: 0,
-                          transition: 'opacity 0.3s ease'
-                        }}
-                        className={`tooltip-${artist.name}-${simIndex}`}
-                      >
-                        <div style={{
-                          background: 'rgba(0, 0, 0, 0.9)',
-                          color: '#DADADA',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          fontSize: '10px',
-                          textAlign: 'center',
-                          border: '1px solid rgba(0, 255, 255, 0.3)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}>
-                          {similar.name} • {similar.similarity}% similarity • {similar.sharedGenres.join(', ')}
-                        </div>
-                      </foreignObject>
                     </g>
                   );
                 })}
@@ -1230,7 +1237,7 @@ const MusicTastePage = () => {
             ))}
           </svg>
           
-          {/* SMOOTH TRANSITIONS: CSS animation */}
+          {/* Animation styles */}
           <style jsx>{`
             @keyframes fadeInScale {
               from {
