@@ -1,4 +1,4 @@
-/ pages/music-taste.js - VERIFIED FIXES: Hero background + API data + Hover + Info placement + Real Events
+// pages/music-taste.js - VERIFIED FIXES: Hero background + API data + Hover + Info placement + Real Events
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '../components/AppLayout';
