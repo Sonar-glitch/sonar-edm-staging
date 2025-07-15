@@ -448,16 +448,20 @@ const MusicTastePage = () => {
           }}>
             Recently Liked
           </h2>
-          <span style={{ 
-            fontSize: '9px', 
-            color: getDataSourceLabel() === 'LIVE' ? '#00FFFF' : '#DADADA',  // Theme colors: cyan for live, light gray for fallback
-            background: getDataSourceLabel() === 'LIVE' ? 'rgba(0, 255, 255, 0.1)' : 'rgba(218, 218, 218, 0.05)',
-            padding: '2px 6px',
-            borderRadius: '3px',
-            border: getDataSourceLabel() === 'LIVE' ? '1px solid rgba(0, 255, 255, 0.3)' : '1px solid rgba(218, 218, 218, 0.1)'
-          }}>
-            {getDataSourceLabel()}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ 
+              fontSize: '9px', 
+              color: getDataSourceLabel() === 'LIVE' ? '#00FFFF' : '#DADADA',  // Theme colors: cyan for live, light gray for fallback
+              background: getDataSourceLabel() === 'LIVE' ? 'rgba(0, 255, 255, 0.1)' : 'rgba(218, 218, 218, 0.05)',
+              padding: '2px 6px',
+              borderRadius: '3px',
+              border: getDataSourceLabel() === 'LIVE' ? '1px solid rgba(0, 255, 255, 0.3)' : '1px solid rgba(218, 218, 218, 0.1)'
+            }}>
+              {getDataSourceLabel()}
+            </span>
+            
+            {/* MYSTERY ANALYSIS: Only show for FALLBACK data */}
+          </div>
         </div>
         
         <div style={{ 
@@ -1063,9 +1067,9 @@ const MusicTastePage = () => {
                 {expandedArtists.has(artist.name) && artist.similarArtists.map((similar, simIndex) => {
                   // FIXED POSITIONING: Proper radial expansion outward from main artist
                   const baseAngle = (index * 60) * (Math.PI / 180); // Main artist angle
-                  const spreadAngle = 30; // Degrees to spread similar artists
+                  const spreadAngle = 40; // Increased spread to prevent overlap
                   const simAngle = baseAngle + ((simIndex - 1) * spreadAngle * (Math.PI / 180)); // Spread around main artist
-                  const simRadius = 140; // Increased radius to avoid overlap
+                  const simRadius = 150; // Increased radius for better spacing
                   const simX = 175 + simRadius * Math.cos(simAngle); // Updated center coordinates
                   const simY = 175 + simRadius * Math.sin(simAngle); // Updated center coordinates
                   
@@ -1085,7 +1089,7 @@ const MusicTastePage = () => {
                         strokeDasharray="1,1"
                       />
                       
-                      {/* THEMATIC COLORS: Using brand colors */}
+                      {/* SYNCHRONIZED BUBBLE: Moves with text */}
                       <circle
                         cx={simX}
                         cy={simY}
@@ -1100,14 +1104,24 @@ const MusicTastePage = () => {
                         onMouseEnter={(e) => {
                           e.target.style.fill = 'rgba(6, 182, 212, 1)';
                           e.target.style.transform = 'scale(1.1)';
+                          // Also scale the corresponding text
+                          const textElement = e.target.nextElementSibling;
+                          if (textElement && textElement.tagName === 'text') {
+                            textElement.style.transform = 'scale(1.1)';
+                          }
                         }}
                         onMouseLeave={(e) => {
                           e.target.style.fill = 'rgba(6, 182, 212, 0.8)';
                           e.target.style.transform = 'scale(1)';
+                          // Also reset the corresponding text
+                          const textElement = e.target.nextElementSibling;
+                          if (textElement && textElement.tagName === 'text') {
+                            textElement.style.transform = 'scale(1)';
+                          }
                         }}
                       />
                       
-                      {/* FIXED TEXT POSITIONING: Text moves with bubble */}
+                      {/* SYNCHRONIZED TEXT: Exact same coordinates as bubble */}
                       <text
                         x={simX}
                         y={simY + 2}
@@ -1117,9 +1131,28 @@ const MusicTastePage = () => {
                         fontWeight="500"
                         style={{ 
                           cursor: 'pointer',
-                          transition: 'all 0.3s ease' // Smooth movement with bubble
+                          transition: 'all 0.3s ease',
+                          transformOrigin: `${simX}px ${simY + 2}px` // Ensure transform origin matches position
                         }}
                         title={`${similar.name} • ${similar.similarity}% similarity • Shared genres: ${similar.sharedGenres.join(', ')} • ${similar.sharedTracks} shared tracks in your library`}
+                        onMouseEnter={(e) => {
+                          // Synchronize with bubble hover
+                          const bubbleElement = e.target.previousElementSibling;
+                          if (bubbleElement && bubbleElement.tagName === 'circle') {
+                            bubbleElement.style.fill = 'rgba(6, 182, 212, 1)';
+                            bubbleElement.style.transform = 'scale(1.1)';
+                          }
+                          e.target.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          // Synchronize with bubble hover
+                          const bubbleElement = e.target.previousElementSibling;
+                          if (bubbleElement && bubbleElement.tagName === 'circle') {
+                            bubbleElement.style.fill = 'rgba(6, 182, 212, 0.8)';
+                            bubbleElement.style.transform = 'scale(1)';
+                          }
+                          e.target.style.transform = 'scale(1)';
+                        }}
                       >
                         {similar.name.length > 6 ? similar.name.substring(0, 6) + '...' : similar.name}
                       </text>
@@ -1958,6 +1991,3 @@ const MusicTastePage = () => {
 };
 
 export default MusicTastePage;
-
-
-
