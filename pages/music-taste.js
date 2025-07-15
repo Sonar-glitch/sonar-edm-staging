@@ -1267,9 +1267,26 @@ const MusicTastePage = () => {
                     transition: 'all 0.3s ease'
                   }}
                   filter="url(#softGlow)"
-                  onClick={() => toggleArtistExpansion(artist.name)}
+                  onClick={() => handleArtistClick(artist)}
                 >
                   {artist.name.length > 9 ? artist.name.substring(0, 9) + '...' : artist.name}
+                </text>
+                <text
+                  x={artist.x}
+                  y={artist.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="#ffffff"
+                  fontSize="10"
+                  fontWeight="600"
+                  style={{ 
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onClick={() => toggleArtistExpansion(artist.name)}
+                >
+                  {/* FIXED: Better text truncation logic */}
+                  {artist.name.length > 10 ? artist.name.substring(0, 10) + '...' : artist.name}
                 </text>
                 
                 {/* Secondary similar artists with visual hierarchy */}
