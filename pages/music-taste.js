@@ -241,15 +241,8 @@ const MusicTastePage = () => {
     };
 
     const getLastUpdated = () => {
-      const now = new Date();
-      const options = { 
-        month: 'long', 
-        day: 'numeric', 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      };
-      return `Updated at ${now.toLocaleDateString('en-US', options)}`;
+      // Static text to prevent hydration mismatch
+      return `Data refreshed recently`;
     };
 
     return (
@@ -311,21 +304,6 @@ const MusicTastePage = () => {
   // RECENTLY LIKED FIX: Real API data + Specific boosts + Meaningful hover
   const RecentlyLiked = ({ profileData }) => {
     const recentTracks = profileData?.recentActivity?.liked || [];
-    
-    // DEBUG: Log actual data structure to understand why FALLBACK is triggered
-    console.log('=== RECENTLY LIKED DEBUG ===');
-    console.log('profileData:', profileData);
-    console.log('recentActivity:', profileData?.recentActivity);
-    console.log('liked array:', profileData?.recentActivity?.liked);
-    console.log('liked array length:', profileData?.recentActivity?.liked?.length);
-    if (profileData?.recentActivity?.liked?.length > 0) {
-      console.log('First track:', profileData.recentActivity.liked[0]);
-      console.log('First track name:', profileData.recentActivity.liked[0]?.name);
-      console.log('First track artists:', profileData.recentActivity.liked[0]?.artists);
-      console.log('First track artist[0]:', profileData.recentActivity.liked[0]?.artists?.[0]);
-      console.log('First track artist[0].name:', profileData.recentActivity.liked[0]?.artists?.[0]?.name);
-    }
-    console.log('=== END DEBUG ===');
     
     // REAL DATA: Check if we have actual Spotify data
     const hasRealData = recentTracks.length > 0 && recentTracks[0]?.name && recentTracks[0]?.artists?.[0];
@@ -1289,26 +1267,9 @@ const MusicTastePage = () => {
                     transition: 'all 0.3s ease'
                   }}
                   filter="url(#softGlow)"
-                  onClick={() => handleArtistClick(artist)}
-                >
-                  {artist.name.length > 9 ? artist.name.substring(0, 9) + '...' : artist.name}
-                </text>
-                <text
-                  x={artist.x}
-                  y={artist.y}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill="#ffffff"
-                  fontSize="10"
-                  fontWeight="600"
-                  style={{ 
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
                   onClick={() => toggleArtistExpansion(artist.name)}
                 >
-                  {/* FIXED: Better text truncation logic */}
-                  {artist.name.length > 10 ? artist.name.substring(0, 10) + '...' : artist.name}
+                  {artist.name.length > 9 ? artist.name.substring(0, 9) + '...' : artist.name}
                 </text>
                 
                 {/* Secondary similar artists with visual hierarchy */}
@@ -1837,19 +1798,7 @@ const MusicTastePage = () => {
       try {
         setEventsLoading(true);
         
-        // Try to fetch real events from API
-        const response = await fetch('/api/events/recommended');
-        
-        if (response.ok) {
-          const realEvents = await response.json();
-          if (realEvents && realEvents.length > 0) {
-            setEventsData(realEvents);
-            setHasRealEvents(true);
-            return;
-          }
-        }
-        
-        // Fallback to mock data if API fails
+        // Use fallback events for now (API endpoint doesn't exist yet)
         setEventsData(getFallbackEvents());
         setHasRealEvents(false);
         
