@@ -1,4 +1,4 @@
-// pages/music-taste.js - VERIFIED FIXES: Hero background + API data + Hover + Info placement + Real Events
+/ pages/music-taste.js - VERIFIED FIXES: Hero background + API data + Hover + Info placement + Real Events
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '../components/AppLayout';
@@ -1351,7 +1351,8 @@ const MusicTastePage = () => {
                     </button>
                   ))}
                 </div>
-          ))}
+              </div>
+            ))}
           </div>
           
           {/* RIGHT COLUMN: Update button in dedicated space */}
@@ -1957,4 +1958,6 @@ const MusicTastePage = () => {
 };
 
 export default MusicTastePage;
+
+
 
