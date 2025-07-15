@@ -1800,7 +1800,7 @@ const MusicTastePage = () => {
             title={
               getDataSourceLabel() === 'LIVE' 
                 ? `Last updated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`
-                : `FALLBACK Analysis: ${!events || events.length === 0 ? 'No events data available' : 'Events data incomplete or invalid'}`
+                : `FALLBACK Analysis: ${!eventsData || eventsData.length === 0 ? 'No events data available' : 'Events data incomplete or invalid'}`
             }
           >
             {getDataSourceLabel()}
