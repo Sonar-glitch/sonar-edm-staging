@@ -1248,7 +1248,7 @@ const MusicTastePage = () => {
                   }}
                 >
                   <title>
-                    {artist.name} • {artist.genres?.slice(0, 2).join(', ') || 'Melodic Techno, Progressive House'} • {artist.followers || '2.1M'} followers • Click for similar artists & events
+                    {artist.name} • {artist.genres?.slice(0, 2).join(', ') || 'Melodic Techno, Progressive House'} • {artist.followers?.total?.toLocaleString() || '2.1M'} followers • Click for similar artists & events
                   </title>
                 </circle>
                 
@@ -1267,26 +1267,9 @@ const MusicTastePage = () => {
                     transition: 'all 0.3s ease'
                   }}
                   filter="url(#softGlow)"
-                  onClick={() => handleArtistClick(artist)}
-                >
-                  {artist.name.length > 9 ? artist.name.substring(0, 9) + '...' : artist.name}
-                </text>
-                <text
-                  x={artist.x}
-                  y={artist.y}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill="#ffffff"
-                  fontSize="10"
-                  fontWeight="600"
-                  style={{ 
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
                   onClick={() => toggleArtistExpansion(artist.name)}
                 >
-                  {/* FIXED: Better text truncation logic */}
-                  {artist.name.length > 10 ? artist.name.substring(0, 10) + '...' : artist.name}
+                  {artist.name.length > 9 ? artist.name.substring(0, 9) + '...' : artist.name}
                 </text>
                 
                 {/* Secondary similar artists with visual hierarchy */}
@@ -2371,13 +2354,22 @@ const MusicTastePage = () => {
         {/* MOBILE OPTIMIZED LAYOUT: Responsive bottom row */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : '1fr 1fr',  // Stack on mobile
+          gridTemplateColumns: '1fr 1fr',  // Default to two columns
           gap: '12px',  // Reduced gap for mobile
           marginBottom: '12px'  // Reduced margin for mobile
         }}>
           <EventsForYou profileData={profileData} />
           <TopTracks spotifyData={spotifyData} />
         </div>
+        
+        {/* CSS media query for mobile responsiveness */}
+        <style jsx>{`
+          @media (max-width: 768px) {
+            div[style*="gridTemplateColumns"] {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}</style>
       </div>
     </AppLayout>
   );
