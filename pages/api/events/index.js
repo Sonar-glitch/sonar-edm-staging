@@ -235,26 +235,45 @@ export default async function handler(req, res) {
 }
 
 /**
- * ENHANCED: Process events with Phase 1 metadata-aware scoring
+ * COMPREHENSIVE FIX: Process events with enhanced Phase 1 metadata-aware scoring and debugging
  */
 async function processEventsWithPhase1Scoring(events, city, session) {
-  console.log(`🎵 Processing ${events.length} events with Phase 1 metadata-aware scoring...`);
+  console.log(`🎵 === PROCESSING ${events.length} EVENTS WITH COMPREHENSIVE PHASE 1 DEBUGGING ===`);
 
-  // Step 1: Get user taste profile
+  // Step 1: Enhanced user taste profile fetching with comprehensive debugging
   let userTaste = null;
   try {
-    console.log('🎯 Enhanced taste processing started...');
+    console.log('🎯 === ENHANCED TASTE PROCESSING STARTED ===');
+    console.log('🔍 Session check:', {
+      hasSession: !!session,
+      hasAccessToken: !!(session && session.accessToken),
+      userEmail: session?.user?.email,
+      tokenLength: session?.accessToken ? session.accessToken.length : 0
+    });
+    
     if (session && session.accessToken) {
-      console.log('🔑 Access token available, fetching taste profile...');
+      console.log('🔑 Access token available, attempting to fetch taste profile...');
+      console.log('🔑 Token preview:', session.accessToken.substring(0, 20) + '...');
+      
       userTaste = await fetchUserTasteProfile(session.accessToken);
-      console.log(`✅ Fetched user taste profile: ${userTaste?.genrePreferences?.length || 0} genre preferences`);
+      
+      if (userTaste) {
+        console.log(`✅ SUCCESS: Fetched user taste profile with ${userTaste?.genrePreferences?.length || 0} genre preferences`);
+        console.log('🎵 Sample genres:', userTaste.genrePreferences?.slice(0, 3).map(g => g.name) || []);
+        console.log('🎤 Top artists count:', userTaste.topArtists?.length || 0);
+      } else {
+        console.log('❌ FAILED: fetchUserTasteProfile returned null');
+      }
     } else {
-      console.log('❌ No session or access token available');
+      console.log('❌ No session or access token available for taste profile fetching');
     }
   } catch (error) {
-    console.error('❌ Enhanced taste processing failed:', error);
-    console.error('Error fetching user taste profile:', error);
+    console.error('❌ CRITICAL: Enhanced taste processing failed with error:', error);
+    console.error('❌ Error stack:', error.stack);
   }
+
+  console.log('🎯 === TASTE PROFILE FETCH COMPLETE ===');
+  console.log('🎯 Final userTaste status:', userTaste ? 'VALID' : 'NULL');
 
   // Step 2: Process and deduplicate events
   const processedEvents = await Promise.all(events.map(event => processEventWithPhase1(event, city, userTaste)));
@@ -263,24 +282,28 @@ async function processEventsWithPhase1Scoring(events, city, session) {
   const deduplicatedEvents = deduplicateEvents(processedEvents);
   console.log(`🔄 Deduplicated: ${events.length} → ${deduplicatedEvents.length} events`);
 
-  // PHASE 1 ENHANCEMENT: Apply Phase 1 metadata-aware scoring
+  // COMPREHENSIVE PHASE 1 ENHANCEMENT: Apply Phase 1 metadata-aware scoring with extensive debugging
   let enhancedEvents = deduplicatedEvents;
   try {
-    console.log('🚀 Applying Phase 1 metadata-aware scoring...');
+    console.log('🚀 === APPLYING COMPREHENSIVE PHASE 1 METADATA SCORING ===');
     
     // Convert userTaste structure to match Phase 1 expectations
     if (userTaste && userTaste.genrePreferences) {
       userTaste.genres = userTaste.genrePreferences.map(pref => pref.name);
       console.log('🔧 Converted genrePreferences to genres for Phase 1 compatibility');
+      console.log('🔧 Available genres:', userTaste.genres.slice(0, 5));
+    } else {
+      console.log('⚠️ No genrePreferences available, userTaste:', userTaste ? 'exists but no genres' : 'is null');
     }
     
-    // Apply Phase 1 metadata-aware scoring
-    enhancedEvents = await applyPhase1MetadataScoring(deduplicatedEvents, userTaste);
+    // Apply comprehensive Phase 1 metadata-aware scoring
+    enhancedEvents = await applyComprehensivePhase1MetadataScoring(deduplicatedEvents, userTaste);
     
-    console.log('✅ Phase 1 metadata-aware scoring applied successfully');
+    console.log('✅ Comprehensive Phase 1 metadata-aware scoring applied successfully');
     console.log(`🎯 Sample Phase 1 scores: ${enhancedEvents.slice(0, 3).map(e => `${e.name}: ${e.personalizedScore}%`).join(', ')}`);
   } catch (error) {
-    console.error('❌ Phase 1 metadata scoring failed, using original results:', error);
+    console.error('❌ Comprehensive Phase 1 metadata scoring failed, using original results:', error);
+    console.error('❌ Error stack:', error.stack);
     // Continue with original results if Phase 1 fails
   }
 
@@ -292,158 +315,326 @@ async function processEventsWithPhase1Scoring(events, city, session) {
 }
 
 /**
- * FINAL FIX: Apply Phase 1 metadata-aware scoring with correct field mapping
+ * COMPREHENSIVE FIX: Apply Phase 1 metadata-aware scoring with extensive debugging and improved algorithms
  */
-async function applyPhase1MetadataScoring(events, userTaste) {
-  console.log(`🎵 Applying Phase 1 metadata scoring to ${events.length} events...`);
+async function applyComprehensivePhase1MetadataScoring(events, userTaste) {
+  console.log(`🎵 === COMPREHENSIVE PHASE 1 METADATA SCORING FOR ${events.length} EVENTS ===`);
+  console.log(`🎵 UserTaste status: ${userTaste ? 'AVAILABLE' : 'NULL'}`);
   
-  const scoredEvents = events.map(event => {
+  if (userTaste) {
+    console.log(`🎵 UserTaste details:`, {
+      genrePreferences: userTaste.genrePreferences?.length || 0,
+      topArtists: userTaste.topArtists?.length || 0,
+      genres: userTaste.genres?.length || 0
+    });
+  }
+  
+  const scoredEvents = events.map((event, index) => {
+    console.log(`\n🎵 === SCORING EVENT ${index + 1}/${events.length}: ${event.name} ===`);
+    
     // Check if event has Phase 1 metadata
     const hasPhase1 = event.soundCharacteristics || event.artistMetadata || event.enhancedGenres;
+    console.log(`🔍 Phase 1 metadata check:`, {
+      soundCharacteristics: !!event.soundCharacteristics,
+      artistMetadata: !!event.artistMetadata,
+      enhancedGenres: !!event.enhancedGenres,
+      hasAnyPhase1: hasPhase1
+    });
     
     if (!hasPhase1) {
-      console.log(`⚠️ Event ${event.name} missing Phase 1 metadata, using basic scoring`);
+      console.log(`⚠️ Event ${event.name} missing Phase 1 metadata, using enhanced basic scoring`);
+      
+      // ENHANCED: Better basic scoring without Phase 1 metadata
+      let basicScore = 50; // Start with base score
+      
+      // Boost for EDM-related genres
+      if (event.genres) {
+        const edmGenres = ['electronic', 'dance', 'house', 'techno', 'trance', 'dubstep', 'edm'];
+        const hasEdmGenre = event.genres.some(genre => 
+          edmGenres.some(edmGenre => genre.toLowerCase().includes(edmGenre))
+        );
+        if (hasEdmGenre) {
+          basicScore += 20;
+          console.log(`🎼 EDM genre boost: +20 (total: ${basicScore})`);
+        }
+      }
+      
+      // User taste matching for basic events
+      if (userTaste && userTaste.genres && event.genres) {
+        for (const eventGenre of event.genres) {
+          for (const userGenre of userTaste.genres) {
+            if (eventGenre.toLowerCase().includes(userGenre.toLowerCase()) ||
+                userGenre.toLowerCase().includes(eventGenre.toLowerCase())) {
+              basicScore += 15;
+              console.log(`🎯 Genre match boost: ${eventGenre} ~ ${userGenre} (+15, total: ${basicScore})`);
+              break;
+            }
+          }
+        }
+      }
+      
+      const finalBasicScore = Math.min(basicScore, 95);
+      console.log(`🎯 Final basic score: ${finalBasicScore}%`);
+      
       return {
         ...event,
-        personalizedScore: event.tasteScore || 50,
-        recommendationScore: event.tasteScore || 50,
-        score: event.tasteScore || 50,
-        matchScore: event.tasteScore || 50, // Keep for backward compatibility
-        phase1Applied: false
+        personalizedScore: finalBasicScore,
+        recommendationScore: finalBasicScore,
+        score: finalBasicScore,
+        matchScore: finalBasicScore,
+        phase1Applied: false,
+        scoringMethod: 'enhanced_basic'
       };
     }
     
-    // Calculate Phase 1 enhanced score
+    // COMPREHENSIVE Phase 1 enhanced scoring
+    console.log(`🚀 Applying comprehensive Phase 1 scoring for ${event.name}`);
+    
     let enhancedScore = 0;
     let totalWeight = 0;
+    let scoringBreakdown = {};
     
     // Sound Characteristics Scoring (40% weight)
-    if (event.soundCharacteristics && userTaste) {
-      const soundScore = calculateSoundCharacteristicsScore(event.soundCharacteristics, userTaste);
+    if (event.soundCharacteristics) {
+      const soundScore = calculateEnhancedSoundCharacteristicsScore(event.soundCharacteristics, userTaste);
       enhancedScore += soundScore * 0.4;
       totalWeight += 0.4;
-      console.log(`🎵 Sound score for ${event.name}: ${soundScore}%`);
+      scoringBreakdown.soundScore = soundScore;
+      console.log(`🎵 Sound characteristics score: ${soundScore}% (weighted: ${soundScore * 0.4})`);
     }
     
     // Artist Metadata Scoring (35% weight)
-    if (event.artistMetadata && userTaste) {
-      const artistScore = calculateArtistMetadataScore(event.artistMetadata, userTaste);
+    if (event.artistMetadata) {
+      const artistScore = calculateEnhancedArtistMetadataScore(event.artistMetadata, userTaste, event.artists);
       enhancedScore += artistScore * 0.35;
       totalWeight += 0.35;
-      console.log(`👨‍🎤 Artist score for ${event.name}: ${artistScore}%`);
+      scoringBreakdown.artistScore = artistScore;
+      console.log(`👨‍🎤 Artist metadata score: ${artistScore}% (weighted: ${artistScore * 0.35})`);
     }
     
     // Enhanced Genres Scoring (25% weight)
-    if (event.enhancedGenres && userTaste) {
+    if (event.enhancedGenres) {
       const genreScore = calculateEnhancedGenreScore(event.enhancedGenres, userTaste);
       enhancedScore += genreScore * 0.25;
       totalWeight += 0.25;
-      console.log(`🎼 Genre score for ${event.name}: ${genreScore}%`);
+      scoringBreakdown.genreScore = genreScore;
+      console.log(`🎼 Enhanced genres score: ${genreScore}% (weighted: ${genreScore * 0.25})`);
     }
     
     // Normalize score based on available metadata
-    const finalScore = totalWeight > 0 ? Math.round(enhancedScore / totalWeight) : (event.tasteScore || 50);
+    const rawScore = totalWeight > 0 ? enhancedScore / totalWeight : 50;
     
-    console.log(`🎯 Phase 1 enhanced score for ${event.name}: ${finalScore}% (weight: ${totalWeight})`);
+    // ENHANCED: Apply user taste multiplier if available
+    let finalScore = rawScore;
+    if (userTaste && userTaste.genres) {
+      // Check for strong user preference matches
+      let tasteMultiplier = 1.0;
+      
+      if (event.enhancedGenres && event.enhancedGenres.primary) {
+        for (const eventGenre of event.enhancedGenres.primary) {
+          for (const userGenre of userTaste.genres) {
+            if (eventGenre.toLowerCase().includes(userGenre.toLowerCase()) ||
+                userGenre.toLowerCase().includes(eventGenre.toLowerCase())) {
+              tasteMultiplier = Math.min(tasteMultiplier + 0.2, 1.4); // Max 40% boost
+              console.log(`🎯 Strong taste match: ${eventGenre} ~ ${userGenre} (multiplier: ${tasteMultiplier})`);
+            }
+          }
+        }
+      }
+      
+      finalScore = Math.min(rawScore * tasteMultiplier, 96);
+      console.log(`🎯 Taste-adjusted score: ${rawScore}% × ${tasteMultiplier} = ${finalScore}%`);
+    }
+    
+    // Ensure minimum score and round
+    finalScore = Math.max(Math.round(finalScore), 8);
+    
+    console.log(`🎯 FINAL COMPREHENSIVE SCORE for ${event.name}: ${finalScore}% (weight: ${totalWeight})`);
+    console.log(`🎯 Scoring breakdown:`, scoringBreakdown);
     
     return {
       ...event,
-      // CRITICAL FIX: Map to all expected field names
       personalizedScore: finalScore,
       recommendationScore: finalScore,
       score: finalScore,
-      matchScore: finalScore, // Keep for backward compatibility
+      matchScore: finalScore,
       phase1Applied: true,
-      phase1Breakdown: {
-        soundScore: event.soundCharacteristics ? calculateSoundCharacteristicsScore(event.soundCharacteristics, userTaste) : null,
-        artistScore: event.artistMetadata ? calculateArtistMetadataScore(event.artistMetadata, userTaste) : null,
-        genreScore: event.enhancedGenres ? calculateEnhancedGenreScore(event.enhancedGenres, userTaste) : null
-      }
+      scoringMethod: 'comprehensive_phase1',
+      phase1Breakdown: scoringBreakdown,
+      tasteMultiplier: userTaste ? 'applied' : 'not_available'
     };
   });
   
-  console.log(`✅ Phase 1 metadata scoring complete. Average score: ${scoredEvents.reduce((sum, e) => sum + e.personalizedScore, 0) / scoredEvents.length}%`);
+  const averageScore = scoredEvents.reduce((sum, e) => sum + e.personalizedScore, 0) / scoredEvents.length;
+  console.log(`✅ COMPREHENSIVE PHASE 1 SCORING COMPLETE`);
+  console.log(`📊 Average score: ${averageScore.toFixed(1)}%`);
+  console.log(`📊 Score range: ${Math.min(...scoredEvents.map(e => e.personalizedScore))}% - ${Math.max(...scoredEvents.map(e => e.personalizedScore))}%`);
   
   return scoredEvents;
 }
 
 /**
- * NEW: Calculate sound characteristics score
+ * ENHANCED: Calculate sound characteristics score with improved algorithm
  */
-function calculateSoundCharacteristicsScore(soundCharacteristics, userTaste) {
-  if (!soundCharacteristics || !userTaste) return 50;
+function calculateEnhancedSoundCharacteristicsScore(soundCharacteristics, userTaste) {
+  console.log(`🎵 Calculating enhanced sound characteristics score:`, soundCharacteristics);
   
-  // For now, use a basic scoring algorithm
-  // This can be enhanced with user's actual sound preferences
-  let score = 50;
+  if (!soundCharacteristics) return 50;
   
-  // Boost score based on confidence
-  if (soundCharacteristics.confidence > 0.7) {
-    score += 20;
-  } else if (soundCharacteristics.confidence > 0.5) {
-    score += 10;
-  }
+  let score = 40; // Start with base score
   
-  // Boost score for high energy electronic music (EDM preference)
-  if (soundCharacteristics.energy > 0.7 && soundCharacteristics.danceability > 0.7) {
+  // Confidence boost (up to +25 points)
+  if (soundCharacteristics.confidence > 0.8) {
+    score += 25;
+    console.log(`🎵 High confidence boost: +25 (confidence: ${soundCharacteristics.confidence})`);
+  } else if (soundCharacteristics.confidence > 0.6) {
     score += 15;
+    console.log(`🎵 Medium confidence boost: +15 (confidence: ${soundCharacteristics.confidence})`);
+  } else if (soundCharacteristics.confidence > 0.4) {
+    score += 8;
+    console.log(`🎵 Low confidence boost: +8 (confidence: ${soundCharacteristics.confidence})`);
   }
   
-  return Math.min(score, 100);
+  // Energy and danceability boost (up to +25 points)
+  if (soundCharacteristics.energy > 0.7 && soundCharacteristics.danceability > 0.7) {
+    score += 25;
+    console.log(`🎵 High energy + danceability boost: +25 (E:${soundCharacteristics.energy}, D:${soundCharacteristics.danceability})`);
+  } else if (soundCharacteristics.energy > 0.5 && soundCharacteristics.danceability > 0.5) {
+    score += 15;
+    console.log(`🎵 Medium energy + danceability boost: +15`);
+  } else if (soundCharacteristics.energy > 0.3 || soundCharacteristics.danceability > 0.3) {
+    score += 8;
+    console.log(`🎵 Some energy/danceability boost: +8`);
+  }
+  
+  // Additional audio features if available
+  if (soundCharacteristics.valence > 0.6) {
+    score += 5;
+    console.log(`🎵 Positive valence boost: +5`);
+  }
+  
+  const finalScore = Math.min(score, 96);
+  console.log(`🎵 Final sound characteristics score: ${finalScore}`);
+  return finalScore;
 }
 
 /**
- * NEW: Calculate artist metadata score
+ * ENHANCED: Calculate artist metadata score with improved algorithm
  */
-function calculateArtistMetadataScore(artistMetadata, userTaste) {
-  if (!artistMetadata || !userTaste) return 50;
+function calculateEnhancedArtistMetadataScore(artistMetadata, userTaste, eventArtists) {
+  console.log(`👨‍🎤 Calculating enhanced artist metadata score:`, artistMetadata);
   
-  let score = 50;
+  if (!artistMetadata) return 50;
   
-  // Boost score based on EDM weight
-  if (artistMetadata.edmWeight > 0.8) {
+  let score = 35; // Start with base score
+  
+  // EDM weight boost (up to +35 points)
+  if (artistMetadata.edmWeight > 0.9) {
+    score += 35;
+    console.log(`👨‍🎤 Very high EDM weight boost: +35 (${artistMetadata.edmWeight})`);
+  } else if (artistMetadata.edmWeight > 0.7) {
     score += 25;
+    console.log(`👨‍🎤 High EDM weight boost: +25 (${artistMetadata.edmWeight})`);
   } else if (artistMetadata.edmWeight > 0.5) {
     score += 15;
+    console.log(`👨‍🎤 Medium EDM weight boost: +15 (${artistMetadata.edmWeight})`);
+  } else if (artistMetadata.edmWeight > 0.3) {
+    score += 8;
+    console.log(`👨‍🎤 Low EDM weight boost: +8 (${artistMetadata.edmWeight})`);
   }
   
-  // Boost score based on popularity (but not too much)
-  if (artistMetadata.popularity > 70) {
+  // Popularity boost (up to +15 points, but not too much)
+  if (artistMetadata.popularity > 80) {
+    score += 15;
+    console.log(`👨‍🎤 High popularity boost: +15 (${artistMetadata.popularity})`);
+  } else if (artistMetadata.popularity > 60) {
     score += 10;
+    console.log(`👨‍🎤 Medium popularity boost: +10 (${artistMetadata.popularity})`);
+  } else if (artistMetadata.popularity > 40) {
+    score += 5;
+    console.log(`👨‍🎤 Some popularity boost: +5 (${artistMetadata.popularity})`);
   }
   
-  return Math.min(score, 100);
-}
-
-/**
- * NEW: Calculate enhanced genre score
- */
-function calculateEnhancedGenreScore(enhancedGenres, userTaste) {
-  if (!enhancedGenres || !userTaste || !userTaste.genres) return 50;
-  
-  let score = 50;
-  
-  // Check for genre matches
-  if (enhancedGenres.primary) {
-    for (const genre of enhancedGenres.primary) {
-      if (userTaste.genres.some(userGenre => 
-        userGenre.toLowerCase().includes(genre.toLowerCase()) ||
-        genre.toLowerCase().includes(userGenre.toLowerCase())
-      )) {
-        score += 20;
-        break;
+  // User artist matching if available
+  if (userTaste && userTaste.topArtists && eventArtists) {
+    for (const eventArtist of eventArtists) {
+      for (const userArtist of userTaste.topArtists) {
+        if (eventArtist.name && userArtist.name &&
+            eventArtist.name.toLowerCase() === userArtist.name.toLowerCase()) {
+          score += 20;
+          console.log(`👨‍🎤 Perfect artist match boost: +20 (${eventArtist.name})`);
+          break;
+        }
       }
     }
   }
   
-  // Boost for EDM classification
+  const finalScore = Math.min(score, 96);
+  console.log(`👨‍🎤 Final artist metadata score: ${finalScore}`);
+  return finalScore;
+}
+
+/**
+ * ENHANCED: Calculate enhanced genre score with improved algorithm
+ */
+function calculateEnhancedGenreScore(enhancedGenres, userTaste) {
+  console.log(`🎼 Calculating enhanced genre score:`, enhancedGenres);
+  
+  if (!enhancedGenres) return 50;
+  
+  let score = 30; // Start with base score
+  
+  // EDM classification boost (up to +30 points)
   if (enhancedGenres.edmClassification === 'core_edm') {
-    score += 15;
+    score += 30;
+    console.log(`🎼 Core EDM classification boost: +30`);
   } else if (enhancedGenres.edmClassification === 'electronic_related') {
+    score += 20;
+    console.log(`🎼 Electronic related classification boost: +20`);
+  } else if (enhancedGenres.edmClassification === 'edm_adjacent') {
+    score += 15;
+    console.log(`🎼 EDM adjacent classification boost: +15`);
+  } else if (enhancedGenres.edmClassification === 'dance_pop') {
     score += 10;
+    console.log(`🎼 Dance pop classification boost: +10`);
   }
   
-  return Math.min(score, 100);
+  // Primary genres boost (up to +25 points)
+  if (enhancedGenres.primary && enhancedGenres.primary.length > 0) {
+    const edmGenres = ['house', 'techno', 'trance', 'dubstep', 'drum and bass', 'electronic', 'dance'];
+    let genreBoost = 0;
+    
+    for (const genre of enhancedGenres.primary) {
+      if (edmGenres.some(edmGenre => genre.toLowerCase().includes(edmGenre))) {
+        genreBoost += 8;
+        console.log(`🎼 EDM genre boost: +8 for ${genre}`);
+      }
+    }
+    
+    score += Math.min(genreBoost, 25);
+  }
+  
+  // User genre matching (up to +20 points)
+  if (userTaste && userTaste.genres && enhancedGenres.primary) {
+    let matchBoost = 0;
+    
+    for (const eventGenre of enhancedGenres.primary) {
+      for (const userGenre of userTaste.genres) {
+        if (eventGenre.toLowerCase().includes(userGenre.toLowerCase()) ||
+            userGenre.toLowerCase().includes(eventGenre.toLowerCase())) {
+          matchBoost += 10;
+          console.log(`🎼 User genre match boost: +10 (${eventGenre} ~ ${userGenre})`);
+          break;
+        }
+      }
+    }
+    
+    score += Math.min(matchBoost, 20);
+  }
+  
+  const finalScore = Math.min(score, 96);
+  console.log(`🎼 Final enhanced genre score: ${finalScore}`);
+  return finalScore;
 }
 
 /**
@@ -498,16 +689,21 @@ async function processEventWithPhase1(event, city, userTaste) {
 }
 
 /**
- * FIXED: Fetch user taste profile from Spotify with proper error handling
+ * COMPREHENSIVE FIX: Fetch user taste profile from Spotify with extensive debugging and error handling
  */
 async function fetchUserTasteProfile(accessToken) {
   try {
-    console.log('🔍 fetchUserTasteProfile called with accessToken:', !!accessToken);
+    console.log('🔍 === FETCHUSERTASTEPROFILE CALLED ===');
+    console.log('🔍 Access token provided:', !!accessToken);
+    console.log('🔍 Access token length:', accessToken ? accessToken.length : 0);
+    console.log('🔍 Access token preview:', accessToken ? accessToken.substring(0, 20) + '...' : 'none');
     
     if (!accessToken) {
-      console.log('❌ No access token provided');
+      console.log('❌ No access token provided to fetchUserTasteProfile');
       return null;
     }
+    
+    console.log('🎵 Making Spotify API calls...');
     
     // Get user's top artists and tracks directly from Spotify
     const [topArtistsResponse, topTracksResponse] = await Promise.all([
@@ -521,46 +717,72 @@ async function fetchUserTasteProfile(accessToken) {
 
     console.log('🎵 Spotify API response status:', {
       artists: topArtistsResponse.status,
-      tracks: topTracksResponse.status
+      tracks: topTracksResponse.status,
+      artistsOk: topArtistsResponse.ok,
+      tracksOk: topTracksResponse.ok
     });
 
     if (!topArtistsResponse.ok || !topTracksResponse.ok) {
-      console.error('❌ Spotify API error:', {
+      console.error('❌ Spotify API error details:', {
         artistsError: topArtistsResponse.status,
-        tracksError: topTracksResponse.status
+        tracksError: topTracksResponse.status,
+        artistsStatusText: topArtistsResponse.statusText,
+        tracksStatusText: topTracksResponse.statusText
       });
+      
+      // Try to get error details
+      try {
+        const artistsError = await topArtistsResponse.text();
+        const tracksError = await topTracksResponse.text();
+        console.error('❌ Spotify API error bodies:', { artistsError, tracksError });
+      } catch (e) {
+        console.error('❌ Could not read error response bodies');
+      }
+      
       return null;
     }
 
+    console.log('🎵 Parsing Spotify API responses...');
     const [topArtists, topTracks] = await Promise.all([
       topArtistsResponse.json(),
       topTracksResponse.json()
     ]);
 
-    console.log('🎵 Spotify API responses:', {
+    console.log('🎵 Spotify API responses parsed:', {
       artists: topArtists.items?.length || 0,
-      tracks: topTracks.items?.length || 0
+      tracks: topTracks.items?.length || 0,
+      artistsTotal: topArtists.total,
+      tracksTotal: topTracks.total
     });
 
     if (topArtists.items && topTracks.items) {
+      console.log('🎵 Processing Spotify data into taste profile...');
+      
       // Extract genres from artists
       const genrePreferences = [];
       const genreCount = {};
       
-      topArtists.items.forEach(artist => {
+      topArtists.items.forEach((artist, index) => {
+        console.log(`🎤 Artist ${index + 1}: ${artist.name} (genres: ${artist.genres?.join(', ') || 'none'})`);
         artist.genres?.forEach(genre => {
           genreCount[genre] = (genreCount[genre] || 0) + 1;
         });
       });
       
+      console.log('🎼 Genre count:', genreCount);
+      
       // Convert to weighted preferences
       const totalGenres = Object.values(genreCount).reduce((a, b) => a + b, 0);
+      console.log('🎼 Total genre occurrences:', totalGenres);
+      
       if (totalGenres > 0) {
         Object.entries(genreCount).forEach(([genre, count]) => {
+          const weight = count / totalGenres;
           genrePreferences.push({
             name: genre,
-            weight: count / totalGenres
+            weight: weight
           });
+          console.log(`🎼 Genre: ${genre} (count: ${count}, weight: ${weight.toFixed(3)})`);
         });
       }
       
@@ -574,20 +796,26 @@ async function fetchUserTasteProfile(accessToken) {
         topTracks: topTracks.items || []
       };
       
-      console.log('✅ Generated taste profile:', {
+      console.log('✅ Generated comprehensive taste profile:', {
         genrePreferences: result.genrePreferences.length,
         topGenres: result.topGenres.length,
         topArtists: result.topArtists.length,
-        sampleGenres: result.genrePreferences.slice(0, 3).map(g => g.name)
+        topTracks: result.topTracks.length,
+        sampleGenres: result.genrePreferences.slice(0, 5).map(g => `${g.name} (${(g.weight * 100).toFixed(1)}%)`)
       });
+      
+      console.log('🎵 Top 5 genres:', result.genrePreferences.slice(0, 5).map(g => g.name));
+      console.log('🎤 Top 3 artists:', result.topArtists.slice(0, 3).map(a => a.name));
       
       return result;
     }
 
-    console.log('❌ No Spotify data available');
+    console.log('❌ No Spotify data available in API responses');
     return null;
   } catch (error) {
-    console.error('❌ Error fetching user taste profile:', error);
+    console.error('❌ CRITICAL ERROR in fetchUserTasteProfile:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error stack:', error.stack);
     return null;
   }
 }
