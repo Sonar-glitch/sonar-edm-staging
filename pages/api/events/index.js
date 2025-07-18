@@ -61,16 +61,17 @@ export default async function handler(req, res) {
       });
     }
 
-    // ENHANCED: Fetch events from MongoDB with retry logic
+    // CRITICAL FIX: Query the correct collection with Phase 1 metadata
     let realEvents = [];
     let apiError = null;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        console.log(`🔄 Attempt ${attempt}: Fetching events from MongoDB...`);
+        console.log(`🔄 Attempt ${attempt}: Fetching events from MongoDB events_unified collection...`);
 
         const { db } = await connectToDatabase();
-        const eventsCollection = db.collection('events');
+        // CRITICAL FIX: Use events_unified collection instead of events
+        const eventsCollection = db.collection('events_unified');
 
         // FIXED: Corrected geospatial query path from 'venues.location.coordinates' to 'location.coordinates'
         const query = {
@@ -88,7 +89,7 @@ export default async function handler(req, res) {
           }
         };
 
-        console.log(`📍 MongoDB query: ${JSON.stringify(query, null, 2)}`);
+        console.log(`📍 MongoDB query on events_unified: ${JSON.stringify(query, null, 2)}`);
 
         const data = await eventsCollection.find(query)
           .limit(50)
@@ -96,39 +97,61 @@ export default async function handler(req, res) {
           .toArray();
 
         if (data && data.length > 0) {
-          console.log(`✅ Found ${data.length} events from MongoDB`);
+          console.log(`✅ Found ${data.length} events from MongoDB events_unified collection`);
+          console.log(`🎵 Sample Phase 1 metadata check:`, {
+            soundCharacteristics: !!data[0].soundCharacteristics,
+            artistMetadata: !!data[0].artistMetadata,
+            enhancedGenres: !!data[0].enhancedGenres,
+            enhancementProcessed: data[0].enhancementProcessed
+          });
 
-          // FIXED: Convert MongoDB format to frontend-expected format with ALL field mappings
+          // ENHANCED: Convert MongoDB format to frontend-expected format with Phase 1 metadata preservation
           const formattedEvents = data.map(event => ({
             id: event._id || event.id,
             name: event.name,
             url: event.url,
             ticketUrl: event.url, // FIXED: Map url to ticketUrl for frontend
-            source: 'mongodb', // FIXED: Add source field
+            source: 'mongodb_unified', // FIXED: Indicate unified collection source
             date: event.date, // FIXED: Map date directly for frontend
             dates: { start: { localDate: event.date } }, // Keep for API compatibility
             venue: event.venue?.name || 'Venue TBA', // FIXED: Map venue.name directly for frontend
             venues: event.venue ? [event.venue] : [], // Keep for API compatibility
-            artists: event.artists ? event.artists.map(artist => ({ name: artist.name, id: artist.id })) : [],
+            artists: event.artists ? event.artists.map(artist => ({ 
+              name: artist.name || artist, 
+              id: artist.id 
+            })) : [],
             _embedded: {
               venues: event.venue ? [event.venue] : [],
-              attractions: event.artists ? event.artists.map(artist => ({ name: artist.name, id: artist.id })) : []
+              attractions: event.artists ? event.artists.map(artist => ({ 
+                name: artist.name || artist, 
+                id: artist.id 
+              })) : []
             },
             classifications: event.classifications || [],
             priceRanges: event.priceRanges || [],
-            images: event.images || []
+            images: event.images || [],
+            
+            // CRITICAL: Preserve Phase 1 metadata from backend
+            soundCharacteristics: event.soundCharacteristics,
+            artistMetadata: event.artistMetadata,
+            enhancedGenres: event.enhancedGenres,
+            enhancementProcessed: event.enhancementProcessed,
+            
+            // ENHANCED: Use existing tasteScore from backend if available
+            tasteScore: event.recommendationMetrics?.tasteScore || 50,
+            matchScore: event.recommendationMetrics?.tasteScore || 50
           }));
 
-          // ENHANCED: Process events with deduplication and personalization
-          realEvents = await processEventsWithTasteFiltering(formattedEvents, city, session);
-          console.log(`✅ Successfully processed ${realEvents.length} personalized events from MongoDB`);
+          // ENHANCED: Process events with Phase 1 metadata-aware scoring
+          realEvents = await processEventsWithPhase1Scoring(formattedEvents, city, session);
+          console.log(`✅ Successfully processed ${realEvents.length} events with Phase 1 metadata`);
           break; // Success, exit retry loop
         }
       } catch (error) {
         console.error(`❌ Attempt ${attempt} failed:`, error.message);
         apiError = error;
         if (attempt === 3) {
-          console.error('🚨 All MongoDB attempts failed');
+          console.error('🚨 All MongoDB events_unified attempts failed');
         }
       }
     }
@@ -155,7 +178,7 @@ export default async function handler(req, res) {
             venue: event._embedded?.venues?.[0]?.name || 'Venue TBA' // FIXED: Extract venue name
           }));
           
-          realEvents = await processEventsWithTasteFiltering(ticketmasterEvents, city, session);
+          realEvents = await processEventsWithPhase1Scoring(ticketmasterEvents, city, session);
         }
       } catch (ticketmasterError) {
         console.error('❌ Ticketmaster API also failed:', ticketmasterError.message);
@@ -189,13 +212,13 @@ export default async function handler(req, res) {
       console.log(`💾 Cached ${realEvents.length} personalized events`);
     }
 
-    // SUCCESS: Return personalized events
-    console.log(`🎉 Returning ${realEvents.length} personalized events for ${city}`);
+    // SUCCESS: Return personalized events with Phase 1 metadata
+    console.log(`🎉 Returning ${realEvents.length} personalized events with Phase 1 metadata for ${city}`);
 
     res.status(200).json({
       events: realEvents,
       total: realEvents.length,
-      source: "mongodb_personalized",
+      source: "mongodb_unified_phase1",
       timestamp: new Date().toISOString(),
       location: { city, country, lat, lon }
     });
@@ -212,10 +235,10 @@ export default async function handler(req, res) {
 }
 
 /**
- * NEW: Enhanced event processing with deduplication and taste filtering
+ * ENHANCED: Process events with Phase 1 metadata-aware scoring
  */
-async function processEventsWithTasteFiltering(events, city, session) {
-  console.log(`🎵 Processing ${events.length} events with taste filtering...`);
+async function processEventsWithPhase1Scoring(events, city, session) {
+  console.log(`🎵 Processing ${events.length} events with Phase 1 metadata-aware scoring...`);
 
   // Step 1: Get user taste profile
   let userTaste = null;
@@ -234,45 +257,237 @@ async function processEventsWithTasteFiltering(events, city, session) {
   }
 
   // Step 2: Process and deduplicate events
-  const processedEvents = await Promise.all(events.map(event => processEvent(event, city, userTaste)));
+  const processedEvents = await Promise.all(events.map(event => processEventWithPhase1(event, city, userTaste)));
 
   // Step 3: Deduplicate events by name + venue + date
   const deduplicatedEvents = deduplicateEvents(processedEvents);
   console.log(`🔄 Deduplicated: ${events.length} → ${deduplicatedEvents.length} events`);
 
-  // PHASE 2 ENHANCEMENT: Apply enhanced scoring BEFORE filtering (REORDERED)
+  // PHASE 1 ENHANCEMENT: Apply Phase 1 metadata-aware scoring
   let enhancedEvents = deduplicatedEvents;
-  if (process.env.ENHANCED_RECOMMENDATION_ENABLED === 'true') {
-    try {
-      console.log('🚀 Applying Phase 2 enhanced scoring BEFORE filtering...');
-      
-      // FIXED: Convert userTaste structure to match Phase 2 expectations
-      if (userTaste && userTaste.genrePreferences) {
-        userTaste.genres = userTaste.genrePreferences.map(pref => pref.name);
-        console.log('🔧 Converted genrePreferences to genres for Phase 2 compatibility');
-      }
-      
-      enhancedEvents = await enhancedRecommendationSystem.processEventsWithEnhancedScoring(deduplicatedEvents, userTaste);
-      
-      // CRITICAL FIX: Map enhanced tasteScore to matchScore for frontend display
-      enhancedEvents = enhancedEvents.map(event => ({
-        ...event,
-        matchScore: event.enhancedScore || event.tasteScore // FIXED: Ensure frontend gets enhanced scores
-      }));
-      
-      console.log('✅ Phase 2 enhanced scoring applied successfully');
-      console.log(`🎯 Sample enhanced scores: ${enhancedEvents.slice(0, 3).map(e => `${e.name}: ${e.matchScore}%`).join(', ')}`);
-    } catch (error) {
-      console.error('❌ Phase 2 enhanced scoring failed, using original results:', error);
-      // Continue with original results if Phase 2 fails
+  try {
+    console.log('🚀 Applying Phase 1 metadata-aware scoring...');
+    
+    // Convert userTaste structure to match Phase 1 expectations
+    if (userTaste && userTaste.genrePreferences) {
+      userTaste.genres = userTaste.genrePreferences.map(pref => pref.name);
+      console.log('🔧 Converted genrePreferences to genres for Phase 1 compatibility');
     }
+    
+    // Apply Phase 1 metadata-aware scoring
+    enhancedEvents = await applyPhase1MetadataScoring(deduplicatedEvents, userTaste);
+    
+    console.log('✅ Phase 1 metadata-aware scoring applied successfully');
+    console.log(`🎯 Sample Phase 1 scores: ${enhancedEvents.slice(0, 3).map(e => `${e.name}: ${e.matchScore}%`).join(', ')}`);
+  } catch (error) {
+    console.error('❌ Phase 1 metadata scoring failed, using original results:', error);
+    // Continue with original results if Phase 1 fails
   }
 
-  // Step 4: Apply taste-based filtering AFTER enhancement (REORDERED)
+  // Step 4: Apply taste-based filtering AFTER Phase 1 enhancement
   let filteredEvents = applyAdvancedTasteFiltering(enhancedEvents, userTaste);
   console.log(`🎯 Taste filtered: ${enhancedEvents.length} → ${filteredEvents.length} events`);
 
   return filteredEvents;
+}
+
+/**
+ * NEW: Apply Phase 1 metadata-aware scoring
+ */
+async function applyPhase1MetadataScoring(events, userTaste) {
+  console.log(`🎵 Applying Phase 1 metadata scoring to ${events.length} events...`);
+  
+  const scoredEvents = events.map(event => {
+    // Check if event has Phase 1 metadata
+    const hasPhase1 = event.soundCharacteristics || event.artistMetadata || event.enhancedGenres;
+    
+    if (!hasPhase1) {
+      console.log(`⚠️ Event ${event.name} missing Phase 1 metadata, using basic scoring`);
+      return {
+        ...event,
+        matchScore: event.tasteScore || 50,
+        phase1Applied: false
+      };
+    }
+    
+    // Calculate Phase 1 enhanced score
+    let enhancedScore = 0;
+    let totalWeight = 0;
+    
+    // Sound Characteristics Scoring (40% weight)
+    if (event.soundCharacteristics && userTaste) {
+      const soundScore = calculateSoundCharacteristicsScore(event.soundCharacteristics, userTaste);
+      enhancedScore += soundScore * 0.4;
+      totalWeight += 0.4;
+      console.log(`🎵 Sound score for ${event.name}: ${soundScore}%`);
+    }
+    
+    // Artist Metadata Scoring (35% weight)
+    if (event.artistMetadata && userTaste) {
+      const artistScore = calculateArtistMetadataScore(event.artistMetadata, userTaste);
+      enhancedScore += artistScore * 0.35;
+      totalWeight += 0.35;
+      console.log(`👨‍🎤 Artist score for ${event.name}: ${artistScore}%`);
+    }
+    
+    // Enhanced Genres Scoring (25% weight)
+    if (event.enhancedGenres && userTaste) {
+      const genreScore = calculateEnhancedGenreScore(event.enhancedGenres, userTaste);
+      enhancedScore += genreScore * 0.25;
+      totalWeight += 0.25;
+      console.log(`🎼 Genre score for ${event.name}: ${genreScore}%`);
+    }
+    
+    // Normalize score based on available metadata
+    const finalScore = totalWeight > 0 ? Math.round(enhancedScore / totalWeight) : (event.tasteScore || 50);
+    
+    console.log(`🎯 Phase 1 enhanced score for ${event.name}: ${finalScore}% (weight: ${totalWeight})`);
+    
+    return {
+      ...event,
+      matchScore: finalScore,
+      phase1Applied: true,
+      phase1Breakdown: {
+        soundScore: event.soundCharacteristics ? calculateSoundCharacteristicsScore(event.soundCharacteristics, userTaste) : null,
+        artistScore: event.artistMetadata ? calculateArtistMetadataScore(event.artistMetadata, userTaste) : null,
+        genreScore: event.enhancedGenres ? calculateEnhancedGenreScore(event.enhancedGenres, userTaste) : null
+      }
+    };
+  });
+  
+  console.log(`✅ Phase 1 metadata scoring complete. Average score: ${scoredEvents.reduce((sum, e) => sum + e.matchScore, 0) / scoredEvents.length}%`);
+  
+  return scoredEvents;
+}
+
+/**
+ * NEW: Calculate sound characteristics score
+ */
+function calculateSoundCharacteristicsScore(soundCharacteristics, userTaste) {
+  if (!soundCharacteristics || !userTaste) return 50;
+  
+  // For now, use a basic scoring algorithm
+  // This can be enhanced with user's actual sound preferences
+  let score = 50;
+  
+  // Boost score based on confidence
+  if (soundCharacteristics.confidence > 0.7) {
+    score += 20;
+  } else if (soundCharacteristics.confidence > 0.5) {
+    score += 10;
+  }
+  
+  // Boost score for high energy electronic music (EDM preference)
+  if (soundCharacteristics.energy > 0.7 && soundCharacteristics.danceability > 0.7) {
+    score += 15;
+  }
+  
+  return Math.min(score, 100);
+}
+
+/**
+ * NEW: Calculate artist metadata score
+ */
+function calculateArtistMetadataScore(artistMetadata, userTaste) {
+  if (!artistMetadata || !userTaste) return 50;
+  
+  let score = 50;
+  
+  // Boost score based on EDM weight
+  if (artistMetadata.edmWeight > 0.8) {
+    score += 25;
+  } else if (artistMetadata.edmWeight > 0.5) {
+    score += 15;
+  }
+  
+  // Boost score based on popularity (but not too much)
+  if (artistMetadata.popularity > 70) {
+    score += 10;
+  }
+  
+  return Math.min(score, 100);
+}
+
+/**
+ * NEW: Calculate enhanced genre score
+ */
+function calculateEnhancedGenreScore(enhancedGenres, userTaste) {
+  if (!enhancedGenres || !userTaste || !userTaste.genres) return 50;
+  
+  let score = 50;
+  
+  // Check for genre matches
+  if (enhancedGenres.primary) {
+    for (const genre of enhancedGenres.primary) {
+      if (userTaste.genres.some(userGenre => 
+        userGenre.toLowerCase().includes(genre.toLowerCase()) ||
+        genre.toLowerCase().includes(userGenre.toLowerCase())
+      )) {
+        score += 20;
+        break;
+      }
+    }
+  }
+  
+  // Boost for EDM classification
+  if (enhancedGenres.edmClassification === 'core_edm') {
+    score += 15;
+  } else if (enhancedGenres.edmClassification === 'electronic_related') {
+    score += 10;
+  }
+  
+  return Math.min(score, 100);
+}
+
+/**
+ * ENHANCED: Process individual event with Phase 1 metadata preservation
+ */
+async function processEventWithPhase1(event, city, userTaste) {
+  try {
+    // Extract basic event information with FRONTEND FIELD MAPPING
+    const processedEvent = {
+      id: event.id,
+      name: event.name || 'Unnamed Event',
+      url: event.url || '',
+      ticketUrl: event.url || '', // FIXED: Map url to ticketUrl for frontend
+      source: event.source || 'unknown',
+      date: event.date || event.dates?.start?.localDate, // FIXED: Map date for frontend
+      dates: event.dates || {},
+      venue: event.venue || event._embedded?.venues?.[0]?.name || 'Venue TBA', // FIXED: Map venue for frontend
+      venues: extractVenues(event),
+      artists: extractArtists(event),
+      genres: await extractGenres(event), // ENHANCED: Now async for artist-based genre enhancement
+      images: event.images || [],
+      priceRanges: event.priceRanges || [],
+      classifications: event.classifications || [],
+      
+      // CRITICAL: Preserve Phase 1 metadata
+      soundCharacteristics: event.soundCharacteristics,
+      artistMetadata: event.artistMetadata,
+      enhancedGenres: event.enhancedGenres,
+      enhancementProcessed: event.enhancementProcessed
+    };
+
+    // Calculate taste match score (will be enhanced by Phase 1 scoring later)
+    const tasteScore = calculateTasteScore(processedEvent, userTaste);
+    processedEvent.tasteScore = tasteScore;
+    processedEvent.matchScore = tasteScore; // FIXED: Map tasteScore to matchScore for frontend
+
+    return processedEvent;
+  } catch (error) {
+    console.error(`Error processing event ${event.name}:`, error);
+    return {
+      id: event.id,
+      name: event.name || 'Unnamed Event',
+      source: event.source || 'unknown',
+      ticketUrl: event.url || '', // FIXED: Even in error case
+      date: event.date || 'Date TBA', // FIXED: Even in error case
+      venue: 'Venue TBA', // FIXED: Even in error case
+      tasteScore: 0,
+      matchScore: 0, // FIXED: Even in error case
+      error: error.message
+    };
+  }
 }
 
 /**
@@ -371,51 +586,6 @@ async function fetchUserTasteProfile(accessToken) {
 }
 
 /**
- * ENHANCED: Process individual event with async genre extraction
- */
-async function processEvent(event, city, userTaste) {
-  try {
-    // Extract basic event information with FRONTEND FIELD MAPPING
-    const processedEvent = {
-      id: event.id,
-      name: event.name || 'Unnamed Event',
-      url: event.url || '',
-      ticketUrl: event.url || '', // FIXED: Map url to ticketUrl for frontend
-      source: event.source || 'unknown',
-      date: event.date || event.dates?.start?.localDate, // FIXED: Map date for frontend
-      dates: event.dates || {},
-      venue: event.venue || event._embedded?.venues?.[0]?.name || 'Venue TBA', // FIXED: Map venue for frontend
-      venues: extractVenues(event),
-      artists: extractArtists(event),
-      genres: await extractGenres(event), // ENHANCED: Now async for artist-based genre enhancement
-      images: event.images || [],
-      priceRanges: event.priceRanges || [],
-      classifications: event.classifications || []
-    };
-
-    // Calculate taste match score
-    const tasteScore = calculateTasteScore(processedEvent, userTaste);
-    processedEvent.tasteScore = tasteScore;
-    processedEvent.matchScore = tasteScore; // FIXED: Map tasteScore to matchScore for frontend
-
-    return processedEvent;
-  } catch (error) {
-    console.error(`Error processing event ${event.name}:`, error);
-    return {
-      id: event.id,
-      name: event.name || 'Unnamed Event',
-      source: event.source || 'unknown',
-      ticketUrl: event.url || '', // FIXED: Even in error case
-      date: event.date || 'Date TBA', // FIXED: Even in error case
-      venue: 'Venue TBA', // FIXED: Even in error case
-      tasteScore: 0,
-      matchScore: 0, // FIXED: Even in error case
-      error: error.message
-    };
-  }
-}
-
-/**
  * ENHANCED: Extract venues with better location handling
  */
 function extractVenues(event) {
@@ -457,9 +627,6 @@ function extractArtists(event) {
   return artists;
 }
 
-/**
- * ENHANCED: Extract genres with improved classification handling
- */
 /**
  * ENHANCED: Extract genres with artist-based enhancement for generic classifications
  */
@@ -653,9 +820,10 @@ function applyAdvancedTasteFiltering(events, userTaste) {
     }));
   }
 
-  // Sort by taste score (highest first)
-  const sortedEvents = events.sort((a, b) => (b.tasteScore || 0) - (a.tasteScore || 0));
+  // Sort by match score (highest first) - now using Phase 1 enhanced scores
+  const sortedEvents = events.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
 
   // Return top events (limit to reasonable number)
   return sortedEvents.slice(0, 50);
 }
+
