@@ -278,7 +278,7 @@ async function processEventsWithPhase1Scoring(events, city, session) {
     enhancedEvents = await applyPhase1MetadataScoring(deduplicatedEvents, userTaste);
     
     console.log('✅ Phase 1 metadata-aware scoring applied successfully');
-    console.log(`🎯 Sample Phase 1 scores: ${enhancedEvents.slice(0, 3).map(e => `${e.name}: ${e.matchScore}%`).join(', ')}`);
+    console.log(`🎯 Sample Phase 1 scores: ${enhancedEvents.slice(0, 3).map(e => `${e.name}: ${e.personalizedScore}%`).join(', ')}`);
   } catch (error) {
     console.error('❌ Phase 1 metadata scoring failed, using original results:', error);
     // Continue with original results if Phase 1 fails
@@ -292,7 +292,7 @@ async function processEventsWithPhase1Scoring(events, city, session) {
 }
 
 /**
- * NEW: Apply Phase 1 metadata-aware scoring
+ * FINAL FIX: Apply Phase 1 metadata-aware scoring with correct field mapping
  */
 async function applyPhase1MetadataScoring(events, userTaste) {
   console.log(`🎵 Applying Phase 1 metadata scoring to ${events.length} events...`);
@@ -305,7 +305,10 @@ async function applyPhase1MetadataScoring(events, userTaste) {
       console.log(`⚠️ Event ${event.name} missing Phase 1 metadata, using basic scoring`);
       return {
         ...event,
-        matchScore: event.tasteScore || 50,
+        personalizedScore: event.tasteScore || 50,
+        recommendationScore: event.tasteScore || 50,
+        score: event.tasteScore || 50,
+        matchScore: event.tasteScore || 50, // Keep for backward compatibility
         phase1Applied: false
       };
     }
@@ -345,7 +348,11 @@ async function applyPhase1MetadataScoring(events, userTaste) {
     
     return {
       ...event,
-      matchScore: finalScore,
+      // CRITICAL FIX: Map to all expected field names
+      personalizedScore: finalScore,
+      recommendationScore: finalScore,
+      score: finalScore,
+      matchScore: finalScore, // Keep for backward compatibility
       phase1Applied: true,
       phase1Breakdown: {
         soundScore: event.soundCharacteristics ? calculateSoundCharacteristicsScore(event.soundCharacteristics, userTaste) : null,
@@ -355,7 +362,7 @@ async function applyPhase1MetadataScoring(events, userTaste) {
     };
   });
   
-  console.log(`✅ Phase 1 metadata scoring complete. Average score: ${scoredEvents.reduce((sum, e) => sum + e.matchScore, 0) / scoredEvents.length}%`);
+  console.log(`✅ Phase 1 metadata scoring complete. Average score: ${scoredEvents.reduce((sum, e) => sum + e.personalizedScore, 0) / scoredEvents.length}%`);
   
   return scoredEvents;
 }
@@ -816,12 +823,15 @@ function applyAdvancedTasteFiltering(events, userTaste) {
     return events.map(event => ({
       ...event,
       tasteScore: event.tasteScore || 50,
-      matchScore: event.matchScore || event.tasteScore || 50 // FIXED: Ensure matchScore is set
+      personalizedScore: event.personalizedScore || event.tasteScore || 50, // FIXED: Ensure personalizedScore is set
+      recommendationScore: event.recommendationScore || event.tasteScore || 50,
+      score: event.score || event.tasteScore || 50,
+      matchScore: event.matchScore || event.tasteScore || 50
     }));
   }
 
-  // Sort by match score (highest first) - now using Phase 1 enhanced scores
-  const sortedEvents = events.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+  // Sort by personalized score (highest first) - now using Phase 1 enhanced scores
+  const sortedEvents = events.sort((a, b) => (b.personalizedScore || 0) - (a.personalizedScore || 0));
 
   // Return top events (limit to reasonable number)
   return sortedEvents.slice(0, 50);
