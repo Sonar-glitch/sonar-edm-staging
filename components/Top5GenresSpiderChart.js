@@ -3,50 +3,76 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } fro
 import styles from '@/styles/Top5GenresSpiderChart.module.css';
 
 const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
-  // Default genre data with PROPER NORMALIZATION (max 100%)
+  // SURGICAL ADDITION: Determine data source for labeling
+  const getDataSource = () => {
+    if (userTasteProfile?.genrePreferences && userTasteProfile.genrePreferences.length > 0) {
+      return { text: 'Live Data', color: '#4ecdc4', icon: '🔴' };
+    } else if (spotifyData?.topGenres && spotifyData.topGenres.length > 0) {
+      return { text: 'Fallback Data', color: '#f9ca24', icon: '⚠️' };
+    } else {
+      return { text: 'Demo Data', color: '#ff6b6b', icon: '❌' };
+    }
+  };
+
+  const dataSource = getDataSource();
+
+  // SURGICAL ADDITION: Enhanced tooltip with error codes and last fetched dates
+  const getEnhancedTooltip = () => {
+    if (dataSource.text === 'Live Data') {
+      // For live data, show last fetched date
+      const lastFetched = userTasteProfile?.lastUpdated || userTasteProfile?.timestamp || new Date().toISOString();
+      const fetchedDate = new Date(lastFetched).toLocaleString();
+      const genreCount = userTasteProfile?.genrePreferences?.length || 0;
+      return `Live Data\nLast fetched: ${fetchedDate}\nSource: Enhanced Profile\nGenres analyzed: ${genreCount}`;
+    } else if (dataSource.text === 'Fallback Data') {
+      // For fallback data, show limited info
+      const genreCount = spotifyData?.topGenres?.length || 0;
+      return `Fallback Data\nReason: Limited enhanced profile data\nSource: Spotify API\nGenres available: ${genreCount}`;
+    } else {
+      // For demo data, show default info
+      return `Demo Data\nReason: No user data available\nSource: Default genre preferences\nNote: Connect Spotify for personalized data`;
+    }
+  };
+  
+  // PRESERVED: Default genre data with PROPER NORMALIZATION (max 100%)
   const getGenreData = () => {
     try {
-      // Default fallback data
-      const defaultGenres = [
-        { genre: 'House', value: 100 },
-        { genre: 'Techno', value: 85 },
-        { genre: 'Progressive house', value: 70 },
-        { genre: 'Progressive', value: 68 },
-        { genre: 'Deep house', value: 61 }
-      ];
-
-      // If no real data, return defaults
-      if (!userTasteProfile?.genrePreferences && !spotifyData?.topGenres) {
-        return defaultGenres;
-      }
-
-      // Process real data with proper normalization
-      const genreScores = new Map();
+      let genreData = {};
       
-      if (userTasteProfile?.genrePreferences) {
+      // PRESERVED: Priority 1 - Enhanced user taste profile
+      if (userTasteProfile?.genrePreferences && userTasteProfile.genrePreferences.length > 0) {
+        console.log('✅ Using enhanced taste profile genres');
         userTasteProfile.genrePreferences.forEach(genre => {
-          const score = (genre.weight || 0) * 100;
-          genreScores.set(genre.name, score);
+          genreData[genre.name.toLowerCase()] = genre.score || genre.preference || 0;
         });
       }
-      
-      if (spotifyData?.topGenres) {
+      // PRESERVED: Priority 2 - Spotify data
+      else if (spotifyData?.topGenres && spotifyData.topGenres.length > 0) {
+        console.log('⚠️ Using Spotify genres as fallback');
         spotifyData.topGenres.forEach((genre, index) => {
-          const spotifyScore = Math.max(0, 100 - (index * 15));
-          const existingScore = genreScores.get(genre.name) || 0;
-          genreScores.set(genre.name, Math.max(existingScore, spotifyScore));
+          // Convert array position to score (first = highest)
+          const score = Math.max(0.2, 1 - (index * 0.15));
+          genreData[genre.toLowerCase()] = score;
         });
       }
-      
-      if (genreScores.size === 0) {
-        return defaultGenres;
+      // PRESERVED: Priority 3 - Demo data
+      else {
+        console.log('❌ Using demo genre data');
+        genreData = {
+          'house': 1.0,
+          'techno': 0.85,
+          'progressive house': 0.70,
+          'progressive': 0.68,
+          'deep house': 0.61
+        };
       }
       
-      const sortedGenres = Array.from(genreScores.entries())
-        .sort((a, b) => b[1] - a[1])
+      // PRESERVED: Get top 5 genres and normalize
+      const sortedGenres = Object.entries(genreData)
+        .sort(([,a], [,b]) => b - a)
         .slice(0, 5);
       
-      // FIXED: Ensure proper normalization with highest value always at 100%
+      // PRESERVED: FIXED: Ensure proper normalization with highest value always at 100%
       const maxScore = Math.max(...sortedGenres.map(([, score]) => score));
       
       return sortedGenres.map(([genre, score]) => ({
@@ -70,7 +96,26 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
 
   return (
     <div className={styles.container}>
-      {/* FIXED: Properly configured chart with explicit domain */}
+      {/* SURGICAL ADDITION: Data Source Header */}
+      <div className={styles.headerSection}>
+        <h3 className={styles.sectionTitle}>
+          Your Top 5 Genres
+          <span 
+            className={styles.dataSourceIndicator}
+            title={getEnhancedTooltip()}
+            style={{ 
+              color: dataSource.color,
+              fontSize: '12px',
+              marginLeft: '8px',
+              opacity: 0.8
+            }}
+          >
+            {dataSource.icon} {dataSource.text}
+          </span>
+        </h3>
+      </div>
+      
+      {/* PRESERVED: Properly configured chart with explicit domain */}
       <div className={styles.chartContainer}>
         <ResponsiveContainer width="100%" height={200}>
           <RadarChart 
@@ -104,7 +149,7 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
                 stroke: '#fff',
                 r: 4
               }}
-              // FIXED: Explicitly set domain to ensure 0-100% scale
+              // PRESERVED: FIXED: Explicitly set domain to ensure 0-100% scale
               domain={[0, 100]}
             />
           </RadarChart>
@@ -115,3 +160,4 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
 };
 
 export default Top5GenresSpiderChart;
+

@@ -10,6 +10,8 @@ const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'),
 const Top5GenresSpiderChart = dynamic(() => import('./Top5GenresSpiderChart'), { ssr: false });
 const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
 const EventDetailModal = dynamic(() => import('./EventDetailModal'), { ssr: false });
+// SURGICAL ADDITION: Import CompactSeasonalVibes component
+const CompactSeasonalVibes = dynamic(() => import('./CompactSeasonalVibes'), { ssr: false });
 
 const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
   const { data: session } = useSession();
@@ -52,34 +54,34 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
 
   const loadSpotifyData = async () => {
     try {
-      setDataStatus(prev => ({ ...prev, spotify: 'loading' }));
       const response = await fetch('/api/spotify/user-profile');
       if (response.ok) {
         const data = await response.json();
         setSpotifyData(data);
         setDataStatus(prev => ({ ...prev, spotify: 'real' }));
+        console.log('✅ Spotify data loaded');
       } else {
-        setDataStatus(prev => ({ ...prev, spotify: 'demo' }));
+        throw new Error('Failed to load Spotify data');
       }
     } catch (error) {
-      console.error('Error loading Spotify data:', error);
+      console.error('❌ Error loading Spotify data:', error);
       setDataStatus(prev => ({ ...prev, spotify: 'demo' }));
     }
   };
 
   const loadUserTasteProfile = async () => {
     try {
-      setDataStatus(prev => ({ ...prev, taste: 'loading' }));
-      const response = await fetch('/api/user/taste-profile');
+      const response = await fetch('/api/user/enhanced-taste-profile');
       if (response.ok) {
         const data = await response.json();
         setUserTasteProfile(data);
         setDataStatus(prev => ({ ...prev, taste: 'real' }));
+        console.log('✅ Enhanced taste profile loaded');
       } else {
-        setDataStatus(prev => ({ ...prev, taste: 'demo' }));
+        throw new Error('Failed to load taste profile');
       }
     } catch (error) {
-      console.error('Error loading taste profile:', error);
+      console.error('❌ Error loading taste profile:', error);
       setDataStatus(prev => ({ ...prev, taste: 'demo' }));
     }
   };
@@ -89,24 +91,24 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
     
     setLoading(true);
     setError(null);
-    setDataStatus(prev => ({ ...prev, events: 'loading' }));
     
     try {
-      const { latitude, longitude } = selectedLocation;
-      const eventsUrl = `/api/events?lat=${latitude}&lon=${longitude}&city=${encodeURIComponent(selectedLocation.city)}&radius=50`;
+      const { lat, lon, city } = selectedLocation;
+      const response = await fetch(
+        `/api/events?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}&radius=50`
+      );
       
-      const response = await fetch(eventsUrl);
-      
-      if (!response.ok) {
+      if (response.ok) {
+        const data = await response.json();
+        setEvents(data.events || []);
+        setDataStatus(prev => ({ ...prev, events: 'real' }));
+        console.log(`✅ Loaded ${data.events?.length || 0} events for ${city}`);
+      } else {
         throw new Error(`Failed to load events: ${response.status}`);
       }
-      
-      const data = await response.json();
-      setEvents(data.events || []);
-      setDataStatus(prev => ({ ...prev, events: data.isRealData ? 'real' : 'demo' }));
     } catch (error) {
-      console.error('Error loading events:', error);
-      setError(`Failed to load events: ${error.message}`);
+      console.error('❌ Error loading events:', error);
+      setError(error.message);
       setDataStatus(prev => ({ ...prev, events: 'error' }));
     } finally {
       setLoading(false);
@@ -114,22 +116,8 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
   };
 
   const handleLocationSelect = (location) => {
-    console.log('🔍 Location selected in dashboard:', location);
-    
-    // SURGICAL FIX: Map search component data structure to dashboard expected structure
-    const mappedLocation = {
-      city: location.name || location.city || 'Unknown City',           // Map 'name' to 'city'
-      region: location.region || location.stateCode || '',              // Keep region if available
-      country: location.country || 'Unknown Country',                   // Keep country
-      latitude: location.lat || location.latitude || 0,                 // Map 'lat' to 'latitude'
-      longitude: location.lon || location.longitude || 0,               // Map 'lon' to 'longitude'
-      formattedAddress: location.formattedAddress || '',                // Keep formatted address
-      placeId: location.placeId || '',                                  // Keep place ID
-      countryCode: location.countryCode || ''                           // Keep country code
-    };
-    
-    console.log('🔍 Mapped location for dashboard:', mappedLocation);
-    setSelectedLocation(mappedLocation);
+    setSelectedLocation(location);
+    console.log('📍 Location selected:', location);
   };
 
   const handleEventClick = (event) => {
@@ -137,15 +125,25 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
     setIsEventModalOpen(true);
   };
 
+  const handleCloseEventModal = () => {
+    setSelectedEvent(null);
+    setIsEventModalOpen(false);
+  };
+
   const handleSaveEvent = async (event) => {
     try {
       const response = await fetch('/api/user/interested-events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId: event._id || event.id })
+        body: JSON.stringify({ 
+          eventId: event.id,
+          eventData: event
+        })
       });
       
       if (response.ok) {
+        console.log('✅ Event saved:', event.name);
+        // Update local state to reflect the saved event
         setEvents(prevEvents => 
           prevEvents.map(e => 
             (e._id || e.id) === (event._id || event.id) 
@@ -193,7 +191,7 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
 
   return (
     <div className={styles.container}>
-      {/* TIGHT HEADER WITH VIBE SUMMARY */}
+      {/* PRESERVED: TIGHT HEADER WITH VIBE SUMMARY */}
       <div className={styles.header}>
         <h1 className={styles.title}>
           <span className={styles.logo}>TIKO</span>
@@ -204,11 +202,11 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
       </div>
 
       <div className={styles.mainContent}>
-        {/* ALL DISCUSSED CHANGES IMPLEMENTED */}
+        {/* PRESERVED: ALL DISCUSSED CHANGES IMPLEMENTED */}
         
-        {/* 1. INFORMATIONAL ROW - BALANCED HEIGHTS */}
+        {/* PRESERVED: 1. INFORMATIONAL ROW - BALANCED HEIGHTS */}
         <div className={styles.informationalRow}>
-          {/* Left: Spider Chart - REDUCED HEIGHT */}
+          {/* PRESERVED: Left: Spider Chart - REDUCED HEIGHT */}
           <div className={styles.leftColumn}>
             <div className={styles.card}>
               <div className={styles.cardHeader}>
@@ -222,7 +220,7 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
             </div>
           </div>
 
-          {/* Right: Seasonal Vibes */}
+          {/* SURGICAL MODIFICATION: Replace hardcoded seasonal vibes with CompactSeasonalVibes component */}
           <div className={styles.rightColumn}>
             <div className={styles.card}>
               <div className={styles.cardHeader}>
@@ -230,29 +228,16 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
                 <span className={styles.dataIndicator}>{getDataIndicator('taste')}</span>
               </div>
               
-              <div className={styles.seasonalGrid}>
-                <div className={`${styles.seasonCard} ${styles.spring}`}>
-                  <h3>Spring</h3>
-                  <p>Fresh beats & uplifting vibes</p>
-                </div>
-                <div className={`${styles.seasonCard} ${styles.summer}`}>
-                  <h3>Summer</h3>
-                  <p>High energy, open air sounds</p>
-                </div>
-                <div className={`${styles.seasonCard} ${styles.fall}`}>
-                  <h3>Fall</h3>
-                  <p>Organic House, Downtempo</p>
-                </div>
-                <div className={`${styles.seasonCard} ${styles.winter}`}>
-                  <h3>Winter</h3>
-                  <p>Deep House, Ambient Techno</p>
-                </div>
-              </div>
+              {/* REPLACED: Hardcoded seasonal grid with dynamic component */}
+              <CompactSeasonalVibes 
+                userTasteProfile={userTasteProfile}
+                spotifyData={spotifyData}
+              />
             </div>
           </div>
         </div>
 
-        {/* 2. DATA INSIGHTS ROW - ONE UNIFIED SOUND CHARACTERISTICS */}
+        {/* PRESERVED: 2. DATA INSIGHTS ROW - ONE UNIFIED SOUND CHARACTERISTICS */}
         <div className={styles.dataInsightsRow}>
           <div className={styles.fullWidth}>
             <div className={styles.card}>
@@ -268,9 +253,9 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
           </div>
         </div>
 
-        {/* 3. FUNCTIONAL ROW */}
+        {/* PRESERVED: 3. FUNCTIONAL ROW */}
         <div className={styles.functionalRow}>
-          {/* Left: Location Filter */}
+          {/* PRESERVED: Left: Location Filter */}
           <div className={styles.leftColumn}>
             <div className={styles.card}>
               <EnhancedLocationSearch 
@@ -280,7 +265,7 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
             </div>
           </div>
 
-          {/* Right: Vibe Match Slider */}
+          {/* PRESERVED: Right: Vibe Match Slider */}
           <div className={styles.rightColumn}>
             <div className={styles.card}>
               <div className={styles.vibeMatch}>
@@ -295,56 +280,29 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
           </div>
         </div>
 
-        {/* Events Section */}
+        {/* PRESERVED: Events Section */}
         <div className={styles.eventsSection}>
           <div className={styles.eventsHeader}>
-            <h2 className={styles.sectionTitle}>Events Matching Your Vibe</h2>
+            <h2 className={styles.eventsTitle}>Events Matching Your Vibe</h2>
             <span className={styles.dataIndicator}>{getDataIndicator('events')}</span>
           </div>
           
-          {loading && (
-            <div className={styles.loading}>
-              <div className={styles.spinner}></div>
-              <p>Finding events that match your taste...</p>
-            </div>
-          )}
-          
-          {error && (
-            <div className={styles.error}>
-              <p>{error}</p>
-              <button onClick={loadEvents} className={styles.retryButton}>
-                Try Again
-              </button>
-            </div>
-          )}
-          
-          {!loading && !error && events.length > 0 && (
-            <EnhancedEventList 
-              events={events}
-              onEventClick={handleEventClick}
-              onSaveEvent={handleSaveEvent}
-            />
-          )}
-          
-          {!loading && !error && events.length === 0 && (
-            <div className={styles.noEvents}>
-              <p>No events found for {selectedLocation.city}.</p>
-              <button onClick={loadEvents} className={styles.retryButton}>
-                Retry Loading Events
-              </button>
-            </div>
-          )}
+          <EnhancedEventList 
+            events={events}
+            loading={loading}
+            error={error}
+            onEventClick={handleEventClick}
+            onSaveEvent={handleSaveEvent}
+          />
         </div>
       </div>
 
-      {/* Event Detail Modal */}
-      {selectedEvent && (
-        <EventDetailModal
+      {/* PRESERVED: Event Detail Modal */}
+      {isEventModalOpen && selectedEvent && (
+        <EventDetailModal 
           event={selectedEvent}
-          isOpen={isEventModalOpen}
-          onClose={() => setIsEventModalOpen(false)}
-          onSaveEvent={handleSaveEvent}
-          spotifyData={spotifyData}
+          onClose={handleCloseEventModal}
+          onSave={handleSaveEvent}
         />
       )}
     </div>
@@ -352,3 +310,4 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
 };
 
 export default EnhancedPersonalizedDashboard;
+

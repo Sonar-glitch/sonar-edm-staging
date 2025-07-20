@@ -1,275 +1,90 @@
 import React, { useState, useEffect } from 'react';
 
-const CompactSeasonalVibes = () => {
+const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
   const [seasonalData, setSeasonalData] = useState(null);
   const [dataSource, setDataSource] = useState('loading');
   const [errorDetails, setErrorDetails] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchSeasonalVibes();
-  }, []);
+  }, [userTasteProfile, spotifyData]);
 
   const fetchSeasonalVibes = async () => {
     try {
-      setIsLoading(true);
-      console.log('🌟 Fetching real seasonal vibes data...');
-
-      // Fetch enhanced user taste profile with temporal patterns
+      setLoading(true);
+      
+      // PHASE 2: Try to fetch real seasonal data from enhanced profile
       const response = await fetch('/api/user/enhanced-taste-profile');
       
-      if (!response.ok) {
+      if (response.ok) {
+        const enhancedProfile = await response.json();
+        
+        if (enhancedProfile.seasonalPreferences && Object.keys(enhancedProfile.seasonalPreferences).length > 0) {
+          // SUCCESS: Real seasonal data available
+          setSeasonalData({
+            spring: enhancedProfile.seasonalPreferences.spring || {},
+            summer: enhancedProfile.seasonalPreferences.summer || {},
+            fall: enhancedProfile.seasonalPreferences.fall || {},
+            winter: enhancedProfile.seasonalPreferences.winter || {},
+            lastFetched: enhancedProfile.lastUpdated,
+            timestamp: enhancedProfile.timestamp,
+            analyzedPeriods: enhancedProfile.analyzedPeriods
+          });
+          setDataSource('live');
+          setErrorDetails(null);
+          console.log('✅ Real seasonal vibes loaded from Phase 2');
+        } else {
+          throw new Error('No seasonal preferences in enhanced profile');
+        }
+      } else {
         throw new Error(`Enhanced profile API failed: ${response.status}`);
       }
-
-      const profileData = await response.json();
-      console.log('✅ Enhanced profile data received:', profileData);
-
-      // Extract temporal patterns from Phase 2 data
-      const temporalPattern = profileData.temporalPattern;
-      const genrePreferences = profileData.genrePreferences || [];
-      
-      if (temporalPattern && temporalPattern.analyzedPeriods) {
-        // Calculate seasonal vibes from real temporal data
-        const calculatedSeasonalData = calculateSeasonalVibesFromTemporalData(
-          temporalPattern, 
-          genrePreferences,
-          profileData.soundCharacteristics
-        );
-        
-        setSeasonalData(calculatedSeasonalData);
-        setDataSource(profileData.dataSource || 'live');
-        setErrorDetails(null);
-        
-        console.log('🌟 Real seasonal vibes calculated from temporal patterns');
-      } else {
-        // Fallback to basic seasonal calculation
-        const fallbackData = calculateBasicSeasonalVibes(genrePreferences);
-        setSeasonalData(fallbackData);
-        setDataSource('fallback');
-        setErrorDetails({
-          code: 'TEMPORAL_DATA_INSUFFICIENT',
-          message: 'Insufficient temporal pattern data, using genre-based estimation'
-        });
-        
-        console.log('⚠️ Using fallback seasonal calculation');
-      }
-
     } catch (error) {
-      console.error('❌ Error fetching seasonal vibes:', error);
+      console.error('❌ Failed to fetch real seasonal vibes:', error);
       
-      // Default seasonal data when everything fails
-      const defaultData = getDefaultSeasonalVibes();
-      setSeasonalData(defaultData);
-      setDataSource('default');
-      setErrorDetails({
-        code: 'SEASONAL_FETCH_FAILED',
-        message: error.message
+      // FALLBACK: Use demo data with error tracking
+      setSeasonalData({
+        spring: { description: 'Fresh beats & uplifting vibes', genres: ['Progressive House', 'Melodic Techno'] },
+        summer: { description: 'High energy, open air sounds', genres: ['Tech House', 'Festival Progressive'] },
+        fall: { description: 'Organic House, Downtempo', genres: ['Deep House', 'Organic House'] },
+        winter: { description: 'Deep House, Ambient Techno', genres: ['Deep Techno', 'Ambient'] }
       });
+      setDataSource('fallback');
+      setErrorDetails({
+        code: 'SEASONAL_DATA_UNAVAILABLE',
+        message: 'Enhanced seasonal preferences not available',
+        fallbackUsed: 'Default seasonal patterns',
+        attemptedSources: ['Enhanced Profile API']
+      });
+      console.log('⚠️ Using demo seasonal vibes data');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  // PHASE 2: Calculate seasonal vibes from real temporal patterns
-  const calculateSeasonalVibesFromTemporalData = (temporalPattern, genrePreferences, soundCharacteristics) => {
-    const { discoveryRate, tasteStability, stableInterests, emergingInterests, fadingInterests } = temporalPattern;
-    
-    // Determine current season
-    const currentMonth = new Date().getMonth();
-    const currentSeason = getCurrentSeason(currentMonth);
-    
-    // Calculate seasonal characteristics based on user data
-    const seasonalVibes = {
-      spring: calculateSeasonalCharacteristics('spring', {
-        discoveryRate,
-        tasteStability,
-        stableInterests,
-        emergingInterests,
-        genrePreferences,
-        soundCharacteristics
-      }),
-      summer: calculateSeasonalCharacteristics('summer', {
-        discoveryRate,
-        tasteStability,
-        stableInterests,
-        emergingInterests,
-        genrePreferences,
-        soundCharacteristics
-      }),
-      fall: calculateSeasonalCharacteristics('fall', {
-        discoveryRate,
-        tasteStability,
-        stableInterests,
-        emergingInterests,
-        genrePreferences,
-        soundCharacteristics
-      }),
-      winter: calculateSeasonalCharacteristics('winter', {
-        discoveryRate,
-        tasteStability,
-        stableInterests,
-        emergingInterests,
-        genrePreferences,
-        soundCharacteristics
-      })
-    };
-
-    // Add metadata
-    seasonalVibes.currentSeason = currentSeason;
-    seasonalVibes.confidence = Math.min(0.95, (temporalPattern.analyzedPeriods?.recent?.tracks || 0) / 50);
-    seasonalVibes.dataQuality = temporalPattern.analyzedPeriods?.recent?.tracks > 20 ? 'high' : 'medium';
-    
-    return seasonalVibes;
-  };
-
-  const calculateSeasonalCharacteristics = (season, userData) => {
-    const { discoveryRate, tasteStability, stableInterests, emergingInterests, genrePreferences, soundCharacteristics } = userData;
-    
-    // Season-specific characteristics based on user's actual patterns
-    const seasonalMappings = {
-      spring: {
-        energyModifier: 0.1,
-        discoveryBoost: 0.2,
-        description: discoveryRate > 0.3 ? 'Fresh beats & uplifting vibes' : 'Renewed energy in familiar sounds',
-        mood: soundCharacteristics?.valence > 0.6 ? 'optimistic' : 'contemplative'
-      },
-      summer: {
-        energyModifier: 0.2,
-        discoveryBoost: 0.3,
-        description: soundCharacteristics?.energy > 0.7 ? 'High-energy festival sounds' : 'Warm, laid-back grooves',
-        mood: 'vibrant'
-      },
-      fall: {
-        energyModifier: -0.1,
-        discoveryBoost: -0.1,
-        description: tasteStability > 0.7 ? 'Organic house, downtempo' : 'Exploring deeper sounds',
-        mood: soundCharacteristics?.valence < 0.4 ? 'introspective' : 'nostalgic'
-      },
-      winter: {
-        energyModifier: -0.2,
-        discoveryBoost: -0.2,
-        description: stableInterests.length > 3 ? 'Deep house, ambient techno' : 'Cozy electronic warmth',
-        mood: 'contemplative'
-      }
-    };
-
-    const mapping = seasonalMappings[season];
-    const baseEnergy = soundCharacteristics?.energy || 0.6;
-    const adjustedEnergy = Math.max(0.1, Math.min(0.9, baseEnergy + mapping.energyModifier));
-    
-    // Find dominant genre for this season
-    const dominantGenre = genrePreferences[0]?.name || 'electronic';
-    const genreMatch = emergingInterests.includes(dominantGenre) ? 'emerging' : 
-                      stableInterests.includes(dominantGenre) ? 'stable' : 'neutral';
-
-    return {
-      title: season.charAt(0).toUpperCase() + season.slice(1),
-      description: mapping.description,
-      mood: mapping.mood,
-      energy: Math.round(adjustedEnergy * 100),
-      dominantGenre: dominantGenre,
-      genreMatch: genreMatch,
-      confidence: Math.round((tasteStability + (discoveryRate * 0.5)) * 100)
-    };
-  };
-
-  const calculateBasicSeasonalVibes = (genrePreferences) => {
-    const dominantGenre = genrePreferences[0]?.name || 'electronic';
-    const genreWeight = genrePreferences[0]?.weight || 0.5;
-    
-    return {
-      spring: {
-        title: 'Spring',
-        description: `Fresh ${dominantGenre} & uplifting vibes`,
-        mood: 'optimistic',
-        energy: Math.round((genreWeight + 0.2) * 100),
-        dominantGenre: dominantGenre,
-        genreMatch: 'estimated',
-        confidence: Math.round(genreWeight * 60)
-      },
-      summer: {
-        title: 'Summer',
-        description: `High-energy ${dominantGenre} sounds`,
-        mood: 'vibrant',
-        energy: Math.round((genreWeight + 0.3) * 100),
-        dominantGenre: dominantGenre,
-        genreMatch: 'estimated',
-        confidence: Math.round(genreWeight * 60)
-      },
-      fall: {
-        title: 'Fall',
-        description: `Organic ${dominantGenre}, downtempo`,
-        mood: 'introspective',
-        energy: Math.round((genreWeight - 0.1) * 100),
-        dominantGenre: dominantGenre,
-        genreMatch: 'estimated',
-        confidence: Math.round(genreWeight * 60)
-      },
-      winter: {
-        title: 'Winter',
-        description: `Deep ${dominantGenre}, ambient warmth`,
-        mood: 'contemplative',
-        energy: Math.round((genreWeight - 0.2) * 100),
-        dominantGenre: dominantGenre,
-        genreMatch: 'estimated',
-        confidence: Math.round(genreWeight * 60)
-      },
-      currentSeason: getCurrentSeason(new Date().getMonth()),
-      confidence: 0.6,
-      dataQuality: 'basic'
-    };
-  };
-
-  const getDefaultSeasonalVibes = () => {
-    return {
-      spring: {
-        title: 'Spring',
-        description: 'Fresh beats & uplifting vibes',
-        mood: 'optimistic',
-        energy: 70,
-        dominantGenre: 'electronic',
-        genreMatch: 'default',
-        confidence: 30
-      },
-      summer: {
-        title: 'Summer',
-        description: 'High-energy festival sounds',
-        mood: 'vibrant',
-        energy: 85,
-        dominantGenre: 'electronic',
-        genreMatch: 'default',
-        confidence: 30
-      },
-      fall: {
-        title: 'Fall',
-        description: 'Organic house, downtempo',
-        mood: 'introspective',
-        energy: 55,
-        dominantGenre: 'electronic',
-        genreMatch: 'default',
-        confidence: 30
-      },
-      winter: {
-        title: 'Winter',
-        description: 'Deep house, ambient techno',
-        mood: 'contemplative',
-        energy: 45,
-        dominantGenre: 'electronic',
-        genreMatch: 'default',
-        confidence: 30
-      },
-      currentSeason: getCurrentSeason(new Date().getMonth()),
-      confidence: 0.3,
-      dataQuality: 'default'
-    };
-  };
-
-  const getCurrentSeason = (month) => {
+  const getCurrentSeason = () => {
+    const month = new Date().getMonth();
     if (month >= 2 && month <= 4) return 'spring';
     if (month >= 5 && month <= 7) return 'summer';
     if (month >= 8 && month <= 10) return 'fall';
     return 'winter';
+  };
+
+  // SURGICAL ADDITION: Enhanced tooltip with error codes and last fetched dates
+  const getEnhancedTooltip = () => {
+    if (dataSource === 'live') {
+      // For live data, show last fetched date
+      const lastFetched = seasonalData.lastFetched || seasonalData.timestamp || new Date().toISOString();
+      const fetchedDate = new Date(lastFetched).toLocaleString();
+      return `Live Data\nLast fetched: ${fetchedDate}\nSource: Enhanced Profile\nAnalyzed periods: ${seasonalData.analyzedPeriods || 'Multiple'}`;
+    } else if (errorDetails) {
+      // For non-live data, show error codes and details
+      return `${errorDetails.code || 'UNKNOWN_ERROR'}\nDetails: ${errorDetails.message || 'No details available'}\nFallback: ${errorDetails.fallbackUsed || 'Default data'}\nAttempted: ${errorDetails.attemptedSources?.join(', ') || 'Multiple sources'}`;
+    } else {
+      // For fallback/demo data without specific errors
+      return `${dataSource === 'fallback' ? 'Fallback Data' : 'Demo Data'}\nReason: ${dataSource === 'fallback' ? 'Limited temporal data' : 'No user data available'}\nSource: Default seasonal patterns`;
+    }
   };
 
   const getDataSourceInfo = () => {
@@ -277,55 +92,22 @@ const CompactSeasonalVibes = () => {
       case 'live':
         return { text: 'Live Data', color: '#00CFFF', icon: '🔴' };
       case 'fallback':
-        return { text: 'Fallback Data', color: '#FFD700', icon: '⚠️' };
-      case 'default':
-        return { text: 'Default Data', color: '#ff6b6b', icon: '❌' };
+        return { text: 'Fallback Data', color: '#f9ca24', icon: '⚠️' };
+      case 'error':
+        return { text: 'Demo Data', color: '#ff6b6b', icon: '❌' };
+      case 'loading':
+        return { text: 'Loading...', color: '#95a5a6', icon: '⏳' };
       default:
-        return { text: 'Loading...', color: '#999999', icon: '⏳' };
+        return { text: 'Unknown', color: '#666', icon: '❓' };
     }
   };
 
-  const getSeasonalColor = (season) => {
-    const colors = {
-      spring: '#00FF7F',
-      summer: '#FFD700',
-      fall: '#FF6347',
-      winter: '#87CEEB'
-    };
-    return colors[season] || '#00CFFF';
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="seasonal-vibes-container">
-        <div className="seasonal-header">
-          <h3 style={{ color: '#DADADA' }}>Seasonal Vibes</h3>
-          <div className="data-source-badge loading">
-            <span style={{ color: '#999999' }}>⏳ Loading...</span>
-          </div>
-        </div>
-        <div className="seasonal-grid loading">
-          <div style={{ color: '#999999', textAlign: 'center', padding: '20px' }}>
-            Analyzing your seasonal music patterns...
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!seasonalData) {
-    return (
-      <div className="seasonal-vibes-container">
-        <div className="seasonal-header">
-          <h3 style={{ color: '#DADADA' }}>Seasonal Vibes</h3>
-          <div className="data-source-badge error">
-            <span style={{ color: '#ff6b6b' }}>❌ Error</span>
-          </div>
-        </div>
-        <div className="seasonal-grid error">
-          <div style={{ color: '#ff6b6b', textAlign: 'center', padding: '20px' }}>
-            Unable to load seasonal data
-          </div>
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p>Loading seasonal vibes...</p>
         </div>
       </div>
     );
@@ -337,119 +119,77 @@ const CompactSeasonalVibes = () => {
   return (
     <div className="seasonal-vibes-container">
       <div className="seasonal-header">
-        <h3 style={{ color: '#DADADA' }}>Seasonal Vibes</h3>
-        <div 
-          className="data-source-badge"
-          title={errorDetails ? `${errorDetails.code}: ${errorDetails.message}` : `Data source: ${dataSource}`}
-          style={{ 
-            backgroundColor: dataSource === 'live' ? 'rgba(0, 207, 255, 0.1)' : 
-                           dataSource === 'fallback' ? 'rgba(255, 215, 0, 0.1)' : 
-                           'rgba(255, 107, 107, 0.1)',
-            border: `1px solid ${dataSourceInfo.color}`,
-            borderRadius: '12px',
-            padding: '4px 8px',
-            fontSize: '12px',
-            cursor: errorDetails ? 'help' : 'default'
-          }}
-        >
-          <span style={{ color: dataSourceInfo.color }}>
+        <h3 style={{ color: '#DADADA' }}>
+          Seasonal Vibes
+          <span 
+            className="data-source-indicator"
+            title={getEnhancedTooltip()}
+            style={{ 
+              color: dataSourceInfo.color,
+              fontSize: '12px',
+              marginLeft: '8px',
+              opacity: 0.8
+            }}
+          >
             {dataSourceInfo.icon} {dataSourceInfo.text}
           </span>
-        </div>
+        </h3>
       </div>
 
       <div className="seasonal-grid">
         {seasons.map((season) => {
-          const seasonData = seasonalData[season];
-          const isCurrentSeason = season === seasonalData.currentSeason;
-          const seasonColor = getSeasonalColor(season);
+          const seasonData = seasonalData?.[season] || {};
+          const isCurrentSeason = getCurrentSeason() === season;
           
           return (
             <div 
               key={season}
-              className={`seasonal-card ${isCurrentSeason ? 'current' : ''}`}
+              className={`season-card ${season} ${isCurrentSeason ? 'current' : ''}`}
               style={{
-                backgroundColor: isCurrentSeason ? 'rgba(0, 207, 255, 0.1)' : '#15151F',
-                border: `1px solid ${isCurrentSeason ? '#00CFFF' : 'rgba(255, 255, 255, 0.1)'}`,
+                background: getSeasonGradient(season),
+                border: isCurrentSeason ? '2px solid #00CFFF' : '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '12px',
                 padding: '16px',
+                margin: '8px',
                 position: 'relative',
-                transition: 'all 0.3s ease'
+                minHeight: '120px'
               }}
             >
-              <div className="season-header">
-                <h4 style={{ 
-                  color: seasonColor, 
-                  margin: '0 0 8px 0',
-                  fontSize: '16px',
-                  fontWeight: '600'
+              <h4 style={{ 
+                color: '#fff', 
+                margin: '0 0 8px 0',
+                textTransform: 'capitalize',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}>
+                {season}
+                {isCurrentSeason && (
+                  <span style={{ 
+                    fontSize: '12px', 
+                    marginLeft: '8px',
+                    color: '#00CFFF'
+                  }}>
+                    Current
+                  </span>
+                )}
+              </h4>
+              <p style={{ 
+                color: 'rgba(255,255,255,0.9)', 
+                margin: '0',
+                fontSize: '14px',
+                lineHeight: '1.4'
+              }}>
+                {seasonData.description || getDefaultSeasonDescription(season)}
+              </p>
+              {seasonData.genres && (
+                <div style={{ 
+                  marginTop: '8px',
+                  fontSize: '12px',
+                  color: 'rgba(255,255,255,0.7)'
                 }}>
-                  {seasonData.title}
-                  {isCurrentSeason && (
-                    <span style={{ 
-                      color: '#00CFFF', 
-                      fontSize: '12px', 
-                      marginLeft: '8px' 
-                    }}>
-                      • Current
-                    </span>
-                  )}
-                </h4>
-              </div>
-
-              <div className="season-content">
-                <p style={{ 
-                  color: '#DADADA', 
-                  fontSize: '14px', 
-                  margin: '0 0 12px 0',
-                  lineHeight: '1.4'
-                }}>
-                  {seasonData.description}
-                </p>
-
-                <div className="season-stats">
-                  <div className="stat-item">
-                    <span style={{ color: '#999999', fontSize: '12px' }}>Energy</span>
-                    <div className="energy-bar" style={{
-                      width: '100%',
-                      height: '4px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      borderRadius: '2px',
-                      marginTop: '4px',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        width: `${seasonData.energy}%`,
-                        height: '100%',
-                        background: `linear-gradient(90deg, ${seasonColor}, #FF00CC)`,
-                        borderRadius: '2px'
-                      }} />
-                    </div>
-                    <span style={{ color: seasonColor, fontSize: '12px', fontWeight: '600' }}>
-                      {seasonData.energy}%
-                    </span>
-                  </div>
-
-                  <div className="genre-info" style={{ marginTop: '8px' }}>
-                    <span style={{ 
-                      color: '#999999', 
-                      fontSize: '11px' 
-                    }}>
-                      {seasonData.dominantGenre} • {seasonData.mood}
-                    </span>
-                  </div>
-
-                  <div className="confidence-info" style={{ marginTop: '4px' }}>
-                    <span style={{ 
-                      color: seasonData.confidence > 70 ? '#00CFFF' : 
-                             seasonData.confidence > 40 ? '#FFD700' : '#ff6b6b',
-                      fontSize: '11px'
-                    }}>
-                      {seasonData.confidence}% confidence
-                    </span>
-                  </div>
+                  {seasonData.genres.slice(0, 2).join(', ')}
                 </div>
-              </div>
+              )}
             </div>
           );
         })}
@@ -457,66 +197,75 @@ const CompactSeasonalVibes = () => {
 
       <style jsx>{`
         .seasonal-vibes-container {
-          background: #0D0C1D;
-          border-radius: 16px;
-          padding: 20px;
-          margin: 16px 0;
+          width: 100%;
         }
-
+        
         .seasonal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
           margin-bottom: 16px;
         }
-
-        .seasonal-header h3 {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-        }
-
+        
         .seasonal-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
         }
-
-        .seasonal-grid.loading,
-        .seasonal-grid.error {
-          grid-template-columns: 1fr;
+        
+        .season-card {
+          transition: all 0.3s ease;
+          cursor: pointer;
         }
-
-        .seasonal-card {
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .seasonal-card:hover {
+        
+        .season-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(255, 0, 204, 0.2);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-
-        .seasonal-card.current {
-          box-shadow: 0 0 12px rgba(0, 207, 255, 0.3);
+        
+        .loading-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 20px;
+          color: #DADADA;
         }
-
-        @media (max-width: 768px) {
-          .seasonal-grid {
-            grid-template-columns: 1fr;
-            gap: 8px;
-          }
-          
-          .seasonal-vibes-container {
-            padding: 16px;
-          }
-          
-          .seasonal-card {
-            padding: 12px;
-          }
+        
+        .loading-spinner {
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top: 2px solid #00CFFF;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 10px;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </div>
   );
+};
+
+// Helper functions
+const getSeasonGradient = (season) => {
+  const gradients = {
+    spring: 'linear-gradient(135deg, #4CAF50, #8BC34A)',
+    summer: 'linear-gradient(135deg, #FF9800, #FF5722)',
+    fall: 'linear-gradient(135deg, #795548, #FF9800)',
+    winter: 'linear-gradient(135deg, #2196F3, #3F51B5)'
+  };
+  return gradients[season] || gradients.spring;
+};
+
+const getDefaultSeasonDescription = (season) => {
+  const descriptions = {
+    spring: 'Fresh beats & uplifting vibes',
+    summer: 'High energy, open air sounds',
+    fall: 'Organic House, Downtempo',
+    winter: 'Deep House, Ambient Techno'
+  };
+  return descriptions[season] || 'Seasonal music vibes';
 };
 
 export default CompactSeasonalVibes;

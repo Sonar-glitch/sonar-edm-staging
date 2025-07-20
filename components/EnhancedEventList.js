@@ -116,7 +116,7 @@ export default function EnhancedEventList({ events, loading, error }) {
               priceRange: event.priceRange,
               headliners: event.headliners,
               genres: event.genres,
-              matchScore: event.matchScore,
+              matchScore: event.personalizedScore || event.matchScore || 50, // SURGICAL FIX: Use personalizedScore from API with fallback
               source: event.source,
               venueType: event.venueType
             }
@@ -139,86 +139,77 @@ export default function EnhancedEventList({ events, loading, error }) {
       });
     }
   };
-  
-  // Enhanced event click handler with proper URL handling
-  const handleEventClick = (event) => {
-    console.log('🎯 Event clicked:', event.name, 'Source:', event.source, 'URL:', event.ticketUrl);
-    
-    // Proper URL validation and handling
-    if (event.ticketUrl && event.ticketUrl !== '#' && event.ticketUrl.startsWith('http')) {
-      console.log('✅ Opening ticket URL:', event.ticketUrl);
-      window.open(event.ticketUrl, '_blank', 'noopener,noreferrer');
-    } else {
-      console.log('ℹ️ No valid ticket URL, showing event details modal');
-      setSelectedEvent(event);
-    }
+
+  const handleShowMore = () => {
+    setVisibleEvents(prev => Math.min(prev + 4, events.length));
   };
-  
-  // Close event modal
+
+  const handleEventClick = (event) => {
+    setSelectedEvent(event);
+  };
+
   const closeModal = () => {
     setSelectedEvent(null);
   };
-  
-  // Show more events
-  const handleShowMore = () => {
-    setVisibleEvents(prev => prev + 8);
-  };
-  
-  // Format date
+
   const formatDate = (dateString) => {
     if (!dateString) return 'Date TBA';
     
-    const date = new Date(dateString);
-    const options = { weekday: 'short', month: 'short', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+    try {
+      const date = new Date(dateString);
+      const options = { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      };
+      return date.toLocaleDateString('en-US', options);
+    } catch (error) {
+      return 'Date TBA';
+    }
   };
-  
-  // Proper data source label determination
+
   const getDataSourceLabel = (event) => {
-  const source = event.source?.toLowerCase();
-  
-  if (source === 'ticketmaster' || source === 'edmtrain' || source === 'spotify') {
-    return 'Live Data';
-  } else if (source === 'mongodb') {
-    return 'Live Data';  // Keep for backward compatibility
-  } else if (source === 'emergency') {
-    return 'Emergency';
-  } else {
-    return 'Demo Data';
-  }
-};
-  
-  // Loading state
+    if (!event.source) return 'Unknown';
+    
+    const sourceLabels = {
+      'ticketmaster': 'Live Data',
+      'edmtrain': 'Live Data',
+      'emergency': 'Emergency Data',
+      'sample': 'Demo Data'
+    };
+    
+    return sourceLabels[event.source.toLowerCase()] || 'Live Data';
+  };
+
   if (loading) {
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.spinner}></div>
-        <p>Finding events that match your vibe...</p>
+      <div className={styles.container}>
+        <div className={styles.loadingState}>
+          <div className={styles.loadingSpinner}></div>
+          <p>Finding events that match your vibe...</p>
+        </div>
       </div>
     );
   }
-  
-  // Error state
+
   if (error) {
     return (
-      <div className={styles.errorContainer}>
-        <p className={styles.errorMessage}>{error}</p>
-        <button 
-          className={styles.retryButton}
-          onClick={() => window.location.reload()}
-        >
-          Retry
-        </button>
+      <div className={styles.container}>
+        <div className={styles.errorState}>
+          <p>Unable to load events. Please try again.</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
       </div>
     );
   }
-  
-  // No events state
+
   if (!events || events.length === 0) {
     return (
-      <div className={styles.noEventsContainer}>
-        <p>No events found matching your criteria.</p>
-        <p>Try adjusting your filters or check back later.</p>
+      <div className={styles.container}>
+        <div className={styles.emptyState}>
+          <h3>No events found</h3>
+          <p>Try adjusting your location or filters to discover more events.</p>
+        </div>
       </div>
     );
   }
@@ -226,15 +217,15 @@ export default function EnhancedEventList({ events, loading, error }) {
   return (
     <>
       <div className={styles.container}>
-        <div className={styles.eventList}>
-          {events.slice(0, visibleEvents).map((event) => {
+        <div className={styles.eventsList}>
+          {events.slice(0, visibleEvents).map((event, index) => {
             const isLiked = likedEvents.has(event.id);
             const isLiking = likingInProgress.has(event.id);
             
             return (
               <div 
-                key={event.id} 
-                className={`${styles.eventCard} ${styles.clickable}`}
+                key={event.id || index} 
+                className={styles.eventCard}
                 onClick={() => handleEventClick(event)}
               >
                 <div className={styles.eventHeader}>
@@ -248,29 +239,23 @@ export default function EnhancedEventList({ events, loading, error }) {
                         className={styles.matchCircle}
                         style={{
                           background: `conic-gradient(
-                            rgba(255, 0, 110, 0.8) ${event.matchScore}%,
-                            rgba(255, 0, 110, 0.2) ${event.matchScore}%
+                            rgba(255, 0, 110, 0.8) ${event.personalizedScore || event.matchScore || 50}%,
+                            rgba(255, 0, 110, 0.2) ${event.personalizedScore || event.matchScore || 50}%
                           )`
                         }}
                       >
-                        <span>{event.matchScore}%</span>
+                        <span>{event.personalizedScore || event.matchScore || 50}%</span>
                       </div>
                     </div>
                     
                     {/* NEW: Heart/Like Button */}
                     <button
-                      className={`${styles.likeButton} ${isLiked ? styles.liked : ''} ${isLiking ? styles.liking : ''}`}
+                      className={`${styles.likeButton} ${isLiked ? styles.liked : ''}`}
                       onClick={(e) => handleLikeEvent(event, e)}
                       disabled={isLiking}
                       title={isLiked ? 'Remove from My Events' : 'Add to My Events'}
                     >
-                      {isLiking ? (
-                        <div className={styles.likeSpinner}></div>
-                      ) : (
-                        <span className={styles.heartIcon}>
-                          {isLiked ? '❤️' : '🤍'}
-                        </span>
-                      )}
+                      {isLiking ? '⏳' : (isLiked ? '❤️' : '🤍')}
                     </button>
                   </div>
                 </div>
@@ -279,9 +264,9 @@ export default function EnhancedEventList({ events, loading, error }) {
                   <h3 className={styles.eventName}>{event.name}</h3>
                   
                   <div className={styles.venueInfo}>
-                    <span className={styles.venueName}>{event.venue}</span>
-                    {event.address && (
-                      <span className={styles.venueAddress}>{event.address}</span>
+                    <span className={styles.venueName}>{getVenueName(event.venue)}</span>
+                    {getVenueAddress(event) && (
+                      <span className={styles.venueAddress}>{getVenueAddress(event)}</span>
                     )}
                   </div>
                   
@@ -330,12 +315,12 @@ export default function EnhancedEventList({ events, loading, error }) {
             </div>
             <div className={styles.modalBody}>
               <p><strong>Date:</strong> {formatDate(selectedEvent.date)}</p>
-              <p><strong>Venue:</strong> {selectedEvent.venue}</p>
-              <p><strong>Address:</strong> {selectedEvent.address}</p>
+              <p><strong>Venue:</strong> {getVenueName(selectedEvent.venue)}</p>
+              <p><strong>Address:</strong> {getVenueAddress(selectedEvent) || 'Address TBA'}</p>
               {selectedEvent.headliners && (
                 <p><strong>Artists:</strong> {selectedEvent.headliners.join(', ')}</p>
               )}
-              <p><strong>Match Score:</strong> {selectedEvent.matchScore}%</p>
+              <p><strong>Match Score:</strong> {selectedEvent.personalizedScore || selectedEvent.matchScore || 50}%</p>
               <p><strong>Source:</strong> {getDataSourceLabel(selectedEvent)}</p>
               {selectedEvent.ticketUrl && selectedEvent.ticketUrl !== '#' && (
                 <p><strong>Tickets:</strong> <a href={selectedEvent.ticketUrl} target="_blank" rel="noopener noreferrer">Buy Tickets</a></p>
@@ -347,3 +332,4 @@ export default function EnhancedEventList({ events, loading, error }) {
     </>
   );
 }
+
