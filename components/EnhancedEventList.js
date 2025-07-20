@@ -2,6 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import styles from '@/styles/EnhancedEventList.module.css';
 
+// Helper function to safely extract venue name - FIXES React error #31
+const getVenueName = (venue) => {
+  if (!venue) return 'Venue TBA';
+  
+  // If venue is already a string, return it
+  if (typeof venue === 'string') return venue;
+  
+  // If venue is an object, extract the name
+  if (typeof venue === 'object' && venue.name) return venue.name;
+  
+  // Fallback
+  return 'Venue TBA';
+};
+
+// Helper function to safely extract venue address
+const getVenueAddress = (event) => {
+  // Check if event has direct address field
+  if (event.address && typeof event.address === 'string') {
+    return event.address;
+  }
+  
+  // Check if venue object has address
+  if (event.venue && typeof event.venue === 'object' && event.venue.address) {
+    return event.venue.address;
+  }
+  
+  // Check venues array
+  if (event.venues && Array.isArray(event.venues) && event.venues[0]?.address) {
+    return event.venues[0].address;
+  }
+  
+  return null;
+};
+
 export default function EnhancedEventList({ events, loading, error }) {
   const { data: session } = useSession();
   const [visibleEvents, setVisibleEvents] = useState(4);
