@@ -1196,12 +1196,16 @@ async function processEventWithPhase1(event, city, userTaste) {
     // Calculate taste score
     const tasteScore = calculateTasteScore(event, userTaste);
     
+    // HOTFIX: Extract venue information for proper data structure
+    const venueObj = venues[0] || { name: 'Unknown Venue', city: city };
+    
     // Format for frontend
     return {
       _id: event._id || event.id,
       name: event.name || event.title,
       date: event.date || event.datetime,
-      venue: venues[0] || { name: 'Unknown Venue', city: city },
+      venue: venueObj.name || 'Unknown Venue',  // ✅ STRING (React compatible)
+      venues: [venueObj],                       // ✅ ARRAY (detailed data)
       artists: artists,
       genres: genres,
       personalizedScore: tasteScore,
@@ -1521,12 +1525,16 @@ async function processEventsWithPhase2Enhancement(events, city, session) {
     try {
       const phase2Result = calculateThreeDimensionalScore(event, enhancedUserProfile);
       
+      // HOTFIX: Extract venue information for proper data structure
+      const venueObj = extractVenues(event)[0] || { name: 'Unknown Venue', city: city };
+      
       // Format for frontend
       return {
         _id: event._id || event.id,
         name: event.name || event.title,
         date: event.date || event.datetime,
-        venue: extractVenues(event)[0] || { name: 'Unknown Venue', city: city },
+        venue: venueObj.name || 'Unknown Venue',  // ✅ STRING (React compatible)
+        venues: [venueObj],                       // ✅ ARRAY (detailed data)
         artists: extractArtists(event),
         genres: event.genres || [],
         personalizedScore: phase2Result.personalizedScore,
