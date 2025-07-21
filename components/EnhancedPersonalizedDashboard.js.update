@@ -1,2 +1,0 @@
-// Add hideHeader prop to component definition
-const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
