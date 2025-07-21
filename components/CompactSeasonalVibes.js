@@ -1,253 +1,203 @@
 import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import styles from '@/styles/CompactSeasonalVibes.module.css';
 
-const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
+export default function CompactSeasonalVibes() {
+  const { data: session } = useSession();
   const [seasonalData, setSeasonalData] = useState(null);
-  const [dataSource, setDataSource] = useState('loading');
-  const [errorDetails, setErrorDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentSeason, setCurrentSeason] = useState('Summer');
 
-  useEffect(() => {
-    fetchSeasonalVibes();
-  }, [userTasteProfile, spotifyData]);
-
-  // SURGICAL FIX 4: Improved fallback data mechanism
-  const fetchSeasonalVibes = async () => {
+  // PHASE 1: Enhanced seasonal data with fallback handling
+  const getSeasonalPreferences = async () => {
     try {
       setLoading(true);
-      setDataSource('loading');
       
-      // Try to fetch real seasonal data from enhanced profile
+      // Try to get real seasonal preferences
       const response = await fetch('/api/user/enhanced-taste-profile');
       
       if (response.ok) {
-        const enhancedProfile = await response.json();
+        const data = await response.json();
         
-        if (enhancedProfile.seasonalPreferences && Object.keys(enhancedProfile.seasonalPreferences).length > 0) {
-          // SUCCESS: Real seasonal data available
-          setSeasonalData({
-            spring: enhancedProfile.seasonalPreferences.spring || {},
-            summer: enhancedProfile.seasonalPreferences.summer || {},
-            fall: enhancedProfile.seasonalPreferences.fall || {},
-            winter: enhancedProfile.seasonalPreferences.winter || {},
-            lastFetched: enhancedProfile.lastUpdated,
-            timestamp: enhancedProfile.timestamp,
-            analyzedPeriods: enhancedProfile.analyzedPeriods
-          });
-          setDataSource('live');
-          setErrorDetails(null);
-          console.log('✅ Real seasonal vibes loaded');
-        } else {
-          throw new Error('SEASONAL_PREFERENCES_EMPTY: Enhanced profile has no seasonal data');
+        if (data.seasonalPreferences && Object.keys(data.seasonalPreferences).length > 0) {
+          setSeasonalData(data.seasonalPreferences);
+          setError(null);
+          return;
         }
-      } else {
-        throw new Error(`ENHANCED_PROFILE_API_FAILED: ${response.status}`);
       }
-    } catch (error) {
-      console.error('❌ Failed to fetch real seasonal vibes:', error);
       
-      // SURGICAL FIX: Improved fallback with better error tracking
-      setSeasonalData({
-        spring: { description: 'Fresh beats & uplifting vibes', genres: ['Progressive House', 'Melodic Techno'] },
-        summer: { description: 'High energy, open air sounds', genres: ['Tech House', 'Festival Progressive'] },
-        fall: { description: 'Organic House, Downtempo', genres: ['Deep House', 'Organic House'] },
-        winter: { description: 'Deep House, Ambient Techno', genres: ['Deep Techno', 'Ambient'] }
-      });
-      setDataSource('fallback');
-      setErrorDetails({
-        code: error.message.includes('SEASONAL_PREFERENCES_EMPTY') ? 'SEASONAL_PREFERENCES_EMPTY' : 'ENHANCED_PROFILE_API_FAILED',
-        message: error.message,
-        fallbackUsed: 'Default seasonal patterns',
-        attemptedSources: ['Enhanced Profile API']
-      });
-      console.log('⚠️ Using fallback seasonal vibes data');
+      // PHASE 1: Fallback to static seasonal data with proper error tracking
+      console.log('⚠️ Using fallback seasonal data - API not available');
+      setSeasonalData(getFallbackSeasonalData());
+      setError('STATIC_SEASONAL_DATA');
+      
+    } catch (err) {
+      console.error('❌ Error loading seasonal preferences:', err);
+      setSeasonalData(getFallbackSeasonalData());
+      setError('API_ERROR');
     } finally {
       setLoading(false);
     }
   };
 
-  const getCurrentSeason = () => {
+  // PHASE 1: Enhanced fallback data
+  const getFallbackSeasonalData = () => ({
+    Spring: {
+      title: 'Spring',
+      description: 'Fresh beats & uplifting vibes',
+      subtext: 'Progressive House, Melodic Techno',
+      mood: 'energetic',
+      color: '#4CAF50' // Green
+    },
+    Summer: {
+      title: 'Summer',
+      description: 'High energy, open air sounds',
+      subtext: 'Tech House, Festival Progressive',
+      mood: 'euphoric',
+      color: '#FF9800', // Orange
+      current: true
+    },
+    Fall: {
+      title: 'Fall',
+      description: 'Organic House, Downtempo',
+      subtext: 'Deep House, Organic House',
+      mood: 'contemplative',
+      color: '#D84315' // Red-orange
+    },
+    Winter: {
+      title: 'Winter',
+      description: 'Deep House, Ambient Techno',
+      subtext: 'Deep Techno, Ambient',
+      mood: 'introspective',
+      color: '#1976D2' // Blue
+    }
+  });
+
+  // PHASE 1: TIKO color scheme for seasonal cards
+  const getSeasonGradient = (season, isCurrentSeason) => {
+    const seasonColors = {
+      Spring: '#4CAF50',
+      Summer: '#FF9800', 
+      Fall: '#D84315',
+      Winter: '#1976D2'
+    };
+    
+    return {
+      background: seasonColors[season] || '#4CAF50',
+      // PHASE 1: TIKO compliant border colors
+      border: isCurrentSeason ? '2px solid #00CFFF' : '1px solid rgba(0, 255, 255, 0.1)',
+      boxShadow: isCurrentSeason ? '0 0 12px #FF00CC88' : 'none'
+    };
+  };
+
+  useEffect(() => {
+    if (session) {
+      getSeasonalPreferences();
+    }
+    
+    // Determine current season
     const month = new Date().getMonth();
-    if (month >= 2 && month <= 4) return 'spring';
-    if (month >= 5 && month <= 7) return 'summer';
-    if (month >= 8 && month <= 10) return 'fall';
-    return 'winter';
-  };
+    const seasons = ['Winter', 'Winter', 'Spring', 'Spring', 'Spring', 'Summer', 'Summer', 'Summer', 'Fall', 'Fall', 'Fall', 'Winter'];
+    setCurrentSeason(seasons[month]);
+  }, [session]);
 
-  // SURGICAL FIX: Enhanced tooltip with proper error codes and fetch dates
-  const getEnhancedTooltip = () => {
-    if (dataSource === 'live') {
-      const lastFetched = seasonalData.lastFetched || seasonalData.timestamp || new Date().toISOString();
-      const fetchedDate = new Date(lastFetched).toLocaleString();
-      return `Real Data\nLast fetched: ${fetchedDate}\nSource: Enhanced Profile\nAnalyzed periods: ${seasonalData.analyzedPeriods || 'Multiple'}`;
-    } else if (errorDetails) {
-      return `${errorDetails.code}\nDetails: ${errorDetails.message}\nFallback: ${errorDetails.fallbackUsed}\nAttempted: ${errorDetails.attemptedSources?.join(', ')}`;
-    } else {
-      return `Fallback Data\nReason: Limited temporal data\nSource: Default seasonal patterns`;
-    }
-  };
-
-  const getDataSourceInfo = () => {
-    switch (dataSource) {
-      case 'live':
-        return { text: 'Real Data', color: '#00CFFF', icon: '🔴' };
-      case 'fallback':
-        return { text: 'Fallback Data', color: '#f9ca24', icon: '⚠️' };
-      case 'error':
-        return { text: 'Fallback Data', color: '#ff6b6b', icon: '❌' };
-      case 'loading':
-        return { text: 'Loading...', color: '#95a5a6', icon: '⏳' };
-      default:
-        return { text: 'Unknown', color: '#666', icon: '❓' };
-    }
-  };
-
+  // PHASE 1: Enhanced loading state
   if (loading) {
     return (
-      <div className="seasonal-vibes-container">
-        <div className="loading-state">
-          <div className="loading-spinner"></div>
-          <p style={{ color: '#DADADA' }}>Loading seasonal vibes...</p>
+      <div className={styles.container}>
+        <div className={styles.loadingState}>
+          <div className={styles.loadingSpinner}></div>
+          <p style={{ color: '#999999' }}>Loading seasonal preferences...</p>
         </div>
       </div>
     );
   }
 
-  const dataSourceInfo = getDataSourceInfo();
-  const seasons = ['spring', 'summer', 'fall', 'winter'];
+  // PHASE 1: Enhanced error state with fallback display
+  if (!seasonalData) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.errorState}>
+          <p style={{ color: '#FF00CC' }}>⚠️ Seasonal data unavailable</p>
+          <p style={{ color: '#999999' }}>Using default seasonal preferences</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="seasonal-vibes-container" style={{ position: 'relative' }}>
-      {/* SURGICAL FIX 1: REMOVED duplicate data source label - main dashboard handles this */}
-
-      {/* SURGICAL FIX 2: REMOVED duplicate heading - main dashboard has OG <h2> title */}
-
-      <div className="seasonal-grid">
-        {seasons.map((season) => {
-          const seasonData = seasonalData?.[season] || {};
-          const isCurrentSeason = getCurrentSeason() === season;
+    <div className={styles.container}>
+      {/* PHASE 1: Removed duplicate heading - main dashboard handles this */}
+      
+      <div className={styles.seasonalGrid}>
+        {Object.entries(seasonalData).map(([season, data]) => {
+          const isCurrentSeason = season === currentSeason;
+          const seasonStyle = getSeasonGradient(season, isCurrentSeason);
           
           return (
-            <div 
+            <div
               key={season}
-              className={`season-card ${season} ${isCurrentSeason ? 'current' : ''}`}
-              style={{
-                background: getSeasonGradient(season),
-                border: isCurrentSeason ? '2px solid #00CFFF' : '1px solid rgba(0, 255, 255, 0.1)',
-                borderRadius: '12px',
-                padding: '16px',
-                margin: '8px',
-                position: 'relative',
-                minHeight: '120px'
-              }}
+              className={`${styles.seasonCard} ${isCurrentSeason ? styles.currentSeason : ''}`}
+              style={seasonStyle}
             >
-              <h4 style={{ 
-                color: '#DADADA', 
-                margin: '0 0 8px 0',
-                textTransform: 'capitalize',
-                fontSize: '16px',
-                fontWeight: '600'
-              }}>
-                {season}
-                {isCurrentSeason && (
-                  <span style={{ 
-                    fontSize: '12px', 
-                    marginLeft: '8px',
-                    color: '#00CFFF'
-                  }}>
-                    Current
-                  </span>
-                )}
-              </h4>
-              <p style={{ 
-                color: '#999999', 
-                margin: '0',
-                fontSize: '14px',
-                lineHeight: '1.4'
-              }}>
-                {seasonData.description || getDefaultSeasonDescription(season)}
-              </p>
-              {seasonData.genres && (
-                <div style={{ 
-                  marginTop: '8px',
-                  fontSize: '12px',
-                  color: '#888888'
-                }}>
-                  {seasonData.genres.slice(0, 2).join(', ')}
+              <div className={styles.seasonContent}>
+                <h4 
+                  className={styles.seasonTitle}
+                  style={{ 
+                    // PHASE 1: TIKO primary text color
+                    color: '#DADADA',
+                    fontWeight: isCurrentSeason ? 'bold' : 'normal'
+                  }}
+                >
+                  {data.title}
+                  {isCurrentSeason && <span className={styles.currentBadge}>Current</span>}
+                </h4>
+                
+                <p 
+                  className={styles.seasonDescription}
+                  style={{ 
+                    // PHASE 1: TIKO secondary text color
+                    color: '#999999',
+                    fontSize: '14px',
+                    marginBottom: '8px'
+                  }}
+                >
+                  {data.description}
+                </p>
+                
+                <p 
+                  className={styles.seasonSubtext}
+                  style={{ 
+                    // PHASE 1: TIKO secondary text color
+                    color: '#888888',
+                    fontSize: '12px',
+                    fontStyle: 'italic'
+                  }}
+                >
+                  {data.subtext}
+                </p>
+              </div>
+              
+              {isCurrentSeason && (
+                <div className={styles.currentIndicator}>
+                  <span style={{ color: '#00CFFF' }}>●</span>
                 </div>
               )}
             </div>
           );
         })}
       </div>
-
-      <style jsx>{`
-        .seasonal-vibes-container {
-          width: 100%;
-        }
-        
-        .seasonal-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-        }
-        
-        .season-card {
-          transition: all 0.3s ease;
-          cursor: pointer;
-        }
-        
-        .season-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 0 12px rgba(255, 0, 204, 0.3);
-        }
-        
-        .loading-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 20px;
-          color: #DADADA;
-        }
-        
-        .loading-spinner {
-          width: 20px;
-          height: 20px;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-top: 2px solid #00CFFF;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          margin-bottom: 10px;
-        }
-        
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+      
+      {/* PHASE 1: Error indicator for fallback data */}
+      {error && (
+        <div className={styles.fallbackIndicator}>
+          <span style={{ color: '#999999', fontSize: '12px' }}>
+            ⚠️ {error === 'STATIC_SEASONAL_DATA' ? 'Using static seasonal data' : 'Fallback data active'}
+          </span>
+        </div>
+      )}
     </div>
   );
-};
-
-// SURGICAL FIX 6: TIKO color scheme for season gradients
-const getSeasonGradient = (season) => {
-  const gradients = {
-    spring: 'linear-gradient(135deg, #2D5016, #4A7C59)',
-    summer: 'linear-gradient(135deg, #8B4513, #CD853F)',
-    fall: 'linear-gradient(135deg, #722F37, #A0522D)',
-    winter: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'
-  };
-  return gradients[season] || gradients.spring;
-};
-
-const getDefaultSeasonDescription = (season) => {
-  const descriptions = {
-    spring: 'Fresh beats & uplifting vibes',
-    summer: 'High energy, open air sounds',
-    fall: 'Organic House, Downtempo',
-    winter: 'Deep House, Ambient Techno'
-  };
-  return descriptions[season] || 'Seasonal music vibes';
-};
-
-export default CompactSeasonalVibes;
+}
 

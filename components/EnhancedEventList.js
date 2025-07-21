@@ -2,378 +2,213 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import styles from '@/styles/EnhancedEventList.module.css';
 
-// Helper function to safely extract venue name
-const getVenueName = (venue) => {
-  if (!venue) return 'Venue TBA';
-  if (typeof venue === 'string') return venue;
-  if (typeof venue === 'object' && venue.name) return venue.name;
-  return 'Venue TBA';
-};
-
-// Helper function to safely extract venue address
-const getVenueAddress = (event) => {
-  if (event.address && typeof event.address === 'string') {
-    return event.address;
-  }
-  if (event.venue && typeof event.venue === 'object' && event.venue.address) {
-    return event.venue.address;
-  }
-  if (event.venues && Array.isArray(event.venues) && event.venues[0]?.address) {
-    return event.venues[0].address;
-  }
-  return null;
-};
-
-export default function EnhancedEventList({ events, loading, error, onEventClick, onSaveEvent }) {
+export default function EnhancedEventList({ events = [], loading = false, error = null, onEventSelect }) {
   const { data: session } = useSession();
-  const [visibleEvents, setVisibleEvents] = useState(4);
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [likedEvents, setLikedEvents] = useState(new Set());
-  const [likingInProgress, setLikingInProgress] = useState(new Set());
-  
-  // Load user's liked events on component mount
+  const [displayEvents, setDisplayEvents] = useState([]);
+  const [eventError, setEventError] = useState(null);
+
+  // PHASE 1: Enhanced event processing with fallback handling
   useEffect(() => {
-    if (session?.user) {
-      loadLikedEvents();
+    if (events && events.length > 0) {
+      setDisplayEvents(events);
+      setEventError(null);
+    } else if (!loading && !error) {
+      // PHASE 1: No events but no error - this indicates API returned empty results
+      setEventError('NO_EVENTS_FOUND');
     }
-  }, [session]);
-  
-  // Load liked events from API
-  const loadLikedEvents = async () => {
-    try {
-      const response = await fetch('/api/user/interested-events');
-      if (response.ok) {
-        const data = await response.json();
-        const likedEventIds = new Set(data.events.map(event => event.id || event.eventId));
-        setLikedEvents(likedEventIds);
-      }
-    } catch (error) {
-      console.error('Error loading liked events:', error);
-    }
-  };
-  
-  // Handle like/unlike event
-  const handleLikeEvent = async (event, e) => {
-    e.stopPropagation();
-    
-    if (!session?.user) {
-      alert('Please sign in to like events');
-      return;
-    }
-    
-    const eventId = event.id;
-    const isCurrentlyLiked = likedEvents.has(eventId);
-    
-    if (likingInProgress.has(eventId)) return;
-    
-    setLikingInProgress(prev => new Set([...prev, eventId]));
-    
-    try {
-      if (isCurrentlyLiked) {
-        // Unlike event
-        const response = await fetch(`/api/user/interested-events?eventId=${eventId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (response.ok) {
-          setLikedEvents(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(eventId);
-            return newSet;
-          });
-          console.log('✅ Event unliked:', event.name);
-        }
-      } else {
-        // Like event
-        const response = await fetch('/api/user/interested-events', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            eventId,
-            eventData: {
-              id: event.id,
-              name: event.name,
-              date: event.date,
-              time: event.time,
-              venue: event.venue,
-              address: event.address,
-              city: event.city,
-              ticketUrl: event.ticketUrl,
-              priceRange: event.priceRange,
-              headliners: event.headliners,
-              genres: event.genres,
-              matchScore: event.personalizedScore || event.matchScore || 50,
-              source: event.source,
-              venueType: event.venueType
-            }
-          })
-        });
-        
-        if (response.ok) {
-          setLikedEvents(prev => new Set([...prev, eventId]));
-          console.log('✅ Event liked:', event.name);
-        }
-      }
-    } catch (error) {
-      console.error('Error toggling like:', error);
-      alert('Failed to update event. Please try again.');
-    } finally {
-      setLikingInProgress(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(eventId);
-        return newSet;
-      });
-    }
-  };
+  }, [events, loading, error]);
 
-  const handleShowMore = () => {
-    setVisibleEvents(prev => Math.min(prev + 4, events.length));
-  };
-
-  const handleEventClick = (event) => {
-    if (onEventClick) {
-      onEventClick(event);
-    } else {
-      setSelectedEvent(event);
-    }
-  };
-
-  const closeModal = () => {
-    setSelectedEvent(null);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Date TBA';
-    
-    try {
-      const date = new Date(dateString);
-      const options = { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric' 
-      };
-      return date.toLocaleDateString('en-US', options);
-    } catch (error) {
-      return 'Date TBA';
-    }
-  };
-
-  const getDataSourceLabel = (event) => {
-    if (!event.source) return 'Unknown';
-    
-    const sourceLabels = {
-      'ticketmaster': 'Real Data',
-      'edmtrain': 'Real Data',
-      'emergency': 'Fallback Data',
-      'sample': 'Fallback Data'
-    };
-    
-    return sourceLabels[event.source.toLowerCase()] || 'Real Data';
-  };
-
+  // PHASE 1: Enhanced loading state
   if (loading) {
     return (
       <div className={styles.container}>
         <div className={styles.loadingState}>
           <div className={styles.loadingSpinner}></div>
-          <p style={{ color: '#DADADA' }}>Finding events that match your vibe...</p>
+          <p style={{ color: '#999999' }}>Discovering events that match your vibe...</p>
+          <div className={styles.loadingDetails}>
+            <span style={{ color: '#888888', fontSize: '12px' }}>
+              Analyzing location, preferences, and availability
+            </span>
+          </div>
         </div>
       </div>
     );
   }
 
+  // PHASE 1: Enhanced error state
   if (error) {
     return (
       <div className={styles.container}>
         <div className={styles.errorState}>
-          <p style={{ color: '#ff6b6b' }}>Unable to load events. Please try again.</p>
+          <h3 style={{ color: '#FF00CC' }}>⚠️ Events Loading Error</h3>
+          <p style={{ color: '#999999' }}>Unable to load events at this time</p>
+          <div className={styles.errorDetails}>
+            <span style={{ color: '#888888', fontSize: '12px' }}>
+              Error: {error}
+            </span>
+          </div>
           <button 
-            onClick={() => window.location.reload()}
+            className={styles.retryButton}
             style={{
-              backgroundColor: '#FF00CC',
+              background: 'linear-gradient(90deg, #00CFFF, #FF00CC)', // PHASE 1: TIKO gradient
               color: '#000000',
               border: 'none',
               padding: '8px 16px',
               borderRadius: '4px',
+              marginTop: '10px',
               cursor: 'pointer'
             }}
+            onClick={() => window.location.reload()}
           >
-            Retry
+            Retry Loading
           </button>
         </div>
       </div>
     );
   }
 
-  // SURGICAL FIX 5: Improved no events found message with better guidance
-  if (!events || events.length === 0) {
+  // PHASE 1: Enhanced no events state with actionable suggestions
+  if (!displayEvents || displayEvents.length === 0) {
     return (
       <div className={styles.container}>
-        <div className={styles.emptyState}>
-          <h3 style={{ color: '#DADADA' }}>No events found</h3>
+        <div className={styles.noEventsState}>
+          <h3 style={{ color: '#FF00CC' }}>No events found</h3>
           <p style={{ color: '#999999' }}>
             Try adjusting your location or filters to discover more events.
           </p>
-          <div style={{ marginTop: '16px', color: '#888888', fontSize: '14px' }}>
-            <p>Suggestions:</p>
-            <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
-              <li>Expand your search radius</li>
-              <li>Check nearby cities</li>
-              <li>Adjust your music preferences</li>
-              <li>Try different date ranges</li>
+          
+          {/* PHASE 1: Enhanced suggestions with TIKO styling */}
+          <div className={styles.suggestions}>
+            <h4 style={{ color: '#DADADA', marginBottom: '10px' }}>Suggestions:</h4>
+            <ul style={{ color: '#888888', fontSize: '14px', lineHeight: '1.6' }}>
+              <li>• Expand your search radius</li>
+              <li>• Check nearby cities</li>
+              <li>• Adjust your music preferences</li>
+              <li>• Try different date ranges</li>
             </ul>
+          </div>
+
+          {/* PHASE 1: Debug information for troubleshooting */}
+          <div className={styles.debugInfo}>
+            <details style={{ marginTop: '20px' }}>
+              <summary style={{ color: '#00CFFF', cursor: 'pointer', fontSize: '12px' }}>
+                Debug Information
+              </summary>
+              <div style={{ color: '#888888', fontSize: '11px', marginTop: '10px' }}>
+                <p>Events array length: {events?.length || 0}</p>
+                <p>Loading state: {loading ? 'true' : 'false'}</p>
+                <p>Error state: {error || 'none'}</p>
+                <p>Event error: {eventError || 'none'}</p>
+                <p>Session: {session ? 'authenticated' : 'not authenticated'}</p>
+              </div>
+            </details>
           </div>
         </div>
       </div>
     );
   }
 
+  // PHASE 1: Enhanced events display
   return (
-    <>
-      <div className={styles.container}>
-        <div className={styles.eventsList}>
-          {events.slice(0, visibleEvents).map((event, index) => {
-            const isLiked = likedEvents.has(event.id);
-            const isLiking = likingInProgress.has(event.id);
-            
-            return (
-              <div 
-                key={event.id || index} 
-                className={styles.eventCard}
-                onClick={() => handleEventClick(event)}
-                style={{
-                  backgroundColor: '#15151F',
-                  border: '1px solid rgba(0, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  margin: '8px 0',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 0 12px rgba(255, 0, 204, 0.3)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <div className={styles.eventHeader}>
-                  <div className={styles.dateBox}>
-                    <span className={styles.date} style={{ color: '#DADADA' }}>
-                      {formatDate(event.date)}
-                    </span>
-                  </div>
-                  
-                  <div className={styles.eventActions}>
-                    <div className={styles.matchScore}>
-                      <div 
-                        className={styles.matchCircle}
-                        style={{
-                          background: `conic-gradient(
-                            #FF00CC ${event.personalizedScore || event.matchScore || 50}%,
-                            rgba(255, 0, 204, 0.2) ${event.personalizedScore || event.matchScore || 50}%
-                          )`,
-                          borderRadius: '50%',
-                          width: '40px',
-                          height: '40px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <span style={{ color: '#000000', fontWeight: 'bold', fontSize: '12px' }}>
-                          {event.personalizedScore || event.matchScore || 50}%
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={(e) => handleLikeEvent(event, e)}
-                      disabled={isLiking}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        fontSize: '20px',
-                        cursor: 'pointer',
-                        opacity: isLiking ? 0.5 : 1
-                      }}
-                    >
-                      {isLiked ? '❤️' : '🤍'}
-                    </button>
-                  </div>
-                </div>
-
-                <div className={styles.eventContent}>
-                  <h3 style={{ color: '#DADADA', margin: '8px 0' }}>{event.name}</h3>
-                  
-                  <div className={styles.eventDetails}>
-                    <p style={{ color: '#999999', margin: '4px 0' }}>
-                      📍 {getVenueName(event.venue)}
-                    </p>
-                    
-                    {event.headliners && event.headliners.length > 0 && (
-                      <p style={{ color: '#888888', margin: '4px 0' }}>
-                        🎵 {event.headliners.slice(0, 2).join(', ')}
-                      </p>
-                    )}
-                    
-                    {event.priceRange && (
-                      <p style={{ color: '#00CFFF', margin: '4px 0' }}>
-                        💰 {event.priceRange}
-                      </p>
-                    )}
-                  </div>
-
-                  {event.genres && event.genres.length > 0 && (
-                    <div className={styles.genreTags} style={{ marginTop: '8px' }}>
-                      {event.genres.slice(0, 3).map((genre, idx) => (
-                        <span 
-                          key={idx}
-                          style={{
-                            backgroundColor: '#111827',
-                            color: '#00FFFF',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            marginRight: '4px',
-                            border: '1px solid rgba(0, 255, 255, 0.3)'
-                          }}
-                        >
-                          {genre}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {visibleEvents < events.length && (
-          <div className={styles.showMoreContainer}>
-            <button 
-              onClick={handleShowMore}
-              className={styles.showMoreButton}
-              style={{
-                backgroundColor: '#FF00CC',
-                color: '#000000',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              Show More Events ({events.length - visibleEvents} remaining)
-            </button>
-          </div>
-        )}
+    <div className={styles.container}>
+      <div className={styles.eventsHeader}>
+        <span style={{ color: '#DADADA' }}>
+          {displayEvents.length} event{displayEvents.length !== 1 ? 's' : ''} found
+        </span>
       </div>
-    </>
+
+      <div className={styles.eventsList}>
+        {displayEvents.map((event, index) => (
+          <div 
+            key={event.id || index} 
+            className={styles.eventCard}
+            style={{
+              background: '#15151F', // PHASE 1: TIKO accent section background
+              border: '1px solid rgba(0, 255, 255, 0.1)', // PHASE 1: TIKO card border
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '12px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+            onClick={() => onEventSelect && onEventSelect(event)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 12px #FF00CC88'; // PHASE 1: TIKO hover effect
+              e.currentTarget.style.borderColor = '#00CFFF';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.style.borderColor = 'rgba(0, 255, 255, 0.1)';
+            }}
+          >
+            <div className={styles.eventHeader}>
+              <h4 style={{ color: '#DADADA', margin: '0 0 8px 0' }}>
+                {event.name || 'Untitled Event'}
+              </h4>
+              {event.personalizedScore && (
+                <span 
+                  className={styles.scoreBadge}
+                  style={{
+                    background: '#FF00CC', // PHASE 1: TIKO action button color
+                    color: '#000000',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {event.personalizedScore}% match
+                </span>
+              )}
+            </div>
+
+            <div className={styles.eventDetails}>
+              <p style={{ color: '#999999', margin: '4px 0' }}>
+                📅 {event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD'}
+              </p>
+              <p style={{ color: '#999999', margin: '4px 0' }}>
+                📍 {event.venue?.name || 'Venue TBD'} - {event.venue?.city || 'Location TBD'}
+              </p>
+              {event.artists && event.artists.length > 0 && (
+                <p style={{ color: '#888888', margin: '4px 0', fontSize: '14px' }}>
+                  🎵 {event.artists.slice(0, 3).map(artist => artist.name || artist).join(', ')}
+                  {event.artists.length > 3 && ` +${event.artists.length - 3} more`}
+                </p>
+              )}
+            </div>
+
+            {event.genres && event.genres.length > 0 && (
+              <div className={styles.genreTags}>
+                {event.genres.slice(0, 3).map((genre, genreIndex) => (
+                  <span 
+                    key={genreIndex}
+                    className={styles.genreTag}
+                    style={{
+                      background: '#111827', // PHASE 1: TIKO genre tag background
+                      color: '#00FFFF', // PHASE 1: TIKO genre tag text
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      marginRight: '6px',
+                      border: '1px solid rgba(0, 255, 255, 0.2)'
+                    }}
+                  >
+                    {genre}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* PHASE 1: Events data source indicator */}
+      <div className={styles.eventsFooter}>
+        <span style={{ color: '#888888', fontSize: '12px' }}>
+          Events loaded from API • Last updated: {new Date().toLocaleTimeString()}
+        </span>
+      </div>
+    </div>
   );
 }
 

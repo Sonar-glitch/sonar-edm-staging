@@ -1,77 +1,149 @@
+/* PHASE 1: ENHANCED GLASSMORPHIC SOUND CHARACTERISTICS WITH TIKO COLORS */
+
 .container {
   width: 100%;
-  height: 100%; /* Fill available space */
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* NO REDUNDANT SUBTITLE */
+/* GLASSMORPHIC CHARACTERISTICS INFO */
+.characteristicsInfo {
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
+  text-align: center;
+}
 
+.characteristicsInfo p {
+  margin: 0;
+  color: #999999; /* TIKO secondary text */
+  font-size: 0.875rem;
+}
+
+.characteristicsInfo span {
+  color: #00CFFF; /* TIKO interactive highlight */
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(0, 207, 255, 0.3);
+}
+
+/* GLASSMORPHIC CHARACTERISTICS GRID */
 .characteristicsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem; /* Reduced gap */
-  flex: 1; /* Fill available space */
+  gap: 1.5rem;
+  flex: 1;
 }
 
-.characteristicItem {
+/* ENHANCED GLASSMORPHIC CHARACTERISTIC ITEMS */
+.characteristic {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem; /* Reduced gap */
+  gap: 0.8rem;
+  padding: 1rem;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
+/* ENHANCED HOVER WITH TIKO GLOW */
+.characteristic:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 30px rgba(0, 207, 255, 0.2), /* TIKO interactive highlight glow */
+    0 0 25px rgba(0, 207, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(0, 255, 255, 0.3);
+}
+
+/* GLASSMORPHIC CHARACTERISTIC HEADER */
 .characteristicHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.iconAndName {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.icon {
-  font-size: 1.1rem; /* Slightly smaller */
-}
-
-.name {
-  font-size: 0.95rem; /* Slightly smaller */
+.characteristicName {
+  font-size: 1rem;
   font-weight: 600;
-  color: #fff;
+  color: #DADADA; /* TIKO primary text */
+  text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
 }
 
-/* SINGLE PERCENTAGE DISPLAY */
-.percentage {
-  font-size: 0.95rem; /* Slightly smaller */
-  font-weight: 600;
-  color: #00d4ff;
+.characteristicValue {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #FF00CC; /* TIKO action button color */
+  text-shadow: 0 0 15px rgba(255, 0, 204, 0.5);
 }
 
+/* GLASSMORPHIC CHARACTERISTIC DESCRIPTION */
+.characteristicDescription {
+  font-size: 0.8rem;
+  color: #999999; /* TIKO secondary text */
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ENHANCED GLASSMORPHIC PROGRESS CONTAINER */
 .progressContainer {
   display: flex;
   align-items: center;
-  gap: 0; /* NO gap - no duplicate percentage */
-}
-
-.progressTrack {
-  flex: 1;
-  height: 6px; /* Slightly smaller */
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  position: relative;
-  overflow: hidden;
+  gap: 0;
 }
 
 .progressBar {
+  flex: 1;
+  height: 8px;
+  background: rgba(21, 21, 31, 0.8); /* TIKO accent section background */
+  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* ENHANCED PROGRESS FILL WITH TIKO GRADIENTS */
+.progressFill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 4px;
   position: relative;
   transition: width 0.8s ease;
   overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 207, 255, 0.3);
 }
 
+/* TIKO GRADIENT BACKGROUNDS FOR DIFFERENT CHARACTERISTICS */
+.progressFill[data-characteristic="energy"] {
+  background: linear-gradient(90deg, #00CFFF, #FF00CC); /* TIKO gradient */
+}
+
+.progressFill[data-characteristic="danceability"] {
+  background: linear-gradient(90deg, #00CFFF, #FF00CC); /* TIKO gradient */
+}
+
+.progressFill[data-characteristic="positivity"] {
+  background: linear-gradient(90deg, #00CFFF, #FF00CC); /* TIKO gradient */
+}
+
+.progressFill[data-characteristic="acoustic"] {
+  background: linear-gradient(90deg, #FFD700, #FFA500); /* TIKO mustard color for special case */
+}
+
+/* ENHANCED SHINE ANIMATION */
 .shine {
   position: absolute;
   top: 0;
@@ -81,10 +153,10 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.6),
     transparent
   );
-  animation: shine 2s infinite;
+  animation: shine 3s infinite;
 }
 
 @keyframes shine {
@@ -99,11 +171,101 @@
   }
 }
 
-.description {
-  font-size: 0.7rem; /* Smaller font */
-  color: rgba(255, 255, 255, 0.6);
+/* GLASSMORPHIC LOADING STATE */
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  height: 100%;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 255, 255, 0.1);
+  border-top: 3px solid #00CFFF; /* TIKO interactive highlight */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 20px rgba(0, 207, 255, 0.3);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loadingState p {
+  color: #999999; /* TIKO secondary text */
   margin: 0;
-  line-height: 1.3;
+}
+
+/* GLASSMORPHIC ERROR STATE */
+.errorState {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 0, 204, 0.1); /* TIKO action button with low opacity */
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 0, 204, 0.3);
+  border-radius: 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.errorState p:first-child {
+  color: #FF00CC; /* TIKO action button color */
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.errorState p:last-child {
+  color: #999999; /* TIKO secondary text */
+  margin: 0;
+}
+
+/* GLASSMORPHIC DATA SOURCE INFO */
+.dataSourceInfo {
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.dataSourceInfo span {
+  color: #888888; /* TIKO secondary text */
+  font-size: 0.75rem;
+}
+
+/* GLASSMORPHIC ERROR INDICATOR */
+.errorIndicator {
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 0, 204, 0.2);
+}
+
+.errorIndicator span {
+  color: #999999; /* TIKO secondary text */
+  font-size: 0.75rem;
 }
 
 /* RESPONSIVE DESIGN */
@@ -112,4 +274,46 @@
     grid-template-columns: 1fr;
     gap: 1rem;
   }
+  
+  .characteristic {
+    padding: 0.8rem;
+  }
+  
+  .characteristicName {
+    font-size: 0.9rem;
+  }
+  
+  .characteristicValue {
+    font-size: 1rem;
+  }
+  
+  .characteristicDescription {
+    font-size: 0.75rem;
+  }
 }
+
+/* GLASSMORPHIC ENHANCEMENT DETAILS */
+.characteristic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.characteristic::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+

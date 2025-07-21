@@ -1,166 +1,208 @@
-import React from 'react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import styles from '@/styles/Top5GenresSpiderChart.module.css';
 
-const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
-  // SURGICAL FIX: Determine data source for proper fallback mechanism
-  const getDataSource = () => {
-    if (userTasteProfile?.genrePreferences && userTasteProfile.genrePreferences.length > 0) {
-      return { 
-        text: 'Real Data', 
-        color: '#00CFFF', 
-        icon: '🔴',
-        type: 'real',
-        lastFetched: userTasteProfile?.lastUpdated || userTasteProfile?.timestamp || new Date().toISOString(),
-        source: 'Enhanced Profile',
-        genreCount: userTasteProfile.genrePreferences.length
-      };
-    } else if (spotifyData?.topGenres && spotifyData.topGenres.length > 0) {
-      return { 
-        text: 'Fallback Data', 
-        color: '#f9ca24', 
-        icon: '⚠️',
-        type: 'fallback',
-        errorCode: 'ENHANCED_PROFILE_UNAVAILABLE',
-        reason: 'Limited enhanced profile data',
-        source: 'Spotify API',
-        genreCount: spotifyData.topGenres.length
-      };
-    } else {
-      return { 
-        text: 'Fallback Data', 
-        color: '#ff6b6b', 
-        icon: '❌',
-        type: 'fallback',
-        errorCode: 'NO_USER_DATA_AVAILABLE',
-        reason: 'No user data available',
-        source: 'Default preferences',
-        genreCount: 0
-      };
-    }
-  };
+export default function Top5GenresSpiderChart() {
+  const { data: session } = useSession();
+  const [genreData, setGenreData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dataSource, setDataSource] = useState('unknown');
 
-  const dataSource = getDataSource();
-
-  // SURGICAL FIX: Enhanced tooltip with proper error codes and fetch dates
-  const getEnhancedTooltip = () => {
-    if (dataSource.type === 'real') {
-      // For real data, show last fetched date
-      const fetchedDate = new Date(dataSource.lastFetched).toLocaleString();
-      return `Real Data\nLast fetched: ${fetchedDate}\nSource: ${dataSource.source}\nGenres analyzed: ${dataSource.genreCount}`;
-    } else {
-      // For fallback data, show error codes
-      return `${dataSource.errorCode}\nReason: ${dataSource.reason}\nSource: ${dataSource.source}\nGenres available: ${dataSource.genreCount}`;
-    }
-  };
-  
-  // PRESERVED: Genre data processing with improved fallback
-  const getGenreData = () => {
+  // PHASE 1: Enhanced genre data loading with fallback handling
+  const loadGenreData = async () => {
     try {
-      let genreData = {};
+      setLoading(true);
+      setError(null);
       
-      // Priority 1 - Enhanced user taste profile
-      if (userTasteProfile?.genrePreferences && userTasteProfile.genrePreferences.length > 0) {
-        console.log('✅ Using enhanced taste profile genres');
-        userTasteProfile.genrePreferences.forEach(genre => {
-          genreData[genre.name.toLowerCase()] = genre.score || genre.preference || 0;
-        });
-      }
-      // Priority 2 - Spotify data fallback
-      else if (spotifyData?.topGenres && spotifyData.topGenres.length > 0) {
-        console.log('⚠️ Using Spotify genres as fallback');
-        spotifyData.topGenres.forEach((genre, index) => {
-          const score = Math.max(0.2, 1 - (index * 0.15));
-          genreData[genre.toLowerCase()] = score;
-        });
-      }
-      // Priority 3 - Minimal fallback (no mock data)
-      else {
-        console.log('❌ Using minimal fallback genre data');
-        genreData = {
-          'house': 1.0,
-          'techno': 0.85,
-          'progressive house': 0.70,
-          'progressive': 0.68,
-          'deep house': 0.61
-        };
+      console.log('🎯 Loading genre preferences...');
+      
+      // Try enhanced profile first
+      try {
+        const enhancedResponse = await fetch('/api/user/enhanced-taste-profile');
+        if (enhancedResponse.ok) {
+          const enhancedData = await enhancedResponse.json();
+          if (enhancedData.genrePreferences && enhancedData.genrePreferences.length > 0) {
+            const processedData = processGenreData(enhancedData.genrePreferences);
+            setGenreData(processedData);
+            setDataSource('enhanced_profile');
+            console.log('✅ Enhanced profile genres loaded');
+            return;
+          }
+        }
+      } catch (enhancedError) {
+        console.log('⚠️ Enhanced profile not available:', enhancedError.message);
       }
       
-      // Get top 5 genres and normalize
-      const sortedGenres = Object.entries(genreData)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 5);
+      // Try basic Spotify profile
+      try {
+        const spotifyResponse = await fetch('/api/spotify/user-profile');
+        if (spotifyResponse.ok) {
+          const spotifyData = await spotifyResponse.json();
+          if (spotifyData.topGenres && spotifyData.topGenres.length > 0) {
+            const processedData = processGenreData(spotifyData.topGenres);
+            setGenreData(processedData);
+            setDataSource(spotifyData.dataSource === 'mock' ? 'mock' : 'spotify');
+            console.log('✅ Spotify genres loaded');
+            return;
+          }
+        }
+      } catch (spotifyError) {
+        console.log('⚠️ Spotify API not available:', spotifyError.message);
+      }
       
-      const maxScore = Math.max(...sortedGenres.map(([, score]) => score));
+      // PHASE 1: Fallback to default genres
+      console.log('⚠️ All APIs failed, using fallback genres');
+      setGenreData(getFallbackGenreData());
+      setDataSource('fallback');
+      setError('NO_GENRE_DATA');
       
-      return sortedGenres.map(([genre, score]) => ({
-        genre: genre.charAt(0).toUpperCase() + genre.slice(1),
-        value: Math.min(100, Math.round((score / maxScore) * 100))
-      }));
-      
-    } catch (error) {
-      console.error('Error processing genre data:', error);
-      // Fallback data structure
-      return [
-        { genre: 'House', value: 100 },
-        { genre: 'Techno', value: 85 },
-        { genre: 'Progressive house', value: 70 },
-        { genre: 'Progressive', value: 68 },
-        { genre: 'Deep house', value: 61 }
-      ];
+    } catch (err) {
+      console.error('❌ Error loading genre data:', err);
+      setGenreData(getFallbackGenreData());
+      setDataSource('error');
+      setError('LOADING_ERROR');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const genresData = getGenreData();
+  // PHASE 1: Enhanced genre data processing with null safety
+  const processGenreData = (genres) => {
+    if (!genres || !Array.isArray(genres) || genres.length === 0) {
+      console.warn('⚠️ Invalid genre data, using fallback');
+      return getFallbackGenreData();
+    }
+    
+    return genres.slice(0, 5).map(genre => ({
+      genre: genre.name || 'Unknown',
+      value: genre.percentage || (genre.weight ? Math.round(genre.weight * 100) : 50),
+      fullMark: 100
+    }));
+  };
+
+  // PHASE 1: Enhanced fallback genre data
+  const getFallbackGenreData = () => [
+    { genre: 'House', value: 85, fullMark: 100 },
+    { genre: 'Techno', value: 72, fullMark: 100 },
+    { genre: 'Progressive House', value: 68, fullMark: 100 },
+    { genre: 'Deep House', value: 61, fullMark: 100 },
+    { genre: 'Trance', value: 45, fullMark: 100 }
+  ];
+
+  useEffect(() => {
+    if (session) {
+      loadGenreData();
+    }
+  }, [session]);
+
+  // PHASE 1: Enhanced loading state
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loadingState}>
+          <div className={styles.loadingSpinner}></div>
+          <p style={{ color: '#999999' }}>Analyzing your genre preferences...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // PHASE 1: Enhanced error state with fallback display
+  if (!genreData || genreData.length === 0) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.errorState}>
+          <p style={{ color: '#FF00CC' }}>⚠️ Genre data unavailable</p>
+          <p style={{ color: '#999999' }}>Unable to load genre preferences</p>
+          <div className={styles.fallbackMessage}>
+            <span style={{ color: '#888888', fontSize: '12px' }}>
+              Using default genre distribution
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
-      {/* SURGICAL FIX 1: REMOVED duplicate data source label - main dashboard handles this */}
+      {/* PHASE 1: Removed duplicate heading - main dashboard handles this */}
       
-      {/* SURGICAL FIX 2: REMOVED duplicate heading - main dashboard has OG <h2> title */}
-      
-      {/* PRESERVED: Chart with SURGICAL FIX 6: TIKO color scheme */}
       <div className={styles.chartContainer}>
-        <ResponsiveContainer width="100%" height={200}>
-          <RadarChart 
-            data={genresData} 
-            margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
-            startAngle={90}
-            endAngle={-270}
-          >
+        <ResponsiveContainer width="100%" height={300}>
+          <RadarChart data={genreData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
             <PolarGrid 
-              stroke="rgba(0, 255, 255, 0.1)"
-              radialLines={true}
+              stroke="rgba(0, 255, 255, 0.1)" // PHASE 1: TIKO card border color
             />
             <PolarAngleAxis 
               dataKey="genre" 
               tick={{ 
-                fontSize: 11, 
-                fill: '#DADADA',
-                fontWeight: 500
+                fill: '#DADADA', // PHASE 1: TIKO primary text color
+                fontSize: 12 
               }}
-              className={styles.genreLabel}
+            />
+            <PolarRadiusAxis 
+              angle={90} 
+              domain={[0, 100]} 
+              tick={{ 
+                fill: '#999999', // PHASE 1: TIKO secondary text color
+                fontSize: 10 
+              }}
             />
             <Radar
-              name="Taste Profile"
+              name="Genre Preference"
               dataKey="value"
-              stroke="#FF00CC"
-              fill="rgba(255, 0, 204, 0.3)"
+              stroke="#00CFFF" // PHASE 1: TIKO interactive highlight color
+              fill="#FF00CC" // PHASE 1: TIKO action button color
+              fillOpacity={0.3}
               strokeWidth={2}
-              dot={{ 
-                fill: '#FF00CC', 
-                strokeWidth: 2, 
-                stroke: '#DADADA',
-                r: 4
-              }}
-              domain={[0, 100]}
             />
           </RadarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* PHASE 1: Genre breakdown list */}
+      <div className={styles.genreList}>
+        {genreData.map((item, index) => (
+          <div key={index} className={styles.genreItem}>
+            <span 
+              className={styles.genreName}
+              style={{ color: '#DADADA' }} // PHASE 1: TIKO primary text
+            >
+              {item.genre}
+            </span>
+            <span 
+              className={styles.genreValue}
+              style={{ color: '#00CFFF' }} // PHASE 1: TIKO interactive highlight
+            >
+              {item.value}%
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* PHASE 1: Data source indicator */}
+      <div className={styles.dataSourceInfo}>
+        <span style={{ color: '#888888', fontSize: '12px' }}>
+          {dataSource === 'enhanced_profile' && '🟡 Enhanced Profile'}
+          {dataSource === 'spotify' && '🟢 Spotify API'}
+          {dataSource === 'mock' && '⚠️ Mock Data'}
+          {dataSource === 'fallback' && '⚠️ Fallback Data'}
+          {dataSource === 'error' && '❌ Error State'}
+        </span>
+      </div>
+
+      {/* PHASE 1: Error indicator */}
+      {error && (
+        <div className={styles.errorIndicator}>
+          <span style={{ color: '#999999', fontSize: '12px' }}>
+            ⚠️ {error === 'NO_GENRE_DATA' ? 'Genre APIs unavailable - using defaults' : 'Data loading error'}
+          </span>
+        </div>
+      )}
     </div>
   );
-};
-
-export default Top5GenresSpiderChart;
+}
 

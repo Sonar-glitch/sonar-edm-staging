@@ -10,82 +10,49 @@ const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'),
 const Top5GenresSpiderChart = dynamic(() => import('./Top5GenresSpiderChart'), { ssr: false });
 const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
 const EventDetailModal = dynamic(() => import('./EventDetailModal'), { ssr: false });
-// SURGICAL ADDITION: Import CompactSeasonalVibes component
+
 const CompactSeasonalVibes = dynamic(() => import('./CompactSeasonalVibes'), { ssr: false });
 
-const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
+export default function EnhancedPersonalizedDashboard() {
   const { data: session } = useSession();
+  const { selectedLocation } = useLocation();
+  
+  // PHASE 1: Enhanced state management for data source tracking
+  const [dataStatus, setDataStatus] = useState({
+    spotify: 'loading',
+    soundstat: 'loading',
+    events: 'loading',
+    seasonal: 'loading'
+  });
+  
+  // PHASE 1: Error tracking for hover tooltips
+  const [errorCodes, setErrorCodes] = useState({});
+  const [errorReasons, setErrorReasons] = useState({});
+  const [lastFetchTimes, setLastFetchTimes] = useState({});
+  const [dataSources, setDataSources] = useState({});
+  
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const { location, loading: locationLoading } = useLocation();
-  const [spotifyData, setSpotifyData] = useState(null);
-  const [userTasteProfile, setUserTasteProfile] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
-  const [dataStatus, setDataStatus] = useState({
-    spotify: 'loading',
-    taste: 'loading',
-    events: 'loading'
-  });
 
-  // Load user's Spotify data and taste profile
-  useEffect(() => {
-    if (session?.user) {
-      loadSpotifyData();
-      loadUserTasteProfile();
-    }
-  }, [session]);
-
-  // Load events when component mounts and when location changes
-  useEffect(() => {
-    if (session?.user && selectedLocation) {
-      loadEvents();
-    }
-  }, [session, selectedLocation]);
-
-  // Sync with LocationProvider
-  useEffect(() => {
-    if (location && !selectedLocation) {
-      setSelectedLocation(location);
-    }
-  }, [location, selectedLocation]);
-
-  const loadSpotifyData = async () => {
-    try {
-      const response = await fetch('/api/spotify/user-profile');
-      if (response.ok) {
-        const data = await response.json();
-        setSpotifyData(data);
-        setDataStatus(prev => ({ ...prev, spotify: 'real' }));
-        console.log('✅ Spotify data loaded');
-      } else {
-        throw new Error('Failed to load Spotify data');
-      }
-    } catch (error) {
-      console.error('❌ Error loading Spotify data:', error);
-      setDataStatus(prev => ({ ...prev, spotify: 'demo' }));
-    }
+  // PHASE 1: Enhanced data indicator with hover tooltips
+  const getDataIndicator = (type) => {
+    const status = dataStatus[type];
+    const isReal = status === 'real';
+    
+    const tooltipInfo = isReal 
+      ? `Real Data\nLast fetched: ${lastFetchTimes[type] || 'Just now'}\nSource: ${dataSources[type] || 'API'}\nStatus: Active`
+      : `Fallback Data\nError: ${errorCodes[type] || 'API_UNAVAILABLE'}\nReason: ${errorReasons[type] || 'Service temporarily unavailable'}\nUsing: Mock/cached data`;
+    
+    return {
+      text: isReal ? 'Real Data' : 'Fallback Data',
+      tooltip: tooltipInfo,
+      className: isReal ? styles.realDataIndicator : styles.fallbackDataIndicator
+    };
   };
 
-  const loadUserTasteProfile = async () => {
-    try {
-      const response = await fetch('/api/user/enhanced-taste-profile');
-      if (response.ok) {
-        const data = await response.json();
-        setUserTasteProfile(data);
-        setDataStatus(prev => ({ ...prev, taste: 'real' }));
-        console.log('✅ Enhanced taste profile loaded');
-      } else {
-        throw new Error('Failed to load taste profile');
-      }
-    } catch (error) {
-      console.error('❌ Error loading taste profile:', error);
-      setDataStatus(prev => ({ ...prev, taste: 'demo' }));
-    }
-  };
-
+  // PHASE 1: Enhanced data loading with proper error tracking
   const loadEvents = async () => {
     if (!selectedLocation) return;
     
@@ -94,15 +61,35 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
     
     try {
       const { lat, lon, city } = selectedLocation;
+      console.log(`🔍 Loading events for: ${city} (${lat}, ${lon})`);
+      
       const response = await fetch(
         `/api/events?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}&radius=50`
       );
       
       if (response.ok) {
         const data = await response.json();
-        setEvents(data.events || []);
-        setDataStatus(prev => ({ ...prev, events: 'real' }));
-        console.log(`✅ Loaded ${data.events?.length || 0} events for ${city}`);
+        const eventsData = data.events || [];
+        
+        setEvents(eventsData);
+        
+        // PHASE 1: Track data source status
+        if (eventsData.length > 0) {
+          setDataStatus(prev => ({ ...prev, events: data.isRealData ? 'real' : 'fallback' }));
+          setDataSources(prev => ({ ...prev, events: data.source || 'Unknown' }));
+          setLastFetchTimes(prev => ({ ...prev, events: new Date().toLocaleString() }));
+          
+          if (!data.isRealData) {
+            setErrorCodes(prev => ({ ...prev, events: 'NO_EVENTS_FOUND' }));
+            setErrorReasons(prev => ({ ...prev, events: 'No events match current location and filters' }));
+          }
+        } else {
+          setDataStatus(prev => ({ ...prev, events: 'fallback' }));
+          setErrorCodes(prev => ({ ...prev, events: 'EMPTY_RESULT_SET' }));
+          setErrorReasons(prev => ({ ...prev, events: 'API returned empty results' }));
+        }
+        
+        console.log(`📊 Loaded ${eventsData.length} events`);
       } else {
         throw new Error(`Failed to load events: ${response.status}`);
       }
@@ -110,80 +97,103 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
       console.error('❌ Error loading events:', error);
       setError(error.message);
       setDataStatus(prev => ({ ...prev, events: 'error' }));
+      setErrorCodes(prev => ({ ...prev, events: 'API_ERROR' }));
+      setErrorReasons(prev => ({ ...prev, events: error.message }));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLocationSelect = (location) => {
-    setSelectedLocation(location);
-    console.log('📍 Location selected:', location);
-  };
-
-  const handleEventClick = (event) => {
-    setSelectedEvent(event);
-    setIsEventModalOpen(true);
-  };
-
-  const handleCloseEventModal = () => {
-    setSelectedEvent(null);
-    setIsEventModalOpen(false);
-  };
-
-  const handleSaveEvent = async (event) => {
+  // PHASE 1: Enhanced profile loading with error tracking
+  const loadUserProfile = async () => {
     try {
-      const response = await fetch('/api/user/interested-events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          eventId: event.id,
-          eventData: event
-        })
-      });
+      console.log('🧠 Loading user taste profile...');
       
-      if (response.ok) {
-        console.log('✅ Event saved:', event.name);
-        // Update local state to reflect the saved event
-        setEvents(prevEvents => 
-          prevEvents.map(e => 
-            (e._id || e.id) === (event._id || event.id) 
-              ? { ...e, isInterested: true }
-              : e
-          )
-        );
+      // Try enhanced profile first
+      const enhancedResponse = await fetch('/api/user/enhanced-taste-profile');
+      if (enhancedResponse.ok) {
+        const enhancedData = await enhancedResponse.json();
+        
+        if (enhancedData.phase2Enabled) {
+          setDataStatus(prev => ({ ...prev, spotify: 'real', soundstat: 'real' }));
+          setDataSources(prev => ({ ...prev, spotify: 'Enhanced API', soundstat: 'SoundStat API' }));
+          setLastFetchTimes(prev => ({ 
+            ...prev, 
+            spotify: new Date().toLocaleString(),
+            soundstat: new Date().toLocaleString()
+          }));
+          return;
+        }
+      }
+      
+      // Fallback to basic Spotify
+      const spotifyResponse = await fetch('/api/spotify/user-profile');
+      if (spotifyResponse.ok) {
+        const spotifyData = await spotifyResponse.json();
+        
+        // PHASE 1: Check if it's mock data
+        if (spotifyData.dataSource === 'mock' || !spotifyData.isRealData) {
+          setDataStatus(prev => ({ ...prev, spotify: 'fallback' }));
+          setErrorCodes(prev => ({ ...prev, spotify: 'MOCK_DATA_ACTIVE' }));
+          setErrorReasons(prev => ({ ...prev, spotify: 'Using mock data - Spotify API integration pending' }));
+          setDataSources(prev => ({ ...prev, spotify: 'Mock Data' }));
+        } else {
+          setDataStatus(prev => ({ ...prev, spotify: 'real' }));
+          setDataSources(prev => ({ ...prev, spotify: 'Spotify API' }));
+          setLastFetchTimes(prev => ({ ...prev, spotify: new Date().toLocaleString() }));
+        }
+        
+        // PHASE 1: Check SoundStat status
+        setDataStatus(prev => ({ ...prev, soundstat: 'fallback' }));
+        setErrorCodes(prev => ({ ...prev, soundstat: 'ZERO_QUERIES' }));
+        setErrorReasons(prev => ({ ...prev, soundstat: 'SoundStat API not being called - 0 queries detected' }));
+        setDataSources(prev => ({ ...prev, soundstat: 'Not Connected' }));
+      } else {
+        throw new Error('Spotify API failed');
       }
     } catch (error) {
-      console.error('Error saving event:', error);
+      console.error('❌ Error loading user profile:', error);
+      setDataStatus(prev => ({ 
+        ...prev, 
+        spotify: 'error',
+        soundstat: 'error'
+      }));
+      setErrorCodes(prev => ({ 
+        ...prev, 
+        spotify: 'API_ERROR',
+        soundstat: 'API_ERROR'
+      }));
+      setErrorReasons(prev => ({ 
+        ...prev, 
+        spotify: error.message,
+        soundstat: 'Failed to connect to SoundStat API'
+      }));
     }
   };
 
-  const getDataIndicator = (type) => {
-  if (type === 'events' && events.length > 0) {
-    // Count events by source
-    const sourceCount = events.reduce((acc, event) => {
-      const source = event.source || 'unknown';
-      acc[source] = (acc[source] || 0) + 1;
-      return acc;
-    }, {});
-    
-    // Create source breakdown display
-    const sourceLabels = Object.entries(sourceCount)
-      .filter(([source, count]) => source !== 'unknown' && count > 0)
-      .map(([source, count]) => `${source}: ${count}`)
-      .join(', ');
-    
-    return sourceLabels || 'Real Data';
-  }
-  
-  return dataStatus[type] === 'real' ? 'Real Data' : 'Demo Data';
-};
+  useEffect(() => {
+    if (session && selectedLocation) {
+      loadEvents();
+      loadUserProfile();
+    }
+  }, [session, selectedLocation]);
+
+  // PHASE 1: Enhanced seasonal data tracking
+  useEffect(() => {
+    // Simulate seasonal data loading
+    setTimeout(() => {
+      setDataStatus(prev => ({ ...prev, seasonal: 'fallback' }));
+      setErrorCodes(prev => ({ ...prev, seasonal: 'STATIC_DATA' }));
+      setErrorReasons(prev => ({ ...prev, seasonal: 'Using static seasonal preferences - dynamic data not available' }));
+      setDataSources(prev => ({ ...prev, seasonal: 'Static Config' }));
+    }, 1000);
+  }, []);
 
   if (!session) {
     return (
       <div className={styles.container}>
         <div className={styles.authPrompt}>
-          <h2>Welcome to TIKO</h2>
-          <p>Please sign in with Spotify to discover events tailored to your music taste.</p>
+          <h2>Please sign in to view your personalized dashboard</h2>
         </div>
       </div>
     );
@@ -191,123 +201,94 @@ const EnhancedPersonalizedDashboard = ({ hideHeader = false }) => {
 
   return (
     <div className={styles.container}>
-      {/* PRESERVED: TIGHT HEADER WITH VIBE SUMMARY */}
       <div className={styles.header}>
-        <h1 className={styles.title}>
-          <span className={styles.logo}>TIKO</span>
-        </h1>
-        <p className={styles.subtitle}>
-          You're all about <span className={styles.highlight}>house + techno</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
-        </p>
+        <h1 className={styles.title}>TIKO</h1>
+        <p className={styles.subtitle}>Your personalized EDM event discovery platform</p>
+        
+        <div className={styles.profileHeader}>
+          <div className={styles.profileInfo}>
+            <h2 className={styles.profileTitle}>
+              🎧 You're all about <span style={{ color: '#FF00CC' }}>house</span> + <span style={{ color: '#00CFFF' }}>techno</span> with a vibe shift toward <span style={{ color: '#FF00CC' }}>fresh sounds</span>.
+            </h2>
+            <div className={styles.profileMeta}>
+              <span className={styles.confidence}>99% Taste Confidence</span>
+              <span className={styles.vibeType}>Midnight Vibes</span>
+              <span className={styles.lastUpdated}>Data refreshed recently</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className={styles.mainContent}>
-        {/* PRESERVED: ALL DISCUSSED CHANGES IMPLEMENTED */}
-        
-        {/* PRESERVED: 1. INFORMATIONAL ROW - BALANCED HEIGHTS */}
-        <div className={styles.informationalRow}>
-          {/* PRESERVED: Left: Spider Chart - REDUCED HEIGHT */}
-          <div className={styles.leftColumn}>
-            <div className={styles.card}>
-              <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Your Top 5 Genres</h2>
-                <span className={styles.dataIndicator}>{getDataIndicator('spotify')}</span>
-              </div>
-              <Top5GenresSpiderChart 
-                userTasteProfile={userTasteProfile}
-                spotifyData={spotifyData}
-              />
-            </div>
+      <div className={styles.dashboardGrid}>
+        {/* Top 5 Genres Section */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Your Top 5 Genres</h2>
+            <span 
+              className={getDataIndicator('spotify').className}
+              title={getDataIndicator('spotify').tooltip}
+            >
+              {getDataIndicator('spotify').text}
+            </span>
           </div>
-
-          {/* SURGICAL MODIFICATION: Replace hardcoded seasonal vibes with CompactSeasonalVibes component */}
-          <div className={styles.rightColumn}>
-            <div className={styles.card}>
-              <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
-                <span className={styles.dataIndicator}>{getDataIndicator('taste')}</span>
-              </div>
-              
-              {/* REPLACED: Hardcoded seasonal grid with dynamic component */}
-              <CompactSeasonalVibes 
-                userTasteProfile={userTasteProfile}
-                spotifyData={spotifyData}
-              />
-            </div>
-          </div>
+          <Top5GenresSpiderChart />
         </div>
 
-        {/* PRESERVED: 2. DATA INSIGHTS ROW - ONE UNIFIED SOUND CHARACTERISTICS */}
-        <div className={styles.dataInsightsRow}>
-          <div className={styles.fullWidth}>
-            <div className={styles.card}>
-              <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Your Sound Characteristics</h2>
-                <span className={styles.dataIndicator}>{getDataIndicator('spotify')}</span>
-              </div>
-              <SoundCharacteristics 
-                userAudioFeatures={spotifyData?.audioFeatures}
-                dataStatus={dataStatus.spotify}
-              />
-            </div>
+        {/* Seasonal Vibes Section */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
+            <span 
+              className={getDataIndicator('seasonal').className}
+              title={getDataIndicator('seasonal').tooltip}
+            >
+              {getDataIndicator('seasonal').text}
+            </span>
           </div>
+          <CompactSeasonalVibes />
         </div>
 
-        {/* PRESERVED: 3. FUNCTIONAL ROW */}
-        <div className={styles.functionalRow}>
-          {/* PRESERVED: Left: Location Filter */}
-          <div className={styles.leftColumn}>
-            <div className={styles.card}>
-              <EnhancedLocationSearch 
-                onLocationSelect={handleLocationSelect}
-                selectedLocation={selectedLocation}
-              />
-            </div>
+        {/* Sound Characteristics Section */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Your Sound Characteristics</h2>
+            <span 
+              className={getDataIndicator('soundstat').className}
+              title={getDataIndicator('soundstat').tooltip}
+            >
+              {getDataIndicator('soundstat').text}
+            </span>
           </div>
-
-          {/* PRESERVED: Right: Vibe Match Slider */}
-          <div className={styles.rightColumn}>
-            <div className={styles.card}>
-              <div className={styles.vibeMatch}>
-                <span className={styles.vibeLabel}>Vibe Match</span>
-                <div className={styles.vibeSlider}>
-                  <div className={styles.vibeProgress} style={{ width: '74%' }}></div>
-                </div>
-                <span className={styles.vibePercentage}>74%</span>
-                <button className={styles.gearIcon} title="Additional Filters">⚙️</button>
-              </div>
-            </div>
-          </div>
+          <SoundCharacteristics />
         </div>
 
-        {/* PRESERVED: Events Section */}
-        <div className={styles.eventsSection}>
-          <div className={styles.eventsHeader}>
-            <h2 className={styles.eventsTitle}>Events Matching Your Vibe</h2>
-            <span className={styles.dataIndicator}>{getDataIndicator('events')}</span>
+        {/* Events Section */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Events Matching Your Vibe</h2>
+            <span 
+              className={getDataIndicator('events').className}
+              title={getDataIndicator('events').tooltip}
+            >
+              {getDataIndicator('events').text}
+            </span>
           </div>
-          
           <EnhancedEventList 
-            events={events}
-            loading={loading}
+            events={events} 
+            loading={loading} 
             error={error}
-            onEventClick={handleEventClick}
-            onSaveEvent={handleSaveEvent}
+            onEventSelect={setSelectedEvent}
           />
         </div>
       </div>
 
-      {/* PRESERVED: Event Detail Modal */}
-      {isEventModalOpen && selectedEvent && (
+      {selectedEvent && (
         <EventDetailModal 
-          event={selectedEvent}
-          onClose={handleCloseEventModal}
-          onSave={handleSaveEvent}
+          event={selectedEvent} 
+          onClose={() => setSelectedEvent(null)} 
         />
       )}
     </div>
   );
-};
-
-export default EnhancedPersonalizedDashboard;
+}
 

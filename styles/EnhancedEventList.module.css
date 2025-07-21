@@ -1,290 +1,162 @@
-/* GLASSMORPHIC EVENT CARDS - PRESERVING EXACT LAYOUT */
+/* PHASE 1: ENHANCED GLASSMORPHIC EVENT LIST WITH TIKO COLORS */
 
 .container {
-  margin-top: 2rem; /* PRESERVED: Exact same spacing */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.eventList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* PRESERVED: Exact same grid */
-  gap: 1.5rem; /* PRESERVED: Exact same gap */
+/* GLASSMORPHIC EVENTS HEADER */
+.eventsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
 }
 
-/* GLASSMORPHIC EVENT CARD - ENHANCED FROM ORIGINAL */
+.eventsHeader span {
+  color: #DADADA; /* TIKO primary text */
+  font-weight: 500;
+  text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
+}
+
+/* GLASSMORPHIC EVENTS LIST */
+.eventsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+/* ENHANCED GLASSMORPHIC EVENT CARDS */
 .eventCard {
-  /* GLASSMORPHIC BACKGROUND */
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(21, 21, 31, 0.8); /* TIKO accent section background with transparency */
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  
-  /* NEON BORDER - ENHANCED FROM CYAN TO PINK/CYAN GRADIENT */
-  border: 1px solid rgba(255, 0, 110, 0.2);
-  border-radius: 0.75rem; /* PRESERVED: Same border radius */
-  
-  /* GLASSMORPHIC SHADOW */
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  
-  overflow: hidden; /* PRESERVED */
-  transition: all 0.3s ease; /* PRESERVED */
-  cursor: pointer; /* PRESERVED */
-  position: relative; /* PRESERVED */
-}
-
-/* ENHANCED HOVER WITH NEON GLOW */
-.eventCard:hover {
-  transform: translateY(-5px); /* PRESERVED: Same transform */
-  
-  /* NEON GLOW EFFECT */
-  box-shadow: 
-    0 10px 40px rgba(255, 0, 110, 0.3),
-    0 0 30px rgba(255, 0, 110, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  
-  /* ENHANCED BORDER GLOW */
-  border-color: rgba(255, 0, 110, 0.5);
-}
-
-/* EVENT HEADER - GLASSMORPHIC ENHANCEMENT */
-.eventHeader {
-  display: flex; /* PRESERVED */
-  justify-content: space-between; /* PRESERVED */
-  align-items: center; /* PRESERVED */
-  padding: 1rem; /* PRESERVED: Exact same padding */
-  
-  /* GLASSMORPHIC HEADER BACKGROUND */
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
-}
-
-/* NEW: EVENT ACTIONS CONTAINER FOR MATCH SCORE + HEART */
-.eventActions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-/* DATE BOX - GLASSMORPHIC ENHANCEMENT */
-.dateBox {
-  background: rgba(0, 0, 0, 0.5); /* PRESERVED: Same background */
-  padding: 0.5rem 0.75rem; /* PRESERVED: Exact same padding */
-  border-radius: 0.5rem; /* PRESERVED: Same border radius */
-  
-  /* GLASSMORPHIC ENHANCEMENT */
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.date {
-  font-size: 0.9rem; /* PRESERVED */
-  font-weight: 500; /* PRESERVED */
-  color: #fff; /* PRESERVED */
-  
-  /* SUBTLE GLOW */
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-.matchScore {
-  display: flex; /* PRESERVED */
-  align-items: center; /* PRESERVED */
-}
-
-/* NEON MATCH CIRCLE - ENHANCED WITH PINK/CYAN GRADIENT */
-.matchCircle {
-  width: 3rem; /* PRESERVED: Exact same size */
-  height: 3rem; /* PRESERVED: Exact same size */
-  border-radius: 50%; /* PRESERVED */
-  display: flex; /* PRESERVED */
-  align-items: center; /* PRESERVED */
-  justify-content: center; /* PRESERVED */
-  font-weight: 600; /* PRESERVED */
-  font-size: 0.9rem; /* PRESERVED */
-  color: #fff; /* PRESERVED */
-  
-  /* ENHANCED: Pink gradient instead of cyan */
-  background: conic-gradient(
-    rgba(255, 0, 110, 0.8) 75%,
-    rgba(255, 0, 110, 0.2) 0%
-  );
-  
-  /* GLASSMORPHIC ENHANCEMENT */
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
-  
-  /* NEON TEXT GLOW */
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-}
-
-/* NEW: HEART/LIKE BUTTON */
-.likeButton {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  width: 2.5rem;
-  height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
+  border-radius: 12px;
+  padding: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 1.2rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.likeButton:hover {
-  background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 15px rgba(255, 0, 110, 0.4);
-  border-color: rgba(255, 0, 110, 0.5);
-  transform: scale(1.1);
+/* ENHANCED HOVER WITH TIKO GLOW */
+.eventCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 30px rgba(255, 0, 204, 0.2), /* TIKO action button glow */
+    0 0 25px rgba(0, 207, 255, 0.1), /* TIKO interactive highlight glow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(0, 255, 255, 0.3);
 }
 
-.likeButton.liked {
-  background: rgba(255, 0, 110, 0.2);
-  border-color: rgba(255, 0, 110, 0.5);
-  box-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+/* GLASSMORPHIC EVENT HEADER */
+.eventHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
 }
 
-.likeButton.liking {
-  opacity: 0.7;
-  cursor: not-allowed;
+.eventHeader h4 {
+  color: #DADADA; /* TIKO primary text */
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
 }
 
-.heartIcon {
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+/* ENHANCED SCORE BADGE WITH TIKO STYLING */
+.scoreBadge {
+  background: linear-gradient(90deg, #FF00CC, #00CFFF); /* TIKO gradient */
+  color: #000000;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 0 15px rgba(255, 0, 204, 0.5);
+  text-shadow: none;
 }
 
-.likeSpinner {
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid rgba(255, 0, 110, 0.8);
+/* GLASSMORPHIC EVENT DETAILS */
+.eventDetails {
+  margin-bottom: 0.8rem;
+}
+
+.eventDetails p {
+  margin: 0.3rem 0;
+  color: #999999; /* TIKO secondary text */
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* ENHANCED GENRE TAGS WITH GLASSMORPHISM */
+.genreTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.genreTag {
+  background: rgba(17, 24, 39, 0.8); /* TIKO genre tag background with transparency */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #00FFFF; /* TIKO genre tag text */
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.genreTag:hover {
+  background: rgba(17, 24, 39, 1);
+  border-color: rgba(0, 255, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+/* GLASSMORPHIC LOADING STATE */
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  height: 100%;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 255, 255, 0.1);
+  border-top: 3px solid #00CFFF; /* TIKO interactive highlight */
   border-radius: 50%;
   animation: spin 1s linear infinite;
-}
-
-/* EVENT CONTENT - GLASSMORPHIC ENHANCEMENT */
-.eventContent {
-  padding: 1rem; /* PRESERVED: Exact same padding */
-}
-
-.eventName {
-  font-size: 1.2rem; /* PRESERVED */
-  font-weight: 600; /* PRESERVED */
-  margin-bottom: 0.75rem; /* PRESERVED */
-  color: #fff; /* PRESERVED */
-  
-  /* NEON TEXT GLOW */
-  text-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
-}
-
-.venueInfo {
-  margin-bottom: 0.75rem; /* PRESERVED */
-}
-
-.venueName {
-  display: block; /* PRESERVED */
-  font-weight: 500; /* PRESERVED */
-  color: rgba(255, 255, 255, 0.9); /* PRESERVED */
-  margin-bottom: 0.25rem; /* PRESERVED */
-  
-  /* SUBTLE GLOW */
-  text-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
-}
-
-.venueAddress {
-  display: block; /* PRESERVED */
-  font-size: 0.85rem; /* PRESERVED */
-  color: rgba(255, 255, 255, 0.6); /* PRESERVED */
-}
-
-.artistList {
-  font-size: 0.9rem; /* PRESERVED */
-  color: rgba(255, 255, 255, 0.8); /* PRESERVED */
-  margin-bottom: 0.5rem; /* PRESERVED */
-}
-
-.artist {
-  display: inline; /* PRESERVED */
-}
-
-/* EVENT FOOTER - GLASSMORPHIC ENHANCEMENT */
-.eventFooter {
-  display: flex; /* PRESERVED */
-  justify-content: space-between; /* PRESERVED */
-  padding: 0.75rem 1rem; /* PRESERVED: Exact same padding */
-  font-size: 0.8rem; /* PRESERVED */
-  
-  /* GLASSMORPHIC FOOTER */
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.venueType {
-  color: rgba(255, 255, 255, 0.7); /* PRESERVED */
-  background: rgba(255, 255, 255, 0.1); /* PRESERVED */
-  padding: 0.25rem 0.5rem; /* PRESERVED */
-  border-radius: 0.25rem; /* PRESERVED */
-  
-  /* GLASSMORPHIC ENHANCEMENT */
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sourceTag {
-  padding: 0.25rem 0.5rem; /* PRESERVED */
-  border-radius: 0.25rem; /* PRESERVED */
-  
-  /* GLASSMORPHIC ENHANCEMENT */
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* ENHANCED LIVE TAG WITH NEON GREEN */
-.liveTag {
-  background: rgba(0, 255, 0, 0.1); /* PRESERVED */
-  color: rgba(0, 255, 0, 0.8); /* PRESERVED */
-  
-  /* NEON GLOW */
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
-  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
-}
-
-.sampleTag {
-  background: rgba(255, 165, 0, 0.1); /* PRESERVED */
-  color: rgba(255, 165, 0, 0.8); /* PRESERVED */
-  
-  /* NEON GLOW */
-  box-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
-}
-
-.emergencyTag {
-  background: rgba(255, 255, 0, 0.1);
-  color: rgba(255, 255, 0, 0.8);
-  box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
-}
-
-/* LOADING STATE - GLASSMORPHIC ENHANCEMENT */
-.loadingContainer {
-  display: flex; /* PRESERVED */
-  flex-direction: column; /* PRESERVED */
-  align-items: center; /* PRESERVED */
-  justify-content: center; /* PRESERVED */
-  padding: 3rem 0; /* PRESERVED */
-}
-
-.spinner {
-  width: 3rem; /* PRESERVED */
-  height: 3rem; /* PRESERVED */
-  border: 3px solid rgba(255, 0, 110, 0.1); /* ENHANCED: Pink instead of cyan */
-  border-top: 3px solid rgba(255, 0, 110, 0.8); /* ENHANCED: Pink instead of cyan */
-  border-radius: 50%; /* PRESERVED */
-  animation: spin 1s linear infinite; /* PRESERVED */
-  margin-bottom: 1rem; /* PRESERVED */
-  
-  /* NEON GLOW */
-  box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+  margin-bottom: 1rem;
+  box-shadow: 0 0 20px rgba(0, 207, 255, 0.3);
 }
 
 @keyframes spin {
@@ -292,178 +164,215 @@
   100% { transform: rotate(360deg); }
 }
 
-/* ERROR CONTAINER - GLASSMORPHIC ENHANCEMENT */
-.errorContainer {
-  text-align: center; /* PRESERVED */
-  padding: 2rem; /* PRESERVED */
-  background: rgba(255, 0, 0, 0.1); /* PRESERVED */
-  border-radius: 0.5rem; /* PRESERVED */
-  margin: 2rem 0; /* PRESERVED */
-  
-  /* GLASSMORPHIC ENHANCEMENT */
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 0, 0, 0.3);
+.loadingState p {
+  color: #999999; /* TIKO secondary text */
+  margin: 0.5rem 0 0 0;
 }
 
-.errorMessage {
-  color: rgba(255, 100, 100, 0.9); /* PRESERVED */
-  margin-bottom: 1rem; /* PRESERVED */
+.loadingDetails {
+  margin-top: 0.5rem;
 }
 
+.loadingDetails span {
+  color: #888888; /* TIKO secondary text */
+}
+
+/* GLASSMORPHIC ERROR STATE */
+.errorState {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 0, 204, 0.1); /* TIKO action button with low opacity */
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 0, 204, 0.3);
+  border-radius: 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.errorState h3 {
+  color: #FF00CC; /* TIKO action button color */
+  margin: 0 0 0.5rem 0;
+}
+
+.errorState p {
+  color: #999999; /* TIKO secondary text */
+  margin: 0.5rem 0;
+}
+
+.errorDetails span {
+  color: #888888; /* TIKO secondary text */
+  font-size: 0.8rem;
+}
+
+/* ENHANCED RETRY BUTTON WITH GLASSMORPHISM */
 .retryButton {
-  background: rgba(255, 255, 255, 0.1); /* PRESERVED */
-  color: #fff; /* PRESERVED */
-  border: none; /* PRESERVED */
-  padding: 0.5rem 1.5rem; /* PRESERVED */
-  border-radius: 0.25rem; /* PRESERVED */
-  cursor: pointer; /* PRESERVED */
-  transition: all 0.2s ease; /* PRESERVED */
-  
-  /* GLASSMORPHIC ENHANCEMENT */
+  background: linear-gradient(90deg, #00CFFF, #FF00CC); /* TIKO gradient */
+  color: #000000;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(0, 207, 255, 0.3);
 }
 
 .retryButton:hover {
-  background: rgba(255, 255, 255, 0.2); /* PRESERVED */
-  box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 0 30px rgba(255, 0, 204, 0.4);
 }
 
-.noEventsContainer {
-  text-align: center; /* PRESERVED */
-  padding: 3rem 0; /* PRESERVED */
-  color: rgba(255, 255, 255, 0.7); /* PRESERVED */
-}
-
-.showMoreContainer {
-  display: flex; /* PRESERVED */
-  justify-content: center; /* PRESERVED */
-  margin-top: 2rem; /* PRESERVED */
-}
-
-/* ENHANCED SHOW MORE BUTTON WITH NEON GRADIENT */
-.showMoreButton {
-  /* ENHANCED: Pink to cyan gradient instead of blue gradient */
-  background: linear-gradient(90deg, rgba(255, 0, 110, 0.5), rgba(0, 212, 255, 0.5));
-  color: #fff; /* PRESERVED */
-  border: none; /* PRESERVED */
-  padding: 0.75rem 2rem; /* PRESERVED */
-  border-radius: 2rem; /* PRESERVED */
-  font-weight: 500; /* PRESERVED */
-  cursor: pointer; /* PRESERVED */
-  transition: all 0.2s ease; /* PRESERVED */
-  
-  /* GLASSMORPHIC ENHANCEMENT */
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 0, 110, 0.3);
-  box-shadow: 0 0 20px rgba(255, 0, 110, 0.2);
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-}
-
-.showMoreButton:hover {
-  /* ENHANCED: Brighter gradient on hover */
-  background: linear-gradient(90deg, rgba(255, 0, 110, 0.7), rgba(0, 212, 255, 0.7));
-  transform: translateY(-2px); /* PRESERVED */
-  
-  /* ENHANCED GLOW */
-  box-shadow: 0 0 30px rgba(255, 0, 110, 0.4);
-}
-
-/* MODAL STYLES - GLASSMORPHIC ENHANCEMENT */
-.modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
+/* GLASSMORPHIC NO EVENTS STATE */
+.noEventsState {
+  text-align: center;
+  padding: 3rem;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  height: 100%;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  z-index: 1000;
 }
 
-.modalContent {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 0, 110, 0.3);
-  border-radius: 1rem;
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+.noEventsState h3 {
+  color: #FF00CC; /* TIKO action button color */
+  margin: 0 0 1rem 0;
+  text-shadow: 0 0 15px rgba(255, 0, 204, 0.3);
 }
 
-.modalHeader {
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.noEventsState p {
+  color: #999999; /* TIKO secondary text */
+  margin: 0 0 1.5rem 0;
 }
 
-.modalHeader h2 {
-  color: #fff;
+/* GLASSMORPHIC SUGGESTIONS */
+.suggestions {
+  background: rgba(21, 21, 31, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.suggestions h4 {
+  color: #DADADA; /* TIKO primary text */
+  margin: 0 0 0.5rem 0;
+}
+
+.suggestions ul {
+  color: #888888; /* TIKO secondary text */
   margin: 0;
-  text-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+  padding-left: 1rem;
 }
 
-.closeButton {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 1.5rem;
+/* GLASSMORPHIC DEBUG INFO */
+.debugInfo {
+  margin-top: 1.5rem;
+}
+
+.debugInfo details {
+  background: rgba(21, 21, 31, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  padding: 0.8rem;
+}
+
+.debugInfo summary {
+  color: #00CFFF; /* TIKO interactive highlight */
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
-.closeButton:hover {
-  background: rgba(255, 0, 110, 0.2);
-  box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+.debugInfo div {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 255, 255, 0.1);
 }
 
-.modalBody {
-  padding: 1.5rem;
-  color: rgba(255, 255, 255, 0.9);
+.debugInfo p {
+  margin: 0.2rem 0;
+  color: #888888; /* TIKO secondary text */
 }
 
-.modalBody p {
-  margin-bottom: 0.75rem;
+/* GLASSMORPHIC EVENTS FOOTER */
+.eventsFooter {
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.8rem;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
 }
 
-.modalBody strong {
-  color: #fff;
-  text-shadow: 0 0 5px rgba(255, 0, 110, 0.3);
+.eventsFooter span {
+  color: #888888; /* TIKO secondary text */
+  font-size: 0.75rem;
 }
 
-.modalBody a {
-  color: rgba(0, 212, 255, 0.9);
-  text-decoration: none;
-  text-shadow: 0 0 5px rgba(0, 212, 255, 0.3);
-}
-
-.modalBody a:hover {
-  color: rgba(0, 212, 255, 1);
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
-}
-
-/* RESPONSIVE DESIGN - PRESERVED */
+/* RESPONSIVE DESIGN */
 @media (max-width: 768px) {
-  .eventList {
-    grid-template-columns: 1fr; /* PRESERVED */
+  .eventCard {
+    padding: 0.8rem;
   }
   
-  .eventActions {
+  .eventHeader {
+    flex-direction: column;
+    align-items: flex-start;
     gap: 0.5rem;
   }
   
-  .likeButton {
-    width: 2rem;
-    height: 2rem;
-    font-size: 1rem;
+  .scoreBadge {
+    align-self: flex-end;
+  }
+  
+  .genreTags {
+    gap: 0.3rem;
+  }
+  
+  .genreTag {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
   }
 }
+
+/* GLASSMORPHIC ENHANCEMENT DETAILS */
+.eventCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.eventCard::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
