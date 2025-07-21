@@ -1,210 +1,176 @@
-/* PHASE 1: ENHANCED GLASSMORPHIC DASHBOARD WITH TIKO COLORS */
+/* Enhanced Personalized Dashboard - TIKO Layout Structure */
 
 .container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  background: #0D0C1D; /* TIKO page background */
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
-  color: #fff;
-  padding: 0;
-  overflow-x: hidden;
 }
 
-/* GLASSMORPHIC HEADER */
-.header {
-  padding: 1rem 1rem 0 1rem;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
-  margin-bottom: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-
-.title {
-  margin: 0 0 0.5rem 0;
-  font-size: 2.5rem;
-  font-weight: 700;
+/* HEADER SECTION - SINGLE HEADER ONLY */
+.profileHeader {
+  margin-bottom: 24px;
   text-align: center;
 }
 
-.logo {
-  background: linear-gradient(90deg, #FF00CC, #00CFFF); /* TIKO gradient */
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: 0.1em;
-  text-shadow: 0 0 30px rgba(255, 0, 204, 0.5); /* TIKO action button glow */
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
-.subtitle {
-  font-size: 1rem;
-  color: #999999; /* TIKO secondary text */
+.profileTitle {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #DADADA; /* TIKO primary text */
   line-height: 1.4;
-  margin: 0;
+  max-width: 600px;
 }
 
 .highlight {
   color: #FF00CC; /* TIKO action button color */
   font-weight: 600;
-  text-shadow: 0 0 20px rgba(255, 0, 204, 0.3);
 }
 
-/* GLASSMORPHIC PROFILE HEADER */
-.profileHeader {
-  background: rgba(21, 21, 31, 0.8); /* TIKO accent section background with transparency */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
-  border-radius: 12px;
-  padding: 1rem;
-  margin: 1rem 0;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.profileInfo {
-  text-align: center;
-}
-
-.profileTitle {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
-  color: #DADADA; /* TIKO primary text */
-}
-
-.profileMeta {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.confidence, .vibeType, .lastUpdated {
-  font-size: 0.875rem;
-  color: #888888; /* TIKO secondary text */
-}
-
-.confidence {
-  color: #00CFFF; /* TIKO interactive highlight */
-}
-
-/* GLASSMORPHIC DASHBOARD GRID */
+/* CORRECTED LAYOUT STRUCTURE */
 .dashboardGrid {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  align-items: stretch;
-}
-
-/* ENHANCED GLASSMORPHIC CARDS */
-.card {
-  background: rgba(21, 21, 31, 0.8); /* TIKO accent section background with transparency */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 15px;
-  padding: 1.5rem;
-  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
-  height: 100%;
-  margin: 0;
   display: flex;
   flex-direction: column;
-  position: relative;
-  overflow: hidden;
+  gap: 20px;
 }
 
-/* ENHANCED HOVER WITH TIKO GLOW */
-.card:hover {
+/* ROW 1: TOP 5 GENRES (50%) + SEASONAL VIBES (50%) */
+.row1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  min-height: 300px;
+}
+
+.leftHalf,
+.rightHalf {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ROW 2: SOUND CHARACTERISTICS (100% - LOWER HEIGHT) */
+.row2 {
+  display: flex;
+  flex-direction: column;
+  min-height: 200px; /* Lower height as requested */
+}
+
+/* ROW 3: EVENTS MATCHING YOUR VIBE (100%) */
+.row3 {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.fullWidth {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* TIKO GLASSMORPHIC CARDS */
+.card {
+  background: rgba(21, 21, 31, 0.8); /* TIKO accent sections */
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
+  border-radius: 16px;
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  
+  /* TIKO depth and glow */
   box-shadow: 
-    0 12px 40px rgba(255, 0, 204, 0.2), /* TIKO action button glow */
-    0 0 30px rgba(0, 207, 255, 0.1), /* TIKO interactive highlight glow */
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-  border-color: rgba(0, 255, 255, 0.3);
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  transition: all 0.3s ease;
 }
 
-/* GLASSMORPHIC CARD HEADER */
+.card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 255, 255, 0.2);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(0, 207, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
 }
 
 .cardTitle {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  margin: 0;
   color: #DADADA; /* TIKO primary text */
-  text-shadow: 0 0 15px rgba(0, 207, 255, 0.3); /* TIKO interactive highlight glow */
+  margin: 0;
 }
 
-/* ENHANCED DATA INDICATORS WITH GLASSMORPHISM */
-.dataIndicator, .realDataIndicator, .fallbackDataIndicator {
+/* DATA SOURCE INDICATORS */
+.realDataIndicator,
+.fallbackDataIndicator {
+  padding: 6px 12px;
+  border-radius: 20px;
   font-size: 0.75rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 12px;
-  font-weight: 500;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: help;
+  transition: all 0.2s ease;
 }
 
 .realDataIndicator {
-  background: rgba(0, 207, 255, 0.2); /* TIKO interactive highlight with transparency */
-  border: 1px solid rgba(0, 207, 255, 0.4);
-  color: #00CFFF;
-  box-shadow: 0 0 15px rgba(0, 207, 255, 0.3);
+  background: linear-gradient(135deg, #00CFFF, #FF00CC);
+  color: #000000;
 }
 
 .fallbackDataIndicator {
-  background: rgba(255, 0, 204, 0.2); /* TIKO action button with transparency */
-  border: 1px solid rgba(255, 0, 204, 0.4);
-  color: #FF00CC;
-  box-shadow: 0 0 15px rgba(255, 0, 204, 0.3);
+  background: rgba(255, 215, 0, 0.2); /* Mustard with transparency */
+  color: #FFD700;
+  border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
-.realDataIndicator:hover, .fallbackDataIndicator:hover {
+.realDataIndicator:hover,
+.fallbackDataIndicator:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 25px rgba(0, 207, 255, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* GLASSMORPHIC LOADING STATES */
-.loadingState {
+/* LOADING STATES */
+.loadingState,
+.errorState,
+.authPrompt {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  min-height: 400px;
   text-align: center;
-  background: rgba(21, 21, 31, 0.6);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: 12px;
-  border: 1px solid rgba(0, 255, 255, 0.1);
+  color: #DADADA;
 }
 
 .loadingSpinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(0, 255, 255, 0.1);
-  border-top: 3px solid #00CFFF; /* TIKO interactive highlight */
+  border: 4px solid rgba(0, 207, 255, 0.3);
+  border-top: 4px solid #00CFFF;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-  box-shadow: 0 0 20px rgba(0, 207, 255, 0.3);
+  margin-bottom: 16px;
 }
 
 @keyframes spin {
@@ -212,139 +178,92 @@
   100% { transform: rotate(360deg); }
 }
 
-/* GLASSMORPHIC ERROR STATES */
-.errorState {
-  text-align: center;
-  padding: 2rem;
-  background: rgba(255, 0, 204, 0.1); /* TIKO action button with low opacity */
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 0, 204, 0.3);
-  border-radius: 12px;
-  margin: 1rem 0;
-}
-
-.errorState p:first-child {
-  color: #FF00CC; /* TIKO action button color */
+.retryButton {
+  background: linear-gradient(135deg, #FF00CC, #00CFFF);
+  color: #000000;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 16px;
 }
 
-.errorState p:last-child {
-  color: #999999; /* TIKO secondary text */
+.retryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 0, 204, 0.3);
 }
 
-/* GLASSMORPHIC FALLBACK INDICATORS */
-.fallbackIndicator, .errorIndicator {
-  text-align: center;
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background: rgba(21, 21, 31, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 0, 204, 0.2);
-}
-
-.dataSourceInfo {
-  text-align: center;
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background: rgba(21, 21, 31, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid rgba(0, 255, 255, 0.2);
-}
-
-/* GLASSMORPHIC AUTH PROMPT */
-.authPrompt {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  text-align: center;
-  padding: 3rem;
-  background: rgba(21, 21, 31, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid rgba(0, 255, 255, 0.2);
-  margin: 2rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-}
-
-.authPrompt h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  background: linear-gradient(90deg, #FF00CC, #00CFFF); /* TIKO gradient */
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.authPrompt p {
-  font-size: 1rem;
-  color: #999999; /* TIKO secondary text */
-  max-width: 500px;
-}
-
-/* RESPONSIVE DESIGN */
-@media (max-width: 1024px) {
+/* MOBILE RESPONSIVENESS - OPTIMIZED FOR MOBILE FIRST */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+  
+  .profileHeader {
+    margin-bottom: 16px;
+  }
+  
+  .profileTitle {
+    font-size: 1.1rem;
+  }
+  
   .dashboardGrid {
+    gap: 16px;
+  }
+  
+  /* MOBILE: STACK ROWS VERTICALLY */
+  .row1 {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 16px;
+    min-height: auto;
+  }
+  
+  .row2,
+  .row3 {
+    min-height: auto;
   }
   
   .card {
-    padding: 1rem;
+    padding: 16px;
+  }
+  
+  .cardTitle {
+    font-size: 1.25rem;
+  }
+  
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .realDataIndicator,
+  .fallbackDataIndicator {
+    align-self: flex-end;
   }
 }
 
-@media (max-width: 768px) {
-  .title {
-    font-size: 2rem;
+@media (max-width: 480px) {
+  .container {
+    padding: 8px;
   }
   
-  .subtitle {
-    font-size: 0.9rem;
-  }
-  
-  .header {
-    padding: 0.8rem;
+  .profileTitle {
+    font-size: 1rem;
   }
   
   .dashboardGrid {
-    padding: 0.5rem;
+    gap: 12px;
   }
   
-  .profileMeta {
-    flex-direction: column;
-    gap: 0.5rem;
+  .card {
+    padding: 12px;
   }
-}
-
-/* ADDITIONAL GLASSMORPHIC ENHANCEMENTS */
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  pointer-events: none;
-}
-
-.card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  pointer-events: none;
+  
+  .cardTitle {
+    font-size: 1.1rem;
+  }
 }
 

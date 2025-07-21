@@ -1,199 +1,127 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useLocation } from './LocationProvider';
 import dynamic from 'next/dynamic';
-import styles from '@/styles/EnhancedPersonalizedDashboard.module.css';
+import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
-// Dynamic imports to prevent SSR issues
-const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: false });
-const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'), { ssr: false });
+// Dynamic imports for components
 const Top5GenresSpiderChart = dynamic(() => import('./Top5GenresSpiderChart'), { ssr: false });
-const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
-const EventDetailModal = dynamic(() => import('./EventDetailModal'), { ssr: false });
-
 const CompactSeasonalVibes = dynamic(() => import('./CompactSeasonalVibes'), { ssr: false });
+const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
+const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: false });
 
 export default function EnhancedPersonalizedDashboard() {
-  const { data: session } = useSession();
-  const { selectedLocation } = useLocation();
-  
-  // PHASE 1: Enhanced state management for data source tracking
-  const [dataStatus, setDataStatus] = useState({
-    spotify: 'loading',
-    soundstat: 'loading',
-    events: 'loading',
-    seasonal: 'loading'
-  });
-  
-  // PHASE 1: Error tracking for hover tooltips
-  const [errorCodes, setErrorCodes] = useState({});
-  const [errorReasons, setErrorReasons] = useState({});
-  const [lastFetchTimes, setLastFetchTimes] = useState({});
-  const [dataSources, setDataSources] = useState({});
-  
-  const [events, setEvents] = useState([]);
+  const { data: session, status } = useSession();
+  const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedEvent, setSelectedEvent] = useState(null);
 
-  // PHASE 1: Enhanced data indicator with hover tooltips
-  const getDataIndicator = (type) => {
-    const status = dataStatus[type];
-    const isReal = status === 'real';
-    
-    const tooltipInfo = isReal 
-      ? `Real Data\nLast fetched: ${lastFetchTimes[type] || 'Just now'}\nSource: ${dataSources[type] || 'API'}\nStatus: Active`
-      : `Fallback Data\nError: ${errorCodes[type] || 'API_UNAVAILABLE'}\nReason: ${errorReasons[type] || 'Service temporarily unavailable'}\nUsing: Mock/cached data`;
-    
-    return {
-      text: isReal ? 'Real Data' : 'Fallback Data',
-      tooltip: tooltipInfo,
-      className: isReal ? styles.realDataIndicator : styles.fallbackDataIndicator
-    };
-  };
+  // Data source tracking for proper labeling
+  const [dataSources, setDataSources] = useState({
+    spotify: { isReal: false, error: 'MOCK_DATA_ACTIVE', lastFetch: null },
+    soundstat: { isReal: false, error: 'ZERO_QUERIES', lastFetch: null },
+    events: { isReal: false, error: 'API_ERROR', lastFetch: null },
+    seasonal: { isReal: false, error: 'STATIC_DATA', lastFetch: null }
+  });
 
-  // PHASE 1: Enhanced data loading with proper error tracking
-  const loadEvents = async () => {
-    if (!selectedLocation) return;
-    
-    setLoading(true);
-    setError(null);
-    
+  useEffect(() => {
+    if (status === 'authenticated') {
+      loadDashboardData();
+    }
+  }, [status]);
+
+  const loadDashboardData = async () => {
     try {
-      const { lat, lon, city } = selectedLocation;
-      console.log(`🔍 Loading events for: ${city} (${lat}, ${lon})`);
+      setLoading(true);
       
-      const response = await fetch(
-        `/api/events?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}&radius=50`
-      );
+      // Load enhanced taste profile
+      const profileResponse = await fetch('/api/user/enhanced-taste-profile');
+      const profileData = await profileResponse.json();
       
-      if (response.ok) {
-        const data = await response.json();
-        const eventsData = data.events || [];
-        
-        setEvents(eventsData);
-        
-        // PHASE 1: Track data source status
-        if (eventsData.length > 0) {
-          setDataStatus(prev => ({ ...prev, events: data.isRealData ? 'real' : 'fallback' }));
-          setDataSources(prev => ({ ...prev, events: data.source || 'Unknown' }));
-          setLastFetchTimes(prev => ({ ...prev, events: new Date().toLocaleString() }));
-          
-          if (!data.isRealData) {
-            setErrorCodes(prev => ({ ...prev, events: 'NO_EVENTS_FOUND' }));
-            setErrorReasons(prev => ({ ...prev, events: 'No events match current location and filters' }));
-          }
+      // Track data sources
+      const newDataSources = { ...dataSources };
+      
+      if (profileData.success) {
+        // Check if data is real or fallback
+        if (profileData.data?.isRealData) {
+          newDataSources.spotify.isReal = true;
+          newDataSources.spotify.lastFetch = new Date().toISOString();
+          delete newDataSources.spotify.error;
         } else {
-          setDataStatus(prev => ({ ...prev, events: 'fallback' }));
-          setErrorCodes(prev => ({ ...prev, events: 'EMPTY_RESULT_SET' }));
-          setErrorReasons(prev => ({ ...prev, events: 'API returned empty results' }));
+          newDataSources.spotify.error = profileData.data?.errorCode || 'MOCK_DATA_ACTIVE';
         }
-        
-        console.log(`📊 Loaded ${eventsData.length} events`);
-      } else {
-        throw new Error(`Failed to load events: ${response.status}`);
       }
-    } catch (error) {
-      console.error('❌ Error loading events:', error);
-      setError(error.message);
-      setDataStatus(prev => ({ ...prev, events: 'error' }));
-      setErrorCodes(prev => ({ ...prev, events: 'API_ERROR' }));
-      setErrorReasons(prev => ({ ...prev, events: error.message }));
+      
+      setDataSources(newDataSources);
+      setDashboardData(profileData.data);
+      
+    } catch (err) {
+      console.error('Dashboard loading error:', err);
+      setError(err.message);
+      
+      // Set all sources to error state
+      const errorSources = { ...dataSources };
+      Object.keys(errorSources).forEach(key => {
+        errorSources[key].error = 'LOAD_ERROR';
+        errorSources[key].isReal = false;
+      });
+      setDataSources(errorSources);
+      
     } finally {
       setLoading(false);
     }
   };
 
-  // PHASE 1: Enhanced profile loading with error tracking
-  const loadUserProfile = async () => {
-    try {
-      console.log('🧠 Loading user taste profile...');
-      
-      // Try enhanced profile first
-      const enhancedResponse = await fetch('/api/user/enhanced-taste-profile');
-      if (enhancedResponse.ok) {
-        const enhancedData = await enhancedResponse.json();
-        
-        if (enhancedData.phase2Enabled) {
-          setDataStatus(prev => ({ ...prev, spotify: 'real', soundstat: 'real' }));
-          setDataSources(prev => ({ ...prev, spotify: 'Enhanced API', soundstat: 'SoundStat API' }));
-          setLastFetchTimes(prev => ({ 
-            ...prev, 
-            spotify: new Date().toLocaleString(),
-            soundstat: new Date().toLocaleString()
-          }));
-          return;
+  // Enhanced data indicator with hover tooltips
+  const getDataIndicator = (sourceKey) => {
+    const source = dataSources[sourceKey];
+    const isReal = source?.isReal;
+    const error = source?.error;
+    const lastFetch = source?.lastFetch;
+
+    return (
+      <div 
+        className={isReal ? styles.realDataIndicator : styles.fallbackDataIndicator}
+        title={isReal 
+          ? `Real Data - Last fetched: ${new Date(lastFetch).toLocaleString()}`
+          : `Fallback Data - Error: ${error}`
         }
-      }
-      
-      // Fallback to basic Spotify
-      const spotifyResponse = await fetch('/api/spotify/user-profile');
-      if (spotifyResponse.ok) {
-        const spotifyData = await spotifyResponse.json();
-        
-        // PHASE 1: Check if it's mock data
-        if (spotifyData.dataSource === 'mock' || !spotifyData.isRealData) {
-          setDataStatus(prev => ({ ...prev, spotify: 'fallback' }));
-          setErrorCodes(prev => ({ ...prev, spotify: 'MOCK_DATA_ACTIVE' }));
-          setErrorReasons(prev => ({ ...prev, spotify: 'Using mock data - Spotify API integration pending' }));
-          setDataSources(prev => ({ ...prev, spotify: 'Mock Data' }));
-        } else {
-          setDataStatus(prev => ({ ...prev, spotify: 'real' }));
-          setDataSources(prev => ({ ...prev, spotify: 'Spotify API' }));
-          setLastFetchTimes(prev => ({ ...prev, spotify: new Date().toLocaleString() }));
-        }
-        
-        // PHASE 1: Check SoundStat status
-        setDataStatus(prev => ({ ...prev, soundstat: 'fallback' }));
-        setErrorCodes(prev => ({ ...prev, soundstat: 'ZERO_QUERIES' }));
-        setErrorReasons(prev => ({ ...prev, soundstat: 'SoundStat API not being called - 0 queries detected' }));
-        setDataSources(prev => ({ ...prev, soundstat: 'Not Connected' }));
-      } else {
-        throw new Error('Spotify API failed');
-      }
-    } catch (error) {
-      console.error('❌ Error loading user profile:', error);
-      setDataStatus(prev => ({ 
-        ...prev, 
-        spotify: 'error',
-        soundstat: 'error'
-      }));
-      setErrorCodes(prev => ({ 
-        ...prev, 
-        spotify: 'API_ERROR',
-        soundstat: 'API_ERROR'
-      }));
-      setErrorReasons(prev => ({ 
-        ...prev, 
-        spotify: error.message,
-        soundstat: 'Failed to connect to SoundStat API'
-      }));
-    }
+      >
+        {isReal ? 'Real Data' : 'Fallback Data'}
+      </div>
+    );
   };
 
-  useEffect(() => {
-    if (session && selectedLocation) {
-      loadEvents();
-      loadUserProfile();
-    }
-  }, [session, selectedLocation]);
+  if (status === 'loading' || loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loadingState}>
+          <div className={styles.loadingSpinner}></div>
+          <p>Loading your personalized dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // PHASE 1: Enhanced seasonal data tracking
-  useEffect(() => {
-    // Simulate seasonal data loading
-    setTimeout(() => {
-      setDataStatus(prev => ({ ...prev, seasonal: 'fallback' }));
-      setErrorCodes(prev => ({ ...prev, seasonal: 'STATIC_DATA' }));
-      setErrorReasons(prev => ({ ...prev, seasonal: 'Using static seasonal preferences - dynamic data not available' }));
-      setDataSources(prev => ({ ...prev, seasonal: 'Static Config' }));
-    }, 1000);
-  }, []);
-
-  if (!session) {
+  if (status === 'unauthenticated') {
     return (
       <div className={styles.container}>
         <div className={styles.authPrompt}>
-          <h2>Please sign in to view your personalized dashboard</h2>
+          <h2>Welcome to TIKO</h2>
+          <p>Please sign in to access your personalized EDM event discovery dashboard.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.errorState}>
+          <h3>Dashboard Error</h3>
+          <p>Unable to load your dashboard: {error}</p>
+          <button onClick={loadDashboardData} className={styles.retryButton}>
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -201,93 +129,82 @@ export default function EnhancedPersonalizedDashboard() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>TIKO</h1>
-        <p className={styles.subtitle}>Your personalized EDM event discovery platform</p>
+      {/* SINGLE HEADER - REMOVED DUPLICATE */}
+      <div className={styles.profileHeader}>
+        <div className={styles.profileInfo}>
+          {/* SIMPLIFIED PROFILE INFO - REMOVED FALSE DATA */}
+          <div className={styles.profileTitle}>
+            🎧 You're all about <span className={styles.highlight}>house</span> + <span className={styles.highlight}>techno</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
+          </div>
+          {/* REMOVED: 99% Taste Confidence, Midnight Vibes, Data refreshed recently */}
+        </div>
+      </div>
+
+      {/* CORRECTED LAYOUT STRUCTURE */}
+      <div className={styles.dashboardGrid}>
         
-        <div className={styles.profileHeader}>
-          <div className={styles.profileInfo}>
-            <h2 className={styles.profileTitle}>
-              🎧 You're all about <span style={{ color: '#FF00CC' }}>house</span> + <span style={{ color: '#00CFFF' }}>techno</span> with a vibe shift toward <span style={{ color: '#FF00CC' }}>fresh sounds</span>.
-            </h2>
-            <div className={styles.profileMeta}>
-              <span className={styles.confidence}>99% Taste Confidence</span>
-              <span className={styles.vibeType}>Midnight Vibes</span>
-              <span className={styles.lastUpdated}>Data refreshed recently</span>
+        {/* ROW 1: TOP 5 GENRES (50%) + SEASONAL VIBES (50%) */}
+        <div className={styles.row1}>
+          <div className={styles.leftHalf}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Your Top 5 Genres</h2>
+                {getDataIndicator('spotify')}
+              </div>
+              <Top5GenresSpiderChart 
+                data={dashboardData?.topGenres} 
+                dataSource={dataSources.spotify}
+              />
+            </div>
+          </div>
+          
+          <div className={styles.rightHalf}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
+                {getDataIndicator('seasonal')}
+              </div>
+              <CompactSeasonalVibes 
+                data={dashboardData?.seasonalPreferences}
+                dataSource={dataSources.seasonal}
+              />
             </div>
           </div>
         </div>
+
+        {/* ROW 2: SOUND CHARACTERISTICS (100% - LOWER HEIGHT) */}
+        <div className={styles.row2}>
+          <div className={styles.fullWidth}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Your Sound Characteristics</h2>
+                {getDataIndicator('soundstat')}
+              </div>
+              <SoundCharacteristics 
+                data={dashboardData?.soundCharacteristics}
+                dataSource={dataSources.soundstat}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 3: EVENTS MATCHING YOUR VIBE (100%) */}
+        <div className={styles.row3}>
+          <div className={styles.fullWidth}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Events Matching Your Vibe</h2>
+                {getDataIndicator('events')}
+              </div>
+              <EnhancedEventList 
+                userProfile={dashboardData}
+                dataSource={dataSources.events}
+              />
+            </div>
+          </div>
+        </div>
+
       </div>
-
-      <div className={styles.dashboardGrid}>
-        {/* Top 5 Genres Section */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Your Top 5 Genres</h2>
-            <span 
-              className={getDataIndicator('spotify').className}
-              title={getDataIndicator('spotify').tooltip}
-            >
-              {getDataIndicator('spotify').text}
-            </span>
-          </div>
-          <Top5GenresSpiderChart />
-        </div>
-
-        {/* Seasonal Vibes Section */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
-            <span 
-              className={getDataIndicator('seasonal').className}
-              title={getDataIndicator('seasonal').tooltip}
-            >
-              {getDataIndicator('seasonal').text}
-            </span>
-          </div>
-          <CompactSeasonalVibes />
-        </div>
-
-        {/* Sound Characteristics Section */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Your Sound Characteristics</h2>
-            <span 
-              className={getDataIndicator('soundstat').className}
-              title={getDataIndicator('soundstat').tooltip}
-            >
-              {getDataIndicator('soundstat').text}
-            </span>
-          </div>
-          <SoundCharacteristics />
-        </div>
-
-        {/* Events Section */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Events Matching Your Vibe</h2>
-            <span 
-              className={getDataIndicator('events').className}
-              title={getDataIndicator('events').tooltip}
-            >
-              {getDataIndicator('events').text}
-            </span>
-          </div>
-          <EnhancedEventList 
-            events={events} 
-            loading={loading} 
-            error={error}
-            onEventSelect={setSelectedEvent}
-          />
-        </div>
-      </div>
-
-      {selectedEvent && (
-        <EventDetailModal 
-          event={selectedEvent} 
-          onClose={() => setSelectedEvent(null)} 
-        />
-      )}
     </div>
   );
 }
