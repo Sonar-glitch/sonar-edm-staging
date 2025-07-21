@@ -1,0 +1,151 @@
+.seasonalMoodCard {
+  background-color: rgba(10, 0, 20, 0.6);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.seasonHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.seasonHeader h3 {
+  font-size: 1.2rem;
+  color: var(--neon-blue);
+  margin: 0;
+}
+
+.seasonName {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.genreList {
+  margin-bottom: 15px;
+}
+
+.genreList p {
+  margin-bottom: 5px;
+  color: var(--neon-blue);
+}
+
+.genreList ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.genreList li {
+  background-color: rgba(255, 0, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: white;
+  border: 1px solid var(--neon-pink);
+}
+
+.moodIndicator p {
+  margin-bottom: 5px;
+  color: var(--neon-blue);
+}
+
+.moodBar, .shiftBar {
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.moodFill, .shiftFill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+}
+
+.seasonalShift h3 {
+  font-size: 1.2rem;
+  color: var(--neon-blue);
+  margin-bottom: 15px;
+}
+
+.shiftDetails {
+  margin-top: 15px;
+}
+
+.shiftDetails p {
+  color: var(--neon-blue);
+  margin-bottom: 5px;
+}
+
+.shiftDetails ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.shiftDetails li {
+  padding: 5px 0;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shiftDetails li:last-child {
+  border-bottom: none;
+}
+
+.winterIcon {
+  color: #a0e6ff;
+  font-size: 1.5rem;
+}
+
+.springIcon {
+  color: #a0ffa0;
+  font-size: 1.5rem;
+}
+
+.summerIcon {
+  color: #ffcc00;
+  font-size: 1.5rem;
+}
+
+.fallIcon {
+  color: #ff6600;
+  font-size: 1.5rem;
+}
+
+.defaultIcon {
+  color: #ffffff;
+  font-size: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .seasonalMoodCard {
+    flex-direction: row;
+  }
+  
+  .currentSeason, .seasonalShift {
+    flex: 1;
+  }
+  
+  .currentSeason {
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding-right: 20px;
+  }
+  
+  .seasonalShift {
+    padding-left: 20px;
+  }
+}
