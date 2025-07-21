@@ -96,26 +96,28 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
 
   return (
     <div className={styles.container}>
-      {/* SURGICAL ADDITION: Data Source Header */}
+      {/* FIXED: Data Source Label - Top-Right Positioning */}
+      <div className={styles.dataSourceLabel} 
+           title={getEnhancedTooltip()}
+           style={{
+             position: 'absolute',
+             top: '10px',
+             right: '10px',
+             color: dataSource.color,
+             fontSize: '12px',
+             opacity: 0.8,
+             zIndex: 10,
+             cursor: 'help'
+           }}>
+        {dataSource.icon} {dataSource.text}
+      </div>
+
+      {/* PRESERVED: Section Header */}
       <div className={styles.headerSection}>
-        <h3 className={styles.sectionTitle}>
-          Your Top 5 Genres
-          <span 
-            className={styles.dataSourceIndicator}
-            title={getEnhancedTooltip()}
-            style={{ 
-              color: dataSource.color,
-              fontSize: '12px',
-              marginLeft: '8px',
-              opacity: 0.8
-            }}
-          >
-            {dataSource.icon} {dataSource.text}
-          </span>
-        </h3>
+        <h3 className={styles.sectionTitle}>Your Top 5 Genres</h3>
       </div>
       
-      {/* PRESERVED: Properly configured chart with explicit domain */}
+      {/* PRESERVED: Properly configured chart with FIXED COLORS */}
       <div className={styles.chartContainer}>
         <ResponsiveContainer width="100%" height={200}>
           <RadarChart 
@@ -140,11 +142,11 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
             <Radar
               name="Taste Profile"
               dataKey="value"
-              stroke="#ff006e"
-              fill="rgba(255, 0, 110, 0.3)"
+              stroke="#FF00CC"
+              fill="rgba(255, 0, 204, 0.3)"
               strokeWidth={2}
               dot={{ 
-                fill: '#ff006e', 
+                fill: '#FF00CC', 
                 strokeWidth: 2, 
                 stroke: '#fff',
                 r: 4

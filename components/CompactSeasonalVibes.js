@@ -117,23 +117,25 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
   const seasons = ['spring', 'summer', 'fall', 'winter'];
 
   return (
-    <div className="seasonal-vibes-container">
+    <div className="seasonal-vibes-container" style={{ position: 'relative' }}>
+      {/* FIXED: Data Source Label - Top-Right Positioning */}
+      <div className="data-source-label"
+           title={getEnhancedTooltip()}
+           style={{
+             position: 'absolute',
+             top: '10px',
+             right: '10px',
+             color: dataSourceInfo.color,
+             fontSize: '12px',
+             opacity: 0.8,
+             zIndex: 10,
+             cursor: 'help'
+           }}>
+        {dataSourceInfo.icon} {dataSourceInfo.text}
+      </div>
+
       <div className="seasonal-header">
-        <h3 style={{ color: '#DADADA' }}>
-          Seasonal Vibes
-          <span 
-            className="data-source-indicator"
-            title={getEnhancedTooltip()}
-            style={{ 
-              color: dataSourceInfo.color,
-              fontSize: '12px',
-              marginLeft: '8px',
-              opacity: 0.8
-            }}
-          >
-            {dataSourceInfo.icon} {dataSourceInfo.text}
-          </span>
-        </h3>
+        <h3 style={{ color: '#DADADA' }}>Seasonal Vibes</h3>
       </div>
 
       <div className="seasonal-grid">
@@ -247,13 +249,13 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
   );
 };
 
-// Helper functions
+// FIXED: Helper functions with DARK THEMED COLORS
 const getSeasonGradient = (season) => {
   const gradients = {
-    spring: 'linear-gradient(135deg, #4CAF50, #8BC34A)',
-    summer: 'linear-gradient(135deg, #FF9800, #FF5722)',
-    fall: 'linear-gradient(135deg, #795548, #FF9800)',
-    winter: 'linear-gradient(135deg, #2196F3, #3F51B5)'
+    spring: 'linear-gradient(135deg, #2D5016, #4A7C59)',     // Dark green
+    summer: 'linear-gradient(135deg, #8B4513, #CD853F)',     // Dark brown
+    fall: 'linear-gradient(135deg, #722F37, #A0522D)',       // Dark red
+    winter: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'      // Dark blue
   };
   return gradients[season] || gradients.spring;
 };

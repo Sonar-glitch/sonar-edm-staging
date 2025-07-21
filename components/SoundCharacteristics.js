@@ -161,19 +161,26 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
   const sourceLabel = getDataSourceLabel();
 
   return (
-    <div className={styles.container}>
-      {/* SURGICAL MODIFICATION: Integrated Data Source Info */}
+    <div className={styles.container} style={{ position: 'relative' }}>
+      {/* FIXED: Data Source Label - Top-Right Positioning */}
+      <div className={styles.dataSourceLabel}
+           title={getEnhancedTooltip()}
+           style={{
+             position: 'absolute',
+             top: '10px',
+             right: '10px',
+             color: sourceLabel.color,
+             fontSize: '12px',
+             opacity: 0.8,
+             zIndex: 10,
+             cursor: 'help'
+           }}>
+        {sourceLabel.icon} {sourceLabel.text}
+      </div>
+
+      {/* PRESERVED: Section Header */}
       <div className={styles.headerSection}>
-        <h3 className={styles.sectionTitle}>
-          Your Sound Characteristics
-          <span 
-            className={styles.dataSourceIndicator}
-            style={{ color: sourceLabel.color }}
-            title={getEnhancedTooltip()}
-          >
-            {sourceLabel.icon} {sourceLabel.text}
-          </span>
-        </h3>
+        <h3 className={styles.sectionTitle}>Your Sound Characteristics</h3>
         
         {features.trackCount > 0 && (
           <div className={styles.dataDetails}>
@@ -198,7 +205,10 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
           <div className={styles.characteristicBar}>
             <div 
               className={styles.characteristicFill}
-              style={{ width: `${features.energy * 100}%` }}
+              style={{ 
+                width: `${features.energy * 100}%`,
+                background: 'linear-gradient(90deg, #FF00CC, #FF6B9D)'
+              }}
             ></div>
           </div>
           <p className={styles.characteristicDescription}>
@@ -214,7 +224,10 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
           <div className={styles.characteristicBar}>
             <div 
               className={styles.characteristicFill}
-              style={{ width: `${features.danceability * 100}%` }}
+              style={{ 
+                width: `${features.danceability * 100}%`,
+                background: 'linear-gradient(90deg, #00CFFF, #4ECDC4)'
+              }}
             ></div>
           </div>
           <p className={styles.characteristicDescription}>
@@ -230,7 +243,10 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
           <div className={styles.characteristicBar}>
             <div 
               className={styles.characteristicFill}
-              style={{ width: `${features.valence * 100}%` }}
+              style={{ 
+                width: `${features.valence * 100}%`,
+                background: 'linear-gradient(90deg, #00CFFF, #4ECDC4)'
+              }}
             ></div>
           </div>
           <p className={styles.characteristicDescription}>
@@ -246,7 +262,10 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
           <div className={styles.characteristicBar}>
             <div 
               className={styles.characteristicFill}
-              style={{ width: `${features.acousticness * 100}%` }}
+              style={{ 
+                width: `${features.acousticness * 100}%`,
+                background: 'linear-gradient(90deg, #FFD700, #FFA500)'
+              }}
             ></div>
           </div>
           <p className={styles.characteristicDescription}>
