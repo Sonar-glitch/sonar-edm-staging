@@ -1,15 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts'; // SURGICAL FIX: Changed from Chart.js to Recharts
 import styles from '../styles/Top5GenresSpiderChart.module.css';
-
-// Dynamic import for Chart.js to avoid SSR issues
-const Chart = dynamic(() => import('react-chartjs-2').then(mod => mod.Chart), { ssr: false });
 
 export default function Top5GenresSpiderChart({ data, dataSource }) {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const chartRef = useRef(null);
 
   useEffect(() => {
     loadChartData();
@@ -34,78 +30,19 @@ export default function Top5GenresSpiderChart({ data, dataSource }) {
         ];
       }
 
-      // Prepare chart data
-      const chartConfig = {
-        labels: genreData.map(genre => genre.name),
-        datasets: [{
-          label: 'Genre Preference',
-          data: genreData.map(genre => genre.percentage),
-          backgroundColor: 'rgba(255, 0, 204, 0.2)', // TIKO pink with transparency
-          borderColor: '#FF00CC', // TIKO pink
-          borderWidth: 2,
-          pointBackgroundColor: '#FF00CC',
-          pointBorderColor: '#DADADA',
-          pointHoverBackgroundColor: '#00CFFF',
-          pointHoverBorderColor: '#FF00CC',
-          pointRadius: 4,
-          pointHoverRadius: 6
-        }]
-      };
+      // SURGICAL FIX: Convert data format for Recharts (was Chart.js format)
+      const rechartData = genreData.map(genre => ({
+        genre: genre.name,
+        value: genre.percentage
+      }));
 
-      setChartData(chartConfig);
+      setChartData(rechartData);
       
     } catch (err) {
       console.error('Chart data loading error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false // Hide legend to keep it clean
-      },
-      tooltip: {
-        backgroundColor: 'rgba(21, 21, 31, 0.9)',
-        titleColor: '#DADADA',
-        bodyColor: '#DADADA',
-        borderColor: '#00CFFF',
-        borderWidth: 1
-      }
-    },
-    scales: {
-      r: {
-        beginAtZero: true,
-        max: 100,
-        ticks: {
-          display: false // Hide tick labels for cleaner look
-        },
-        grid: {
-          color: 'rgba(0, 207, 255, 0.2)' // TIKO cyan grid
-        },
-        angleLines: {
-          color: 'rgba(0, 207, 255, 0.2)' // TIKO cyan angle lines
-        },
-        pointLabels: {
-          color: '#DADADA', // TIKO primary text color
-          font: {
-            size: 12,
-            weight: '500'
-          }
-        }
-      }
-    },
-    elements: {
-      line: {
-        borderWidth: 2
-      },
-      point: {
-        radius: 4
-      }
     }
   };
 
@@ -145,12 +82,38 @@ export default function Top5GenresSpiderChart({ data, dataSource }) {
     <div className={styles.container}>
       {/* ONLY SPIDER CHART - REMOVED DUPLICATE GENRE LIST */}
       <div className={styles.chartContainer}>
-        <Chart
-          ref={chartRef}
-          type="radar"
-          data={chartData}
-          options={chartOptions}
-        />
+        {/* SURGICAL FIX: Recharts implementation instead of Chart.js */}
+        <ResponsiveContainer width="100%" height={300}>
+          <RadarChart 
+            data={chartData} 
+            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+          >
+            <PolarGrid 
+              stroke="rgba(0, 255, 255, 0.2)" // TIKO cyan grid
+            />
+            <PolarAngleAxis 
+              dataKey="genre" 
+              tick={{ 
+                fontSize: 12, 
+                fill: '#DADADA', // TIKO primary text
+                fontWeight: '500'
+              }}
+            />
+            <Radar
+              name="Genre Preference"
+              dataKey="value"
+              stroke="#FF00CC" // TIKO pink
+              fill="rgba(255, 0, 204, 0.2)" // TIKO pink with transparency
+              strokeWidth={2}
+              dot={{ 
+                fill: '#FF00CC', // TIKO pink
+                strokeWidth: 2, 
+                stroke: '#DADADA', // TIKO primary text
+                r: 4
+              }}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
       </div>
       
       {/* REMOVED: Enhanced Profile button as requested */}
