@@ -2,41 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import styles from '@/styles/EnhancedEventList.module.css';
 
-// Helper function to safely extract venue name - FIXES React error #31
+// Helper function to safely extract venue name
 const getVenueName = (venue) => {
   if (!venue) return 'Venue TBA';
-  
-  // If venue is already a string, return it
   if (typeof venue === 'string') return venue;
-  
-  // If venue is an object, extract the name
   if (typeof venue === 'object' && venue.name) return venue.name;
-  
-  // Fallback
   return 'Venue TBA';
 };
 
 // Helper function to safely extract venue address
 const getVenueAddress = (event) => {
-  // Check if event has direct address field
   if (event.address && typeof event.address === 'string') {
     return event.address;
   }
-  
-  // Check if venue object has address
   if (event.venue && typeof event.venue === 'object' && event.venue.address) {
     return event.venue.address;
   }
-  
-  // Check venues array
   if (event.venues && Array.isArray(event.venues) && event.venues[0]?.address) {
     return event.venues[0].address;
   }
-  
   return null;
 };
 
-export default function EnhancedEventList({ events, loading, error }) {
+export default function EnhancedEventList({ events, loading, error, onEventClick, onSaveEvent }) {
   const { data: session } = useSession();
   const [visibleEvents, setVisibleEvents] = useState(4);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -66,7 +54,7 @@ export default function EnhancedEventList({ events, loading, error }) {
   
   // Handle like/unlike event
   const handleLikeEvent = async (event, e) => {
-    e.stopPropagation(); // Prevent event card click
+    e.stopPropagation();
     
     if (!session?.user) {
       alert('Please sign in to like events');
@@ -76,7 +64,6 @@ export default function EnhancedEventList({ events, loading, error }) {
     const eventId = event.id;
     const isCurrentlyLiked = likedEvents.has(eventId);
     
-    // Prevent multiple simultaneous requests
     if (likingInProgress.has(eventId)) return;
     
     setLikingInProgress(prev => new Set([...prev, eventId]));
@@ -85,9 +72,9 @@ export default function EnhancedEventList({ events, loading, error }) {
       if (isCurrentlyLiked) {
         // Unlike event
         const response = await fetch(`/api/user/interested-events?eventId=${eventId}`, {
-  method: 'DELETE',
-  headers: { 'Content-Type': 'application/json' }
-});
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
         
         if (response.ok) {
           setLikedEvents(prev => {
@@ -116,7 +103,7 @@ export default function EnhancedEventList({ events, loading, error }) {
               priceRange: event.priceRange,
               headliners: event.headliners,
               genres: event.genres,
-              matchScore: event.personalizedScore || event.matchScore || 50, // SURGICAL FIX: Use personalizedScore from API with fallback
+              matchScore: event.personalizedScore || event.matchScore || 50,
               source: event.source,
               venueType: event.venueType
             }
@@ -145,7 +132,11 @@ export default function EnhancedEventList({ events, loading, error }) {
   };
 
   const handleEventClick = (event) => {
-    setSelectedEvent(event);
+    if (onEventClick) {
+      onEventClick(event);
+    } else {
+      setSelectedEvent(event);
+    }
   };
 
   const closeModal = () => {
@@ -172,13 +163,13 @@ export default function EnhancedEventList({ events, loading, error }) {
     if (!event.source) return 'Unknown';
     
     const sourceLabels = {
-      'ticketmaster': 'Live Data',
-      'edmtrain': 'Live Data',
-      'emergency': 'Emergency Data',
-      'sample': 'Demo Data'
+      'ticketmaster': 'Real Data',
+      'edmtrain': 'Real Data',
+      'emergency': 'Fallback Data',
+      'sample': 'Fallback Data'
     };
     
-    return sourceLabels[event.source.toLowerCase()] || 'Live Data';
+    return sourceLabels[event.source.toLowerCase()] || 'Real Data';
   };
 
   if (loading) {
@@ -186,7 +177,7 @@ export default function EnhancedEventList({ events, loading, error }) {
       <div className={styles.container}>
         <div className={styles.loadingState}>
           <div className={styles.loadingSpinner}></div>
-          <p>Finding events that match your vibe...</p>
+          <p style={{ color: '#DADADA' }}>Finding events that match your vibe...</p>
         </div>
       </div>
     );
@@ -196,19 +187,43 @@ export default function EnhancedEventList({ events, loading, error }) {
     return (
       <div className={styles.container}>
         <div className={styles.errorState}>
-          <p>Unable to load events. Please try again.</p>
-          <button onClick={() => window.location.reload()}>Retry</button>
+          <p style={{ color: '#ff6b6b' }}>Unable to load events. Please try again.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{
+              backgroundColor: '#FF00CC',
+              color: '#000000',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
   }
 
+  // SURGICAL FIX 5: Improved no events found message with better guidance
   if (!events || events.length === 0) {
     return (
       <div className={styles.container}>
         <div className={styles.emptyState}>
-          <h3>No events found</h3>
-          <p>Try adjusting your location or filters to discover more events.</p>
+          <h3 style={{ color: '#DADADA' }}>No events found</h3>
+          <p style={{ color: '#999999' }}>
+            Try adjusting your location or filters to discover more events.
+          </p>
+          <div style={{ marginTop: '16px', color: '#888888', fontSize: '14px' }}>
+            <p>Suggestions:</p>
+            <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
+              <li>Expand your search radius</li>
+              <li>Check nearby cities</li>
+              <li>Adjust your music preferences</li>
+              <li>Try different date ranges</li>
+            </ul>
+          </div>
         </div>
       </div>
     );
@@ -227,10 +242,29 @@ export default function EnhancedEventList({ events, loading, error }) {
                 key={event.id || index} 
                 className={styles.eventCard}
                 onClick={() => handleEventClick(event)}
+                style={{
+                  backgroundColor: '#15151F',
+                  border: '1px solid rgba(0, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  margin: '8px 0',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 12px rgba(255, 0, 204, 0.3)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
               >
                 <div className={styles.eventHeader}>
                   <div className={styles.dateBox}>
-                    <span className={styles.date}>{formatDate(event.date)}</span>
+                    <span className={styles.date} style={{ color: '#DADADA' }}>
+                      {formatDate(event.date)}
+                    </span>
                   </div>
                   
                   <div className={styles.eventActions}>
@@ -239,96 +273,106 @@ export default function EnhancedEventList({ events, loading, error }) {
                         className={styles.matchCircle}
                         style={{
                           background: `conic-gradient(
-                            rgba(255, 0, 110, 0.8) ${event.personalizedScore || event.matchScore || 50}%,
-                            rgba(255, 0, 110, 0.2) ${event.personalizedScore || event.matchScore || 50}%
-                          )`
+                            #FF00CC ${event.personalizedScore || event.matchScore || 50}%,
+                            rgba(255, 0, 204, 0.2) ${event.personalizedScore || event.matchScore || 50}%
+                          )`,
+                          borderRadius: '50%',
+                          width: '40px',
+                          height: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                       >
-                        <span>{event.personalizedScore || event.matchScore || 50}%</span>
+                        <span style={{ color: '#000000', fontWeight: 'bold', fontSize: '12px' }}>
+                          {event.personalizedScore || event.matchScore || 50}%
+                        </span>
                       </div>
                     </div>
                     
-                    {/* NEW: Heart/Like Button */}
                     <button
-                      className={`${styles.likeButton} ${isLiked ? styles.liked : ''}`}
                       onClick={(e) => handleLikeEvent(event, e)}
                       disabled={isLiking}
-                      title={isLiked ? 'Remove from My Events' : 'Add to My Events'}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '20px',
+                        cursor: 'pointer',
+                        opacity: isLiking ? 0.5 : 1
+                      }}
                     >
-                      {isLiking ? '⏳' : (isLiked ? '❤️' : '🤍')}
+                      {isLiked ? '❤️' : '🤍'}
                     </button>
                   </div>
                 </div>
-                
+
                 <div className={styles.eventContent}>
-                  <h3 className={styles.eventName}>{event.name}</h3>
+                  <h3 style={{ color: '#DADADA', margin: '8px 0' }}>{event.name}</h3>
                   
-                  <div className={styles.venueInfo}>
-                    <span className={styles.venueName}>{getVenueName(event.venue)}</span>
-                    {getVenueAddress(event) && (
-                      <span className={styles.venueAddress}>{getVenueAddress(event)}</span>
+                  <div className={styles.eventDetails}>
+                    <p style={{ color: '#999999', margin: '4px 0' }}>
+                      📍 {getVenueName(event.venue)}
+                    </p>
+                    
+                    {event.headliners && event.headliners.length > 0 && (
+                      <p style={{ color: '#888888', margin: '4px 0' }}>
+                        🎵 {event.headliners.slice(0, 2).join(', ')}
+                      </p>
+                    )}
+                    
+                    {event.priceRange && (
+                      <p style={{ color: '#00CFFF', margin: '4px 0' }}>
+                        💰 {event.priceRange}
+                      </p>
                     )}
                   </div>
-                  
-                  <div className={styles.artistList}>
-                    {event.headliners && event.headliners.map((artist, index) => (
-                      <span key={index} className={styles.artist}>
-                        {artist}{index < event.headliners.length - 1 ? ', ' : ''}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className={styles.eventFooter}>
-                  <span className={styles.venueType}>{event.venueType}</span>
-                  <span className={`${styles.sourceTag} ${
-                    event.source === 'ticketmaster' ? styles.liveTag : 
-                    event.source === 'emergency' ? styles.emergencyTag : styles.sampleTag
-                  }`}>
-                    {getDataSourceLabel(event)}
-                  </span>
+
+                  {event.genres && event.genres.length > 0 && (
+                    <div className={styles.genreTags} style={{ marginTop: '8px' }}>
+                      {event.genres.slice(0, 3).map((genre, idx) => (
+                        <span 
+                          key={idx}
+                          style={{
+                            backgroundColor: '#111827',
+                            color: '#00FFFF',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            marginRight: '4px',
+                            border: '1px solid rgba(0, 255, 255, 0.3)'
+                          }}
+                        >
+                          {genre}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
-        
-        {events.length > visibleEvents && (
+
+        {visibleEvents < events.length && (
           <div className={styles.showMoreContainer}>
             <button 
-              className={styles.showMoreButton}
               onClick={handleShowMore}
+              className={styles.showMoreButton}
+              style={{
+                backgroundColor: '#FF00CC',
+                color: '#000000',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
             >
-              View All Events
+              Show More Events ({events.length - visibleEvents} remaining)
             </button>
           </div>
         )}
       </div>
-
-      {/* Event Details Modal */}
-      {selectedEvent && (
-        <div className={styles.modalOverlay} onClick={closeModal}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2>{selectedEvent.name}</h2>
-              <button className={styles.closeButton} onClick={closeModal}>×</button>
-            </div>
-            <div className={styles.modalBody}>
-              <p><strong>Date:</strong> {formatDate(selectedEvent.date)}</p>
-              <p><strong>Venue:</strong> {getVenueName(selectedEvent.venue)}</p>
-              <p><strong>Address:</strong> {getVenueAddress(selectedEvent) || 'Address TBA'}</p>
-              {selectedEvent.headliners && (
-                <p><strong>Artists:</strong> {selectedEvent.headliners.join(', ')}</p>
-              )}
-              <p><strong>Match Score:</strong> {selectedEvent.personalizedScore || selectedEvent.matchScore || 50}%</p>
-              <p><strong>Source:</strong> {getDataSourceLabel(selectedEvent)}</p>
-              {selectedEvent.ticketUrl && selectedEvent.ticketUrl !== '#' && (
-                <p><strong>Tickets:</strong> <a href={selectedEvent.ticketUrl} target="_blank" rel="noopener noreferrer">Buy Tickets</a></p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

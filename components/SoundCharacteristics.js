@@ -11,38 +11,39 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
     fetchRealSoundCharacteristics();
   }, []);
 
+  // SURGICAL FIX 4: Improved fallback data mechanism
   const fetchRealSoundCharacteristics = async () => {
     try {
       setLoading(true);
       setDataSource('loading');
       
-      // PHASE 2: Fetch real sound characteristics from enhanced user profile
+      // Try to fetch real sound characteristics from enhanced user profile
       const response = await fetch('/api/user/enhanced-taste-profile');
       
       if (response.ok) {
         const enhancedProfile = await response.json();
         
         if (enhancedProfile.soundCharacteristics && enhancedProfile.soundCharacteristics.trackCount > 0) {
-          // SUCCESS: Real Phase 2 data available
+          // SUCCESS: Real data available
           setSoundData({
-            energy: enhancedProfile.soundCharacteristics.energy,
-            danceability: enhancedProfile.soundCharacteristics.danceability,
-            valence: enhancedProfile.soundCharacteristics.valence,
-            acousticness: enhancedProfile.soundCharacteristics.acousticness,
+            energy: enhancedProfile.soundCharacteristics.energy || 0,
+            danceability: enhancedProfile.soundCharacteristics.danceability || 0,
+            valence: enhancedProfile.soundCharacteristics.valence || 0,
+            acousticness: enhancedProfile.soundCharacteristics.acousticness || 0,
             trackCount: enhancedProfile.soundCharacteristics.trackCount,
-            confidence: enhancedProfile.soundCharacteristics.confidenceScore,
-            source: enhancedProfile.soundCharacteristics.source,
+            confidence: enhancedProfile.soundCharacteristics.confidenceScore || 0.8,
+            source: enhancedProfile.soundCharacteristics.source || 'Enhanced Profile',
             lastFetched: enhancedProfile.soundCharacteristics.lastUpdated || enhancedProfile.lastUpdated,
             timestamp: enhancedProfile.soundCharacteristics.timestamp || enhancedProfile.timestamp
           });
           setDataSource('live');
           setErrorDetails(null);
-          console.log('✅ Real sound characteristics loaded from Phase 2');
+          console.log('✅ Real sound characteristics loaded');
         } else {
-          throw new Error('No sound characteristics in enhanced profile');
+          throw new Error('SOUND_CHARACTERISTICS_EMPTY: No sound characteristics in enhanced profile');
         }
       } else {
-        throw new Error(`Enhanced profile API failed: ${response.status}`);
+        throw new Error(`ENHANCED_PROFILE_API_FAILED: ${response.status}`);
       }
     } catch (error) {
       console.error('❌ Failed to fetch real sound characteristics:', error);
@@ -57,10 +58,10 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
           if (spotifyData.audioFeatures) {
             // FALLBACK SUCCESS: Basic Spotify data available
             setSoundData({
-              energy: spotifyData.audioFeatures.energy,
-              danceability: spotifyData.audioFeatures.danceability,
-              valence: spotifyData.audioFeatures.valence,
-              acousticness: spotifyData.audioFeatures.acousticness,
+              energy: spotifyData.audioFeatures.energy || 0,
+              danceability: spotifyData.audioFeatures.danceability || 0,
+              valence: spotifyData.audioFeatures.valence || 0,
+              acousticness: spotifyData.audioFeatures.acousticness || 0,
               trackCount: spotifyData.audioFeatures.trackCount || 50,
               confidence: 0.7,
               source: 'Spotify API'
@@ -74,15 +75,15 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
             });
             console.log('⚠️ Using fallback Spotify sound characteristics');
           } else {
-            throw new Error('No audio features in Spotify data');
+            throw new Error('NO_AUDIO_FEATURES: No audio features in Spotify data');
           }
         } else {
-          throw new Error(`Spotify API failed: ${spotifyResponse.status}`);
+          throw new Error(`SPOTIFY_API_FAILED: ${spotifyResponse.status}`);
         }
       } catch (fallbackError) {
         console.error('❌ Fallback also failed:', fallbackError);
         
-        // FALLBACK 2: Demo data with error details
+        // FALLBACK 2: Minimal fallback data with proper null safety
         setSoundData({
           energy: 0.75,
           danceability: 0.82,
@@ -90,22 +91,23 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
           acousticness: 0.15,
           trackCount: 0,
           confidence: 0.0,
-          source: 'Demo Data'
+          source: 'Fallback Data'
         });
         setDataSource('error');
         setErrorDetails({
           code: 'ALL_SOURCES_FAILED',
           message: 'Both enhanced profile and Spotify API unavailable',
-          fallbackUsed: 'Demo data',
+          fallbackUsed: 'Minimal fallback data',
           attemptedSources: ['Enhanced Profile API', 'Spotify API']
         });
-        console.log('❌ Using demo sound characteristics due to API failures');
+        console.log('❌ Using minimal fallback sound characteristics');
       }
     } finally {
       setLoading(false);
     }
   };
 
+  // SURGICAL FIX 3: Proper null safety to prevent NaN%
   const features = soundData || {
     energy: 0.75,
     danceability: 0.82,
@@ -119,11 +121,11 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
   const getDataSourceLabel = () => {
     switch (dataSource) {
       case 'live':
-        return { text: 'Live Data', color: '#4ecdc4', icon: '🔴' };
+        return { text: 'Real Data', color: '#00CFFF', icon: '🔴' };
       case 'fallback':
         return { text: 'Fallback Data', color: '#f9ca24', icon: '⚠️' };
       case 'error':
-        return { text: 'Default Data', color: '#ff6b6b', icon: '❌' };
+        return { text: 'Fallback Data', color: '#ff6b6b', icon: '❌' };
       case 'loading':
         return { text: 'Loading...', color: '#95a5a6', icon: '⏳' };
       default:
@@ -131,19 +133,16 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
     }
   };
 
-  // SURGICAL ADDITION: Enhanced tooltip with error codes and last fetched dates
+  // SURGICAL FIX: Enhanced tooltip with error codes and last fetched dates
   const getEnhancedTooltip = () => {
     if (dataSource === 'live') {
-      // For live data, show last fetched date
       const lastFetched = features.lastFetched || features.timestamp || new Date().toISOString();
       const fetchedDate = new Date(lastFetched).toLocaleString();
-      return `Live Data\nLast fetched: ${fetchedDate}\nSource: ${features.source || 'Enhanced Profile'}\nConfidence: ${Math.round((features.confidence || 0.8) * 100)}%`;
+      return `Real Data\nLast fetched: ${fetchedDate}\nSource: ${features.source}\nConfidence: ${Math.round((features.confidence || 0.8) * 100)}%`;
     } else if (errorDetails) {
-      // For non-live data, show error codes and details
-      return `${errorDetails.code || 'UNKNOWN_ERROR'}\nDetails: ${errorDetails.message || 'No details available'}\nFallback: ${errorDetails.fallbackUsed || 'Default data'}\nAttempted: ${errorDetails.attemptedSources?.join(', ') || 'Multiple sources'}`;
+      return `${errorDetails.code}\nDetails: ${errorDetails.message}\nFallback: ${errorDetails.fallbackUsed}\nAttempted: ${errorDetails.attemptedSources?.join(', ')}`;
     } else {
-      // For fallback/demo data without specific errors
-      return `${dataSource === 'fallback' ? 'Fallback Data' : 'Demo Data'}\nReason: ${dataSource === 'fallback' ? 'Primary source unavailable' : 'No user data available'}\nSource: Default characteristics`;
+      return `Fallback Data\nReason: Primary source unavailable\nSource: Default characteristics`;
     }
   };
 
@@ -152,7 +151,7 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
       <div className={styles.container}>
         <div className={styles.loadingState}>
           <div className={styles.loadingSpinner}></div>
-          <p>Loading your sound characteristics...</p>
+          <p style={{ color: '#DADADA' }}>Loading your sound characteristics...</p>
         </div>
       </div>
     );
@@ -162,113 +161,109 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
 
   return (
     <div className={styles.container} style={{ position: 'relative' }}>
-      {/* FIXED: Data Source Label - Top-Right Positioning */}
-      <div className={styles.dataSourceLabel}
-           title={getEnhancedTooltip()}
-           style={{
-             position: 'absolute',
-             top: '10px',
-             right: '10px',
-             color: sourceLabel.color,
-             fontSize: '12px',
-             opacity: 0.8,
-             zIndex: 10,
-             cursor: 'help'
-           }}>
-        {sourceLabel.icon} {sourceLabel.text}
-      </div>
+      {/* SURGICAL FIX 1: REMOVED duplicate data source label - main dashboard handles this */}
 
-      {/* PRESERVED: Section Header */}
-      <div className={styles.headerSection}>
-        <h3 className={styles.sectionTitle}>Your Sound Characteristics</h3>
-        
-        {features.trackCount > 0 && (
-          <div className={styles.dataDetails}>
-            <span className={styles.trackCount}>
-              Based on {features.trackCount} tracks
+      {/* SURGICAL FIX 2: REMOVED duplicate heading - main dashboard has OG <h2> title */}
+
+      {/* PRESERVED: Track count and confidence display */}
+      {features.trackCount > 0 && (
+        <div className={styles.dataDetails}>
+          <span className={styles.trackCount} style={{ color: '#999999' }}>
+            Based on {features.trackCount} tracks
+          </span>
+          {features.confidence && (
+            <span className={styles.confidence} style={{ color: '#888888' }}>
+              Confidence: {Math.round((features.confidence || 0) * 100)}%
             </span>
-            {features.confidence && (
-              <span className={styles.confidence}>
-                Confidence: {Math.round(features.confidence * 100)}%
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <div className={styles.characteristicsGrid}>
         <div className={styles.characteristic}>
           <div className={styles.characteristicHeader}>
-            <span className={styles.characteristicName}>Energy</span>
-            <span className={styles.characteristicValue}>{Math.round(features.energy * 100)}%</span>
+            <span className={styles.characteristicName} style={{ color: '#DADADA' }}>Energy</span>
+            {/* SURGICAL FIX 3: Added null checks to prevent NaN% */}
+            <span className={styles.characteristicValue} style={{ color: '#DADADA' }}>
+              {Math.round((features.energy || 0) * 100)}%
+            </span>
           </div>
           <div className={styles.characteristicBar}>
             <div 
               className={styles.characteristicFill}
               style={{ 
-                width: `${features.energy * 100}%`,
-                background: 'linear-gradient(90deg, #FF00CC, #FF6B9D)'
+                width: `${(features.energy || 0) * 100}%`,
+                background: 'linear-gradient(90deg, #00CFFF, #FF00CC)'
               }}
             ></div>
           </div>
-          <p className={styles.characteristicDescription}>
+          <p className={styles.characteristicDescription} style={{ color: '#999999' }}>
             How energetic and intense your music feels
           </p>
         </div>
 
         <div className={styles.characteristic}>
           <div className={styles.characteristicHeader}>
-            <span className={styles.characteristicName}>Danceability</span>
-            <span className={styles.characteristicValue}>{Math.round(features.danceability * 100)}%</span>
+            <span className={styles.characteristicName} style={{ color: '#DADADA' }}>Danceability</span>
+            {/* SURGICAL FIX 3: Added null checks to prevent NaN% */}
+            <span className={styles.characteristicValue} style={{ color: '#DADADA' }}>
+              {Math.round((features.danceability || 0) * 100)}%
+            </span>
           </div>
           <div className={styles.characteristicBar}>
             <div 
               className={styles.characteristicFill}
               style={{ 
-                width: `${features.danceability * 100}%`,
-                background: 'linear-gradient(90deg, #00CFFF, #4ECDC4)'
+                width: `${(features.danceability || 0) * 100}%`,
+                background: 'linear-gradient(90deg, #00CFFF, #FF00CC)'
               }}
             ></div>
           </div>
-          <p className={styles.characteristicDescription}>
+          <p className={styles.characteristicDescription} style={{ color: '#999999' }}>
             How suitable your music is for dancing
           </p>
         </div>
 
         <div className={styles.characteristic}>
           <div className={styles.characteristicHeader}>
-            <span className={styles.characteristicName}>Positivity</span>
-            <span className={styles.characteristicValue}>{Math.round(features.valence * 100)}%</span>
+            <span className={styles.characteristicName} style={{ color: '#DADADA' }}>Positivity</span>
+            {/* SURGICAL FIX 3: Added null checks to prevent NaN% */}
+            <span className={styles.characteristicValue} style={{ color: '#DADADA' }}>
+              {Math.round((features.valence || 0) * 100)}%
+            </span>
           </div>
           <div className={styles.characteristicBar}>
             <div 
               className={styles.characteristicFill}
               style={{ 
-                width: `${features.valence * 100}%`,
-                background: 'linear-gradient(90deg, #00CFFF, #4ECDC4)'
+                width: `${(features.valence || 0) * 100}%`,
+                background: 'linear-gradient(90deg, #00CFFF, #FF00CC)'
               }}
             ></div>
           </div>
-          <p className={styles.characteristicDescription}>
+          <p className={styles.characteristicDescription} style={{ color: '#999999' }}>
             The mood of positivity conveyed by your tracks
           </p>
         </div>
 
         <div className={styles.characteristic}>
           <div className={styles.characteristicHeader}>
-            <span className={styles.characteristicName}>Acoustic</span>
-            <span className={styles.characteristicValue}>{Math.round(features.acousticness * 100)}%</span>
+            <span className={styles.characteristicName} style={{ color: '#DADADA' }}>Acoustic</span>
+            {/* SURGICAL FIX 3: Added null checks to prevent NaN% */}
+            <span className={styles.characteristicValue} style={{ color: '#DADADA' }}>
+              {Math.round((features.acousticness || 0) * 100)}%
+            </span>
           </div>
           <div className={styles.characteristicBar}>
             <div 
               className={styles.characteristicFill}
               style={{ 
-                width: `${features.acousticness * 100}%`,
+                width: `${(features.acousticness || 0) * 100}%`,
                 background: 'linear-gradient(90deg, #FFD700, #FFA500)'
               }}
             ></div>
           </div>
-          <p className={styles.characteristicDescription}>
+          <p className={styles.characteristicDescription} style={{ color: '#999999' }}>
             How acoustic vs electronic your music is
           </p>
         </div>
@@ -277,13 +272,14 @@ const EnhancedSoundCharacteristics = ({ userAudioFeatures, dataStatus = 'loading
       {/* PRESERVED: Data source footer for additional context */}
       {(dataSource === 'fallback' || dataSource === 'error') && (
         <div className={styles.dataSourceFooter}>
-          <span className={styles.sourceText}>
+          <span className={styles.sourceText} style={{ color: '#888888' }}>
             Data source: {features.source}
           </span>
           {errorDetails && (
             <span 
               className={styles.errorIndicator}
               title={getEnhancedTooltip()}
+              style={{ color: '#f9ca24' }}
             >
               ⚠️ Fallback used
             </span>

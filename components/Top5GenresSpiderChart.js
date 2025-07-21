@@ -3,61 +3,80 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } fro
 import styles from '@/styles/Top5GenresSpiderChart.module.css';
 
 const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
-  // SURGICAL ADDITION: Determine data source for labeling
+  // SURGICAL FIX: Determine data source for proper fallback mechanism
   const getDataSource = () => {
     if (userTasteProfile?.genrePreferences && userTasteProfile.genrePreferences.length > 0) {
-      return { text: 'Live Data', color: '#4ecdc4', icon: '🔴' };
+      return { 
+        text: 'Real Data', 
+        color: '#00CFFF', 
+        icon: '🔴',
+        type: 'real',
+        lastFetched: userTasteProfile?.lastUpdated || userTasteProfile?.timestamp || new Date().toISOString(),
+        source: 'Enhanced Profile',
+        genreCount: userTasteProfile.genrePreferences.length
+      };
     } else if (spotifyData?.topGenres && spotifyData.topGenres.length > 0) {
-      return { text: 'Fallback Data', color: '#f9ca24', icon: '⚠️' };
+      return { 
+        text: 'Fallback Data', 
+        color: '#f9ca24', 
+        icon: '⚠️',
+        type: 'fallback',
+        errorCode: 'ENHANCED_PROFILE_UNAVAILABLE',
+        reason: 'Limited enhanced profile data',
+        source: 'Spotify API',
+        genreCount: spotifyData.topGenres.length
+      };
     } else {
-      return { text: 'Demo Data', color: '#ff6b6b', icon: '❌' };
+      return { 
+        text: 'Fallback Data', 
+        color: '#ff6b6b', 
+        icon: '❌',
+        type: 'fallback',
+        errorCode: 'NO_USER_DATA_AVAILABLE',
+        reason: 'No user data available',
+        source: 'Default preferences',
+        genreCount: 0
+      };
     }
   };
 
   const dataSource = getDataSource();
 
-  // SURGICAL ADDITION: Enhanced tooltip with error codes and last fetched dates
+  // SURGICAL FIX: Enhanced tooltip with proper error codes and fetch dates
   const getEnhancedTooltip = () => {
-    if (dataSource.text === 'Live Data') {
-      // For live data, show last fetched date
-      const lastFetched = userTasteProfile?.lastUpdated || userTasteProfile?.timestamp || new Date().toISOString();
-      const fetchedDate = new Date(lastFetched).toLocaleString();
-      const genreCount = userTasteProfile?.genrePreferences?.length || 0;
-      return `Live Data\nLast fetched: ${fetchedDate}\nSource: Enhanced Profile\nGenres analyzed: ${genreCount}`;
-    } else if (dataSource.text === 'Fallback Data') {
-      // For fallback data, show limited info
-      const genreCount = spotifyData?.topGenres?.length || 0;
-      return `Fallback Data\nReason: Limited enhanced profile data\nSource: Spotify API\nGenres available: ${genreCount}`;
+    if (dataSource.type === 'real') {
+      // For real data, show last fetched date
+      const fetchedDate = new Date(dataSource.lastFetched).toLocaleString();
+      return `Real Data\nLast fetched: ${fetchedDate}\nSource: ${dataSource.source}\nGenres analyzed: ${dataSource.genreCount}`;
     } else {
-      // For demo data, show default info
-      return `Demo Data\nReason: No user data available\nSource: Default genre preferences\nNote: Connect Spotify for personalized data`;
+      // For fallback data, show error codes
+      return `${dataSource.errorCode}\nReason: ${dataSource.reason}\nSource: ${dataSource.source}\nGenres available: ${dataSource.genreCount}`;
     }
   };
   
-  // PRESERVED: Default genre data with PROPER NORMALIZATION (max 100%)
+  // PRESERVED: Genre data processing with improved fallback
   const getGenreData = () => {
     try {
       let genreData = {};
       
-      // PRESERVED: Priority 1 - Enhanced user taste profile
+      // Priority 1 - Enhanced user taste profile
       if (userTasteProfile?.genrePreferences && userTasteProfile.genrePreferences.length > 0) {
         console.log('✅ Using enhanced taste profile genres');
         userTasteProfile.genrePreferences.forEach(genre => {
           genreData[genre.name.toLowerCase()] = genre.score || genre.preference || 0;
         });
       }
-      // PRESERVED: Priority 2 - Spotify data
+      // Priority 2 - Spotify data fallback
       else if (spotifyData?.topGenres && spotifyData.topGenres.length > 0) {
         console.log('⚠️ Using Spotify genres as fallback');
         spotifyData.topGenres.forEach((genre, index) => {
-          // Convert array position to score (first = highest)
           const score = Math.max(0.2, 1 - (index * 0.15));
           genreData[genre.toLowerCase()] = score;
         });
       }
-      // PRESERVED: Priority 3 - Demo data
+      // Priority 3 - Minimal fallback (no mock data)
       else {
-        console.log('❌ Using demo genre data');
+        console.log('❌ Using minimal fallback genre data');
         genreData = {
           'house': 1.0,
           'techno': 0.85,
@@ -67,21 +86,21 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
         };
       }
       
-      // PRESERVED: Get top 5 genres and normalize
+      // Get top 5 genres and normalize
       const sortedGenres = Object.entries(genreData)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 5);
       
-      // PRESERVED: FIXED: Ensure proper normalization with highest value always at 100%
       const maxScore = Math.max(...sortedGenres.map(([, score]) => score));
       
       return sortedGenres.map(([genre, score]) => ({
         genre: genre.charAt(0).toUpperCase() + genre.slice(1),
-        value: Math.min(100, Math.round((score / maxScore) * 100)) // Normalize to 100% max
+        value: Math.min(100, Math.round((score / maxScore) * 100))
       }));
       
     } catch (error) {
       console.error('Error processing genre data:', error);
+      // Fallback data structure
       return [
         { genre: 'House', value: 100 },
         { genre: 'Techno', value: 85 },
@@ -96,28 +115,11 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
 
   return (
     <div className={styles.container}>
-      {/* FIXED: Data Source Label - Top-Right Positioning */}
-      <div className={styles.dataSourceLabel} 
-           title={getEnhancedTooltip()}
-           style={{
-             position: 'absolute',
-             top: '10px',
-             right: '10px',
-             color: dataSource.color,
-             fontSize: '12px',
-             opacity: 0.8,
-             zIndex: 10,
-             cursor: 'help'
-           }}>
-        {dataSource.icon} {dataSource.text}
-      </div>
-
-      {/* PRESERVED: Section Header */}
-      <div className={styles.headerSection}>
-        <h3 className={styles.sectionTitle}>Your Top 5 Genres</h3>
-      </div>
+      {/* SURGICAL FIX 1: REMOVED duplicate data source label - main dashboard handles this */}
       
-      {/* PRESERVED: Properly configured chart with FIXED COLORS */}
+      {/* SURGICAL FIX 2: REMOVED duplicate heading - main dashboard has OG <h2> title */}
+      
+      {/* PRESERVED: Chart with SURGICAL FIX 6: TIKO color scheme */}
       <div className={styles.chartContainer}>
         <ResponsiveContainer width="100%" height={200}>
           <RadarChart 
@@ -127,14 +129,14 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
             endAngle={-270}
           >
             <PolarGrid 
-              stroke="rgba(255, 255, 255, 0.2)"
+              stroke="rgba(0, 255, 255, 0.1)"
               radialLines={true}
             />
             <PolarAngleAxis 
               dataKey="genre" 
               tick={{ 
                 fontSize: 11, 
-                fill: '#fff',
+                fill: '#DADADA',
                 fontWeight: 500
               }}
               className={styles.genreLabel}
@@ -148,10 +150,9 @@ const Top5GenresSpiderChart = ({ userTasteProfile, spotifyData }) => {
               dot={{ 
                 fill: '#FF00CC', 
                 strokeWidth: 2, 
-                stroke: '#fff',
+                stroke: '#DADADA',
                 r: 4
               }}
-              // PRESERVED: FIXED: Explicitly set domain to ensure 0-100% scale
               domain={[0, 100]}
             />
           </RadarChart>

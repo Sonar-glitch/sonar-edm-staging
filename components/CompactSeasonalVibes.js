@@ -10,11 +10,13 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
     fetchSeasonalVibes();
   }, [userTasteProfile, spotifyData]);
 
+  // SURGICAL FIX 4: Improved fallback data mechanism
   const fetchSeasonalVibes = async () => {
     try {
       setLoading(true);
+      setDataSource('loading');
       
-      // PHASE 2: Try to fetch real seasonal data from enhanced profile
+      // Try to fetch real seasonal data from enhanced profile
       const response = await fetch('/api/user/enhanced-taste-profile');
       
       if (response.ok) {
@@ -33,17 +35,17 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
           });
           setDataSource('live');
           setErrorDetails(null);
-          console.log('✅ Real seasonal vibes loaded from Phase 2');
+          console.log('✅ Real seasonal vibes loaded');
         } else {
-          throw new Error('No seasonal preferences in enhanced profile');
+          throw new Error('SEASONAL_PREFERENCES_EMPTY: Enhanced profile has no seasonal data');
         }
       } else {
-        throw new Error(`Enhanced profile API failed: ${response.status}`);
+        throw new Error(`ENHANCED_PROFILE_API_FAILED: ${response.status}`);
       }
     } catch (error) {
       console.error('❌ Failed to fetch real seasonal vibes:', error);
       
-      // FALLBACK: Use demo data with error tracking
+      // SURGICAL FIX: Improved fallback with better error tracking
       setSeasonalData({
         spring: { description: 'Fresh beats & uplifting vibes', genres: ['Progressive House', 'Melodic Techno'] },
         summer: { description: 'High energy, open air sounds', genres: ['Tech House', 'Festival Progressive'] },
@@ -52,12 +54,12 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
       });
       setDataSource('fallback');
       setErrorDetails({
-        code: 'SEASONAL_DATA_UNAVAILABLE',
-        message: 'Enhanced seasonal preferences not available',
+        code: error.message.includes('SEASONAL_PREFERENCES_EMPTY') ? 'SEASONAL_PREFERENCES_EMPTY' : 'ENHANCED_PROFILE_API_FAILED',
+        message: error.message,
         fallbackUsed: 'Default seasonal patterns',
         attemptedSources: ['Enhanced Profile API']
       });
-      console.log('⚠️ Using demo seasonal vibes data');
+      console.log('⚠️ Using fallback seasonal vibes data');
     } finally {
       setLoading(false);
     }
@@ -71,30 +73,27 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
     return 'winter';
   };
 
-  // SURGICAL ADDITION: Enhanced tooltip with error codes and last fetched dates
+  // SURGICAL FIX: Enhanced tooltip with proper error codes and fetch dates
   const getEnhancedTooltip = () => {
     if (dataSource === 'live') {
-      // For live data, show last fetched date
       const lastFetched = seasonalData.lastFetched || seasonalData.timestamp || new Date().toISOString();
       const fetchedDate = new Date(lastFetched).toLocaleString();
-      return `Live Data\nLast fetched: ${fetchedDate}\nSource: Enhanced Profile\nAnalyzed periods: ${seasonalData.analyzedPeriods || 'Multiple'}`;
+      return `Real Data\nLast fetched: ${fetchedDate}\nSource: Enhanced Profile\nAnalyzed periods: ${seasonalData.analyzedPeriods || 'Multiple'}`;
     } else if (errorDetails) {
-      // For non-live data, show error codes and details
-      return `${errorDetails.code || 'UNKNOWN_ERROR'}\nDetails: ${errorDetails.message || 'No details available'}\nFallback: ${errorDetails.fallbackUsed || 'Default data'}\nAttempted: ${errorDetails.attemptedSources?.join(', ') || 'Multiple sources'}`;
+      return `${errorDetails.code}\nDetails: ${errorDetails.message}\nFallback: ${errorDetails.fallbackUsed}\nAttempted: ${errorDetails.attemptedSources?.join(', ')}`;
     } else {
-      // For fallback/demo data without specific errors
-      return `${dataSource === 'fallback' ? 'Fallback Data' : 'Demo Data'}\nReason: ${dataSource === 'fallback' ? 'Limited temporal data' : 'No user data available'}\nSource: Default seasonal patterns`;
+      return `Fallback Data\nReason: Limited temporal data\nSource: Default seasonal patterns`;
     }
   };
 
   const getDataSourceInfo = () => {
     switch (dataSource) {
       case 'live':
-        return { text: 'Live Data', color: '#00CFFF', icon: '🔴' };
+        return { text: 'Real Data', color: '#00CFFF', icon: '🔴' };
       case 'fallback':
         return { text: 'Fallback Data', color: '#f9ca24', icon: '⚠️' };
       case 'error':
-        return { text: 'Demo Data', color: '#ff6b6b', icon: '❌' };
+        return { text: 'Fallback Data', color: '#ff6b6b', icon: '❌' };
       case 'loading':
         return { text: 'Loading...', color: '#95a5a6', icon: '⏳' };
       default:
@@ -107,7 +106,7 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
       <div className="seasonal-vibes-container">
         <div className="loading-state">
           <div className="loading-spinner"></div>
-          <p>Loading seasonal vibes...</p>
+          <p style={{ color: '#DADADA' }}>Loading seasonal vibes...</p>
         </div>
       </div>
     );
@@ -118,25 +117,9 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
 
   return (
     <div className="seasonal-vibes-container" style={{ position: 'relative' }}>
-      {/* FIXED: Data Source Label - Top-Right Positioning */}
-      <div className="data-source-label"
-           title={getEnhancedTooltip()}
-           style={{
-             position: 'absolute',
-             top: '10px',
-             right: '10px',
-             color: dataSourceInfo.color,
-             fontSize: '12px',
-             opacity: 0.8,
-             zIndex: 10,
-             cursor: 'help'
-           }}>
-        {dataSourceInfo.icon} {dataSourceInfo.text}
-      </div>
+      {/* SURGICAL FIX 1: REMOVED duplicate data source label - main dashboard handles this */}
 
-      <div className="seasonal-header">
-        <h3 style={{ color: '#DADADA' }}>Seasonal Vibes</h3>
-      </div>
+      {/* SURGICAL FIX 2: REMOVED duplicate heading - main dashboard has OG <h2> title */}
 
       <div className="seasonal-grid">
         {seasons.map((season) => {
@@ -149,7 +132,7 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
               className={`season-card ${season} ${isCurrentSeason ? 'current' : ''}`}
               style={{
                 background: getSeasonGradient(season),
-                border: isCurrentSeason ? '2px solid #00CFFF' : '1px solid rgba(255,255,255,0.1)',
+                border: isCurrentSeason ? '2px solid #00CFFF' : '1px solid rgba(0, 255, 255, 0.1)',
                 borderRadius: '12px',
                 padding: '16px',
                 margin: '8px',
@@ -158,7 +141,7 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
               }}
             >
               <h4 style={{ 
-                color: '#fff', 
+                color: '#DADADA', 
                 margin: '0 0 8px 0',
                 textTransform: 'capitalize',
                 fontSize: '16px',
@@ -176,7 +159,7 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
                 )}
               </h4>
               <p style={{ 
-                color: 'rgba(255,255,255,0.9)', 
+                color: '#999999', 
                 margin: '0',
                 fontSize: '14px',
                 lineHeight: '1.4'
@@ -187,7 +170,7 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
                 <div style={{ 
                   marginTop: '8px',
                   fontSize: '12px',
-                  color: 'rgba(255,255,255,0.7)'
+                  color: '#888888'
                 }}>
                   {seasonData.genres.slice(0, 2).join(', ')}
                 </div>
@@ -200,10 +183,6 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
       <style jsx>{`
         .seasonal-vibes-container {
           width: 100%;
-        }
-        
-        .seasonal-header {
-          margin-bottom: 16px;
         }
         
         .seasonal-grid {
@@ -219,7 +198,7 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
         
         .season-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          box-shadow: 0 0 12px rgba(255, 0, 204, 0.3);
         }
         
         .loading-state {
@@ -249,13 +228,13 @@ const CompactSeasonalVibes = ({ userTasteProfile, spotifyData }) => {
   );
 };
 
-// FIXED: Helper functions with DARK THEMED COLORS
+// SURGICAL FIX 6: TIKO color scheme for season gradients
 const getSeasonGradient = (season) => {
   const gradients = {
-    spring: 'linear-gradient(135deg, #2D5016, #4A7C59)',     // Dark green
-    summer: 'linear-gradient(135deg, #8B4513, #CD853F)',     // Dark brown
-    fall: 'linear-gradient(135deg, #722F37, #A0522D)',       // Dark red
-    winter: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'      // Dark blue
+    spring: 'linear-gradient(135deg, #2D5016, #4A7C59)',
+    summer: 'linear-gradient(135deg, #8B4513, #CD853F)',
+    fall: 'linear-gradient(135deg, #722F37, #A0522D)',
+    winter: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'
   };
   return gradients[season] || gradients.spring;
 };
