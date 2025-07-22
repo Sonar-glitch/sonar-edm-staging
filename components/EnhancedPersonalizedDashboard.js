@@ -34,7 +34,8 @@ export default function EnhancedPersonalizedDashboard() {
       setLoading(true);
       
       // Load enhanced taste profile
-      const profileResponse = await fetch('/api/user/enhanced-taste-profile');
+      const profileResponse = await fetch('/api/spotify/detailed-taste');
+
       const profileData = await profileResponse.json();
       
       // Track data sources
