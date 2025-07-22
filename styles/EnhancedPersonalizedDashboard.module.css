@@ -76,11 +76,11 @@
   flex-direction: column;
 }
 
-/* TIKO GLASSMORPHIC CARDS */
+/* TIKO GLASSMORPHIC CARDS - SURGICAL FIX: REMOVED BORDERS */
 .card {
   background: rgba(21, 21, 31, 0.8); /* TIKO accent sections */
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
+  /* SURGICAL FIX: REMOVED border: 1px solid rgba(0, 255, 255, 0.1); */
   border-radius: 16px;
   padding: 20px;
   height: 100%;
@@ -97,7 +97,7 @@
 
 .card:hover {
   transform: translateY(-2px);
-  border-color: rgba(0, 255, 255, 0.2);
+  /* SURGICAL FIX: REMOVED border-color: rgba(0, 255, 255, 0.2); */
   box-shadow: 
     0 12px 40px rgba(0, 0, 0, 0.4),
     0 0 20px rgba(0, 207, 255, 0.1),

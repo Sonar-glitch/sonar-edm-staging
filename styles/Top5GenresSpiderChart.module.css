@@ -7,11 +7,11 @@
   flex-direction: column;
 }
 
-/* ENHANCED GLASSMORPHIC CHART CONTAINER */
+/* SURGICAL FIX: ENHANCED GLASSMORPHIC CHART CONTAINER - REMOVED BOUNDARY AND IMPROVED SPACE */
 .chartContainer {
   flex: 1;
-  min-height: 250px;
-  max-height: 250px;
+  min-height: 280px; /* SURGICAL FIX: Increased from 250px for better space utilization */
+  max-height: 280px; /* SURGICAL FIX: Increased from 250px for better space utilization */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -19,8 +19,8 @@
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border-radius: 12px;
-  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
-  margin-bottom: 1rem;
+  /* SURGICAL FIX: REMOVED border: 1px solid rgba(0, 255, 255, 0.1); */
+  /* SURGICAL FIX: REMOVED margin-bottom: 1rem; for better space utilization */
   position: relative;
   overflow: hidden;
   box-shadow: 
@@ -122,7 +122,7 @@
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border-radius: 12px;
-  border: 1px solid rgba(0, 255, 255, 0.1);
+  /* SURGICAL FIX: REMOVED border: 1px solid rgba(0, 255, 255, 0.1); for consistency */
   height: 100%;
 }
 
@@ -154,7 +154,7 @@
   background: rgba(255, 0, 204, 0.1); /* TIKO action button with low opacity */
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 0, 204, 0.3);
+  /* SURGICAL FIX: REMOVED border: 1px solid rgba(255, 0, 204, 0.3); for consistency */
   border-radius: 12px;
   height: 100%;
   display: flex;
@@ -223,11 +223,11 @@
   font-size: 0.75rem;
 }
 
-/* RESPONSIVE DESIGN */
+/* RESPONSIVE DESIGN - SURGICAL FIX: IMPROVED MOBILE SPACE UTILIZATION */
 @media (max-width: 768px) {
   .chartContainer {
-    min-height: 200px;
-    max-height: 200px;
+    min-height: 220px; /* SURGICAL FIX: Increased from 200px for better mobile space */
+    max-height: 220px; /* SURGICAL FIX: Increased from 200px for better mobile space */
   }
   
   .genreLabel {
