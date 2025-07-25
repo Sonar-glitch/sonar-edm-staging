@@ -1,6 +1,7 @@
 // pages/api/auth/[...nextauth].js
-import NextAuth from "next-auth";
-import SpotifyProvider from "next-auth/providers/spotify";
+// SURGICAL FIX: Only changed import syntax to resolve SpotifyProvider function issue
+const NextAuth = require("next-auth").default;
+const SpotifyProvider = require("next-auth/providers/spotify").default;
 
 export const authOptions = {
   providers: [
@@ -154,3 +155,4 @@ export const authOptions = {
 };
 
 export default NextAuth(authOptions);
+
