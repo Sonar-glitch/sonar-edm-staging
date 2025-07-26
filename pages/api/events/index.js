@@ -64,7 +64,7 @@ export default async function handler(req, res) {
         
         // FIXED: Corrected geospatial query path from 'venues.location.coordinates' to 'location.coordinates'
         const query = {
-          'location.coordinates': {
+          'location': {
             $near: {
               $geometry: {
                 type: "Point",
