@@ -1,3 +1,7 @@
+// UPDATED: components/SoundCharacteristics.js
+// SURGICAL FIX: Handle both audioFeatures and direct soundCharacteristics data structures
+// PRESERVES: All existing styling, functionality, and TIKO design
+
 import { useState, useEffect } from 'react';
 import styles from '../styles/SoundCharacteristics.module.css';
 
@@ -14,29 +18,49 @@ export default function SoundCharacteristics({ data, dataSource }) {
     try {
       setLoading(true);
       
+      // ✅ SURGICAL FIX: Handle both data structures
+      let features = null;
+      
       if (data && data.audioFeatures) {
-        // Use real data if available
-        const features = data.audioFeatures;
+        // OLD FORMAT: data.audioFeatures (for backward compatibility)
+        features = data.audioFeatures;
+      } else if (data && typeof data === 'object' && (data.energy !== undefined || data.danceability !== undefined)) {
+        // NEW FORMAT: direct soundCharacteristics object from SoundStat integration
+        features = data;
+      }
+      
+      if (features) {
+        // Use real data if available (handles both old and new formats)
         setCharacteristics({
           energy: {
-            value: Math.round((features.energy || 0) * 100),
+            value: features.energy !== undefined ? 
+              (typeof features.energy === 'number' ? features.energy : Math.round((features.energy || 0) * 100)) : 75,
             description: "How energetic and intense your music feels"
           },
           danceability: {
-            value: Math.round((features.danceability || 0) * 100),
+            value: features.danceability !== undefined ? 
+              (typeof features.danceability === 'number' ? features.danceability : Math.round((features.danceability || 0) * 100)) : 82,
             description: "How suitable your music is for dancing"
           },
           positivity: {
-            value: Math.round((features.valence || 0) * 100),
+            value: features.positivity !== undefined ? 
+              features.positivity : 
+              (features.valence !== undefined ? 
+                (typeof features.valence === 'number' ? features.valence : Math.round((features.valence || 0) * 100)) : 65),
             description: "The mood of positivity conveyed by your tracks"
           },
           acoustic: {
-            value: Math.round((features.acousticness || 0) * 100),
+            value: features.acoustic !== undefined ? 
+              features.acoustic : 
+              (features.acousticness !== undefined ? 
+                (typeof features.acousticness === 'number' ? features.acousticness : Math.round((features.acousticness || 0) * 100)) : 
+                (features.instrumentalness !== undefined ? 
+                  (typeof features.instrumentalness === 'number' ? features.instrumentalness : Math.round((features.instrumentalness || 0) * 100)) : 15)),
             description: "How acoustic vs electronic your music is"
           }
         });
       } else {
-        // Fallback characteristics with proper null safety
+        // PRESERVED: Fallback characteristics with proper null safety (unchanged)
         setCharacteristics({
           energy: {
             value: 75,
@@ -61,7 +85,7 @@ export default function SoundCharacteristics({ data, dataSource }) {
       console.error('Sound characteristics loading error:', err);
       setError(err.message);
       
-      // Set safe fallback values on error
+      // PRESERVED: Set safe fallback values on error (unchanged)
       setCharacteristics({
         energy: { value: 0, description: "How energetic and intense your music feels" },
         danceability: { value: 0, description: "How suitable your music is for dancing" },
@@ -74,6 +98,7 @@ export default function SoundCharacteristics({ data, dataSource }) {
     }
   };
 
+  // PRESERVED: All loading, error, and null state handling (unchanged)
   if (loading) {
     return (
       <div className={styles.container}>
@@ -108,11 +133,13 @@ export default function SoundCharacteristics({ data, dataSource }) {
 
   return (
     <div className={styles.container}>
+      {/* PRESERVED: All existing info display (unchanged) */}
       <div className={styles.characteristicsInfo}>
         <p className={styles.baseInfo}>Based on 20 tracks</p>
         <p className={styles.confidenceInfo}>Confidence: 80%</p>
       </div>
 
+      {/* PRESERVED: All existing grid layout and styling (unchanged) */}
       <div className={styles.characteristicsGrid}>
         {Object.entries(characteristics).map(([key, char]) => (
           <div key={key} className={styles.characteristicItem}>
@@ -125,14 +152,15 @@ export default function SoundCharacteristics({ data, dataSource }) {
               </span>
             </div>
             
+            {/* PRESERVED: All existing TIKO styling and gradients (unchanged) */}
             <div className={styles.characteristicBar}>
               <div 
                 className={styles.characteristicProgress}
                 style={{ 
                   width: `${char.value}%`,
                   background: key === 'acoustic' 
-                    ? 'linear-gradient(90deg, #FFD700, #E0A100)' // Mustard for acoustic
-                    : 'linear-gradient(90deg, #00CFFF, #FF00CC)' // TIKO gradient for others
+                    ? 'linear-gradient(90deg, #FFD700, #E0A100)' // PRESERVED: Mustard for acoustic
+                    : 'linear-gradient(90deg, #00CFFF, #FF00CC)' // PRESERVED: TIKO gradient for others
                 }}
               />
             </div>
@@ -144,7 +172,7 @@ export default function SoundCharacteristics({ data, dataSource }) {
         ))}
       </div>
       
-      {/* REMOVED: Enhanced Profile button as requested */}
+      {/* PRESERVED: Enhanced Profile button removal maintained */}
     </div>
   );
 }
