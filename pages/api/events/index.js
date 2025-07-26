@@ -68,18 +68,7 @@ export default async function handler(req, res) {
         const eventsCollection = db.collection('events_unified');
         
         // FIXED: Corrected geospatial query path from 'venues.location.coordinates' to 'location.coordinates'
-        const query = {
-          'location': {
-            $near: {
-              $geometry: {
-                type: "Point",
-                coordinates: [parseFloat(lon), parseFloat(lat)]
-              },
-              $maxDistance: parseInt(radius) * 1000 // Convert km to meters
-            }
-          },
-          'date': { $gte: new Date() } // Only future events
-        };
+        
 
         // PHASE 2: Enhanced query with music event filtering
         const enhancedQuery = buildEnhancedMusicEventsQuery(lat, lon, radius);
@@ -216,7 +205,7 @@ if (parseInt(vibeMatch) > 0) {
 // PHASE 2: Enhanced music events query with filtering
 function buildEnhancedMusicEventsQuery(lat, lon, radius) {
   return {
-    'location.coordinates': {
+    'location': {
       $near: {
         $geometry: {
           type: "Point",
