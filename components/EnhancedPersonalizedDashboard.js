@@ -1,6 +1,6 @@
 // ENHANCED: components/EnhancedPersonalizedDashboard.js
-// SURGICAL ADDITION: Handle separate seasonal data source metadata
-// PRESERVES: All existing functionality, only enhances data source tracking
+// SURGICAL ADDITION: Integrate MinimalEventFilters in Events section
+// PRESERVES: All existing functionality, only adds filter integration
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -12,6 +12,8 @@ const Top5GenresSpiderChart = dynamic(() => import('./Top5GenresSpiderChart'), {
 const CompactSeasonalVibes = dynamic(() => import('./CompactSeasonalVibes'), { ssr: false });
 const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
 const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: false });
+// SURGICAL ADDITION: Import MinimalEventFilters
+const MinimalEventFilters = dynamic(() => import('./MinimalEventFilters'), { ssr: false });
 
 export default function EnhancedPersonalizedDashboard() {
   const { data: session, status } = useSession();
@@ -19,12 +21,19 @@ export default function EnhancedPersonalizedDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ENHANCED: Data source tracking with separate seasonal tracking
+  // ENHANCED: Data source tracking with separate seasonal tracking (PRESERVED)
   const [dataSources, setDataSources] = useState({
     spotify: { isReal: false, error: 'MOCK_DATA_ACTIVE', lastFetch: null },
     soundstat: { isReal: false, error: 'ZERO_QUERIES', lastFetch: null },
     events: { isReal: false, error: 'API_ERROR', lastFetch: null },
     seasonal: { isReal: false, error: 'STATIC_DATA', lastFetch: null }
+  });
+
+  // SURGICAL ADDITION: Event filter state management
+  const [userLocation, setUserLocation] = useState(null);
+  const [eventFilters, setEventFilters] = useState({
+    vibeMatch: 50, // Default 50% vibe match threshold
+    location: null
   });
 
   useEffect(() => {
@@ -33,21 +42,22 @@ export default function EnhancedPersonalizedDashboard() {
     }
   }, [status]);
 
+  // PRESERVED: All existing loadDashboardData logic (unchanged)
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Load enhanced taste profile (PRESERVED - using working endpoint)
       const profileResponse = await fetch('/api/spotify/detailed-taste');
       const profileData = await profileResponse.json();
-      
+
       // ENHANCED: Track separate data sources using new dataSources structure
       const newDataSources = { ...dataSources };
-      
+
       // Handle separate data source metadata if available
       if (profileData.dataSources) {
         // NEW: Separate data source tracking
-        
+
         // Genre Profile (Top 5 Genres)
         if (profileData.dataSources.genreProfile) {
           newDataSources.spotify.isReal = profileData.dataSources.genreProfile.isRealData;
@@ -58,7 +68,7 @@ export default function EnhancedPersonalizedDashboard() {
             newDataSources.spotify.error = profileData.dataSources.genreProfile.error || 'SPOTIFY_API_ERROR';
           }
         }
-        
+
         // Sound Characteristics
         if (profileData.dataSources.soundCharacteristics) {
           newDataSources.soundstat.isReal = profileData.dataSources.soundCharacteristics.isRealData;
@@ -72,7 +82,7 @@ export default function EnhancedPersonalizedDashboard() {
             newDataSources.soundstat.error = profileData.dataSources.soundCharacteristics.fallbackReason || 'SOUNDSTAT_ERROR';
           }
         }
-        
+
         // SURGICAL ADDITION: Seasonal Profile tracking
         if (profileData.dataSources.seasonalProfile) {
           newDataSources.seasonal.isReal = profileData.dataSources.seasonalProfile.isRealData;
@@ -86,14 +96,14 @@ export default function EnhancedPersonalizedDashboard() {
             newDataSources.seasonal.error = profileData.dataSources.seasonalProfile.error || 'STATIC_DATA';
           }
         }
-        
+
       } else {
         // PRESERVED: Fallback to legacy data source handling
         if (profileData.isRealData) {
           newDataSources.spotify.isReal = true;
           newDataSources.spotify.lastFetch = profileData.lastFetch || new Date().toISOString();
           delete newDataSources.spotify.error;
-          
+
           newDataSources.soundstat.isReal = true;
           newDataSources.soundstat.lastFetch = profileData.lastFetch || new Date().toISOString();
           delete newDataSources.soundstat.error;
@@ -102,14 +112,14 @@ export default function EnhancedPersonalizedDashboard() {
           newDataSources.soundstat.error = profileData.errorCode || 'SPOTIFY_API_ERROR';
         }
       }
-      
+
       setDataSources(newDataSources);
       setDashboardData(profileData);
-      
+
     } catch (err) {
       console.error('Dashboard loading error:', err);
       setError(err.message);
-      
+
       // PRESERVED: Set all sources to error state
       const errorSources = { ...dataSources };
       Object.keys(errorSources).forEach(key => {
@@ -117,13 +127,43 @@ export default function EnhancedPersonalizedDashboard() {
         errorSources[key].isReal = false;
       });
       setDataSources(errorSources);
-      
+
     } finally {
       setLoading(false);
     }
   };
 
-  // ENHANCED: Data indicator with enhanced tooltip information
+  // SURGICAL ADDITION: Event filter handlers
+  const handleLocationChange = (location) => {
+    setUserLocation(location);
+    setEventFilters(prev => ({ ...prev, location }));
+    
+    // Update events data source to show loading state
+    setDataSources(prev => ({
+      ...prev,
+      events: { ...prev.events, isReal: false, error: 'LOADING_WITH_FILTERS' }
+    }));
+  };
+
+  const handleVibeMatchChange = (vibeMatch) => {
+    setEventFilters(prev => ({ ...prev, vibeMatch }));
+    
+    // Update events data source to show loading state
+    setDataSources(prev => ({
+      ...prev,
+      events: { ...prev.events, isReal: false, error: 'LOADING_WITH_FILTERS' }
+    }));
+  };
+
+  // SURGICAL ADDITION: Handle events data source updates from EnhancedEventList
+  const handleEventsDataSourceUpdate = (newDataSource) => {
+    setDataSources(prev => ({
+      ...prev,
+      events: newDataSource
+    }));
+  };
+
+  // ENHANCED: Data indicator with enhanced tooltip information (PRESERVED)
   const getDataIndicator = (sourceKey) => {
     const source = dataSources[sourceKey];
     const isReal = source?.isReal;
@@ -134,7 +174,7 @@ export default function EnhancedPersonalizedDashboard() {
     let tooltipText = '';
     if (isReal) {
       tooltipText = `Real Data - Last fetched: ${new Date(lastFetch).toLocaleString()}`;
-      
+
       // Add additional metadata for specific sources
       if (sourceKey === 'soundstat' && source.tracksAnalyzed) {
         tooltipText += `\nTracks analyzed: ${source.tracksAnalyzed}`;
@@ -142,7 +182,7 @@ export default function EnhancedPersonalizedDashboard() {
           tooltipText += `\nConfidence: ${Math.round(source.confidence * 100)}%`;
         }
       }
-      
+
       if (sourceKey === 'seasonal' && source.tracksAnalyzed) {
         tooltipText += `\nTracks analyzed: ${source.tracksAnalyzed}`;
         if (source.seasonsWithData && source.seasonsWithData.length > 0) {
@@ -152,13 +192,23 @@ export default function EnhancedPersonalizedDashboard() {
           tooltipText += `\nConfidence: ${Math.round(source.confidence * 100)}%`;
         }
       }
-      
+
+      // SURGICAL ADDITION: Add filter information for events
+      if (sourceKey === 'events') {
+        if (eventFilters.vibeMatch !== 50) {
+          tooltipText += `\nVibe match filter: ${eventFilters.vibeMatch}%`;
+        }
+        if (userLocation) {
+          tooltipText += `\nLocation: ${userLocation.city || 'Custom location'}`;
+        }
+      }
+
     } else {
       tooltipText = `Fallback Data - Error: ${error}`;
     }
 
     return (
-      <div 
+      <div
         className={isReal ? styles.realDataIndicator : styles.fallbackDataIndicator}
         title={tooltipText}
       >
@@ -218,7 +268,7 @@ export default function EnhancedPersonalizedDashboard() {
 
       {/* PRESERVED: Dashboard grid layout */}
       <div className={styles.dashboardGrid}>
-        
+
         {/* PRESERVED: ROW 1 - TOP 5 GENRES + SEASONAL VIBES */}
         <div className={styles.row1}>
           <div className={styles.leftHalf}>
@@ -227,20 +277,20 @@ export default function EnhancedPersonalizedDashboard() {
                 <h2 className={styles.cardTitle}>Your Top 5 Genres</h2>
                 {getDataIndicator('spotify')}
               </div>
-              <Top5GenresSpiderChart 
-                data={dashboardData?.genreProfile} 
+              <Top5GenresSpiderChart
+                data={dashboardData?.genreProfile}
                 dataSource={dataSources.spotify}
               />
             </div>
           </div>
-          
+
           <div className={styles.rightHalf}>
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
                 {getDataIndicator('seasonal')}
               </div>
-              <CompactSeasonalVibes 
+              <CompactSeasonalVibes
                 data={dashboardData?.seasonalProfile}
                 dataSource={dataSources.seasonal}
               />
@@ -256,7 +306,7 @@ export default function EnhancedPersonalizedDashboard() {
                 <h2 className={styles.cardTitle}>Your Sound Characteristics</h2>
                 {getDataIndicator('soundstat')}
               </div>
-              <SoundCharacteristics 
+              <SoundCharacteristics
                 data={dashboardData?.soundCharacteristics}
                 dataSource={dataSources.soundstat}
               />
@@ -264,7 +314,7 @@ export default function EnhancedPersonalizedDashboard() {
           </div>
         </div>
 
-        {/* PRESERVED: ROW 3 - EVENTS */}
+        {/* ENHANCED: ROW 3 - EVENTS WITH MINIMAL FILTERS */}
         <div className={styles.row3}>
           <div className={styles.fullWidth}>
             <div className={styles.card}>
@@ -272,14 +322,27 @@ export default function EnhancedPersonalizedDashboard() {
                 <h2 className={styles.cardTitle}>Events Matching Your Vibe</h2>
                 {getDataIndicator('events')}
               </div>
-              <EnhancedEventList 
+              
+              {/* SURGICAL ADDITION: Minimal Event Filters */}
+              <MinimalEventFilters 
+                onLocationChange={handleLocationChange}
+                onVibeMatchChange={handleVibeMatchChange}
+                initialLocation={userLocation}
+                initialVibeMatch={eventFilters.vibeMatch}
+              />
+              
+              {/* ENHANCED: EnhancedEventList with filter props */}
+              <EnhancedEventList
                 userProfile={dashboardData}
                 dataSource={dataSources.events}
+                location={userLocation}
+                vibeMatch={eventFilters.vibeMatch}
+                onDataSourceUpdate={handleEventsDataSourceUpdate}
               />
             </div>
           </div>
         </div>
-        
+
       </div>
     </div>
   );

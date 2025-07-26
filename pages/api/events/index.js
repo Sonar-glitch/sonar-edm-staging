@@ -14,7 +14,8 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { lat, lon, city = 'Toronto', radius = 50 } = req.query;
+    const { lat, lon, city = 'Toronto', radius = 50, vibeMatch = 0 } = req.query;
+
     const userId = session.user.id || session.user.email;
 
     // FIXED: Proper authentication check with correct imports
@@ -22,13 +23,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Latitude and longitude are required' });
     }
 
-    console.log(`🎯 Processing events request for user ${userId} in ${city} (${lat}, ${lon})`);
+    console.log(`🎯 Processing events request for user ${userId} in ${city} (${lat}, ${lon}) with ${vibeMatch}% vibe match`);
+
 
     // ENHANCED: Accept city/country parameters but keep Toronto as fallback for compatibility
     const targetCity = city || 'Toronto';
     
     // ENHANCED: Cache key includes user ID for personalized caching
-    const cacheKey = `events_${city}_${lat}_${lon}_${radius}_${userId}`;
+    const cacheKey = `events_${city}_${lat}_${lon}_${radius}_${vibeMatch}_${userId}`;
+
     
     // Check cache first
     const { db } = await connectToDatabase();
@@ -41,13 +44,15 @@ export default async function handler(req, res) {
       const cachedEvents = cachedResult.events || [];
       console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached personalized events`);
       return res.status(200).json({
-        events: cachedEvents,
-        source: "cache",
-        isRealData: true,
-        city: targetCity,
-        totalEvents: cachedEvents.length,
-        cacheHit: true
-      });
+  events: cachedEvents,
+  source: "cache",
+  isRealData: true,
+  city: targetCity,
+  totalEvents: cachedEvents.length,
+  vibeMatchThreshold: parseInt(vibeMatch) || 0,
+  cacheHit: true
+});
+
     }
 
     let events = [];
@@ -94,7 +99,18 @@ export default async function handler(req, res) {
           
           // PHASE 2: Merge Phase 1 and Phase 2 results (Phase 2 takes precedence)
           events = mergePhase1AndPhase2Results(phase1Events, events);
-          
+          if (parseInt(vibeMatch) > 0) {
+  const vibeMatchThreshold = parseInt(vibeMatch);
+  console.log(`🎯 Applying vibe match filter: ${vibeMatchThreshold}% threshold`);
+  
+  const originalCount = events.length;
+  events = events.filter(event => {
+    const score = event.personalizedScore || 50;
+    return score >= vibeMatchThreshold;
+  });
+  
+  console.log(`🎯 Vibe match filtering: ${originalCount} → ${events.length} events (${originalCount - events.length} filtered out)`);
+}
           break;
         } else if (attempt === 3) {
           console.log('⚠️ No events found in MongoDB, falling back to Ticketmaster...');
@@ -102,6 +118,20 @@ export default async function handler(req, res) {
           const fallbackEvents = await fetchTicketmasterEvents(lat, lon, radius);
           if (fallbackEvents && fallbackEvents.length > 0) {
             events = await processEventsWithPhase1Scoring(fallbackEvents, targetCity, session);
+            // SURGICAL ADDITION: Apply vibe match filtering to fallback events
+if (parseInt(vibeMatch) > 0) {
+  const vibeMatchThreshold = parseInt(vibeMatch);
+  console.log(`🎯 Applying vibe match filter to fallback events: ${vibeMatchThreshold}% threshold`);
+  
+  const originalCount = events.length;
+  events = events.filter(event => {
+    const score = event.personalizedScore || 50;
+    return score >= vibeMatchThreshold;
+  });
+  
+  console.log(`🎯 Fallback vibe match filtering: ${originalCount} → ${events.length} events`);
+}
+
             isRealData = false;
             dataSource = "ticketmaster_fallback";
           }
@@ -114,6 +144,20 @@ export default async function handler(req, res) {
             const fallbackEvents = await fetchTicketmasterEvents(lat, lon, radius);
             if (fallbackEvents && fallbackEvents.length > 0) {
               events = await processEventsWithPhase1Scoring(fallbackEvents, targetCity, session);
+              // SURGICAL ADDITION: Apply vibe match filtering to fallback events
+if (parseInt(vibeMatch) > 0) {
+  const vibeMatchThreshold = parseInt(vibeMatch);
+  console.log(`🎯 Applying vibe match filter to fallback events: ${vibeMatchThreshold}% threshold`);
+  
+  const originalCount = events.length;
+  events = events.filter(event => {
+    const score = event.personalizedScore || 50;
+    return score >= vibeMatchThreshold;
+  });
+  
+  console.log(`🎯 Fallback vibe match filtering: ${originalCount} → ${events.length} events`);
+}
+
               isRealData = false;
               dataSource = "ticketmaster_fallback";
             }
@@ -132,12 +176,14 @@ export default async function handler(req, res) {
     if (events.length > 0) {
       try {
         await db.collection('events_cache').insertOne({
-          key: cacheKey,
-          events: events,
-          createdAt: new Date(),
-          dataSource: dataSource,
-          isRealData: isRealData
-        });
+  key: cacheKey,
+  events: events,
+  createdAt: new Date(),
+  dataSource: dataSource,
+  isRealData: isRealData,
+  vibeMatchThreshold: parseInt(vibeMatch) || 0
+});
+
         console.log(`💾 Cached ${events.length} events for future requests`);
       } catch (cacheError) {
         console.error('⚠️ Failed to cache events:', cacheError.message);
@@ -146,14 +192,16 @@ export default async function handler(req, res) {
 
     console.log(`🎉 Returning ${events.length} events to client`);
     
-    res.status(200).json({
-      events: events,
-      source: dataSource,
-      isRealData: isRealData,
-      city: targetCity,
-      totalEvents: events.length,
-      cacheHit: false
-    });
+   res.status(200).json({
+  events: events,
+  source: dataSource,
+  isRealData: isRealData,
+  city: targetCity,
+  totalEvents: events.length,
+  vibeMatchThreshold: parseInt(vibeMatch) || 0,
+  cacheHit: false
+});
+
 
   } catch (error) {
     console.error('🚨 Critical error in events API:', error);
