@@ -1,6 +1,6 @@
-// SURGICAL FIX: Data Structure Mismatch in EnhancedPersonalizedDashboard.js
-// ONLY CHANGES: Lines 44-56 - Data processing logic to handle actual API response format
-// PRESERVES: All existing functionality, components, styling, and behavior
+// ENHANCED: components/EnhancedPersonalizedDashboard.js
+// SURGICAL ADDITION: Handle separate seasonal data source metadata
+// PRESERVES: All existing functionality, only enhances data source tracking
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -19,7 +19,7 @@ export default function EnhancedPersonalizedDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Data source tracking for proper labeling (PRESERVED)
+  // ENHANCED: Data source tracking with separate seasonal tracking
   const [dataSources, setDataSources] = useState({
     spotify: { isReal: false, error: 'MOCK_DATA_ACTIVE', lastFetch: null },
     soundstat: { isReal: false, error: 'ZERO_QUERIES', lastFetch: null },
@@ -41,35 +41,76 @@ export default function EnhancedPersonalizedDashboard() {
       const profileResponse = await fetch('/api/spotify/detailed-taste');
       const profileData = await profileResponse.json();
       
-      // Track data sources (SURGICAL FIX: Handle actual API response format)
+      // ENHANCED: Track separate data sources using new dataSources structure
       const newDataSources = { ...dataSources };
       
-      // SURGICAL FIX: API returns isRealData directly, not wrapped in success/data
-      if (profileData.isRealData) {
-        // Real Spotify data received
-        newDataSources.spotify.isReal = true;
-        newDataSources.spotify.lastFetch = profileData.lastFetch || new Date().toISOString();
-        delete newDataSources.spotify.error;
+      // Handle separate data source metadata if available
+      if (profileData.dataSources) {
+        // NEW: Separate data source tracking
         
-        // Also update soundstat since it comes from the same API
-        newDataSources.soundstat.isReal = true;
-        newDataSources.soundstat.lastFetch = profileData.lastFetch || new Date().toISOString();
-        delete newDataSources.soundstat.error;
+        // Genre Profile (Top 5 Genres)
+        if (profileData.dataSources.genreProfile) {
+          newDataSources.spotify.isReal = profileData.dataSources.genreProfile.isRealData;
+          newDataSources.spotify.lastFetch = profileData.dataSources.genreProfile.lastFetch;
+          if (profileData.dataSources.genreProfile.isRealData) {
+            delete newDataSources.spotify.error;
+          } else {
+            newDataSources.spotify.error = profileData.dataSources.genreProfile.error || 'SPOTIFY_API_ERROR';
+          }
+        }
+        
+        // Sound Characteristics
+        if (profileData.dataSources.soundCharacteristics) {
+          newDataSources.soundstat.isReal = profileData.dataSources.soundCharacteristics.isRealData;
+          newDataSources.soundstat.lastFetch = profileData.dataSources.soundCharacteristics.lastFetch;
+          // ENHANCED: Pass through additional metadata for Sound Characteristics display
+          newDataSources.soundstat.tracksAnalyzed = profileData.dataSources.soundCharacteristics.tracksAnalyzed;
+          newDataSources.soundstat.confidence = profileData.dataSources.soundCharacteristics.confidence;
+          if (profileData.dataSources.soundCharacteristics.isRealData) {
+            delete newDataSources.soundstat.error;
+          } else {
+            newDataSources.soundstat.error = profileData.dataSources.soundCharacteristics.fallbackReason || 'SOUNDSTAT_ERROR';
+          }
+        }
+        
+        // SURGICAL ADDITION: Seasonal Profile tracking
+        if (profileData.dataSources.seasonalProfile) {
+          newDataSources.seasonal.isReal = profileData.dataSources.seasonalProfile.isRealData;
+          newDataSources.seasonal.lastFetch = profileData.dataSources.seasonalProfile.lastFetch;
+          newDataSources.seasonal.tracksAnalyzed = profileData.dataSources.seasonalProfile.tracksAnalyzed;
+          newDataSources.seasonal.seasonsWithData = profileData.dataSources.seasonalProfile.seasonsWithData;
+          newDataSources.seasonal.confidence = profileData.dataSources.seasonalProfile.confidence;
+          if (profileData.dataSources.seasonalProfile.isRealData) {
+            delete newDataSources.seasonal.error;
+          } else {
+            newDataSources.seasonal.error = profileData.dataSources.seasonalProfile.error || 'STATIC_DATA';
+          }
+        }
+        
       } else {
-        // Fallback data
-        newDataSources.spotify.error = profileData.errorCode || 'SPOTIFY_API_ERROR';
-        newDataSources.soundstat.error = profileData.errorCode || 'SPOTIFY_API_ERROR';
+        // PRESERVED: Fallback to legacy data source handling
+        if (profileData.isRealData) {
+          newDataSources.spotify.isReal = true;
+          newDataSources.spotify.lastFetch = profileData.lastFetch || new Date().toISOString();
+          delete newDataSources.spotify.error;
+          
+          newDataSources.soundstat.isReal = true;
+          newDataSources.soundstat.lastFetch = profileData.lastFetch || new Date().toISOString();
+          delete newDataSources.soundstat.error;
+        } else {
+          newDataSources.spotify.error = profileData.errorCode || 'SPOTIFY_API_ERROR';
+          newDataSources.soundstat.error = profileData.errorCode || 'SPOTIFY_API_ERROR';
+        }
       }
       
       setDataSources(newDataSources);
-      // SURGICAL FIX: Use profileData directly, not profileData.data
       setDashboardData(profileData);
       
     } catch (err) {
       console.error('Dashboard loading error:', err);
       setError(err.message);
       
-      // Set all sources to error state (PRESERVED)
+      // PRESERVED: Set all sources to error state
       const errorSources = { ...dataSources };
       Object.keys(errorSources).forEach(key => {
         errorSources[key].error = 'LOAD_ERROR';
@@ -82,27 +123,51 @@ export default function EnhancedPersonalizedDashboard() {
     }
   };
 
-  // Enhanced data indicator with hover tooltips (PRESERVED)
+  // ENHANCED: Data indicator with enhanced tooltip information
   const getDataIndicator = (sourceKey) => {
     const source = dataSources[sourceKey];
     const isReal = source?.isReal;
     const error = source?.error;
     const lastFetch = source?.lastFetch;
 
+    // ENHANCED: Build detailed tooltip text
+    let tooltipText = '';
+    if (isReal) {
+      tooltipText = `Real Data - Last fetched: ${new Date(lastFetch).toLocaleString()}`;
+      
+      // Add additional metadata for specific sources
+      if (sourceKey === 'soundstat' && source.tracksAnalyzed) {
+        tooltipText += `\nTracks analyzed: ${source.tracksAnalyzed}`;
+        if (source.confidence) {
+          tooltipText += `\nConfidence: ${Math.round(source.confidence * 100)}%`;
+        }
+      }
+      
+      if (sourceKey === 'seasonal' && source.tracksAnalyzed) {
+        tooltipText += `\nTracks analyzed: ${source.tracksAnalyzed}`;
+        if (source.seasonsWithData && source.seasonsWithData.length > 0) {
+          tooltipText += `\nSeasons with data: ${source.seasonsWithData.join(', ')}`;
+        }
+        if (source.confidence) {
+          tooltipText += `\nConfidence: ${Math.round(source.confidence * 100)}%`;
+        }
+      }
+      
+    } else {
+      tooltipText = `Fallback Data - Error: ${error}`;
+    }
+
     return (
       <div 
         className={isReal ? styles.realDataIndicator : styles.fallbackDataIndicator}
-        title={isReal 
-          ? `Real Data - Last fetched: ${new Date(lastFetch).toLocaleString()}`
-          : `Fallback Data - Error: ${error}`
-        }
+        title={tooltipText}
       >
         {isReal ? 'Real Data' : 'Fallback Data'}
       </div>
     );
   };
 
-  // PRESERVED: All existing loading, authentication, and error states
+  // PRESERVED: All existing loading, authentication, and error states (unchanged)
   if (status === 'loading' || loading) {
     return (
       <div className={styles.container}>
@@ -139,7 +204,7 @@ export default function EnhancedPersonalizedDashboard() {
     );
   }
 
-  // PRESERVED: All existing layout and component structure
+  // PRESERVED: All existing layout and component structure (unchanged)
   return (
     <div className={styles.container}>
       {/* PRESERVED: Profile header */}
@@ -214,6 +279,7 @@ export default function EnhancedPersonalizedDashboard() {
             </div>
           </div>
         </div>
+        
       </div>
     </div>
   );

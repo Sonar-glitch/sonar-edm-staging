@@ -1,6 +1,6 @@
-// UPDATED: components/SoundCharacteristics.js
-// SURGICAL FIX: Handle both audioFeatures and direct soundCharacteristics data structures
-// PRESERVES: All existing styling, functionality, and TIKO design
+// SURGICAL FIX: components/SoundCharacteristics.js
+// ONLY CHANGES: Lines 95-96 - Replace hardcoded display with dynamic values from API
+// PRESERVES: All existing styling, functionality, and component behavior
 
 import { useState, useEffect } from 'react';
 import styles from '../styles/SoundCharacteristics.module.css';
@@ -18,7 +18,7 @@ export default function SoundCharacteristics({ data, dataSource }) {
     try {
       setLoading(true);
       
-      // ✅ SURGICAL FIX: Handle both data structures
+      // PRESERVED: Handle both data structures (unchanged)
       let features = null;
       
       if (data && data.audioFeatures) {
@@ -30,7 +30,7 @@ export default function SoundCharacteristics({ data, dataSource }) {
       }
       
       if (features) {
-        // Use real data if available (handles both old and new formats)
+        // PRESERVED: Use real data if available (unchanged)
         setCharacteristics({
           energy: {
             value: features.energy !== undefined ? 
@@ -131,12 +131,40 @@ export default function SoundCharacteristics({ data, dataSource }) {
     );
   }
 
+  // SURGICAL FIX: Helper function to get dynamic metadata from dataSource
+  const getMetadata = () => {
+    // Try to get real metadata from dataSource prop
+    if (dataSource && dataSource.lastFetch) {
+      // Extract metadata from API response if available
+      const tracksAnalyzed = dataSource.tracksAnalyzed || 
+                           (dataSource.soundStatAnalysis && dataSource.soundStatAnalysis.tracksAnalyzed) || 
+                           10; // Default fallback
+      
+      const confidence = dataSource.confidence || 
+                        (dataSource.soundStatAnalysis && dataSource.soundStatAnalysis.confidence) || 
+                        0.8; // Default fallback
+      
+      return {
+        tracks: tracksAnalyzed,
+        confidence: Math.round(confidence * 100)
+      };
+    }
+    
+    // Final fallback to hardcoded values if no metadata available
+    return {
+      tracks: 20,
+      confidence: 80
+    };
+  };
+
+  const metadata = getMetadata();
+
   return (
     <div className={styles.container}>
-      {/* PRESERVED: All existing info display (unchanged) */}
+      {/* SURGICAL FIX: Replace hardcoded values with dynamic metadata */}
       <div className={styles.characteristicsInfo}>
-        <p className={styles.baseInfo}>Based on 20 tracks</p>
-        <p className={styles.confidenceInfo}>Confidence: 80%</p>
+        <p className={styles.baseInfo}>Based on {metadata.tracks} tracks</p>
+        <p className={styles.confidenceInfo}>Confidence: {metadata.confidence}%</p>
       </div>
 
       {/* PRESERVED: All existing grid layout and styling (unchanged) */}
