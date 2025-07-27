@@ -25,16 +25,46 @@ export default function EnhancedEventList({
   }, [userProfile, location, vibeMatch]);
 
   const loadEvents = async () => {
+    // INSERT after "const loadEvents = async () => {"
+console.log('🔍 [EnhancedEventList] loadEvents() called:', {
+  timestamp: new Date().toISOString(),
+  propsReceived: {
+    location: location,
+    locationType: typeof location,
+    locationKeys: location ? Object.keys(location) : null,
+    vibeMatch: vibeMatch,
+    userProfile: !!userProfile
+  }
+});
+
     try {
       setLoading(true);
       setDebugInfo({ query: 'Loading events...', timestamp: new Date().toISOString() });
 
       // SURGICAL ADDITION: Use provided location or get user location
       let locationData = location;
-      
+      // INSERT after "let locationData = location;"
+console.log('🔍 [EnhancedEventList] Location processing analysis:', {
+  receivedLocationProp: location,
+  assignedLocationData: locationData,
+  willUseProvidedLocation: !!locationData
+});
+
       if (!locationData) {
         try {
+          // INSERT before the fetch() call
+console.log('🚀 [EnhancedEventList] Making API request:', {
+  method: 'GET',
+  url: apiUrl,
+  expectedBackendParams: {
+    lat: new URLSearchParams(apiUrl.split('?')[1]).get('lat'),
+    lon: new URLSearchParams(apiUrl.split('?')[1]).get('lon')
+  }
+});
+
           const locationResponse = await fetch('/api/user/get-location');
+         
+
           if (locationResponse.ok) {
             locationData = await locationResponse.json();
             setUserLocation(locationData);
@@ -85,6 +115,16 @@ export default function EnhancedEventList({
       }
 
       // SURGICAL CHANGE: GET request instead of POST
+      // INSERT before the fetch() call
+console.log('🚀 [EnhancedEventList] Making API request:', {
+  method: 'GET',
+  url: apiUrl,
+  expectedBackendParams: {
+    lat: new URLSearchParams(apiUrl.split('?')[1]).get('lat'),
+    lon: new URLSearchParams(apiUrl.split('?')[1]).get('lon')
+  }
+});
+
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -93,6 +133,13 @@ export default function EnhancedEventList({
       });
 
       const data = await response.json();
+// INSERT after "const data = await response.json();"
+console.log('📊 [EnhancedEventList] API response data:', {
+  success: data.success,
+  eventsCount: data.events ? data.events.length : 0,
+  source: data.source,
+  error: data.error
+});
 
       // PRESERVED: All existing response handling logic (unchanged)
       if (data.success && data.events && data.events.length > 0) {
