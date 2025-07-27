@@ -1,6 +1,7 @@
-// MINIMAL EVENT FILTERS - VIBE MATCH + LOCATION SEARCH
-// Uses TIKO glassmorphic theme and existing styling patterns
-// Only includes filters we can confidently support with Phase 1 metadata
+// MINIMAL EVENT FILTERS - SURGICAL LAYOUT FIX
+// Fixes location input layout to make room for autocomplete suggestions
+// Preserves 100% of existing thematic styling and functionality
+// Only modifies layout structure for better UX
 
 import { useState, useEffect } from 'react';
 import styles from '../styles/MinimalEventFilters.module.css';
@@ -32,7 +33,7 @@ export default function MinimalEventFilters({
     if (value.length > 2) {
       setIsLoadingLocation(true);
       try {
-        // Use Google Places API for location suggestions
+        // Use our new hybrid location search API
         const response = await fetch(`/api/location/search?query=${encodeURIComponent(value)}`);
         if (response.ok) {
           const data = await response.json();
@@ -53,7 +54,9 @@ export default function MinimalEventFilters({
 
   // Handle location selection from suggestions
   const handleLocationSelect = (selectedLocation) => {
-    setLocation(selectedLocation.description);
+    const locationString = selectedLocation.formattedAddress || 
+                          `${selectedLocation.name}, ${selectedLocation.country}`;
+    setLocation(locationString);
     setShowSuggestions(false);
     onLocationChange(selectedLocation);
   };
@@ -76,10 +79,15 @@ export default function MinimalEventFilters({
     }
   };
 
+  // Close suggestions when clicking outside
+  const handleClickOutside = () => {
+    setShowSuggestions(false);
+  };
+
   return (
     <div className={styles.filtersContainer}>
       
-      {/* VIBE MATCH SLIDER */}
+      {/* VIBE MATCH SLIDER - UNCHANGED */}
       <div className={styles.filterGroup}>
         <div className={styles.filterHeader}>
           <label className={styles.filterLabel}>Vibe Match</label>
@@ -107,38 +115,56 @@ export default function MinimalEventFilters({
         </div>
       </div>
 
-      {/* LOCATION SEARCH */}
+      {/* LOCATION SEARCH - SURGICAL LAYOUT FIX */}
       <div className={styles.filterGroup}>
         <div className={styles.filterHeader}>
           <label className={styles.filterLabel}>Location</label>
-          <button 
-            onClick={handleAutoLocation}
-            disabled={isLoadingLocation}
-            className={styles.autoLocationButton}
-          >
-            {isLoadingLocation ? '📍' : '🎯'} Auto
-          </button>
         </div>
         
+        {/* MODIFIED: Inline layout for input + auto button */}
         <div className={styles.locationInputContainer}>
-          <input
-            type="text"
-            value={location}
-            onChange={handleLocationInput}
-            placeholder="Search city or venue..."
-            className={styles.locationInput}
-          />
+          <div className={styles.locationInputRow}>
+            <input
+              type="text"
+              value={location}
+              onChange={handleLocationInput}
+              placeholder="Search city or venue..."
+              className={styles.locationInput}
+              onBlur={handleClickOutside}
+            />
+            <button 
+              onClick={handleAutoLocation}
+              disabled={isLoadingLocation}
+              className={styles.autoLocationButton}
+            >
+              {isLoadingLocation ? '📍' : '🎯'} Auto
+            </button>
+          </div>
           
+          {/* ENHANCED: Better positioned suggestions dropdown */}
           {showSuggestions && locationSuggestions.length > 0 && (
             <div className={styles.locationSuggestions}>
               {locationSuggestions.slice(0, 5).map((suggestion, index) => (
                 <div
                   key={index}
+                  onMouseDown={(e) => e.preventDefault()} // Prevent blur before click
                   onClick={() => handleLocationSelect(suggestion)}
                   className={styles.locationSuggestion}
                 >
                   <span className={styles.suggestionIcon}>📍</span>
-                  <span className={styles.suggestionText}>{suggestion.description}</span>
+                  <div className={styles.suggestionContent}>
+                    <span className={styles.suggestionText}>
+                      {suggestion.name || suggestion.formattedAddress}
+                    </span>
+                    {suggestion.country && (
+                      <span className={styles.suggestionSubtext}>
+                        {suggestion.country}
+                      </span>
+                    )}
+                  </div>
+                  {suggestion.source === 'google_maps' && (
+                    <span className={styles.suggestionSource}>🌍</span>
+                  )}
                 </div>
               ))}
             </div>
