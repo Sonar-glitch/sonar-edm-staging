@@ -291,12 +291,6 @@ async function buildUserSoundDNA(userTracks) {
     return getDefaultSoundDNA();
   }
 }
-        trackName: track.name,
-        addedAt: track.added_at || track.played_at,
-        popularity: track.popularity || 50
-      });
-    });
-  });
   
   // Calculate affinity scores
   const totalTracks = userTracks.length;
