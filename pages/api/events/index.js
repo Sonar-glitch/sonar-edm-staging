@@ -1,6 +1,8 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { connectToDatabase } from '@/lib/mongodb';
+import TIKOSoundStatIntegration from '@/lib/tikoSoundStatIntegration';
+import { authOptions } from '../auth/[...nextauth]';
 
 // PHASE 2: SoundStat API configuration
 const SOUNDSTAT_API_KEY = '4Bwbb8OrfpHukJBZSOaIolUMZat0rj3I-baIzASBVw0';
@@ -263,10 +265,37 @@ async function buildUserSoundDNA(userTracks) {
     return getDefaultSoundDNA();
   }
 
+  console.log(`🧬 Building user sound DNA from ${userTracks.length} tracks using TIKOSoundStatIntegration`);
+
+  try {
+    const soundStatIntegration = new TIKOSoundStatIntegration();
+    const result = await soundStatIntegration.analyzeUserTracks(userTracks);
+    
+    // Convert TIKOSoundStatIntegration format to Events API format
+    return {
+      energy: result.soundCharacteristics.energy / 100,
+      danceability: result.soundCharacteristics.danceability / 100,
+      valence: result.soundCharacteristics.positivity / 100,
+      tempo: 120, // Default tempo
+      acousticness: result.soundCharacteristics.acoustic / 100,
+      instrumentalness: 0.5, // Default
+      loudness: 0.5, // Default
+      trackCount: result.tracksAnalyzed,
+      confidenceScore: result.confidence, // This will be 0.6-1.0 instead of 0
+      source: result.source,
+      analyzedAt: result.lastFetch
+    };
+    
+  } catch (error) {
+    console.error('❌ Error with TIKOSoundStatIntegration:', error);
+    return getDefaultSoundDNA();
+  }
+}
+
   console.log(`🧬 Building user sound DNA from ${userTracks.length} tracks`);
 
   // PHASE 2: Prioritize most recent tracks (mobile optimization: limit to 25)
-  const maxTracks = 25;
+  const maxTracks = 10;
   const sortedTracks = [...userTracks].sort((a, b) => {
     const dateA = new Date(a.added_at || a.played_at || 0);
     const dateB = new Date(b.added_at || b.played_at || 0);
