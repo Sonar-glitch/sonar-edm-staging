@@ -1,9 +1,9 @@
-// MINIMAL EVENT FILTERS - OPTIMAL LAYOUT FIX
-// Auto button at rightmost position + Search bar takes remaining space
-// Exactly matching the screenshot layout
-// Preserves 100% of existing thematic styling
+// MINIMAL EVENT FILTERS - VIBE MATCH + LOCATION SEARCH
+// Uses TIKO glassmorphic theme and existing styling patterns
+// Only includes filters we can confidently support with Phase 1 metadata
 
 import { useState, useEffect } from 'react';
+import { getUserLocationFromBrowser, getUserLocationFromIP } from '@/lib/locationUtils';
 import styles from '../styles/MinimalEventFilters.module.css';
 
 export default function MinimalEventFilters({ 
@@ -33,7 +33,7 @@ export default function MinimalEventFilters({
     if (value.length > 2) {
       setIsLoadingLocation(true);
       try {
-        // Use our new hybrid location search API
+        // Use Google Places API for location suggestions
         const response = await fetch(`/api/location/search?query=${encodeURIComponent(value)}`);
         if (response.ok) {
           const data = await response.json();
@@ -54,9 +54,7 @@ export default function MinimalEventFilters({
 
   // Handle location selection from suggestions
   const handleLocationSelect = (selectedLocation) => {
-    const locationString = selectedLocation.formattedAddress || 
-                          `${selectedLocation.name}, ${selectedLocation.country}`;
-    setLocation(locationString);
+    setLocation(selectedLocation.description);
     setShowSuggestions(false);
     onLocationChange(selectedLocation);
   };
@@ -65,6 +63,29 @@ export default function MinimalEventFilters({
   const handleAutoLocation = async () => {
     setIsLoadingLocation(true);
     try {
+      // First try browser geolocation (GPS)
+      try {
+        const locationData = await getUserLocationFromBrowser();
+        const locationString = `${locationData.city}, ${locationData.region}, ${locationData.country}`;
+        setLocation(locationString);
+        onLocationChange(locationData);
+        return; // Success, exit early
+      } catch (browserError) {
+        console.log('Browser geolocation failed, trying client-side IP detection:', browserError.message);
+      }
+      
+      // Fallback to client-side IP detection (user's actual IP)
+      try {
+        const locationData = await getUserLocationFromIP();
+        const locationString = `${locationData.city}, ${locationData.region}, ${locationData.country}`;
+        setLocation(locationString);
+        onLocationChange(locationData);
+        return; // Success, exit early
+      } catch (ipError) {
+        console.log('Client-side IP detection failed, trying server-side:', ipError.message);
+      }
+      
+      // Last resort: server-side IP detection
       const response = await fetch('/api/user/get-location');
       if (response.ok) {
         const locationData = await response.json();
@@ -79,15 +100,10 @@ export default function MinimalEventFilters({
     }
   };
 
-  // Close suggestions when clicking outside
-  const handleClickOutside = () => {
-    setShowSuggestions(false);
-  };
-
   return (
     <div className={styles.filtersContainer}>
       
-      {/* VIBE MATCH SLIDER - UNCHANGED */}
+      {/* VIBE MATCH SLIDER */}
       <div className={styles.filterGroup}>
         <div className={styles.filterHeader}>
           <label className={styles.filterLabel}>Vibe Match</label>
@@ -115,56 +131,38 @@ export default function MinimalEventFilters({
         </div>
       </div>
 
-      {/* LOCATION SEARCH - OPTIMAL LAYOUT (Search bar + Auto button rightmost) */}
+      {/* LOCATION SEARCH */}
       <div className={styles.filterGroup}>
         <div className={styles.filterHeader}>
           <label className={styles.filterLabel}>Location</label>
+          <button 
+            onClick={handleAutoLocation}
+            disabled={isLoadingLocation}
+            className={styles.autoLocationButton}
+          >
+            {isLoadingLocation ? '📍' : '🎯'} Auto
+          </button>
         </div>
         
         <div className={styles.locationInputContainer}>
-          {/* Search bar (remaining space) + Auto button (rightmost) */}
-          <div className={styles.locationInputRow}>
-            <input
-              type="text"
-              value={location}
-              onChange={handleLocationInput}
-              placeholder="Search city or venue..."
-              className={styles.locationInput}
-              onBlur={handleClickOutside}
-            />
-            <button 
-              onClick={handleAutoLocation}
-              disabled={isLoadingLocation}
-              className={styles.autoLocationButton}
-            >
-              {isLoadingLocation ? '📍' : '🎯'} Auto
-            </button>
-          </div>
+          <input
+            type="text"
+            value={location}
+            onChange={handleLocationInput}
+            placeholder="Search city or venue..."
+            className={styles.locationInput}
+          />
           
-          {/* Suggestions dropdown - positioned to be visible above Events */}
           {showSuggestions && locationSuggestions.length > 0 && (
             <div className={styles.locationSuggestions}>
               {locationSuggestions.slice(0, 5).map((suggestion, index) => (
                 <div
                   key={index}
-                  onMouseDown={(e) => e.preventDefault()} // Prevent blur before click
                   onClick={() => handleLocationSelect(suggestion)}
                   className={styles.locationSuggestion}
                 >
                   <span className={styles.suggestionIcon}>📍</span>
-                  <div className={styles.suggestionContent}>
-                    <span className={styles.suggestionText}>
-                      {suggestion.name || suggestion.formattedAddress}
-                    </span>
-                    {suggestion.country && (
-                      <span className={styles.suggestionSubtext}>
-                        {suggestion.country}
-                      </span>
-                    )}
-                  </div>
-                  {suggestion.source === 'google_maps' && (
-                    <span className={styles.suggestionSource}>🌍</span>
-                  )}
+                  <span className={styles.suggestionText}>{suggestion.description}</span>
                 </div>
               ))}
             </div>

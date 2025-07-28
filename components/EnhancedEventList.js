@@ -307,7 +307,7 @@ console.log('📊 [EnhancedEventList] API response data:', {
 
               {event.artists && event.artists.length > 0 && (
                 <div className={styles.eventArtists}>
-                  <strong>Artists:</strong> {event.artists.join(', ')}
+                  <strong>Artists:</strong> {event.artists.map(artist => typeof artist === 'object' ? artist.name : artist).join(', ')}
                 </div>
               )}
 
