@@ -3,6 +3,7 @@
 // Only includes filters we can confidently support with Phase 1 metadata
 
 import { useState, useEffect } from 'react';
+import { getUserLocationFromBrowser, getUserLocationFromIP } from '@/lib/locationUtils';
 import styles from '../styles/MinimalEventFilters.module.css';
 
 export default function MinimalEventFilters({ 
@@ -62,15 +63,51 @@ export default function MinimalEventFilters({
   const handleAutoLocation = async () => {
     setIsLoadingLocation(true);
     try {
-      const response = await fetch('/api/user/get-location');
-      if (response.ok) {
-        const locationData = await response.json();
+      // First try browser geolocation (GPS)
+      try {
+        const locationData = await getUserLocationFromBrowser();
         const locationString = `${locationData.city}, ${locationData.region}, ${locationData.country}`;
         setLocation(locationString);
         onLocationChange(locationData);
+        return; // Success, exit early
+      } catch (browserError) {
+        console.log('Browser geolocation failed, trying client-side IP detection:', browserError.message);
       }
+      
+      // Fallback to client-side IP detection (user's actual IP)
+      try {
+        const locationData = await getUserLocationFromIP();
+        const locationString = `${locationData.city}, ${locationData.region}, ${locationData.country}`;
+        setLocation(locationString);
+        onLocationChange(locationData);
+        return; // Success, exit early
+      } catch (ipError) {
+        console.log('Client-side IP detection failed, defaulting to Toronto:', ipError.message);
+      }
+      
+      // Default to Toronto if both methods fail
+      const torontoData = {
+        city: 'Toronto',
+        region: 'Ontario',
+        country: 'Canada',
+        lat: 43.6532,
+        lon: -79.3832
+      };
+      setLocation('Toronto, Ontario, Canada');
+      onLocationChange(torontoData);
+      
     } catch (error) {
       console.error('Auto location error:', error);
+      // Even if there's an error, default to Toronto
+      const torontoData = {
+        city: 'Toronto',
+        region: 'Ontario',
+        country: 'Canada',
+        lat: 43.6532,
+        lon: -79.3832
+      };
+      setLocation('Toronto, Ontario, Canada');
+      onLocationChange(torontoData);
     } finally {
       setIsLoadingLocation(false);
     }
@@ -107,27 +144,29 @@ export default function MinimalEventFilters({
         </div>
       </div>
 
-      {/* LOCATION SEARCH */}
+      {/* LOCATION SEARCH - INLINE LAYOUT */}
       <div className={styles.filterGroup}>
         <div className={styles.filterHeader}>
           <label className={styles.filterLabel}>Location</label>
-          <button 
-            onClick={handleAutoLocation}
-            disabled={isLoadingLocation}
-            className={styles.autoLocationButton}
-          >
-            {isLoadingLocation ? '📍' : '🎯'} Auto
-          </button>
         </div>
         
         <div className={styles.locationInputContainer}>
-          <input
-            type="text"
-            value={location}
-            onChange={handleLocationInput}
-            placeholder="Search city or venue..."
-            className={styles.locationInput}
-          />
+          <div className={styles.locationInputRow}>
+            <input
+              type="text"
+              value={location}
+              onChange={handleLocationInput}
+              placeholder="Search city or venue..."
+              className={styles.locationInput}
+            />
+            <button 
+              onClick={handleAutoLocation}
+              disabled={isLoadingLocation}
+              className={styles.autoLocationButton}
+            >
+              {isLoadingLocation ? '📍' : '🎯'} Auto
+            </button>
+          </div>
           
           {showSuggestions && locationSuggestions.length > 0 && (
             <div className={styles.locationSuggestions}>
