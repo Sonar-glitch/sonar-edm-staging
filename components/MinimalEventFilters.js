@@ -1,6 +1,6 @@
-// MINIMAL EVENT FILTERS - FINAL LAYOUT FIX
-// Input field (70% width) + separate Auto button
-// Suggestions dropdown visible above Events section
+// MINIMAL EVENT FILTERS - OPTIMAL LAYOUT FIX
+// Auto button at rightmost position + Search bar takes remaining space
+// Exactly matching the screenshot layout
 // Preserves 100% of existing thematic styling
 
 import { useState, useEffect } from 'react';
@@ -115,14 +115,14 @@ export default function MinimalEventFilters({
         </div>
       </div>
 
-      {/* LOCATION SEARCH - FINAL LAYOUT (70% input + separate Auto button) */}
+      {/* LOCATION SEARCH - OPTIMAL LAYOUT (Search bar + Auto button rightmost) */}
       <div className={styles.filterGroup}>
         <div className={styles.filterHeader}>
           <label className={styles.filterLabel}>Location</label>
         </div>
         
         <div className={styles.locationInputContainer}>
-          {/* Input field (70% width) + Auto button (separate) */}
+          {/* Search bar (remaining space) + Auto button (rightmost) */}
           <div className={styles.locationInputRow}>
             <input
               type="text"

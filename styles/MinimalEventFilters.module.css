@@ -1,6 +1,6 @@
-/* MINIMAL EVENT FILTERS - FINAL CSS FIX */
-/* Input field (70% width) + separate Auto button */
-/* Suggestions dropdown visible above Events section */
+/* MINIMAL EVENT FILTERS - OPTIMAL CSS FIX */
+/* Auto button at rightmost + Search bar takes remaining space */
+/* Exactly matching the screenshot layout */
 /* Preserves all existing TIKO glassmorphic theme styling */
 
 .filtersContainer {
@@ -77,13 +77,13 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
-/* LOCATION INPUT STYLES - FINAL LAYOUT */
+/* LOCATION INPUT STYLES - OPTIMAL LAYOUT */
 .locationInputContainer {
   position: relative;
   width: 100%;
 }
 
-/* Flexbox row for input + Auto button */
+/* Flexbox row: Search bar (flex: 1) + Auto button (fixed) */
 .locationInputRow {
   display: flex;
   gap: 12px;
@@ -91,9 +91,9 @@
   width: 100%;
 }
 
-/* Input field takes 70% width */
+/* Search bar takes ALL remaining space */
 .locationInput {
-  flex: 0 0 70%;
+  flex: 1; /* Takes all remaining space after Auto button */
   padding: 0.75rem 1rem;
   background-color: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 0, 255, 0.2);
@@ -102,6 +102,7 @@
   font-size: 0.9rem;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  min-width: 0; /* Allows flex item to shrink below content size */
 }
 
 .locationInput:focus {
@@ -114,9 +115,9 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* Auto button separate from input */
+/* Auto button at rightmost position (fixed width) */
 .autoLocationButton {
-  flex: 0 0 auto;
+  flex: 0 0 auto; /* Fixed size, no grow/shrink */
   background-color: rgba(255, 0, 255, 0.15);
   border: 1px solid rgba(255, 0, 255, 0.3);
   border-radius: 12px;
@@ -209,10 +210,6 @@
     gap: 8px;
   }
   
-  .locationInput {
-    flex: 0 0 65%; /* Slightly smaller on mobile */
-  }
-  
   .autoLocationButton {
     font-size: 0.8rem;
     padding: 0.7rem 0.8rem;
@@ -234,7 +231,6 @@
   }
   
   .locationInput {
-    flex: 0 0 60%; /* Even smaller on very small screens */
     padding: 0.6rem 0.8rem;
   }
   
