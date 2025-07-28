@@ -1,7 +1,7 @@
-// MINIMAL EVENT FILTERS - SURGICAL LAYOUT FIX
-// Fixes location input layout to make room for autocomplete suggestions
-// Preserves 100% of existing thematic styling and functionality
-// Only modifies layout structure for better UX
+// MINIMAL EVENT FILTERS - FINAL LAYOUT FIX
+// Input field (70% width) + separate Auto button
+// Suggestions dropdown visible above Events section
+// Preserves 100% of existing thematic styling
 
 import { useState, useEffect } from 'react';
 import styles from '../styles/MinimalEventFilters.module.css';
@@ -115,14 +115,14 @@ export default function MinimalEventFilters({
         </div>
       </div>
 
-      {/* LOCATION SEARCH - SURGICAL LAYOUT FIX */}
+      {/* LOCATION SEARCH - FINAL LAYOUT (70% input + separate Auto button) */}
       <div className={styles.filterGroup}>
         <div className={styles.filterHeader}>
           <label className={styles.filterLabel}>Location</label>
         </div>
         
-        {/* MODIFIED: Inline layout for input + auto button */}
         <div className={styles.locationInputContainer}>
+          {/* Input field (70% width) + Auto button (separate) */}
           <div className={styles.locationInputRow}>
             <input
               type="text"
@@ -141,7 +141,7 @@ export default function MinimalEventFilters({
             </button>
           </div>
           
-          {/* ENHANCED: Better positioned suggestions dropdown */}
+          {/* Suggestions dropdown - positioned to be visible above Events */}
           {showSuggestions && locationSuggestions.length > 0 && (
             <div className={styles.locationSuggestions}>
               {locationSuggestions.slice(0, 5).map((suggestion, index) => (
