@@ -142,7 +142,8 @@ console.log('📊 [EnhancedEventList] API response data:', {
 });
 
       // PRESERVED: All existing response handling logic (unchanged)
-      if (data.success && data.events && data.events.length > 0) {
+      if (data.events && data.events.length > 0) {
+
         setEvents(data.events);
         
         const newDebugInfo = {
