@@ -3,7 +3,6 @@
 // Only includes filters we can confidently support with Phase 1 metadata
 
 import { useState, useEffect } from 'react';
-import { getUserLocationFromBrowser, getUserLocationFromIP } from '@/lib/locationUtils';
 import styles from '../styles/MinimalEventFilters.module.css';
 
 export default function MinimalEventFilters({ 
@@ -63,29 +62,6 @@ export default function MinimalEventFilters({
   const handleAutoLocation = async () => {
     setIsLoadingLocation(true);
     try {
-      // First try browser geolocation (GPS)
-      try {
-        const locationData = await getUserLocationFromBrowser();
-        const locationString = `${locationData.city}, ${locationData.region}, ${locationData.country}`;
-        setLocation(locationString);
-        onLocationChange(locationData);
-        return; // Success, exit early
-      } catch (browserError) {
-        console.log('Browser geolocation failed, trying client-side IP detection:', browserError.message);
-      }
-      
-      // Fallback to client-side IP detection (user's actual IP)
-      try {
-        const locationData = await getUserLocationFromIP();
-        const locationString = `${locationData.city}, ${locationData.region}, ${locationData.country}`;
-        setLocation(locationString);
-        onLocationChange(locationData);
-        return; // Success, exit early
-      } catch (ipError) {
-        console.log('Client-side IP detection failed, trying server-side:', ipError.message);
-      }
-      
-      // Last resort: server-side IP detection
       const response = await fetch('/api/user/get-location');
       if (response.ok) {
         const locationData = await response.json();
