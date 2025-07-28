@@ -738,7 +738,7 @@ function calculateSoundSimilarity(userSoundDNA, eventSoundCharacteristics) {
       similarity = Math.max(0, 1 - tempoDiff);
     } else {
       // Standard similarity for other features
-      similarity = 1 - Math.abs(userValue - eventValue);
+      similarity = Math.max(0, Math.exp(-Math.abs(userValue - eventValue) * 3));
     }
     
     totalSimilarity += similarity * weight;
