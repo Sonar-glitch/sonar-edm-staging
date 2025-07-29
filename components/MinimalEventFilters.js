@@ -168,20 +168,22 @@ export default function MinimalEventFilters({
             </button>
           </div>
           
-          {showSuggestions && locationSuggestions.length > 0 && (
-            <div className={styles.locationSuggestions}>
-              {locationSuggestions.slice(0, 5).map((suggestion, index) => (
-                <div
-                  key={index}
-                  onClick={() => handleLocationSelect(suggestion)}
-                  className={styles.locationSuggestion}
-                >
-                  <span className={styles.suggestionIcon}>📍</span>
-                  <span className={styles.suggestionText}>{suggestion.description}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        {showSuggestions && locationSuggestions.length > 0 && (
+  <div className={styles.locationSuggestions}>
+    {locationSuggestions.slice(0, 5).map((suggestion, index) => (
+      <div
+        key={index}
+        onClick={() => handleLocationSelect(suggestion)}
+        className={styles.locationSuggestion}
+      >
+        <span className={styles.suggestionIcon}>📍</span>
+        <div className={styles.suggestionContent}>
+          <span className={styles.suggestionText}>{suggestion.description}</span>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
         </div>
       </div>
 

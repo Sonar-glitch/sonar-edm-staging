@@ -754,27 +754,131 @@ function estimateSoundScoreFromGenres(eventGenres, userSoundDNA) {
     return 50; // Neutral score for events without genre info
   }
   
+  // SURGICAL REPLACEMENT: Comprehensive genre score mapping aligned with worker
   const genreScoreMap = {
+    // ========================================
+    // EXISTING EDM GENRES (PRESERVED + ENHANCED)
+    // ========================================
     'electronic': 75,
     'house': 80,
+    'deep house': 78,
+    'tech house': 82,
+    'progressive house': 76,
+    'electro house': 85,
+    'future house': 80,
+    'big room': 88,
     'techno': 85,
+    'minimal techno': 83,
+    'acid techno': 87,
     'trance': 80,
+    'progressive trance': 78,
+    'uplifting trance': 82,
+    'electronica': 72,
+    'ambient': 45, // Lower for ambient
+    'dubstep': 88,
+    'drum and bass': 85,
+    'dnb': 85,
+    'trap': 82,
     'dance': 75,
     'edm': 85,
+    'electro': 80,
     'club': 70,
     'rave': 80,
     'festival': 70,
+    
+    // ========================================
+    // NON-EDM GENRES (REALISTIC SCORES FOR EDM USERS)
+    // ========================================
+    
+    // Pop family (Low scores for EDM users)
+    'pop': 35,
+    'pop rock': 38,
+    'indie pop': 32,
+    'synth pop': 42, // Slightly higher due to synth elements
+    'dance pop': 55, // Higher due to dance elements
+    
+    // Rock family (Low scores due to low danceability)
+    'rock': 35,
+    'classic rock': 32,
+    'hard rock': 40, // Higher energy but low danceability
+    'indie rock': 30,
+    'alternative rock': 32,
+    'punk rock': 45, // High energy
+    
+    // Hip hop family (Moderate scores)
+    'hip hop': 50,
+    'rap': 48,
+    'trap rap': 65, // Higher due to trap elements
+    
+    // R&B/Soul family (Moderate scores)
+    'r&b': 45,
+    'soul': 48,
+    'funk': 60, // Higher danceability
+    
+    // Jazz family (Low scores due to low energy/danceability)
+    'jazz': 25,
+    'smooth jazz': 20,
+    'swing': 35, // Higher danceability
+    
+    // Blues family (Low scores)
+    'blues': 22,
+    'blues rock': 32,
+    
+    // Country family (Low to moderate scores)
+    'country': 30,
+    'country rock': 35,
+    'bluegrass': 32,
+    
+    // Folk family (Low scores due to high acousticness)
+    'folk': 20,
+    'folk rock': 28,
+    'indie folk': 22,
+    
+    // Classical family (Very low scores)
+    'classical': 15,
+    'opera': 22,
+    
+    // Reggae family (Moderate scores)
+    'reggae': 40,
+    'dancehall': 55, // Higher danceability
+    
+    // World music family (Variable scores)
+    'latin': 55, // Higher danceability
+    'salsa': 70, // Very high danceability
+    'bossa nova': 25,
+    
+    // Metal family (High energy but very low danceability)
+    'metal': 25,
+    'heavy metal': 22,
+    
+    // Punk family (Moderate scores - high energy but low danceability)
+    'punk': 40,
+    'pop punk': 48,
+    
+    // Alternative family (Low to moderate scores)
+    'alternative': 35,
+    'grunge': 30,
+    'indie': 32,
+    
+    // Generic fallbacks
     'concert': 60,
     'music': 65
   };
   
-  let bestScore = 30; // Low default for non-electronic genres
+  let bestScore = 30; // Low default for unknown genres
   
   eventGenres.forEach(genre => {
     const genreName = genre.toLowerCase();
-    for (const [knownGenre, score] of Object.entries(genreScoreMap)) {
-      if (genreName.includes(knownGenre)) {
-        bestScore = Math.max(bestScore, score);
+    
+    // Direct genre match
+    if (genreScoreMap[genreName]) {
+      bestScore = Math.max(bestScore, genreScoreMap[genreName]);
+    } else {
+      // Partial match (existing logic preserved)
+      for (const [knownGenre, score] of Object.entries(genreScoreMap)) {
+        if (genreName.includes(knownGenre)) {
+          bestScore = Math.max(bestScore, score);
+        }
       }
     }
   });
