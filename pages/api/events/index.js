@@ -268,7 +268,7 @@ async function buildUserSoundDNA(userTracks) {
 
   try {
 const enhancedAudioAnalysis = new EnhancedAudioAnalysisService();
-    const result = await soundStatIntegration.analyzeUserTracks(userTracks);
+const result = await enhancedAudioAnalysis.analyzeUserTracks(userTracks);
     
     // Convert TIKOSoundStatIntegration format to Events API format
     return {
