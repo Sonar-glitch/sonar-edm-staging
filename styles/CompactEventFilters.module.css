@@ -210,3 +210,70 @@
     align-self: flex-end;
   }
 }
+
+/* MINIMAL EVENT FILTERS - SURGICAL CSS LAYOUT FIX */
+/* Adds new styles for inline location input + auto button layout */
+/* Preserves all existing TIKO glassmorphic theme styling */
+
+/* NEW: Inline layout for location input + auto button */
+.locationInputRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+/* MODIFIED: Location input takes most of the width */
+.locationInput {
+  flex: 1;
+  /* All existing styles preserved - only width changes */
+}
+
+/* ENHANCED: Auto button positioned inline */
+.autoLocationButton {
+  /* Preserve existing button styling */
+  flex-shrink: 0;
+  min-width: 80px;
+  /* All existing button styles remain the same */
+}
+
+/* ENHANCED: Better positioned suggestions dropdown */
+.locationSuggestions {
+  /* Preserve existing dropdown styling */
+  position: absolute;
+  z-index: 1000; /* Ensure it appears above Events section */
+  margin-top: 4px; /* Small gap from input */
+  /* All existing suggestion styles remain the same */
+}
+
+/* NEW: Enhanced suggestion content layout */
+.suggestionContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.suggestionSubtext {
+  font-size: 0.85em;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.suggestionSource {
+  font-size: 0.8em;
+  opacity: 0.6;
+  margin-left: 8px;
+}
+
+/* RESPONSIVE: Ensure mobile compatibility */
+@media (max-width: 768px) {
+  .locationInputRow {
+    gap: 8px;
+  }
+  
+  .autoLocationButton {
+    min-width: 60px;
+    font-size: 0.9em;
+  }
+}
+

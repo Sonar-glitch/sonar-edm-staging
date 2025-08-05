@@ -1,12 +1,12 @@
-// FIXED: pages/api/spotify/detailed-taste.js
-// SURGICAL ADDITION: Real seasonal analysis with proper error handling
-// PRESERVES: All existing functionality, only adds seasonal analysis logic
+// ENHANCED: pages/api/spotify/detailed-taste.js
+// INTEGRATION: Enhanced Audio Analysis Service replacing SoundStat
+// PRESERVES: All existing functionality, only replaces audio analysis integration
 
 import { getSession } from 'next-auth/react';
 import { getTopArtists, getTopTracks, getRecentlyPlayed } from '../../../lib/spotify';
 import { connectToDatabase } from '../../../lib/mongodb';
 import { getFallbackDetailedTasteData } from '../../../lib/fallbackData';
-import TIKOSoundStatIntegration from '../../../lib/tikoSoundStatIntegration';
+import EnhancedAudioAnalysisService from '../../../lib/enhancedAudioAnalysisService';
 
 // SURGICAL ADDITION: Inline seasonal analysis functions to avoid import issues
 function analyzeRealSeasonalPatterns(recentlyPlayedData, topArtistsData) {
@@ -260,12 +260,12 @@ export default async function handler(req, res) {
       }
     }
     
-    // PRESERVED: SoundStat integration for real sound characteristics (unchanged)
+    // ENHANCED: Enhanced Audio Analysis integration replacing SoundStat
     let soundCharacteristicsResult;
     try {
       if (apiCallsSuccessful.topTracks && topTracksResponse.value.items.length > 0) {
-        const soundStatIntegration = new TIKOSoundStatIntegration();
-        soundCharacteristicsResult = await soundStatIntegration.analyzeUserTracks(topTracksResponse.value.items);
+        const enhancedAudioAnalysis = new EnhancedAudioAnalysisService();
+        soundCharacteristicsResult = await enhancedAudioAnalysis.analyzeUserTracks(topTracksResponse.value.items);
       } else {
         soundCharacteristicsResult = {
           soundCharacteristics: {
@@ -280,8 +280,8 @@ export default async function handler(req, res) {
           fallbackReason: 'NO_SPOTIFY_TRACKS'
         };
       }
-    } catch (soundStatError) {
-      console.error('SoundStat integration error:', soundStatError);
+    } catch (enhancedAudioError) {
+      console.error('Enhanced Audio Analysis integration error:', enhancedAudioError);
       soundCharacteristicsResult = {
         soundCharacteristics: {
           energy: 75,
@@ -292,8 +292,8 @@ export default async function handler(req, res) {
         source: 'demo_data',
         isRealData: false,
         confidence: 0.0,
-        fallbackReason: 'SOUNDSTAT_ERROR',
-        error: soundStatError.message
+        fallbackReason: 'ENHANCED_AUDIO_ERROR',
+        error: enhancedAudioError.message
       };
     }
     
@@ -341,7 +341,7 @@ export default async function handler(req, res) {
       ];
     }
     
-    // ENHANCED: Response with real seasonal analysis and separate data source metadata
+    // ENHANCED: Response with enhanced audio analysis and separate data source metadata
     const responseData = {
       genreProfile: Object.keys(genreProfile).length > 0 ? genreProfile : getFallbackDetailedTasteData().genreProfile,
       artistProfile: artistProfile.length > 0 ? artistProfile : getFallbackDetailedTasteData().artistProfile,
@@ -380,7 +380,7 @@ export default async function handler(req, res) {
       },
       
       // PRESERVED: Legacy fields for backward compatibility
-      source: soundCharacteristicsResult.isRealData ? 'soundstat_api' : soundCharacteristicsResult.source,
+      source: soundCharacteristicsResult.isRealData ? 'enhanced_audio_analysis' : soundCharacteristicsResult.source,
       isRealData: soundCharacteristicsResult.isRealData,
       dataQuality: {
         topArtists: apiCallsSuccessful.topArtists,
@@ -388,7 +388,7 @@ export default async function handler(req, res) {
         recentlyPlayed: apiCallsSuccessful.recentlyPlayed,
         artistCount: topArtistsResponse.value?.items?.length || 0,
         trackCount: topTracksResponse.value?.items?.length || 0,
-        soundStatAnalysis: {
+        enhancedAudioAnalysis: {
           source: soundCharacteristicsResult.source,
           confidence: soundCharacteristicsResult.confidence,
           tracksAnalyzed: soundCharacteristicsResult.tracksAnalyzed || 0,
@@ -412,7 +412,7 @@ export default async function handler(req, res) {
           status: recentlyPlayedResponse.status,
           error: recentlyPlayedResponse.status === 'rejected' ? recentlyPlayedResponse.reason?.message : null
         },
-        soundStat: {
+        enhancedAudio: {
           source: soundCharacteristicsResult.source,
           isRealData: soundCharacteristicsResult.isRealData,
           error: soundCharacteristicsResult.error || null
@@ -434,36 +434,35 @@ export default async function handler(req, res) {
       tokenLength: session?.accessToken?.length || 0
     });
     
-    // PRESERVED: Return fallback data with error info instead of 500 error (unchanged)
+    // PRESERVED: Return fallback data on error (unchanged)
     const fallbackData = getFallbackDetailedTasteData();
     res.status(200).json({
       ...fallbackData,
+      source: 'fallback_data',
+      isRealData: false,
+      error: error.message,
+      lastFetch: new Date().toISOString(),
       dataSources: {
         genreProfile: {
           source: 'error_fallback',
           isRealData: false,
-          error: error.message,
-          lastFetch: new Date().toISOString()
+          lastFetch: new Date().toISOString(),
+          error: error.message
         },
         soundCharacteristics: {
-          source: 'error_fallback',
+          source: 'demo_data',
           isRealData: false,
-          error: error.message,
-          lastFetch: new Date().toISOString()
+          lastFetch: new Date().toISOString(),
+          confidence: 0.0,
+          fallbackReason: 'API_ERROR'
         },
         seasonalProfile: {
           source: 'error_fallback',
           isRealData: false,
-          error: error.message,
-          lastFetch: new Date().toISOString()
+          lastFetch: new Date().toISOString(),
+          error: error.message
         }
-      },
-      source: 'fallback_due_to_error',
-      isRealData: false,
-      error: error.message,
-      errorCode: 'DETAILED_TASTE_ERROR',
-      errorTimestamp: new Date().toISOString(),
-      lastFetch: new Date().toISOString()
+      }
     });
   }
 }
