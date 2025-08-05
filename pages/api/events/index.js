@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { connectToDatabase } from '@/lib/mongodb';
-import TIKOSoundStatIntegration from '@/lib/tikoSoundStatIntegration';
+import EnhancedAudioAnalysisService from '@/lib/enhancedAudioAnalysisService';
 
 // PHASE 2: SoundStat API configuration
 const SOUNDSTAT_API_KEY = '4Bwbb8OrfpHukJBZSOaIolUMZat0rj3I-baIzASBVw0';
@@ -267,7 +267,7 @@ async function buildUserSoundDNA(userTracks) {
   console.log(`🧬 Building user sound DNA from ${userTracks.length} tracks using TIKOSoundStatIntegration`);
 
   try {
-    const soundStatIntegration = new TIKOSoundStatIntegration();
+const enhancedAudioAnalysis = new EnhancedAudioAnalysisService();
     const result = await soundStatIntegration.analyzeUserTracks(userTracks);
     
     // Convert TIKOSoundStatIntegration format to Events API format
