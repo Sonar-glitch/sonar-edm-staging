@@ -14,9 +14,9 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
   const loadChartData = async () => {
     try {
       setLoading(true);
-      
+
       let genreData;
-      
+
       if (data && data.topGenres && data.topGenres.length > 0) {
         genreData = data.topGenres.slice(0, 5);
       } else {
@@ -37,7 +37,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
       }));
 
       setChartData(rechartData);
-      
+
     } catch (err) {
       console.error('Chart data loading error:', err);
       setError(err.message);
@@ -46,29 +46,23 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     }
   };
 
-  // SURGICAL ADD: Custom label component to ensure genre labels are visible with delta indicators
+  // CORRECTED: Custom label component with proper error handling and null safety
   const CustomLabel = ({ payload, x, y, textAnchor, ...props }) => {
-    // Ensure we have valid payload data
+    // CRITICAL FIX: Early return for invalid data to prevent crashes
     if (!payload || !payload.genre || typeof payload.genre !== 'string') {
       return null;
     }
 
-    // Safe genre key normalization for delta lookup
-    const genreKey = payload.genre.toLowerCase().replace(/\s+/g, ' ').trim();
-    
-    // Get delta indicator if function is provided
+    // CRITICAL FIX: Safe genre key normalization with null checks
+    const genreKey = payload.genre ? 
+      payload.genre.toLowerCase().replace(/\s+/g, ' ').trim() : '';
+
+    // CRITICAL FIX: Safe delta indicator access with null checks
     const deltaIndicator = getDeltaIndicator && genreKey ? 
       getDeltaIndicator('genres', genreKey) : null;
 
-    // Extract delta information for tooltip
-    const deltaText = deltaIndicator?.props?.children || '';
-    const deltaValue = deltaText.split(' ')[1] || '';
-    const isIncrease = deltaText.includes('↗️');
-    const direction = isIncrease ? 'increased' : 'decreased';
-
     return (
       <g>
-        {/* SURGICAL ADD: Always render genre label with enhanced visibility */}
         <text
           x={x}
           y={y}
@@ -76,33 +70,19 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
           fontSize={12}
           fill="#DADADA"
           fontWeight="500"
-          style={{ 
-            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-            userSelect: 'none'
-          }}
         >
           {payload.genre}
         </text>
-        
-        {/* SURGICAL ADD: Delta indicator with enhanced tooltip */}
         {deltaIndicator && (
           <text
             x={x}
             y={y + 15}
             textAnchor={textAnchor}
             fontSize={10}
-            fill={deltaIndicator?.props?.style?.color || '#00FF88'}
+            fill={deltaIndicator?.props?.style?.color || '#DADADA'}
             fontWeight="600"
-            style={{ 
-              cursor: 'pointer',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-            }}
           >
-            {deltaText}
-            {/* SURGICAL ADD: Enhanced tooltip explaining what the number means */}
-            <title>
-              {`${payload.genre} preference ${direction} by ${deltaValue}% since last week`}
-            </title>
+            {deltaIndicator?.props?.children || ''}
           </text>
         )}
       </g>
@@ -145,17 +125,17 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     <div className={styles.container}>
       {/* ONLY SPIDER CHART - REMOVED DUPLICATE GENRE LIST */}
       <div className={styles.chartContainer}>
-        {/* SURGICAL FIX: Recharts implementation with custom labels */}
+        {/* SURGICAL FIX: Recharts implementation instead of Chart.js */}
         <ResponsiveContainer width="100%" height={300}>
-          <RadarChart 
-            data={chartData} 
+          <RadarChart
+            data={chartData}
             margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
           >
-            <PolarGrid 
+            <PolarGrid
               stroke="rgba(0, 255, 255, 0.2)" // TIKO cyan grid
             />
-            <PolarAngleAxis 
-              dataKey="genre" 
+            <PolarAngleAxis
+              dataKey="genre"
               tick={<CustomLabel />}
             />
             <Radar
@@ -164,9 +144,9 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
               stroke="#FF00CC" // TIKO pink
               fill="rgba(255, 0, 204, 0.2)" // TIKO pink with transparency
               strokeWidth={2}
-              dot={{ 
+              dot={{
                 fill: '#FF00CC', // TIKO pink
-                strokeWidth: 2, 
+                strokeWidth: 2,
                 stroke: '#DADADA', // TIKO primary text
                 r: 4
               }}
@@ -174,7 +154,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
           </RadarChart>
         </ResponsiveContainer>
       </div>
-      
+
       {/* REMOVED: Enhanced Profile button as requested */}
       {/* REMOVED: Duplicate genre list below chart as requested */}
     </div>
