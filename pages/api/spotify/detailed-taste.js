@@ -350,32 +350,31 @@ export default async function handler(req, res) {
       seasonalProfile: seasonalAnalysis.profile, // SURGICAL CHANGE: Real seasonal data
       listeningTrends,
       
-      // ENHANCED: Separate data source metadata for each component
+      // SURGICAL ADDITION: Add dataSources structure for ALL dashboard sections
       dataSources: {
         genreProfile: {
-          source: hasRealData ? 'spotify_api' : 'fallback_data',
-          isRealData: hasRealData,
+          source: 'spotify_api',
+          isRealData: apiCallsSuccessful.topArtists && apiCallsSuccessful.topTracks,
           lastFetch: new Date().toISOString(),
-          artistCount: topArtistsResponse.value?.items?.length || 0
+          tracksAnalyzed: (topArtistsResponse.value?.items?.length || 0) + (topTracksResponse.value?.items?.length || 0),
+          confidence: apiCallsSuccessful.topArtists && apiCallsSuccessful.topTracks ? 1.0 : 0.0,
+          error: !apiCallsSuccessful.topArtists || !apiCallsSuccessful.topTracks ? 'SPOTIFY_API_ERROR' : null
         },
         soundCharacteristics: {
           source: soundCharacteristicsResult.source,
           isRealData: soundCharacteristicsResult.isRealData,
-          lastFetch: new Date().toISOString(),
-          tracksAnalyzed: soundCharacteristicsResult.tracksAnalyzed || 0,
-          totalTracks: soundCharacteristicsResult.totalTracks || 0,
-          confidence: soundCharacteristicsResult.confidence || 0,
+          lastFetch: soundCharacteristicsResult.lastFetch,
+          tracksAnalyzed: soundCharacteristicsResult.tracksAnalyzed,
+          confidence: soundCharacteristicsResult.confidence,
           fallbackReason: soundCharacteristicsResult.fallbackReason
         },
         seasonalProfile: {
-          source: seasonalAnalysis.metadata.source,
-          isRealData: seasonalAnalysis.metadata.isRealData,
+          source: 'spotify_api',
+          isRealData: apiCallsSuccessful.recentlyPlayed,
           lastFetch: new Date().toISOString(),
-          tracksAnalyzed: seasonalAnalysis.metadata.tracksAnalyzed,
-          seasonsWithData: seasonalAnalysis.metadata.seasonsWithData,
-          dataQuality: seasonalAnalysis.metadata.dataQuality,
-          confidence: seasonalAnalysis.metadata.confidence,
-          error: seasonalAnalysis.metadata.error || null
+          tracksAnalyzed: recentlyPlayedResponse.value?.items?.length || 0,
+          confidence: apiCallsSuccessful.recentlyPlayed ? 1.0 : 0.0,
+          error: !apiCallsSuccessful.recentlyPlayed ? 'SPOTIFY_API_ERROR' : null
         }
       },
       
