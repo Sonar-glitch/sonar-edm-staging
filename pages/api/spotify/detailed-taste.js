@@ -151,6 +151,16 @@ export default async function handler(req, res) {
   
   try {
     // PRESERVED: Existing Spotify API calls with proper error handling
+        // MINIMAL FIX: Add session initialization
+    const session = await getSession({ req });
+    
+    if (!session || !session.accessToken) {
+      console.error('No valid session or access token found');
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    console.log('Session found, making Spotify API calls...');
+
     const [topArtistsResponse, topTracksResponse, recentlyPlayedResponse] = await Promise.allSettled([
       getTopArtists(session.accessToken),
       getTopTracks(session.accessToken),
