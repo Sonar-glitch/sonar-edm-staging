@@ -61,6 +61,16 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     const deltaIndicator = getDeltaIndicator && genreKey ? 
       getDeltaIndicator('genres', genreKey) : null;
 
+    // SURGICAL FIX: Create meaningful tooltip text
+    const deltaText = deltaIndicator?.props?.children || '';
+    const deltaNumber = deltaText.replace(/[↗️↘️]/g, '').trim();
+    const isIncrease = deltaText.includes('↗️');
+    const tooltipText = isIncrease 
+      ? `${payload.genre} preference increased by ${deltaNumber} points since last week`
+      : deltaText.includes('↘️')
+      ? `${payload.genre} preference decreased by ${deltaNumber} points since last week`
+      : `${payload.genre}: ${payload.value}%`;
+
     return (
       <g>
         <text
@@ -70,7 +80,9 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
           fontSize={12}
           fill="#DADADA"
           fontWeight="500"
+          style={{ cursor: 'help' }}
         >
+          <title>{tooltipText}</title>
           {payload.genre}
         </text>
         {deltaIndicator && (
@@ -81,7 +93,9 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
             fontSize={10}
             fill={deltaIndicator?.props?.style?.color || '#DADADA'}
             fontWeight="600"
+            style={{ cursor: 'help' }}
           >
+            <title>{tooltipText}</title>
             {deltaIndicator?.props?.children || ''}
           </text>
         )}
@@ -129,7 +143,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
         <ResponsiveContainer width="100%" height={300}>
           <RadarChart
             data={chartData}
-            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+            margin={{ top: 60, right: 60, bottom: 60, left: 60 }} // SURGICAL FIX: Increased margins for label space
           >
             <PolarGrid
               stroke="rgba(0, 255, 255, 0.2)" // TIKO cyan grid

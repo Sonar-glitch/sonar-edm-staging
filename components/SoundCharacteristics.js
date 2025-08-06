@@ -98,7 +98,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
     }
   };
 
-  // CORRECTED: Safe delta indicator rendering function
+  // SURGICAL FIX: Enhanced delta indicator rendering with meaningful hover tooltips
   const renderDeltaIndicator = (key) => {
     try {
       if (!getDeltaIndicator || !key || typeof key !== 'string') {
@@ -112,7 +112,32 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
         return null;
       }
 
-      return deltaIndicator;
+      // SURGICAL FIX: Extract delta information for meaningful tooltips
+      const deltaText = deltaIndicator?.props?.children || '';
+      const deltaNumber = deltaText.replace(/[↗️↘️]/g, '').trim();
+      const isIncrease = deltaText.includes('↗️');
+      const isDecrease = deltaText.includes('↘️');
+      
+      // SURGICAL FIX: Create meaningful tooltip text
+      const characteristicName = key.charAt(0).toUpperCase() + key.slice(1);
+      let tooltipText = '';
+      if (isIncrease) {
+        tooltipText = `${characteristicName} increased by ${deltaNumber} points since last week`;
+      } else if (isDecrease) {
+        tooltipText = `${characteristicName} decreased by ${deltaNumber} points since last week`;
+      } else {
+        tooltipText = `${characteristicName} weekly change: ${deltaText}`;
+      }
+
+      // SURGICAL FIX: Wrap delta indicator with tooltip
+      return (
+        <span 
+          style={{ cursor: 'help' }}
+          title={tooltipText}
+        >
+          {deltaIndicator}
+        </span>
+      );
     } catch (err) {
       console.error('Delta indicator rendering error:', err);
       return null;
@@ -168,7 +193,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
                 <span className={styles.characteristicValue}>
                   {char.value}%
                 </span>
-                {/* CORRECTED: Safe delta indicator rendering */}
+                {/* SURGICAL FIX: Enhanced delta indicator with meaningful hover tooltips */}
                 {renderDeltaIndicator(key)}
               </div>
             </div>
