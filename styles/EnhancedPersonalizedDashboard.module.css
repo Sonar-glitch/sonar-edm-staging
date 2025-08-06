@@ -1,4 +1,4 @@
-/* Enhanced Personalized Dashboard - TIKO Layout Structure */
+/* ENHANCED DASHBOARD CSS: Themed tooltips, delta indicators, preserved UI theme */
 
 .container {
   width: 100%;
@@ -7,6 +7,7 @@
   padding: 16px;
   background: #0D0C1D; /* TIKO page background */
   min-height: 100vh;
+  position: relative; /* For tooltip positioning */
 }
 
 /* HEADER SECTION - SINGLE HEADER ONLY */
@@ -80,7 +81,6 @@
 .card {
   background: rgba(21, 21, 31, 0.8); /* TIKO accent sections */
   backdrop-filter: blur(20px);
-  /* SURGICAL FIX: REMOVED border: 1px solid rgba(0, 255, 255, 0.1); */
   border-radius: 16px;
   padding: 20px;
   height: 100%;
@@ -97,63 +97,129 @@
 
 .card:hover {
   transform: translateY(-2px);
-  /* SURGICAL FIX: REMOVED border-color: rgba(0, 255, 255, 0.2); */
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.4),
-    0 0 20px rgba(0, 207, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
+/* CARD HEADERS WITH STATUS INDICATORS */
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .cardTitle {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #DADADA; /* TIKO primary text */
   margin: 0;
 }
 
-/* DATA SOURCE INDICATORS */
-.realDataIndicator,
-.fallbackDataIndicator {
-  padding: 6px 12px;
-  border-radius: 20px;
+/* ENHANCED: Status indicators with hover states */
+.statusIndicator {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
   font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  cursor: help;
-  transition: all 0.2s ease;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 10;
 }
 
-.realDataIndicator {
-  background: linear-gradient(135deg, #00CFFF, #FF00CC);
-  color: #000000;
-}
-
-.fallbackDataIndicator {
-  background: rgba(255, 215, 0, 0.2); /* Mustard with transparency */
-  color: #FFD700;
-  border: 1px solid rgba(255, 215, 0, 0.3);
-}
-
-.realDataIndicator:hover,
-.fallbackDataIndicator:hover {
+.statusIndicator:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-/* LOADING STATES */
+/* NEW: Custom themed tooltip */
+.customTooltip {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 320px;
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltipContent {
+  background: rgba(21, 21, 31, 0.95); /* Match card background */
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.tooltipLine {
+  color: #DADADA;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.tooltipLine:last-child {
+  margin-bottom: 0;
+}
+
+.tooltipLine:first-child {
+  font-weight: 600;
+  color: #FF00CC; /* TIKO highlight color */
+}
+
+.tooltipArrow {
+  position: absolute;
+  top: -6px;
+  left: 20px;
+  width: 12px;
+  height: 12px;
+  background: rgba(21, 21, 31, 0.95);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-bottom: none;
+  border-right: none;
+  transform: rotate(45deg);
+}
+
+/* NEW: Weekly delta indicators */
+.deltaIndicator {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+/* CARD CONTENT AREAS */
+.cardContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0; /* Allow content to shrink */
+}
+
+/* LOADING AND ERROR STATES */
 .loadingState,
-.errorState,
-.authPrompt {
+.errorState {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -166,8 +232,8 @@
 .loadingSpinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(0, 207, 255, 0.3);
-  border-top: 4px solid #00CFFF;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #FF00CC;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -179,69 +245,51 @@
 }
 
 .retryButton {
-  background: linear-gradient(135deg, #FF00CC, #00CFFF);
-  color: #000000;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border: none;
   padding: 12px 24px;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
   margin-top: 16px;
+  transition: all 0.3s ease;
 }
 
 .retryButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255, 0, 204, 0.3);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-/* MOBILE RESPONSIVENESS - OPTIMIZED FOR MOBILE FIRST */
+/* RESPONSIVE DESIGN */
 @media (max-width: 768px) {
   .container {
     padding: 12px;
   }
   
-  .profileHeader {
-    margin-bottom: 16px;
+  .row1 {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
   
   .profileTitle {
     font-size: 1.1rem;
   }
   
-  .dashboardGrid {
-    gap: 16px;
-  }
-  
-  /* MOBILE: STACK ROWS VERTICALLY */
-  .row1 {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    min-height: auto;
-  }
-  
-  .row2,
-  .row3 {
-    min-height: auto;
-  }
-  
   .card {
     padding: 16px;
   }
   
-  .cardTitle {
-    font-size: 1.25rem;
+  .customTooltip {
+    max-width: 280px;
   }
   
-  .cardHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .tooltipContent {
+    padding: 10px 12px;
   }
   
-  .realDataIndicator,
-  .fallbackDataIndicator {
-    align-self: flex-end;
+  .tooltipLine {
+    font-size: 0.8rem;
   }
 }
 
@@ -250,12 +298,8 @@
     padding: 8px;
   }
   
-  .profileTitle {
-    font-size: 1rem;
-  }
-  
   .dashboardGrid {
-    gap: 12px;
+    gap: 16px;
   }
   
   .card {
@@ -263,7 +307,44 @@
   }
   
   .cardTitle {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
+  
+  .statusIndicator {
+    padding: 3px 8px;
+    font-size: 0.7rem;
+  }
+  
+  .customTooltip {
+    max-width: 240px;
+  }
+}
+
+/* ENHANCED: Component-specific styling integration */
+.card .spiderChart,
+.card .seasonalVibes,
+.card .soundCharacteristics,
+.card .eventsList {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure charts and components fill available space */
+.cardContent > * {
+  flex: 1;
+  min-height: 0;
+}
+
+/* TIKO theme color variables for consistency */
+:root {
+  --tiko-bg: #0D0C1D;
+  --tiko-card: rgba(21, 21, 31, 0.8);
+  --tiko-text: #DADADA;
+  --tiko-highlight: #FF00CC;
+  --tiko-accent: #667eea;
+  --tiko-success: #00FF88;
+  --tiko-warning: #FFB800;
+  --tiko-error: #FF4444;
 }
 
