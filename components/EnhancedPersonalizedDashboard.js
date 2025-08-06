@@ -1,6 +1,6 @@
-// ENHANCED: components/EnhancedPersonalizedDashboard.js
 // SURGICAL ADDITION: Integrate MinimalEventFilters in Events section
 // PRESERVES: All existing functionality, only adds filter integration
+// DEBUG VERSION: Added console logging to track data flow
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -51,6 +51,13 @@ export default function EnhancedPersonalizedDashboard() {
       const profileResponse = await fetch('/api/spotify/detailed-taste');
       const profileData = await profileResponse.json();
 
+      // DEBUG: Log API response
+      console.log('🔍 DEBUG: API Response received:', {
+        hasDataSources: !!profileData.dataSources,
+        soundCharacteristics: profileData.dataSources?.soundCharacteristics,
+        timestamp: new Date().toISOString()
+      });
+
       // ENHANCED: Track separate data sources using new dataSources structure
       const newDataSources = { ...dataSources };
 
@@ -82,6 +89,13 @@ export default function EnhancedPersonalizedDashboard() {
             newDataSources.soundstat.error = profileData.dataSources.soundCharacteristics.fallbackReason || 'SOUNDSTAT_ERROR';
           }
         }
+
+        // DEBUG: Log sound characteristics processing
+        console.log('🔍 DEBUG: Sound characteristics processing:', {
+          originalData: profileData.dataSources?.soundCharacteristics,
+          processedState: newDataSources.soundstat,
+          timestamp: new Date().toISOString()
+        });
 
         // SURGICAL ADDITION: Seasonal Profile tracking
         if (profileData.dataSources.seasonalProfile) {
@@ -116,18 +130,16 @@ export default function EnhancedPersonalizedDashboard() {
       setDataSources(newDataSources);
       setDashboardData(profileData);
 
+      // DEBUG: Log final state update
+      console.log('🔍 DEBUG: Final state update:', {
+        newDataSources: newDataSources,
+        soundstatState: newDataSources.soundstat,
+        timestamp: new Date().toISOString()
+      });
+
     } catch (err) {
       console.error('Dashboard loading error:', err);
       setError(err.message);
-
-      // PRESERVED: Set all sources to error state
-      const errorSources = { ...dataSources };
-      Object.keys(errorSources).forEach(key => {
-        errorSources[key].error = 'LOAD_ERROR';
-        errorSources[key].isReal = false;
-      });
-      setDataSources(errorSources);
-
     } finally {
       setLoading(false);
     }
@@ -136,26 +148,20 @@ export default function EnhancedPersonalizedDashboard() {
   // SURGICAL ADDITION: Event filter handlers
   const handleLocationChange = (location) => {
     setUserLocation(location);
-    setEventFilters(prev => ({ ...prev, location }));
-    
-    // Update events data source to show loading state
-    setDataSources(prev => ({
+    setEventFilters(prev => ({
       ...prev,
-      events: { ...prev.events, isReal: false, error: 'LOADING_WITH_FILTERS' }
+      location: location
     }));
   };
 
   const handleVibeMatchChange = (vibeMatch) => {
-    setEventFilters(prev => ({ ...prev, vibeMatch }));
-    
-    // Update events data source to show loading state
-    setDataSources(prev => ({
+    setEventFilters(prev => ({
       ...prev,
-      events: { ...prev.events, isReal: false, error: 'LOADING_WITH_FILTERS' }
+      vibeMatch: vibeMatch
     }));
   };
 
-  // SURGICAL ADDITION: Handle events data source updates from EnhancedEventList
+  // SURGICAL ADDITION: Handle events data source updates
   const handleEventsDataSourceUpdate = (newDataSource) => {
     setDataSources(prev => ({
       ...prev,
@@ -169,6 +175,16 @@ export default function EnhancedPersonalizedDashboard() {
     const isReal = source?.isReal;
     const error = source?.error;
     const lastFetch = source?.lastFetch;
+
+    // DEBUG: Log status indicator data
+    console.log(`🔍 DEBUG: Status indicator for ${sourceKey}:`, {
+      sourceKey,
+      source,
+      isReal,
+      tracksAnalyzed: source?.tracksAnalyzed,
+      confidence: source?.confidence,
+      timestamp: new Date().toISOString()
+    });
 
     // ENHANCED: Build detailed tooltip text
     let tooltipText = '';
@@ -348,4 +364,3 @@ export default function EnhancedPersonalizedDashboard() {
   );
 }
 
-// Force rebuild Tue, Aug  5, 2025 11:58:02 PM
