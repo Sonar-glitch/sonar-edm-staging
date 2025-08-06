@@ -1,4 +1,5 @@
 /* ENHANCED DASHBOARD CSS: Themed tooltips, delta indicators, preserved UI theme */
+/* FIXED: Removed :root selector for CSS Modules compatibility */
 
 .container {
   width: 100%;
@@ -334,17 +335,5 @@
 .cardContent > * {
   flex: 1;
   min-height: 0;
-}
-
-/* TIKO theme color variables for consistency */
-:root {
-  --tiko-bg: #0D0C1D;
-  --tiko-card: rgba(21, 21, 31, 0.8);
-  --tiko-text: #DADADA;
-  --tiko-highlight: #FF00CC;
-  --tiko-accent: #667eea;
-  --tiko-success: #00FF88;
-  --tiko-warning: #FFB800;
-  --tiko-error: #FF4444;
 }
 
