@@ -1,7 +1,3 @@
-// CORRECTED: components/SoundCharacteristics.js
-// CHANGES: Added delta indicator integration, removed red section, added proper error handling
-// PRESERVES: All existing styling, functionality, and component behavior
-
 import { useState, useEffect } from 'react';
 import styles from '../styles/SoundCharacteristics.module.css';
 
@@ -18,7 +14,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
     try {
       setLoading(true);
 
-      // PRESERVED: Handle both data structures (unchanged)
+      // Handle both data structures
       let features = null;
 
       if (data && data.audioFeatures) {
@@ -30,7 +26,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
       }
 
       if (features) {
-        // PRESERVED: Use real data if available (unchanged)
+        // Use real data if available
         setCharacteristics({
           energy: {
             value: features.energy !== undefined ?
@@ -60,7 +56,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
           }
         });
       } else {
-        // PRESERVED: Fallback characteristics with proper null safety (unchanged)
+        // Fallback characteristics with proper null safety
         setCharacteristics({
           energy: {
             value: 75,
@@ -85,7 +81,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
       console.error('Sound characteristics loading error:', err);
       setError(err.message);
 
-      // PRESERVED: Set safe fallback values on error (unchanged)
+      // Set safe fallback values on error
       setCharacteristics({
         energy: { value: 0, description: "How energetic and intense your music feels" },
         danceability: { value: 0, description: "How suitable your music is for dancing" },
@@ -98,53 +94,52 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
     }
   };
 
-  // SURGICAL FIX: Enhanced delta indicator rendering with meaningful hover tooltips
+  // FIXED: Delta indicator with TIKO-themed hover tooltip
   const renderDeltaIndicator = (key) => {
     try {
       if (!getDeltaIndicator || !key || typeof key !== 'string') {
         return null;
       }
       
+      // Get the delta indicator component
       const deltaIndicator = getDeltaIndicator('soundCharacteristics', key);
       
-      // CRITICAL FIX: Safe access to delta indicator properties
       if (!deltaIndicator) {
         return null;
       }
 
-      // SURGICAL FIX: Extract delta information for meaningful tooltips
+      // Extract delta information for tooltip
       const deltaText = deltaIndicator?.props?.children || '';
       const deltaNumber = deltaText.replace(/[↗️↘️]/g, '').trim();
       const isIncrease = deltaText.includes('↗️');
       const isDecrease = deltaText.includes('↘️');
       
-      // SURGICAL FIX: Create meaningful tooltip text
+      // Create meaningful tooltip text
       const characteristicName = key.charAt(0).toUpperCase() + key.slice(1);
       let tooltipText = '';
       if (isIncrease) {
-        tooltipText = `${characteristicName} increased by ${deltaNumber} points since last week`;
+        tooltipText = `${characteristicName} increased by ${deltaNumber} points vs last week`;
       } else if (isDecrease) {
-        tooltipText = `${characteristicName} decreased by ${deltaNumber} points since last week`;
-      } else {
+        tooltipText = `${characteristicName} decreased by ${deltaNumber} points vs last week`;
+      } else if (deltaText) {
         tooltipText = `${characteristicName} weekly change: ${deltaText}`;
       }
 
-      // SURGICAL FIX: Wrap delta indicator with tooltip
+      // Wrap with TIKO-styled tooltip container
       return (
         <span 
-          style={{ cursor: 'help' }}
-          title={tooltipText}
+          className={styles.deltaTooltipWrapper}
+          data-tooltip={tooltipText}
         >
           {deltaIndicator}
         </span>
       );
     } catch (err) {
-      console.error('Delta indicator rendering error:', err);
+      console.error('Delta indicator rendering error for key:', key, err);
       return null;
     }
   };
 
-  // PRESERVED: All loading, error, and null state handling (unchanged)
   if (loading) {
     return (
       <div className={styles.container}>
@@ -179,9 +174,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
 
   return (
     <div className={styles.container}>
-      {/* REMOVED: Red section with "Based on X tracks, Confidence: Y%" as requested */}
-
-      {/* PRESERVED: All existing grid layout and styling (unchanged) */}
+      {/* All existing grid layout and styling */}
       <div className={styles.characteristicsGrid}>
         {Object.entries(characteristics).map(([key, char]) => (
           <div key={key} className={styles.characteristicItem}>
@@ -193,20 +186,20 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
                 <span className={styles.characteristicValue}>
                   {char.value}%
                 </span>
-                {/* SURGICAL FIX: Enhanced delta indicator with meaningful hover tooltips */}
+                {/* FIXED: Enhanced delta indicator with TIKO-themed tooltip */}
                 {renderDeltaIndicator(key)}
               </div>
             </div>
 
-            {/* PRESERVED: All existing TIKO styling and gradients (unchanged) */}
+            {/* All existing TIKO styling and gradients */}
             <div className={styles.characteristicBar}>
               <div
                 className={styles.characteristicProgress}
                 style={{
                   width: `${char.value}%`,
                   background: key === 'acoustic'
-                    ? 'linear-gradient(90deg, #FFD700, #E0A100)' // PRESERVED: Mustard for acoustic
-                    : 'linear-gradient(90deg, #00CFFF, #FF00CC)' // PRESERVED: TIKO gradient for others
+                    ? 'linear-gradient(90deg, #FFD700, #E0A100)' // Mustard for acoustic
+                    : 'linear-gradient(90deg, #00CFFF, #FF00CC)' // TIKO gradient for others
                 }}
               />
             </div>
@@ -217,8 +210,6 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
           </div>
         ))}
       </div>
-
-      {/* PRESERVED: Enhanced Profile button removal maintained */}
     </div>
   );
 }

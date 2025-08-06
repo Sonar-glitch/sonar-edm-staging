@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts'; // SURGICAL FIX: Changed from Chart.js to Recharts
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import styles from '../styles/Top5GenresSpiderChart.module.css';
 
 export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndicator }) {
@@ -30,7 +30,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
         ];
       }
 
-      // SURGICAL FIX: Convert data format for Recharts (was Chart.js format)
+      // Convert data format for Recharts
       const rechartData = genreData.map(genre => ({
         genre: genre.name,
         value: genre.percentage
@@ -46,30 +46,57 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     }
   };
 
-  // CORRECTED: Custom label component with proper error handling and null safety
+  // TIKO-themed custom tooltip
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload[0]) {
+      const data = payload[0].payload;
+      
+      // Get delta for this genre
+      let deltaText = '';
+      if (getDeltaIndicator && data.genre) {
+        const genreKey = data.genre.toLowerCase().replace(/\s+/g, ' ').trim();
+        const deltaIndicator = getDeltaIndicator('genres', genreKey);
+        if (deltaIndicator && deltaIndicator.props && deltaIndicator.props.children) {
+          deltaText = deltaIndicator.props.children;
+        }
+      }
+
+      return (
+        <div className={styles.customTooltip}>
+          <p className={styles.tooltipGenre}>{data.genre}</p>
+          <p className={styles.tooltipValue}>Preference: {data.value}%</p>
+          {deltaText && (
+            <p className={styles.tooltipDelta}>
+              Weekly change: {deltaText}
+            </p>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // FIXED: Custom label that shows genre name + delta as separate text elements
   const CustomLabel = ({ payload, x, y, textAnchor, ...props }) => {
-    // CRITICAL FIX: Early return for invalid data to prevent crashes
-    if (!payload || !payload.genre || typeof payload.genre !== 'string') {
+    if (!payload || !payload.value) {
       return null;
     }
 
-    // CRITICAL FIX: Safe genre key normalization with null checks
-    const genreKey = payload.genre ? 
-      payload.genre.toLowerCase().replace(/\s+/g, ' ').trim() : '';
+    // Get delta indicator for this genre
+    let deltaText = '';
+    if (getDeltaIndicator && payload.value) {
+      // Normalize the genre name to match what getDeltaIndicator expects
+      const genreKey = payload.value.toLowerCase().replace(/\s+/g, ' ').trim();
+      const deltaIndicator = getDeltaIndicator('genres', genreKey);
+      
+      // Extract the text content from the delta indicator if it exists
+      if (deltaIndicator && deltaIndicator.props && deltaIndicator.props.children) {
+        deltaText = deltaIndicator.props.children;
+      }
+    }
 
-    // CRITICAL FIX: Safe delta indicator access with null checks
-    const deltaIndicator = getDeltaIndicator && genreKey ? 
-      getDeltaIndicator('genres', genreKey) : null;
-
-    // SURGICAL FIX: Create meaningful tooltip text
-    const deltaText = deltaIndicator?.props?.children || '';
-    const deltaNumber = deltaText.replace(/[↗️↘️]/g, '').trim();
-    const isIncrease = deltaText.includes('↗️');
-    const tooltipText = isIncrease 
-      ? `${payload.genre} preference increased by ${deltaNumber} points since last week`
-      : deltaText.includes('↘️')
-      ? `${payload.genre} preference decreased by ${deltaNumber} points since last week`
-      : `${payload.genre}: ${payload.value}%`;
+    // Position delta text slightly below genre name
+    const deltaY = y + 14;
 
     return (
       <g>
@@ -77,26 +104,22 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
           x={x}
           y={y}
           textAnchor={textAnchor}
-          fontSize={12}
+          fontSize={11}
           fill="#DADADA"
           fontWeight="500"
-          style={{ cursor: 'help' }}
         >
-          <title>{tooltipText}</title>
-          {payload.genre}
+          {payload.value}
         </text>
-        {deltaIndicator && (
+        {deltaText && (
           <text
             x={x}
-            y={y + 15}
+            y={deltaY}
             textAnchor={textAnchor}
             fontSize={10}
-            fill={deltaIndicator?.props?.style?.color || '#DADADA'}
-            fontWeight="600"
-            style={{ cursor: 'help' }}
+            fill={deltaText.includes('↗️') ? '#00FF88' : deltaText.includes('↘️') ? '#FF4444' : '#999999'}
+            fontWeight="400"
           >
-            <title>{tooltipText}</title>
-            {deltaIndicator?.props?.children || ''}
+            {deltaText}
           </text>
         )}
       </g>
@@ -137,16 +160,14 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
 
   return (
     <div className={styles.container}>
-      {/* ONLY SPIDER CHART - REMOVED DUPLICATE GENRE LIST */}
       <div className={styles.chartContainer}>
-        {/* SURGICAL FIX: Recharts implementation instead of Chart.js */}
         <ResponsiveContainer width="100%" height={300}>
           <RadarChart
             data={chartData}
-            margin={{ top: 60, right: 60, bottom: 60, left: 60 }} // SURGICAL FIX: Increased margins for label space
+            margin={{ top: 60, right: 60, bottom: 60, left: 60 }}
           >
             <PolarGrid
-              stroke="rgba(0, 255, 255, 0.2)" // TIKO cyan grid
+              stroke="rgba(0, 255, 255, 0.2)"
             />
             <PolarAngleAxis
               dataKey="genre"
@@ -155,22 +176,20 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
             <Radar
               name="Genre Preference"
               dataKey="value"
-              stroke="#FF00CC" // TIKO pink
-              fill="rgba(255, 0, 204, 0.2)" // TIKO pink with transparency
+              stroke="#FF00CC"
+              fill="rgba(255, 0, 204, 0.2)"
               strokeWidth={2}
               dot={{
-                fill: '#FF00CC', // TIKO pink
+                fill: '#FF00CC',
                 strokeWidth: 2,
-                stroke: '#DADADA', // TIKO primary text
+                stroke: '#DADADA',
                 r: 4
               }}
             />
+            <CustomTooltip />
           </RadarChart>
         </ResponsiveContainer>
       </div>
-
-      {/* REMOVED: Enhanced Profile button as requested */}
-      {/* REMOVED: Duplicate genre list below chart as requested */}
     </div>
   );
 }

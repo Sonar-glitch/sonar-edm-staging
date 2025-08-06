@@ -1,116 +1,69 @@
-/* PHASE 1: ENHANCED GLASSMORPHIC SPIDER CHART WITH TIKO COLORS */
+/* TIKO-THEMED SPIDER CHART STYLES */
 
 .container {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
-/* SURGICAL FIX: ENHANCED GLASSMORPHIC CHART CONTAINER - REMOVED BOUNDARY AND IMPROVED SPACE */
 .chartContainer {
   flex: 1;
-  min-height: 280px; /* SURGICAL FIX: Increased from 250px for better space utilization */
-  max-height: 280px; /* SURGICAL FIX: Increased from 250px for better space utilization */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(21, 21, 31, 0.6);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: 12px;
-  /* SURGICAL FIX: REMOVED border: 1px solid rgba(0, 255, 255, 0.1); */
-  /* SURGICAL FIX: REMOVED margin-bottom: 1rem; for better space utilization */
+  width: 100%;
   position: relative;
-  overflow: hidden;
-  box-shadow: 
-    0 4px 20px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* GLASSMORPHIC CHART BACKGROUND ENHANCEMENT */
-.chartContainer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(
-    circle at center,
-    rgba(0, 207, 255, 0.05) 0%,
-    rgba(255, 0, 204, 0.05) 50%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* ENHANCED GENRE LABELS WITH TIKO STYLING */
-.genreLabel {
-  font-size: 11px !important;
-  fill: #DADADA !important; /* TIKO primary text */
-  font-weight: 500 !important;
-  text-shadow: 0 0 5px rgba(218, 218, 218, 0.3) !important;
-}
-
-/* GLASSMORPHIC GENRE LIST */
-.genreList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  background: rgba(21, 21, 31, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+/* TIKO-THEMED CUSTOM TOOLTIP */
+.customTooltip {
+  padding: 0.75rem 1rem;
+  background: rgba(21, 21, 31, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.3);
   border-radius: 8px;
-  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
-  padding: 1rem;
   box-shadow: 
-    0 4px 15px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 20px rgba(0, 207, 255, 0.2),
+    0 0 40px rgba(255, 0, 204, 0.1);
+  animation: tooltipFadeIn 0.3s ease;
 }
 
-/* ENHANCED GLASSMORPHIC GENRE ITEMS */
-.genreItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.8rem;
-  background: rgba(21, 21, 31, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* ENHANCED HOVER WITH TIKO GLOW */
-.genreItem:hover {
-  transform: translateY(-1px);
-  box-shadow: 
-    0 4px 20px rgba(0, 207, 255, 0.2), /* TIKO interactive highlight glow */
-    0 0 15px rgba(0, 207, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  border-color: rgba(0, 255, 255, 0.3);
-}
-
-.genreName {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #DADADA; /* TIKO primary text */
-  text-shadow: 0 0 8px rgba(218, 218, 218, 0.3);
-}
-
-.genreValue {
-  font-size: 0.875rem;
+.tooltipGenre {
+  margin: 0 0 0.25rem 0;
+  color: #DADADA;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #00CFFF; /* TIKO interactive highlight */
-  text-shadow: 0 0 10px rgba(0, 207, 255, 0.5);
+  text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
 }
 
-/* GLASSMORPHIC LOADING STATE */
+.tooltipValue {
+  margin: 0 0 0.25rem 0;
+  color: #FF00CC;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-shadow: 0 0 15px rgba(255, 0, 204, 0.4);
+}
+
+.tooltipDelta {
+  margin: 0;
+  color: #00CFFF;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-shadow: 0 0 10px rgba(0, 207, 255, 0.4);
+}
+
+/* LOADING STATE */
 .loadingState {
   display: flex;
   flex-direction: column;
@@ -122,7 +75,7 @@
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border-radius: 12px;
-  /* SURGICAL FIX: REMOVED border: 1px solid rgba(0, 255, 255, 0.1); for consistency */
+  border: 1px solid rgba(0, 255, 255, 0.1);
   height: 100%;
 }
 
@@ -130,7 +83,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid rgba(0, 255, 255, 0.1);
-  border-top: 3px solid #00CFFF; /* TIKO interactive highlight */
+  border-top: 3px solid #00CFFF;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -143,18 +96,18 @@
 }
 
 .loadingState p {
-  color: #999999; /* TIKO secondary text */
+  color: #999999;
   margin: 0;
 }
 
-/* GLASSMORPHIC ERROR STATE */
+/* ERROR STATE */
 .errorState {
   text-align: center;
   padding: 2rem;
-  background: rgba(255, 0, 204, 0.1); /* TIKO action button with low opacity */
+  background: rgba(255, 0, 204, 0.1);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  /* SURGICAL FIX: REMOVED border: 1px solid rgba(255, 0, 204, 0.3); for consistency */
+  border: 1px solid rgba(255, 0, 204, 0.3);
   border-radius: 12px;
   height: 100%;
   display: flex;
@@ -163,112 +116,79 @@
 }
 
 .errorState p:first-child {
-  color: #FF00CC; /* TIKO action button color */
+  color: #FF00CC;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
 .errorState p:last-child {
-  color: #999999; /* TIKO secondary text */
+  color: #999999;
   margin: 0;
 }
 
-/* GLASSMORPHIC FALLBACK MESSAGE */
-.fallbackMessage {
-  text-align: center;
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background: rgba(21, 21, 31, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 0, 204, 0.2);
-}
-
-.fallbackMessage span {
-  color: #888888; /* TIKO secondary text */
-}
-
-/* GLASSMORPHIC DATA SOURCE INFO */
-.dataSourceInfo {
-  text-align: center;
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background: rgba(21, 21, 31, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid rgba(0, 255, 255, 0.2);
-}
-
-.dataSourceInfo span {
-  color: #888888; /* TIKO secondary text */
-  font-size: 0.75rem;
-}
-
-/* GLASSMORPHIC ERROR INDICATOR */
-.errorIndicator {
-  text-align: center;
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background: rgba(21, 21, 31, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 0, 204, 0.2);
-}
-
-.errorIndicator span {
-  color: #999999; /* TIKO secondary text */
-  font-size: 0.75rem;
-}
-
-/* RESPONSIVE DESIGN - SURGICAL FIX: IMPROVED MOBILE SPACE UTILIZATION */
+/* RESPONSIVE DESIGN */
 @media (max-width: 768px) {
-  .chartContainer {
-    min-height: 220px; /* SURGICAL FIX: Increased from 200px for better mobile space */
-    max-height: 220px; /* SURGICAL FIX: Increased from 200px for better mobile space */
+  .customTooltip {
+    padding: 0.5rem 0.75rem;
   }
   
-  .genreLabel {
-    font-size: 10px !important;
+  .tooltipGenre {
+    font-size: 0.85rem;
   }
   
-  .genreList {
-    padding: 0.8rem;
-  }
-  
-  .genreItem {
-    padding: 0.4rem 0.6rem;
-  }
-  
-  .genreName, .genreValue {
+  .tooltipValue {
     font-size: 0.8rem;
   }
+  
+  .tooltipDelta {
+    font-size: 0.75rem;
+  }
+}
+/* TIKO-THEMED CUSTOM TOOLTIP */
+.customTooltip {
+  padding: 0.75rem 1rem;
+  background: rgba(21, 21, 31, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  box-shadow: 
+    0 4px 20px rgba(0, 207, 255, 0.2),
+    0 0 40px rgba(255, 0, 204, 0.1);
+  animation: tooltipFadeIn 0.3s ease;
 }
 
-/* GLASSMORPHIC ENHANCEMENT DETAILS */
-.genreItem::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  pointer-events: none;
-  z-index: 2;
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.chartContainer::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  pointer-events: none;
-  z-index: 3;
+.tooltipGenre {
+  margin: 0 0 0.25rem 0;
+  color: #DADADA;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
 }
 
+.tooltipValue {
+  margin: 0 0 0.25rem 0;
+  color: #FF00CC;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-shadow: 0 0 15px rgba(255, 0, 204, 0.4);
+}
+
+.tooltipDelta {
+  margin: 0;
+  color: #00CFFF;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-shadow: 0 0 10px rgba(0, 207, 255, 0.4);
+}
