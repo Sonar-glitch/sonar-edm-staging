@@ -100,7 +100,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
         <div className={styles.customTooltip}>
           <p className={styles.tooltipGenre}>{label}</p>
           <p className={styles.tooltipValue}>{value}% {deltaInfo && (
-            <span className={styles.deltaIndicator} style={{ marginLeft: 8 }}>{deltaInfo}</span>
+              <span className={styles.deltaIndicator} style={{ marginLeft: 8, border: '1px solid #FFD700', padding: '0 4px', borderRadius: '4px', background: '#15151F' }}>{deltaInfo} <span style={{color:'#FFD700',fontWeight:'bold'}}>DEBUG</span></span>
           )}</p>
           <p className={styles.tooltipDelta}>{tooltip}</p>
         </div>
@@ -128,14 +128,14 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
         >
           {payload.value}
           {deltaInfo && (
-            <tspan
-              dx={8}
-              fontSize={11}
-              fill={deltaInfo.includes('↗️') ? '#00FF88' : '#FF4444'}
-              fontWeight="600"
-            >
-              {deltaInfo}
-            </tspan>
+              <tspan
+                dx={8}
+                fontSize={11}
+                fill={deltaInfo.includes('↗️') ? '#00FF88' : '#FF4444'}
+                fontWeight="600"
+              >
+                {deltaInfo} DEBUG
+              </tspan>
           )}
         </text>
       </g>

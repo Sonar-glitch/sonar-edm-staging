@@ -121,8 +121,9 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
         }
       }
       return (
-        <span className={styles.deltaIndicator} style={{ marginLeft: 8, cursor: 'pointer' }} title={tooltip}>
-          {indicator}
+        // Add a visible debug marker for deployment verification
+        <span className={styles.deltaIndicator} style={{ marginLeft: 8, cursor: 'pointer', border: '1px solid #FFD700', padding: '0 4px', borderRadius: '4px', background: '#15151F' }} title={tooltip}>
+          {indicator} <span style={{color:'#FFD700',fontWeight:'bold'}}>DEBUG</span>
         </span>
       );
     } catch (err) {
