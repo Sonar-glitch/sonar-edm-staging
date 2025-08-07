@@ -123,10 +123,13 @@ export default function EnhancedPersonalizedDashboard() {
   // ENHANCED: Load weekly deltas with real data and fallback mechanism
   const loadWeeklyDeltas = async () => {
     try {
+      console.log('🎯 Loading weekly deltas...');
       const response = await fetch('/api/user/weekly-deltas');
       const data = await response.json();
+      console.log('📊 Weekly deltas response:', data);
       
       if (data.success && data.deltas) {
+        console.log('✅ Got weekly deltas data:', data.deltas);
         // Update data source tracking for deltas
         setDataSources(prev => ({
           ...prev,
@@ -141,6 +144,7 @@ export default function EnhancedPersonalizedDashboard() {
           }
         }));
         
+        console.log('⚡ Setting weekly deltas state...');
         setWeeklyDeltas(data.deltas);
       } else {
           // Use the fallback data from the API response
@@ -237,23 +241,27 @@ export default function EnhancedPersonalizedDashboard() {
     }
   }, [activeTooltip]);
 
-  // Delta indicator component with debugging
+  // Delta indicator component with enhanced debugging
   const getDeltaIndicator = useCallback((type, key) => {
+    console.log('🔍 getDeltaIndicator called with:', { type, key, weeklyDeltas });
+    
     if (!weeklyDeltas || !weeklyDeltas[type]) {
-      console.log('DEBUG: No weeklyDeltas data available');
+      console.log('❌ No weeklyDeltas data available for type:', type);
       return null;
     }
 
+    console.log(`📊 Weekly deltas for ${type}:`, weeklyDeltas[type]);
     const delta = weeklyDeltas[type][key];
+    
     if (!delta || typeof delta.change === 'undefined') {
-      console.log(`DEBUG: No delta found for ${type}.${key}`);
+      console.log(`❌ No delta found for ${type}.${key}`);
       return null;
     }
 
-    console.log(`DEBUG: Found delta for ${type}.${key}:`, delta);
+    console.log(`✨ Found delta for ${type}.${key}:`, delta);
 
     if (Math.abs(delta.change) === 0) {
-      console.log('DEBUG: Delta change is zero');
+      console.log('⚠️ Delta change is zero');
       return null;
     }
 
@@ -264,7 +272,7 @@ export default function EnhancedPersonalizedDashboard() {
       color: isPositive ? '#00FF88' : '#FF4444'
     };
 
-    console.log('DEBUG: Returning indicator:', indicator);
+    console.log('✅ Returning indicator:', indicator);
     return indicator;
   }, [weeklyDeltas]);
 

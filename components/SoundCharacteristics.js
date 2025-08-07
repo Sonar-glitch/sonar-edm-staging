@@ -2,11 +2,24 @@ import { useState, useEffect, memo } from 'react';
 import styles from '../styles/SoundCharacteristics.module.css';
 
 const DeltaIndicator = memo(({ type, characteristicKey, getDeltaIndicator }) => {
-  if (!getDeltaIndicator || typeof getDeltaIndicator !== 'function') return null;
+  console.log(`🎯 DeltaIndicator called for ${type}.${characteristicKey}`);
+  
+  if (!getDeltaIndicator || typeof getDeltaIndicator !== 'function') {
+    console.log('❌ getDeltaIndicator is not a function');
+    return null;
+  }
+  
   const delta = getDeltaIndicator(type, characteristicKey);
-  if (!delta) return null;
+  console.log('🎯 Delta returned:', delta);
+  
+  if (!delta) {
+    console.log('❌ No delta returned');
+    return null;
+  }
 
   const { arrow, change, color } = delta;
+  console.log(`✅ Rendering delta: ${arrow} ${change} in color ${color}`);
+  
   return (
     <span className={styles.deltaIndicator} style={{ color }}>
       {arrow} {change}
@@ -163,7 +176,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
                 </span>
                 <DeltaIndicator
                   type="soundCharacteristics"
-                  characteristicKey={key}
+                  characteristicKey={key.toLowerCase()}
                   getDeltaIndicator={getDeltaIndicator}
                 />
               </div>
