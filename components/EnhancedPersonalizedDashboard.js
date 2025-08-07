@@ -123,11 +123,14 @@ export default function EnhancedPersonalizedDashboard() {
   // ENHANCED: Load weekly deltas with real data and fallback mechanism
   const loadWeeklyDeltas = async () => {
     try {
+      console.log('Fetching weekly deltas...');
       // Fetch real delta data from API
       const response = await fetch('/api/user/weekly-deltas');
       const data = await response.json();
+      console.log('Weekly deltas API response:', data);
       
       if (data.success && data.deltas) {
+        console.log('Got successful delta response');
         // Update data source tracking for deltas
         setDataSources(prev => ({
           ...prev,
@@ -263,14 +266,23 @@ export default function EnhancedPersonalizedDashboard() {
     }
   }, [activeTooltip]);
 
-  // NEW: Delta indicator component
+  // NEW: Delta indicator component with debug logging
   const getDeltaIndicator = useCallback((type, key) => {
+    console.log('getDeltaIndicator called with:', { type, key, weeklyDeltas });
+    
     const delta = weeklyDeltas[type]?.[key];
-    if (!delta || Math.abs(delta.change) === 0) return null;
+    console.log('delta value:', delta);
+    
+    if (!delta || Math.abs(delta.change) === 0) {
+      console.log('no delta or zero change');
+      return null;
+    }
 
     const isPositive = delta.direction === 'up';
     const arrow = isPositive ? '↗️' : '↘️';
     const color = isPositive ? '#00FF88' : '#FF4444';
+    
+    console.log('rendering delta:', { arrow, change: delta.change, color });
 
     return (
       <span className={styles.deltaIndicator} style={{ color }}>
