@@ -166,6 +166,21 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
 
   return (
     <div className={styles.container}>
+      {/* DEBUG MARKER - REMOVE AFTER VERIFICATION */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        background: '#FF00CC',
+        color: '#FFFFFF',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        zIndex: 1000,
+        fontSize: '12px',
+        fontWeight: 'bold'
+      }}>
+        DEBUG 2025-08-07
+      </div>
       <div className={styles.characteristicsGrid}>
         {Object.entries(characteristics).map(([key, char]) => (
           <div 

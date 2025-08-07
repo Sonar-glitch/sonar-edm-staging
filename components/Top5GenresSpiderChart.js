@@ -177,6 +177,21 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
   return (
     <div className={styles.container}>
       <div className={styles.chartContainer}>
+        {/* DEBUG MARKER - REMOVE AFTER VERIFICATION */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          background: '#FF00CC',
+          color: '#FFFFFF',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          zIndex: 1000,
+          fontSize: '12px',
+          fontWeight: 'bold'
+        }}>
+          DEBUG 2025-08-07
+        </div>
         <ResponsiveContainer width="100%" height={300}>
           <RadarChart
             data={chartData}
