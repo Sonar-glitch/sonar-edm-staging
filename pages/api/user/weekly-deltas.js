@@ -59,7 +59,7 @@ export default async function handler(req, res) {
 
     // Get current taste profile
     const currentProfile = await db.collection('user_taste_profiles').findOne(
-      { userId },
+      { userEmail: userId },
       { sort: { createdAt: -1 } }
     );
 
