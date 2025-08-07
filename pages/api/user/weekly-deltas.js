@@ -16,25 +16,70 @@ export default async function handler(req, res) {
   const startTime = Date.now();
 
   try {
-    // Authentication check
+    // Authentication check with fallback
     const session = await getSession({ req });
     if (!session?.user?.email) {
-      return res.status(401).json({ 
-        success: false,
-        error: 'UNAUTHORIZED',
-        message: 'Authentication required',
-        fallbackData: getFallbackDeltas()
+      console.log('⚠️ No session found, using fallback data');
+      return res.status(200).json({ 
+        success: true,
+        deltas: getFallbackDeltas(),
+        dataSource: {
+          isReal: false,
+          cached: false,
+          calculatedAt: new Date().toISOString(),
+          confidence: 0.4,
+          processingTime: Date.now() - startTime,
+          error: 'NO_SESSION',
+          fallbackReason: 'Authentication required but session not found'
+        }
       });
     }
 
-    const { client, db } = await connectToDatabase();
+    let client, db;
+    try {
+      ({ client, db } = await connectToDatabase());
+    } catch (err) {
+      console.error('❌ MongoDB connection error:', err);
+      return res.status(200).json({
+        success: true,
+        deltas: getFallbackDeltas(),
+        dataSource: {
+          isReal: false,
+          cached: false,
+          calculatedAt: new Date().toISOString(),
+          confidence: 0.4,
+          processingTime: Date.now() - startTime,
+          error: 'DB_CONNECTION_ERROR',
+          fallbackReason: 'Could not connect to database'
+        }
+      });
+    }
+    
     const userId = session.user.email;
 
     // Check cache first (24 hour TTL for mobile performance)
-    const cachedDeltas = await db.collection('weekly_deltas_cache').findOne({
-      userId,
-      createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-    });
+    let cachedDeltas;
+    try {
+      cachedDeltas = await db.collection('weekly_deltas_cache').findOne({
+        userId,
+        createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      });
+    } catch (err) {
+      console.error('❌ Cache query error:', err);
+      return res.status(200).json({
+        success: true,
+        deltas: getFallbackDeltas(),
+        dataSource: {
+          isReal: false,
+          cached: false,
+          calculatedAt: new Date().toISOString(),
+          confidence: 0.4,
+          processingTime: Date.now() - startTime,
+          error: 'CACHE_QUERY_ERROR',
+          fallbackReason: 'Failed to query cache'
+        }
+      });
+    }
 
     if (cachedDeltas) {
       console.log(`✅ Cache hit for user ${userId}`);
