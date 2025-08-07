@@ -127,12 +127,15 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
           tooltip = 'Demo data - personalizing your experience (3 more days)';
         }
       }
-      return (
-        // Add a visible debug marker for deployment verification
-        <span className={styles.deltaIndicator} style={{ marginLeft: 8, cursor: 'pointer', border: '1px solid #FFD700', padding: '0 4px', borderRadius: '4px', background: '#15151F' }} title={tooltip}>
-          {indicator} <span style={{color:'#FFD700',fontWeight:'bold'}}>DEBUG</span>
-        </span>
-      );
+      if (indicator) {
+        const { arrow, change, color } = indicator;
+        return (
+          <span className={styles.deltaIndicator} style={{ color }}>
+            {arrow} {change}
+          </span>
+        );
+      }
+      return null;
     } catch (err) {
       console.error('Error rendering delta indicator:', err);
       return null;

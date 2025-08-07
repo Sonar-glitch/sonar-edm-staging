@@ -31,25 +31,19 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
         ];
       }
 
-      // Convert data format for Recharts
+      // Convert data format for Recharts and pre-calculate deltas
       const rechartData = genreData.map(genre => ({
         genre: genre.name,
         value: genre.percentage
       }));
 
-      // Pre-calculate deltas for all genres to avoid calling in render
       const deltas = {};
       if (getDeltaIndicator && typeof getDeltaIndicator === 'function') {
         genreData.forEach(genre => {
-          try {
-            const genreKey = genre.name.toLowerCase().replace(/\s+/g, ' ').trim();
-            const delta = getDeltaIndicator('genres', genreKey);
-            if (delta) {
-              const { arrow, change, color } = delta;
-              deltas[genre.name] = { arrow, change, color };
-            }
-          } catch (err) {
-            console.error('Error getting delta for genre:', genre.name, err);
+          const genreKey = genre.name.toLowerCase().replace(/\s+/g, ' ').trim();
+          const delta = getDeltaIndicator('genres', genreKey);
+          if (delta) {
+            deltas[genre.name] = delta;
           }
         });
       }
@@ -100,9 +94,14 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
       return (
         <div className={styles.customTooltip}>
           <p className={styles.tooltipGenre}>{label}</p>
-          <p className={styles.tooltipValue}>{value}% {deltaInfo && (
-              <span className={styles.deltaIndicator} style={{ marginLeft: 8, border: '1px solid #FFD700', padding: '0 4px', borderRadius: '4px', background: '#15151F' }}>{deltaInfo} <span style={{color:'#FFD700',fontWeight:'bold'}}>DEBUG</span></span>
-          )}</p>
+          <p className={styles.tooltipValue}>
+            {value}% 
+            {deltaInfo && (
+              <span className={styles.deltaIndicator} style={{ color: deltaInfo.color }}>
+                {deltaInfo.arrow} {deltaInfo.change}
+              </span>
+            )}
+          </p>
           <p className={styles.tooltipDelta}>{tooltip}</p>
         </div>
       );
