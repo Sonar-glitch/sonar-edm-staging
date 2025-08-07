@@ -64,40 +64,58 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     }
   };
 
-  // ✅ MINIMAL ENHANCEMENT: Enhanced existing CustomTooltip without breaking structure
+
+  // Enhanced CustomTooltip with protocol-compliant delta and tooltip logic
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const value = payload[0].value;
       const deltaInfo = genreDeltas[label];
-      
-      // ✅ MINIMAL ADDITION: Simple personalization message
-      const personalizationMessage = "Demo data - personalizing your experience (3 more days)";
-
+      // Try to extract delta value and direction
+      let change = 0;
+      let direction = '';
+      if (deltaInfo) {
+        const match = /([↗↘])\s*(\d+)/.exec(deltaInfo);
+        if (match) {
+          direction = match[1] === '↗️' ? 'up' : 'down';
+          change = parseInt(match[2], 10);
+        }
+      }
+      // Determine data source (real or fallback)
+      let isReal = false;
+      if (dataSource && dataSource.isReal) {
+        isReal = true;
+      }
+      // Tooltip message per protocol
+      let tooltip = '';
+      if (isReal && change !== 0) {
+        tooltip = `Your ${label} taste ${direction === 'up' ? 'increased' : 'decreased'} ${change}% in the last 7 days`;
+      } else if (!isReal) {
+        if (dataSource && dataSource.error === 'API_ERROR') {
+          tooltip = 'Demo data - waiting for your music activity';
+        } else {
+          tooltip = 'Demo data - personalizing your experience (3 more days)';
+        }
+      }
       return (
         <div className={styles.customTooltip}>
           <p className={styles.tooltipGenre}>{label}</p>
-          <p className={styles.tooltipValue}>{value}%</p>
-          {deltaInfo && (
-            <p className={styles.tooltipValue}>{deltaInfo}</p>
-          )}
-          {/* ✅ MINIMAL ADDITION: Personalization context using existing CSS class */}
-          <p className={styles.tooltipDelta}>
-            {personalizationMessage}
-          </p>
+          <p className={styles.tooltipValue}>{value}% {deltaInfo && (
+            <span className={styles.deltaIndicator} style={{ marginLeft: 8 }}>{deltaInfo}</span>
+          )}</p>
+          <p className={styles.tooltipDelta}>{tooltip}</p>
         </div>
       );
     }
     return null;
   };
 
-  // Custom label component for genre names
+
+  // Custom label component for genre names with always-visible delta
   const CustomLabel = ({ payload, x, y, textAnchor }) => {
     if (!payload || !payload.value) {
       return null;
     }
-
     const deltaInfo = genreDeltas[payload.value];
-    
     return (
       <g>
         <text
@@ -109,19 +127,17 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
           fontWeight="500"
         >
           {payload.value}
+          {deltaInfo && (
+            <tspan
+              dx={8}
+              fontSize={11}
+              fill={deltaInfo.includes('↗️') ? '#00FF88' : '#FF4444'}
+              fontWeight="600"
+            >
+              {deltaInfo}
+            </tspan>
+          )}
         </text>
-        {deltaInfo && (
-          <text
-            x={x}
-            y={y + 16}
-            textAnchor={textAnchor}
-            fontSize={10}
-            fill="#00CFFF"
-            fontWeight="400"
-          >
-            {deltaInfo}
-          </text>
-        )}
       </g>
     );
   };

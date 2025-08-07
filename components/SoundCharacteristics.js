@@ -80,22 +80,51 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
     }
   };
 
-  // ✅ MINIMAL ADDITION: Simple tooltip text generation
-  const generateSimpleTooltip = (key) => {
-    // For now, return personalization-focused message
-    // This can be enhanced later with real delta data
-    return `Demo data - personalizing your experience (3 more days)`;
-  };
 
-  // Simple delta indicator renderer - just return the component
+  // Enhanced delta indicator with up/down arrow, value, and protocol-compliant tooltip
   const renderDeltaIndicator = (key) => {
     if (!getDeltaIndicator || typeof getDeltaIndicator !== 'function') {
       return null;
     }
-
     try {
       const indicator = getDeltaIndicator('soundCharacteristics', key);
-      return indicator || null;
+      if (!indicator) return null;
+
+      // Tooltip logic: get delta and data source
+      let tooltip = '';
+      let isReal = false;
+      let change = 0;
+      let direction = '';
+      // Try to extract info from indicator props if possible
+      if (indicator.props && indicator.props.children) {
+        // e.g. "↗️ 3" or "↘️ 1"
+        const match = /([↗↘])\s*(\d+)/.exec(indicator.props.children);
+        if (match) {
+          direction = match[1] === '↗️' ? 'up' : 'down';
+          change = parseInt(match[2], 10);
+        }
+      }
+      // Determine data source (real or fallback)
+      if (typeof dataSource === 'object' && dataSource.isReal) {
+        isReal = true;
+      }
+      // Tooltip message per protocol
+      if (isReal && change !== 0) {
+        tooltip = `Your ${key} taste ${direction === 'up' ? 'increased' : 'decreased'} ${change}% in the last 7 days`;
+      } else if (!isReal) {
+        // Fallback: show day-based or API failure message
+        if (dataSource && dataSource.error === 'API_ERROR') {
+          tooltip = 'Demo data - waiting for your music activity';
+        } else {
+          // Optionally, you could use a day-based message if available
+          tooltip = 'Demo data - personalizing your experience (3 more days)';
+        }
+      }
+      return (
+        <span className={styles.deltaIndicator} style={{ marginLeft: 8, cursor: 'pointer' }} title={tooltip}>
+          {indicator}
+        </span>
+      );
     } catch (err) {
       console.error('Error rendering delta indicator:', err);
       return null;
@@ -141,7 +170,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
           <div 
             key={key} 
             className={styles.characteristicItem}
-            title={generateSimpleTooltip(key)}
+            // Tooltip now handled by delta indicator
           >
             <div className={styles.characteristicHeader}>
               <span className={styles.characteristicName}>
