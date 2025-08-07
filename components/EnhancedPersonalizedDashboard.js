@@ -237,35 +237,35 @@ export default function EnhancedPersonalizedDashboard() {
     }
   }, [activeTooltip]);
 
-  // Delta indicator component
+  // Delta indicator component with debugging
   const getDeltaIndicator = useCallback((type, key) => {
-    // DEBUG: Log the inputs and state
-    console.log(`DEBUG: getDeltaIndicator called with type=${type}, key=${key}`);
-    console.log('DEBUG: weeklyDeltas state:', weeklyDeltas);
+    if (!weeklyDeltas || !weeklyDeltas[type]) {
+      console.log('DEBUG: No weeklyDeltas data available');
+      return null;
+    }
 
-    const delta = weeklyDeltas[type]?.[key];
-    console.log('DEBUG: found delta:', delta);
+    const delta = weeklyDeltas[type][key];
+    if (!delta || typeof delta.change === 'undefined') {
+      console.log(`DEBUG: No delta found for ${type}.${key}`);
+      return null;
+    }
 
-    if (!delta || Math.abs(delta.change) === 0) {
-      console.log('DEBUG: Returning null - no delta or zero change');
+    console.log(`DEBUG: Found delta for ${type}.${key}:`, delta);
+
+    if (Math.abs(delta.change) === 0) {
+      console.log('DEBUG: Delta change is zero');
       return null;
     }
 
     const isPositive = delta.direction === 'up';
-    const arrow = isPositive ? '↗️' : '↘️';
-    const color = isPositive ? '#00FF88' : '#FF4444';
+    const indicator = {
+      arrow: isPositive ? '↗️' : '↘️',
+      change: `${Math.abs(delta.change)}%`,
+      color: isPositive ? '#00FF88' : '#FF4444'
+    };
 
-    const result = {
-      arrow,
-      color,
-      change: `${Math.abs(delta.change)}%`
-    };
-    console.log('DEBUG: Returning indicator:', result);
-    return result;
-  }, [weeklyDeltas]);
-      change: Math.abs(delta.change),
-      color
-    };
+    console.log('DEBUG: Returning indicator:', indicator);
+    return indicator;
   }, [weeklyDeltas]);
 
   if (loading) {
