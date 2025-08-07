@@ -1,4 +1,3 @@
-// ENHANCED DASHBOARD: Themed tooltips, weekly deltas, enhanced data sources
 // PRESERVES: All existing functionality and UI theme
 // ADDS: Custom themed tooltips, weekly delta indicators, comprehensive data source info
 // REMOVES: Redundant red section as requested
@@ -72,7 +71,9 @@ export default function EnhancedPersonalizedDashboard() {
         soundCharacteristics: tasteData.dataSources?.soundCharacteristics
       });
 
-      // ENHANCED: Process comprehensive data sources
+      setDashboardData(tasteData);
+
+      // ENHANCED: Process data sources with detailed tracking
       const newDataSources = {
         spotify: {
           isReal: tasteData.dataSources?.genreProfile?.isRealData || false,
@@ -80,8 +81,8 @@ export default function EnhancedPersonalizedDashboard() {
           tracksAnalyzed: tasteData.dataSources?.genreProfile?.tracksAnalyzed || 0,
           confidence: tasteData.dataSources?.genreProfile?.confidence || 0,
           source: 'spotify_api',
-          timePeriod: 'medium_term',
-          description: 'top artists and tracks (6-month period)',
+          timePeriod: 'last_6_months',
+          description: 'top artists and tracks from Spotify',
           error: tasteData.dataSources?.genreProfile?.error
         },
         soundstat: {
@@ -90,11 +91,19 @@ export default function EnhancedPersonalizedDashboard() {
           tracksAnalyzed: tasteData.dataSources?.soundCharacteristics?.tracksAnalyzed || 0,
           confidence: tasteData.dataSources?.soundCharacteristics?.confidence || 0,
           source: tasteData.dataSources?.soundCharacteristics?.source || 'enhanced_audio_analysis',
-          methodBreakdown: tasteData.dataSources?.soundCharacteristics?.methodBreakdown,
-          trackSelectionContext: tasteData.dataSources?.soundCharacteristics?.trackSelectionContext,
-          representativeness: tasteData.dataSources?.soundCharacteristics?.representativeness,
-          fallbackReason: tasteData.dataSources?.soundCharacteristics?.fallbackReason,
+          timePeriod: tasteData.dataSources?.soundCharacteristics?.timePeriod || 'recent_tracks',
+          description: tasteData.dataSources?.soundCharacteristics?.description || 'audio features from enhanced analysis',
           error: tasteData.dataSources?.soundCharacteristics?.error
+        },
+        events: {
+          isReal: false, // Events are currently mock
+          lastFetch: null,
+          tracksAnalyzed: 0,
+          confidence: 0,
+          source: 'mock_data',
+          timePeriod: 'static',
+          description: 'demo events for UI testing',
+          error: 'MOCK_DATA_ACTIVE'
         },
         seasonal: {
           isReal: tasteData.dataSources?.seasonalProfile?.isRealData || false,
@@ -119,8 +128,14 @@ export default function EnhancedPersonalizedDashboard() {
         soundstatState: newDataSources.soundstat
       });
 
-      // REPLACE loadWeeklyDeltas function (lines 122-165) in EnhancedPersonalizedDashboard.js
-// PRESERVES: All existing functionality, adds real data with fallback
+    } catch (err) {
+      console.error('❌ Dashboard loading error:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ENHANCED: Load weekly deltas with real data and fallback mechanism
   const loadWeeklyDeltas = async () => {
     try {
@@ -239,87 +254,47 @@ export default function EnhancedPersonalizedDashboard() {
     
     // Enhanced tooltip content based on source type
     let tooltipContent = '';
-    
-    if (sourceKey === 'spotify') {
-      tooltipContent = isReal 
-        ? `Based on your ${source.description}
-Data source: Spotify API
-Artists analyzed: ${Math.floor((source.tracksAnalyzed || 0) / 2)}
-Tracks analyzed: ${Math.floor((source.tracksAnalyzed || 0) / 2)}
-Confidence: ${Math.round((source.confidence || 0) * 100)}%
-Represents your core music taste`
-        : `Demo Data - Using fallback data
-Reason: ${source.error || 'No real data available'}`;
-    } else if (sourceKey === 'soundstat') {
-      if (source.methodBreakdown && source.trackSelectionContext) {
-        const audioCount = (source.methodBreakdown.essentia_analysis?.count || 0) + 
-                          (source.methodBreakdown.acousticbrainz?.count || 0);
-        const inferenceCount = source.methodBreakdown.metadata_inference?.count || 0;
-        const timePeriod = source.trackSelectionContext.description || "recent tracks";
-        
-        tooltipContent = isReal 
-          ? `Based on your ${source.tracksAnalyzed} most-played tracks (6-month period)
-Audio analysis: ${audioCount} tracks (90% accuracy)
-Genre inference: ${inferenceCount} tracks (60% accuracy)
-Overall accuracy: ${Math.round((source.confidence || 0) * 100)}%
-Represents your core listening preferences`
-          : `Demo Data - Using fallback data
-Reason: ${source.fallbackReason || 'No real data available'}`;
-      } else {
-        tooltipContent = isReal 
-          ? `Based on your ${source.tracksAnalyzed} most-played tracks
-Data source: ${source.source}
-Confidence: ${Math.round((source.confidence || 0) * 100)}%
-Analysis method: Enhanced audio processing`
-          : `Demo Data - Using fallback data
-Reason: ${source.fallbackReason || 'No real data available'}`;
-      }
-    } else if (sourceKey === 'seasonal') {
-      tooltipContent = isReal 
-        ? `Based on your ${source.description}
-Data source: Spotify API
-Tracks analyzed: ${source.tracksAnalyzed}
-Time period: Recent listening history
-Confidence: ${Math.round((source.confidence || 0) * 100)}%
-Seasonal pattern detection from timestamps`
-        : `Demo Data - Using fallback data
-Reason: ${source.error || 'No real data available'}`;
-    } else if (sourceKey === 'events') {
-      tooltipContent = isReal 
-        ? `Live event data from Ticketmaster
-Events found: ${source.eventsCount}
-Data source: Ticketmaster API
-Last updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}
-Filtered by your music taste`
-        : `Demo Data - Using fallback data
-Reason: ${source.error || 'No real data available'}`;
+    if (isReal) {
+      const timePeriod = source.trackSelectionContext?.description || "recent tracks";
+      tooltipContent = `Real Data\n${source.tracksAnalyzed || 0} tracks analyzed\nConfidence: ${Math.round((source.confidence || 0) * 100)}%\nSource: ${source.source || 'spotify'}\nPeriod: ${timePeriod}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+    } else {
+      const errorCode = source.error || 'UNKNOWN_ERROR';
+      const fallbackReason = source.fallbackReason || 'Data source unavailable';
+      tooltipContent = `Fallback Data\nError: ${errorCode}\nReason: ${fallbackReason}\nUsing demo data for display`;
     }
-
-    const handleMouseEnter = (e) => {
-      setActiveTooltip({ sourceKey, content: tooltipContent });
-      setTooltipPosition({ x: e.clientX, y: e.clientY });
-    };
-
-    const handleMouseLeave = () => {
-      setActiveTooltip(null);
-    };
-
-    const handleMouseMove = (e) => {
-      if (activeTooltip?.sourceKey === sourceKey) {
-        setTooltipPosition({ x: e.clientX, y: e.clientY });
-      }
-    };
 
     return (
       <div 
-        className={styles.statusIndicator}
+        className={`${styles.dataIndicator} ${isReal ? styles.realData : styles.fallbackData}`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onMouseMove={handleMouseMove}
+        data-tooltip={tooltipContent}
       >
-        {isReal ? 'Real Data' : 'Demo Data'}
+        {isReal ? 'Real Data' : 'Fallback'}
       </div>
     );
+  };
+
+  // NEW: Tooltip event handlers
+  const handleMouseEnter = (e) => {
+    const content = e.target.getAttribute('data-tooltip');
+    if (content) {
+      setActiveTooltip({ content });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setActiveTooltip(null);
+  };
+
+  const handleMouseMove = (e) => {
+    if (activeTooltip) {
+      setTooltipPosition({
+        x: e.clientX,
+        y: e.clientY
+      });
+    }
   };
 
   // NEW: Delta indicator component
@@ -375,17 +350,7 @@ Reason: ${source.error || 'No real data available'}`;
 
   return (
     <div className={styles.container}>
-      {/* PRESERVED: Profile Header */}
-      <div className={styles.profileHeader}>
-        <div className={styles.profileInfo}>
-          <h1 className={styles.profileTitle}>
-            🎧 You're all about <span className={styles.highlight}>house</span> + <span className={styles.highlight}>techno</span> with a vibe shift toward <span className={styles.highlight}>fresh sounds</span>.
-          </h1>
-        </div>
-      </div>
-
-      {/* ENHANCED: Dashboard Grid with Weekly Deltas */}
-      <div className={styles.dashboardGrid}>
+      <div className={styles.dashboard}>
         {/* ROW 1: TOP 5 GENRES + SEASONAL VIBES */}
         <div className={styles.row1}>
           <div className={styles.leftHalf}>
@@ -396,7 +361,8 @@ Reason: ${source.error || 'No real data available'}`;
               </div>
               <div className={styles.cardContent}>
                 <Top5GenresSpiderChart 
-                  data={dashboardData.genreProfile} 
+                  data={dashboardData.genreProfile}
+                  dataSource={dataSources.spotify}
                   getDeltaIndicator={getDeltaIndicator}
                 />
               </div>
