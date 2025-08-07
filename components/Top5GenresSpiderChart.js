@@ -64,28 +64,14 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     }
   };
 
-  // ✅ SURGICAL ENHANCEMENT: Enhanced custom tooltip with personalization context
+  // ✅ MINIMAL ENHANCEMENT: Enhanced existing CustomTooltip without breaking structure
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const value = payload[0].value;
       const deltaInfo = genreDeltas[label];
       
-      // ✅ SURGICAL ADDITION: Generate personalization tooltip text
-      const generateGenreTooltipText = (genre, value, deltaInfo) => {
-        if (deltaInfo) {
-          const deltaMatch = deltaInfo.match(/([↗️↘️])\s*(\d+)/);
-          if (deltaMatch) {
-            const direction = deltaMatch[1] === '↗️' ? 'increased' : 'decreased';
-            const change = deltaMatch[2];
-            return `Your ${genre.toLowerCase()} interest ${direction} ${change}% in the last 7 days`;
-          }
-        }
-        
-        // Fallback to personalization-focused messaging
-        return `Demo data - personalizing your experience (3 more days)`;
-      };
-
-      const tooltipText = generateGenreTooltipText(label, value, deltaInfo);
+      // ✅ MINIMAL ADDITION: Simple personalization message
+      const personalizationMessage = "Demo data - personalizing your experience (3 more days)";
 
       return (
         <div className={styles.customTooltip}>
@@ -94,9 +80,9 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
           {deltaInfo && (
             <p className={styles.tooltipValue}>{deltaInfo}</p>
           )}
-          {/* ✅ SURGICAL ADDITION: Personalization context using existing CSS class */}
+          {/* ✅ MINIMAL ADDITION: Personalization context using existing CSS class */}
           <p className={styles.tooltipDelta}>
-            {tooltipText}
+            {personalizationMessage}
           </p>
         </div>
       );

@@ -80,22 +80,10 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
     }
   };
 
-  // ✅ SURGICAL ADDITION: Tooltip generation function
-  const generateTooltipText = (key, characteristic, deltaIndicator) => {
-    // Check if we have real delta data
-    if (deltaIndicator && deltaIndicator.props && deltaIndicator.props.children) {
-      const deltaText = deltaIndicator.props.children;
-      const deltaMatch = deltaText.match(/([↗️↘️])\s*(\d+)/);
-      
-      if (deltaMatch) {
-        const direction = deltaMatch[1] === '↗️' ? 'increased' : 'decreased';
-        const change = deltaMatch[2];
-        return `Your ${key} taste ${direction} ${change}% in the last 7 days`;
-      }
-    }
-
-    // Fallback to personalization-focused messaging
-    // This would be enhanced with real progress tracking in the future
+  // ✅ MINIMAL ADDITION: Simple tooltip text generation
+  const generateSimpleTooltip = (key) => {
+    // For now, return personalization-focused message
+    // This can be enhanced later with real delta data
     return `Demo data - personalizing your experience (3 more days)`;
   };
 
@@ -149,46 +137,41 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
   return (
     <div className={styles.container}>
       <div className={styles.characteristicsGrid}>
-        {Object.entries(characteristics).map(([key, char]) => {
-          const deltaIndicator = renderDeltaIndicator(key);
-          const tooltipText = generateTooltipText(key, char, deltaIndicator);
-          
-          return (
-            <div 
-              key={key} 
-              className={`${styles.characteristicItem} ${styles.deltaTooltipWrapper}`}
-              data-tooltip={tooltipText}
-            >
-              <div className={styles.characteristicHeader}>
-                <span className={styles.characteristicName}>
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
+        {Object.entries(characteristics).map(([key, char]) => (
+          <div 
+            key={key} 
+            className={styles.characteristicItem}
+            title={generateSimpleTooltip(key)}
+          >
+            <div className={styles.characteristicHeader}>
+              <span className={styles.characteristicName}>
+                {key.charAt(0).toUpperCase() + key.slice(1)}
+              </span>
+              <div className={styles.characteristicValueContainer}>
+                <span className={styles.characteristicValue}>
+                  {char.value}%
                 </span>
-                <div className={styles.characteristicValueContainer}>
-                  <span className={styles.characteristicValue}>
-                    {char.value}%
-                  </span>
-                  {deltaIndicator}
-                </div>
+                {renderDeltaIndicator(key)}
               </div>
-
-              <div className={styles.characteristicBar}>
-                <div
-                  className={styles.characteristicProgress}
-                  style={{
-                    width: `${char.value}%`,
-                    background: key === 'acoustic'
-                      ? 'linear-gradient(90deg, #FFD700, #E0A100)'
-                      : 'linear-gradient(90deg, #00CFFF, #FF00CC)'
-                  }}
-                />
-              </div>
-
-              <p className={styles.characteristicDescription}>
-                {char.description}
-              </p>
             </div>
-          );
-        })}
+
+            <div className={styles.characteristicBar}>
+              <div
+                className={styles.characteristicProgress}
+                style={{
+                  width: `${char.value}%`,
+                  background: key === 'acoustic'
+                    ? 'linear-gradient(90deg, #FFD700, #E0A100)'
+                    : 'linear-gradient(90deg, #00CFFF, #FF00CC)'
+                }}
+              />
+            </div>
+
+            <p className={styles.characteristicDescription}>
+              {char.description}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
