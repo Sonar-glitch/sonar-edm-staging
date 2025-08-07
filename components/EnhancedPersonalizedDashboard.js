@@ -2,7 +2,7 @@
 // ADDS: Custom themed tooltips, weekly delta indicators, comprehensive data source info
 // REMOVES: Redundant red section as requested
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
@@ -57,8 +57,6 @@ export default function EnhancedPersonalizedDashboard() {
     try {
       setLoading(true);
 
-      console.log('🔍 DEBUG: Loading dashboard data...');
-
       // Load enhanced taste profile
       const tasteResponse = await fetch('/api/spotify/detailed-taste');
       if (!tasteResponse.ok) {
@@ -66,11 +64,6 @@ export default function EnhancedPersonalizedDashboard() {
       }
 
       const tasteData = await tasteResponse.json();
-      console.log('🔍 DEBUG: API Response received:', {
-        hasDataSources: !!tasteData.dataSources,
-        soundCharacteristics: tasteData.dataSources?.soundCharacteristics
-      });
-
       setDashboardData(tasteData);
 
       // ENHANCED: Process data sources with detailed tracking
@@ -117,16 +110,7 @@ export default function EnhancedPersonalizedDashboard() {
         }
       };
 
-      console.log('🔍 DEBUG: Sound characteristics processing:', {
-        originalData: tasteData.dataSources?.soundCharacteristics,
-        processedState: newDataSources.soundstat
-      });
-
       setDataSources(newDataSources);
-      console.log('🔍 DEBUG: Final state update:', {
-        newDataSources,
-        soundstatState: newDataSources.soundstat
-      });
 
     } catch (err) {
       console.error('❌ Dashboard loading error:', err);
@@ -139,19 +123,11 @@ export default function EnhancedPersonalizedDashboard() {
   // ENHANCED: Load weekly deltas with real data and fallback mechanism
   const loadWeeklyDeltas = async () => {
     try {
-      console.log('📊 Loading weekly deltas...');
-      
       // Fetch real delta data from API
       const response = await fetch('/api/user/weekly-deltas');
       const data = await response.json();
       
       if (data.success && data.deltas) {
-        console.log('✅ Loaded real weekly deltas:', {
-          isReal: data.dataSource?.isReal,
-          confidence: data.dataSource?.confidence,
-          cached: data.dataSource?.cached
-        });
-        
         // Update data source tracking for deltas
         setDataSources(prev => ({
           ...prev,
@@ -169,8 +145,6 @@ export default function EnhancedPersonalizedDashboard() {
         setWeeklyDeltas(data.deltas);
       } else {
         // Use fallback if API fails
-        console.warn('⚠️ Weekly deltas API returned no data, using fallback');
-        
         setDataSources(prev => ({
           ...prev,
           weeklyDeltas: {
@@ -237,18 +211,10 @@ export default function EnhancedPersonalizedDashboard() {
     }
   };
 
-  // NEW: Enhanced data indicator with themed tooltips
-  const getDataIndicator = (sourceKey) => {
+  // NEW: Enhanced data indicator with themed tooltips (CLEANED - NO DEBUG LOGGING)
+  const getDataIndicator = useCallback((sourceKey) => {
     const source = dataSources[sourceKey];
     if (!source) return null;
-
-    console.log('🔍 DEBUG: Status indicator for', sourceKey, ':', {
-      sourceKey,
-      source,
-      isReal: source.isReal || source.isRealData,
-      tracksAnalyzed: source.tracksAnalyzed,
-      confidence: source.confidence
-    });
 
     const isReal = source.isReal || source.isRealData;
     
@@ -274,31 +240,31 @@ export default function EnhancedPersonalizedDashboard() {
         {isReal ? 'Real Data' : 'Fallback'}
       </div>
     );
-  };
+  }, [dataSources]);
 
   // NEW: Tooltip event handlers
-  const handleMouseEnter = (e) => {
+  const handleMouseEnter = useCallback((e) => {
     const content = e.target.getAttribute('data-tooltip');
     if (content) {
       setActiveTooltip({ content });
     }
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setActiveTooltip(null);
-  };
+  }, []);
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = useCallback((e) => {
     if (activeTooltip) {
       setTooltipPosition({
         x: e.clientX,
         y: e.clientY
       });
     }
-  };
+  }, [activeTooltip]);
 
   // NEW: Delta indicator component
-  const getDeltaIndicator = (type, key) => {
+  const getDeltaIndicator = useCallback((type, key) => {
     const delta = weeklyDeltas[type]?.[key];
     if (!delta || Math.abs(delta.change) === 0) return null;
 
@@ -311,7 +277,7 @@ export default function EnhancedPersonalizedDashboard() {
         {arrow} {Math.abs(delta.change)}
       </span>
     );
-  };
+  }, [weeklyDeltas]);
 
   if (loading) {
     return (
