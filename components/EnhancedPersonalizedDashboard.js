@@ -239,15 +239,30 @@ export default function EnhancedPersonalizedDashboard() {
 
   // Delta indicator component
   const getDeltaIndicator = useCallback((type, key) => {
+    // DEBUG: Log the inputs and state
+    console.log(`DEBUG: getDeltaIndicator called with type=${type}, key=${key}`);
+    console.log('DEBUG: weeklyDeltas state:', weeklyDeltas);
+
     const delta = weeklyDeltas[type]?.[key];
-    if (!delta || Math.abs(delta.change) === 0) return null;
+    console.log('DEBUG: found delta:', delta);
+
+    if (!delta || Math.abs(delta.change) === 0) {
+      console.log('DEBUG: Returning null - no delta or zero change');
+      return null;
+    }
 
     const isPositive = delta.direction === 'up';
     const arrow = isPositive ? '↗️' : '↘️';
     const color = isPositive ? '#00FF88' : '#FF4444';
 
-    return {
+    const result = {
       arrow,
+      color,
+      change: `${Math.abs(delta.change)}%`
+    };
+    console.log('DEBUG: Returning indicator:', result);
+    return result;
+  }, [weeklyDeltas]);
       change: Math.abs(delta.change),
       color
     };
