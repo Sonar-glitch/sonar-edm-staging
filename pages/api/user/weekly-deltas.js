@@ -1,9 +1,8 @@
-// pages/api/user/weekly-deltas.js
 // REAL DELTA CALCULATION WITH FALLBACK MECHANISM
 // Mobile-optimized response size
 
 import { getSession } from 'next-auth/react';
-import clientPromise from '../../../lib/mongodb';
+const { connectToDatabase } = require('../../../lib/mongodb');
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -28,8 +27,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const client = await clientPromise;
-    const db = client.db();
+    const { client, db } = await connectToDatabase();
     const userId = session.user.email;
 
     // Check cache first (24 hour TTL for mobile performance)
@@ -155,16 +153,15 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('❌ Weekly deltas error:', error);
+    console.error('❌ Weekly deltas calculation error:', error);
     
-    // Return fallback data on error (mobile-friendly)
     return res.status(200).json({
       success: false,
       deltas: getFallbackDeltas(),
       dataSource: {
         isReal: false,
         cached: false,
-        error: error.code || 'CALCULATION_ERROR',
+        error: 'CALCULATION_ERROR',
         errorMessage: error.message,
         fallbackReason: 'Error calculating deltas, using demo data',
         processingTime: Date.now() - startTime
@@ -184,13 +181,13 @@ function calculateDeltas(current, historical) {
       confidence: 0
     },
     dataQuality: {
-      hasHistoricalData: true,
+      hasHistoricalData: !!historical,
       daysOfData: 7,
-      confidence: 0
+      confidence: 0.85
     }
   };
 
-  // Calculate genre deltas (mobile-optimized: only top changes)
+  // Calculate genre deltas
   if (current.genres && historical.genres) {
     const genreChanges = [];
     
@@ -298,7 +295,7 @@ function createBaselineFromCurrent(current) {
     Object.keys(current.audioFeatures).forEach(key => {
       const variation = (Math.random() - 0.5) * 5;
       baseline.audioFeatures[key] = 
-        Math.max(0, Math.min(100, current.audioFeatures[key] + variation));
+        Math.max(0, Math.min(1, current.audioFeatures[key] + variation));
     });
   }
 
@@ -306,7 +303,6 @@ function createBaselineFromCurrent(current) {
 }
 
 function getFallbackDeltas() {
-  // Mobile-friendly fallback data
   return {
     genres: {
       'melodic techno': { change: 5, direction: 'up', current: 95, historical: 90 },
@@ -334,3 +330,4 @@ function getFallbackDeltas() {
     }
   };
 }
+
