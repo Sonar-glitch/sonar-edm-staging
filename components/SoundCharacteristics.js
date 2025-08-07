@@ -1,5 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import styles from '../styles/SoundCharacteristics.module.css';
+
+const DeltaIndicator = memo(({ type, characteristicKey, getDeltaIndicator }) => {
+  if (!getDeltaIndicator || typeof getDeltaIndicator !== 'function') return null;
+  const delta = getDeltaIndicator(type, characteristicKey);
+  if (!delta) return null;
+
+  const { arrow, change, color } = delta;
+  return (
+    <span className={styles.deltaIndicator} style={{ color }}>
+      {arrow} {change}
+    </span>
+  );
+});
+DeltaIndicator.displayName = 'DeltaIndicator';
 
 export default function SoundCharacteristics({ data, dataSource, getDeltaIndicator }) {
   const [characteristics, setCharacteristics] = useState(null);
@@ -81,66 +95,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
   };
 
 
-  // Enhanced delta indicator with up/down arrow, value, and protocol-compliant tooltip
-  const renderDeltaIndicator = (key) => {
-    if (!getDeltaIndicator || typeof getDeltaIndicator !== 'function') {
-      return null;
-    }
-
-    const delta = getDeltaIndicator('soundCharacteristics', key);
-    if (!delta) return null;
-
-    const { arrow, change, color } = delta;
-    return (
-      <span className={styles.deltaIndicator} style={{ color }}>
-        {arrow} {change}
-      </span>
-    );
-
-      // Tooltip logic: get delta and data source
-      let tooltip = '';
-      let isReal = false;
-      let change = 0;
-      let direction = '';
-      // Try to extract info from indicator props if possible
-      if (indicator.props && indicator.props.children) {
-        // e.g. "↗️ 3" or "↘️ 1"
-        const match = /([↗↘])\s*(\d+)/.exec(indicator.props.children);
-        if (match) {
-          direction = match[1] === '↗️' ? 'up' : 'down';
-          change = parseInt(match[2], 10);
-        }
-      }
-      // Determine data source (real or fallback)
-      if (typeof dataSource === 'object' && dataSource.isReal) {
-        isReal = true;
-      }
-      // Tooltip message per protocol
-      if (isReal && change !== 0) {
-        tooltip = `Your ${key} taste ${direction === 'up' ? 'increased' : 'decreased'} ${change}% in the last 7 days`;
-      } else if (!isReal) {
-        // Fallback: show day-based or API failure message
-        if (dataSource && dataSource.error === 'API_ERROR') {
-          tooltip = 'Demo data - waiting for your music activity';
-        } else {
-          // Optionally, you could use a day-based message if available
-          tooltip = 'Demo data - personalizing your experience (3 more days)';
-        }
-      }
-      if (indicator) {
-        const { arrow, change, color } = indicator;
-        return (
-          <span className={styles.deltaIndicator} style={{ color }}>
-            {arrow} {change}
-          </span>
-        );
-      }
-      return null;
-    } catch (err) {
-      console.error('Error rendering delta indicator:', err);
-      return null;
-    }
-  };
+  // No need for a renderDeltaIndicator function here since we're using the DeltaIndicator component
 
   if (loading) {
     return (
@@ -206,7 +161,11 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
                 <span className={styles.characteristicValue}>
                   {char.value}%
                 </span>
-                {renderDeltaIndicator(key)}
+                <DeltaIndicator
+                  type="soundCharacteristics"
+                  characteristicKey={key}
+                  getDeltaIndicator={getDeltaIndicator}
+                />
               </div>
             </div>
 
