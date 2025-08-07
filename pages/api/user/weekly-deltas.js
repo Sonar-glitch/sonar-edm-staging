@@ -73,7 +73,12 @@ export default async function handler(req, res) {
           cached: false,
           error: 'NO_TASTE_PROFILE',
           fallbackReason: 'User taste profile not yet generated',
-          processingTime: Date.now() - startTime
+          processingTime: Date.now() - startTime,
+          debug: {
+      userId: session.user.email,  // Add this
+      searchedCollections: ['user_taste_profiles'],  // Add this
+      sessionValid: !!session,  // Add this
+    }
         }
       });
     }
