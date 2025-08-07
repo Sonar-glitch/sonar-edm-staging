@@ -94,48 +94,17 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
     }
   };
 
-  // FIXED: Delta indicator with TIKO-themed hover tooltip
+  // Simple delta indicator renderer - just return the component
   const renderDeltaIndicator = (key) => {
+    if (!getDeltaIndicator || typeof getDeltaIndicator !== 'function') {
+      return null;
+    }
+
     try {
-      if (!getDeltaIndicator || !key || typeof key !== 'string') {
-        return null;
-      }
-      
-      // Get the delta indicator component
-      const deltaIndicator = getDeltaIndicator('soundCharacteristics', key);
-      
-      if (!deltaIndicator) {
-        return null;
-      }
-
-      // Extract delta information for tooltip
-      const deltaText = deltaIndicator?.props?.children || '';
-      const deltaNumber = deltaText.replace(/[↗️↘️]/g, '').trim();
-      const isIncrease = deltaText.includes('↗️');
-      const isDecrease = deltaText.includes('↘️');
-      
-      // Create meaningful tooltip text
-      const characteristicName = key.charAt(0).toUpperCase() + key.slice(1);
-      let tooltipText = '';
-      if (isIncrease) {
-        tooltipText = `${characteristicName} increased by ${deltaNumber} points vs last week`;
-      } else if (isDecrease) {
-        tooltipText = `${characteristicName} decreased by ${deltaNumber} points vs last week`;
-      } else if (deltaText) {
-        tooltipText = `${characteristicName} weekly change: ${deltaText}`;
-      }
-
-      // Wrap with TIKO-styled tooltip container
-      return (
-        <span 
-          className={styles.deltaTooltipWrapper}
-          data-tooltip={tooltipText}
-        >
-          {deltaIndicator}
-        </span>
-      );
+      const indicator = getDeltaIndicator('soundCharacteristics', key);
+      return indicator || null;
     } catch (err) {
-      console.error('Delta indicator rendering error for key:', key, err);
+      console.error('Error rendering delta indicator:', err);
       return null;
     }
   };
@@ -174,7 +143,6 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
 
   return (
     <div className={styles.container}>
-      {/* All existing grid layout and styling */}
       <div className={styles.characteristicsGrid}>
         {Object.entries(characteristics).map(([key, char]) => (
           <div key={key} className={styles.characteristicItem}>
@@ -186,20 +154,18 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
                 <span className={styles.characteristicValue}>
                   {char.value}%
                 </span>
-                {/* FIXED: Enhanced delta indicator with TIKO-themed tooltip */}
                 {renderDeltaIndicator(key)}
               </div>
             </div>
 
-            {/* All existing TIKO styling and gradients */}
             <div className={styles.characteristicBar}>
               <div
                 className={styles.characteristicProgress}
                 style={{
                   width: `${char.value}%`,
                   background: key === 'acoustic'
-                    ? 'linear-gradient(90deg, #FFD700, #E0A100)' // Mustard for acoustic
-                    : 'linear-gradient(90deg, #00CFFF, #FF00CC)' // TIKO gradient for others
+                    ? 'linear-gradient(90deg, #FFD700, #E0A100)'
+                    : 'linear-gradient(90deg, #00CFFF, #FF00CC)'
                 }}
               />
             </div>
@@ -213,4 +179,3 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
     </div>
   );
 }
-

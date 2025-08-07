@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
+import { useState, useEffect } from 'react';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import styles from '../styles/Top5GenresSpiderChart.module.css';
 
 export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndicator }) {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [genreDeltas, setGenreDeltas] = useState({});
 
   useEffect(() => {
     loadChartData();
@@ -36,6 +37,23 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
         value: genre.percentage
       }));
 
+      // Pre-calculate deltas for all genres to avoid calling in render
+      const deltas = {};
+      if (getDeltaIndicator && typeof getDeltaIndicator === 'function') {
+        genreData.forEach(genre => {
+          try {
+            const genreKey = genre.name.toLowerCase().replace(/\s+/g, ' ').trim();
+            const indicator = getDeltaIndicator('genres', genreKey);
+            if (indicator && indicator.props && indicator.props.children) {
+              deltas[genre.name] = indicator.props.children;
+            }
+          } catch (err) {
+            console.error('Error getting delta for genre:', genre.name, err);
+          }
+        });
+      }
+
+      setGenreDeltas(deltas);
       setChartData(rechartData);
 
     } catch (err) {
@@ -46,28 +64,19 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     }
   };
 
-  // TIKO-themed custom tooltip
+  // Custom tooltip component
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload[0]) {
       const data = payload[0].payload;
-      
-      // Get delta for this genre
-      let deltaText = '';
-      if (getDeltaIndicator && data.genre) {
-        const genreKey = data.genre.toLowerCase().replace(/\s+/g, ' ').trim();
-        const deltaIndicator = getDeltaIndicator('genres', genreKey);
-        if (deltaIndicator && deltaIndicator.props && deltaIndicator.props.children) {
-          deltaText = deltaIndicator.props.children;
-        }
-      }
+      const deltaInfo = genreDeltas[data.genre];
 
       return (
         <div className={styles.customTooltip}>
           <p className={styles.tooltipGenre}>{data.genre}</p>
           <p className={styles.tooltipValue}>Preference: {data.value}%</p>
-          {deltaText && (
+          {deltaInfo && (
             <p className={styles.tooltipDelta}>
-              Weekly change: {deltaText}
+              Weekly change: {deltaInfo}
             </p>
           )}
         </div>
@@ -76,50 +85,36 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     return null;
   };
 
-  // FIXED: Custom label that shows genre name + delta as separate text elements
-  const CustomLabel = ({ payload, x, y, textAnchor, ...props }) => {
+  // Custom label component for genre names
+  const CustomLabel = ({ payload, x, y, textAnchor }) => {
     if (!payload || !payload.value) {
       return null;
     }
 
-    // Get delta indicator for this genre
-    let deltaText = '';
-    if (getDeltaIndicator && payload.value) {
-      // Normalize the genre name to match what getDeltaIndicator expects
-      const genreKey = payload.value.toLowerCase().replace(/\s+/g, ' ').trim();
-      const deltaIndicator = getDeltaIndicator('genres', genreKey);
-      
-      // Extract the text content from the delta indicator if it exists
-      if (deltaIndicator && deltaIndicator.props && deltaIndicator.props.children) {
-        deltaText = deltaIndicator.props.children;
-      }
-    }
-
-    // Position delta text slightly below genre name
-    const deltaY = y + 14;
-
+    const deltaInfo = genreDeltas[payload.value];
+    
     return (
       <g>
         <text
           x={x}
           y={y}
           textAnchor={textAnchor}
-          fontSize={11}
+          fontSize={12}
           fill="#DADADA"
           fontWeight="500"
         >
           {payload.value}
         </text>
-        {deltaText && (
+        {deltaInfo && (
           <text
             x={x}
-            y={deltaY}
+            y={y + 16}
             textAnchor={textAnchor}
             fontSize={10}
-            fill={deltaText.includes('↗️') ? '#00FF88' : deltaText.includes('↘️') ? '#FF4444' : '#999999'}
+            fill="#00CFFF"
             fontWeight="400"
           >
-            {deltaText}
+            {deltaInfo}
           </text>
         )}
       </g>
@@ -164,7 +159,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
         <ResponsiveContainer width="100%" height={300}>
           <RadarChart
             data={chartData}
-            margin={{ top: 60, right: 60, bottom: 60, left: 60 }}
+            margin={{ top: 80, right: 60, bottom: 60, left: 60 }}  // Increased top margin for delta above labels
           >
             <PolarGrid
               stroke="rgba(0, 255, 255, 0.2)"
@@ -186,11 +181,10 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
                 r: 4
               }}
             />
-            <CustomTooltip />
+            <Tooltip content={<CustomTooltip />} />
           </RadarChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
 }
-
