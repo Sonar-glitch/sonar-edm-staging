@@ -64,21 +64,40 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     }
   };
 
-  // Custom tooltip component
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload[0]) {
-      const data = payload[0].payload;
-      const deltaInfo = genreDeltas[data.genre];
+  // ✅ SURGICAL ENHANCEMENT: Enhanced custom tooltip with personalization context
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const value = payload[0].value;
+      const deltaInfo = genreDeltas[label];
+      
+      // ✅ SURGICAL ADDITION: Generate personalization tooltip text
+      const generateGenreTooltipText = (genre, value, deltaInfo) => {
+        if (deltaInfo) {
+          const deltaMatch = deltaInfo.match(/([↗️↘️])\s*(\d+)/);
+          if (deltaMatch) {
+            const direction = deltaMatch[1] === '↗️' ? 'increased' : 'decreased';
+            const change = deltaMatch[2];
+            return `Your ${genre.toLowerCase()} interest ${direction} ${change}% in the last 7 days`;
+          }
+        }
+        
+        // Fallback to personalization-focused messaging
+        return `Demo data - personalizing your experience (3 more days)`;
+      };
+
+      const tooltipText = generateGenreTooltipText(label, value, deltaInfo);
 
       return (
         <div className={styles.customTooltip}>
-          <p className={styles.tooltipGenre}>{data.genre}</p>
-          <p className={styles.tooltipValue}>Preference: {data.value}%</p>
+          <p className={styles.tooltipGenre}>{label}</p>
+          <p className={styles.tooltipValue}>{value}%</p>
           {deltaInfo && (
-            <p className={styles.tooltipDelta}>
-              Weekly change: {deltaInfo}
-            </p>
+            <p className={styles.tooltipValue}>{deltaInfo}</p>
           )}
+          {/* ✅ SURGICAL ADDITION: Personalization context using existing CSS class */}
+          <p className={styles.tooltipDelta}>
+            {tooltipText}
+          </p>
         </div>
       );
     }
@@ -188,3 +207,4 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     </div>
   );
 }
+

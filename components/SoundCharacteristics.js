@@ -49,31 +49,17 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
             value: features.acoustic !== undefined ?
               features.acoustic :
               (features.acousticness !== undefined ?
-                (typeof features.acousticness === 'number' ? features.acousticness : Math.round((features.acousticness || 0) * 100)) :
-                (features.instrumentalness !== undefined ?
-                  (typeof features.instrumentalness === 'number' ? features.instrumentalness : Math.round((features.instrumentalness || 0) * 100)) : 15)),
+                (typeof features.acousticness === 'number' ? features.acousticness : Math.round((features.acousticness || 0) * 100)) : 25),
             description: "How acoustic vs electronic your music is"
           }
         });
       } else {
-        // Fallback characteristics with proper null safety
+        // Fallback values if no data available
         setCharacteristics({
-          energy: {
-            value: 75,
-            description: "How energetic and intense your music feels"
-          },
-          danceability: {
-            value: 82,
-            description: "How suitable your music is for dancing"
-          },
-          positivity: {
-            value: 65,
-            description: "The mood of positivity conveyed by your tracks"
-          },
-          acoustic: {
-            value: 15,
-            description: "How acoustic vs electronic your music is"
-          }
+          energy: { value: 75, description: "How energetic and intense your music feels" },
+          danceability: { value: 82, description: "How suitable your music is for dancing" },
+          positivity: { value: 65, description: "The mood of positivity conveyed by your tracks" },
+          acoustic: { value: 25, description: "How acoustic vs electronic your music is" }
         });
       }
 
@@ -92,6 +78,25 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ SURGICAL ADDITION: Tooltip generation function
+  const generateTooltipText = (key, characteristic, deltaIndicator) => {
+    // Check if we have real delta data
+    if (deltaIndicator && deltaIndicator.props && deltaIndicator.props.children) {
+      const deltaText = deltaIndicator.props.children;
+      const deltaMatch = deltaText.match(/([↗️↘️])\s*(\d+)/);
+      
+      if (deltaMatch) {
+        const direction = deltaMatch[1] === '↗️' ? 'increased' : 'decreased';
+        const change = deltaMatch[2];
+        return `Your ${key} taste ${direction} ${change}% in the last 7 days`;
+      }
+    }
+
+    // Fallback to personalization-focused messaging
+    // This would be enhanced with real progress tracking in the future
+    return `Demo data - personalizing your experience (3 more days)`;
   };
 
   // Simple delta indicator renderer - just return the component
@@ -144,38 +149,48 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
   return (
     <div className={styles.container}>
       <div className={styles.characteristicsGrid}>
-        {Object.entries(characteristics).map(([key, char]) => (
-          <div key={key} className={styles.characteristicItem}>
-            <div className={styles.characteristicHeader}>
-              <span className={styles.characteristicName}>
-                {key.charAt(0).toUpperCase() + key.slice(1)}
-              </span>
-              <div className={styles.characteristicValueContainer}>
-                <span className={styles.characteristicValue}>
-                  {char.value}%
+        {Object.entries(characteristics).map(([key, char]) => {
+          const deltaIndicator = renderDeltaIndicator(key);
+          const tooltipText = generateTooltipText(key, char, deltaIndicator);
+          
+          return (
+            <div 
+              key={key} 
+              className={`${styles.characteristicItem} ${styles.deltaTooltipWrapper}`}
+              data-tooltip={tooltipText}
+            >
+              <div className={styles.characteristicHeader}>
+                <span className={styles.characteristicName}>
+                  {key.charAt(0).toUpperCase() + key.slice(1)}
                 </span>
-                {renderDeltaIndicator(key)}
+                <div className={styles.characteristicValueContainer}>
+                  <span className={styles.characteristicValue}>
+                    {char.value}%
+                  </span>
+                  {deltaIndicator}
+                </div>
               </div>
-            </div>
 
-            <div className={styles.characteristicBar}>
-              <div
-                className={styles.characteristicProgress}
-                style={{
-                  width: `${char.value}%`,
-                  background: key === 'acoustic'
-                    ? 'linear-gradient(90deg, #FFD700, #E0A100)'
-                    : 'linear-gradient(90deg, #00CFFF, #FF00CC)'
-                }}
-              />
-            </div>
+              <div className={styles.characteristicBar}>
+                <div
+                  className={styles.characteristicProgress}
+                  style={{
+                    width: `${char.value}%`,
+                    background: key === 'acoustic'
+                      ? 'linear-gradient(90deg, #FFD700, #E0A100)'
+                      : 'linear-gradient(90deg, #00CFFF, #FF00CC)'
+                  }}
+                />
+              </div>
 
-            <p className={styles.characteristicDescription}>
-              {char.description}
-            </p>
-          </div>
-        ))}
+              <p className={styles.characteristicDescription}>
+                {char.description}
+              </p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
+
