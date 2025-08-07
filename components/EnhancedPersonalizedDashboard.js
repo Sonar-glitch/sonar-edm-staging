@@ -121,7 +121,6 @@ export default function EnhancedPersonalizedDashboard() {
 
       // REPLACE loadWeeklyDeltas function (lines 122-165) in EnhancedPersonalizedDashboard.js
 // PRESERVES: All existing functionality, adds real data with fallback
-
   // ENHANCED: Load weekly deltas with real data and fallback mechanism
   const loadWeeklyDeltas = async () => {
     try {
