@@ -43,9 +43,10 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
         genreData.forEach(genre => {
           try {
             const genreKey = genre.name.toLowerCase().replace(/\s+/g, ' ').trim();
-            const indicator = getDeltaIndicator('genres', genreKey);
-            if (indicator && indicator.props && indicator.props.children) {
-              deltas[genre.name] = indicator.props.children;
+            const delta = getDeltaIndicator('genres', genreKey);
+            if (delta) {
+              const { arrow, change, color } = delta;
+              deltas[genre.name] = { arrow, change, color };
             }
           } catch (err) {
             console.error('Error getting delta for genre:', genre.name, err);
@@ -131,10 +132,10 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
               <tspan
                 dx={8}
                 fontSize={11}
-                fill={deltaInfo.includes('↗️') ? '#00FF88' : '#FF4444'}
+                fill={deltaInfo.color}
                 fontWeight="600"
               >
-                {deltaInfo} DEBUG
+                {deltaInfo.arrow} {deltaInfo.change}
               </tspan>
           )}
         </text>

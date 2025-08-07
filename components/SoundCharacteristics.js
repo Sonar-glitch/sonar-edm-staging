@@ -86,9 +86,16 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
     if (!getDeltaIndicator || typeof getDeltaIndicator !== 'function') {
       return null;
     }
-    try {
-      const indicator = getDeltaIndicator('soundCharacteristics', key);
-      if (!indicator) return null;
+
+    const delta = getDeltaIndicator('soundCharacteristics', key);
+    if (!delta) return null;
+
+    const { arrow, change, color } = delta;
+    return (
+      <span className={styles.deltaIndicator} style={{ color }}>
+        {arrow} {change}
+      </span>
+    );
 
       // Tooltip logic: get delta and data source
       let tooltip = '';

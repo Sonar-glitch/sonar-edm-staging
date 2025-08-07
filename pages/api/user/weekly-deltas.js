@@ -5,10 +5,7 @@ import { getSession } from 'next-auth/react';
 const { connectToDatabase } = require('../../../lib/mongodb');
 
 export default async function handler(req, res) {
-  console.log('Weekly deltas API called');
-  
   if (req.method !== 'GET') {
-    console.log('Invalid method:', req.method);
     return res.status(405).json({ 
       success: false,
       error: 'METHOD_NOT_ALLOWED',
@@ -17,15 +14,12 @@ export default async function handler(req, res) {
   }
 
   const startTime = Date.now();
-  console.log('Processing weekly deltas request...');
 
   try {
     // Authentication check with fallback
     const session = await getSession({ req });
     if (!session?.user?.email) {
-      console.log('⚠️ No session found, using fallback data');
       const fallbackData = getFallbackDeltas();
-      console.log('Fallback data:', fallbackData);
       
       return res.status(200).json({ 
         success: true,

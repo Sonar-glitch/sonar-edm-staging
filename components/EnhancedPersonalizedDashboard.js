@@ -123,14 +123,10 @@ export default function EnhancedPersonalizedDashboard() {
   // ENHANCED: Load weekly deltas with real data and fallback mechanism
   const loadWeeklyDeltas = async () => {
     try {
-      console.log('Fetching weekly deltas...');
-      // Fetch real delta data from API
       const response = await fetch('/api/user/weekly-deltas');
       const data = await response.json();
-      console.log('Weekly deltas API response:', data);
       
       if (data.success && data.deltas) {
-        console.log('Got successful delta response');
         // Update data source tracking for deltas
         setDataSources(prev => ({
           ...prev,
@@ -147,36 +143,11 @@ export default function EnhancedPersonalizedDashboard() {
         
         setWeeklyDeltas(data.deltas);
       } else {
-        // Use fallback if API fails
-        setDataSources(prev => ({
-          ...prev,
-          weeklyDeltas: {
-            isReal: false,
-            lastFetch: new Date().toISOString(),
-            confidence: 0,
-            error: data.dataSource?.error || 'API_ERROR',
-            fallbackReason: data.dataSource?.fallbackReason || 'API returned no data'
-          }
-        }));
-        
-        // Fallback to demo data
-        const fallbackDeltas = {
-          genres: {
-            'melodic techno': { change: 5, direction: 'up' },
-            'melodic house': { change: 2, direction: 'up' },
-            'progressive house': { change: 10, direction: 'up' },
-            'organic house': { change: -3, direction: 'down' },
-            'techno': { change: 1, direction: 'up' }
-          },
-          soundCharacteristics: {
-            energy: { change: 3, direction: 'up' },
-            danceability: { change: 2, direction: 'up' },
-            positivity: { change: -1, direction: 'down' },
-            acoustic: { change: 11, direction: 'up' }
-          }
-        };
-        
-        setWeeklyDeltas(fallbackDeltas);
+          // Use the fallback data from the API response
+          setDataSources(prev => ({
+            ...prev,
+            weeklyDeltas: data.dataSource
+          }));        setWeeklyDeltas(fallbackDeltas);
       }
     } catch (err) {
       console.error('❌ Weekly deltas loading error:', err);
@@ -266,29 +237,20 @@ export default function EnhancedPersonalizedDashboard() {
     }
   }, [activeTooltip]);
 
-  // NEW: Delta indicator component with debug logging
+  // Delta indicator component
   const getDeltaIndicator = useCallback((type, key) => {
-    console.log('getDeltaIndicator called with:', { type, key, weeklyDeltas });
-    
     const delta = weeklyDeltas[type]?.[key];
-    console.log('delta value:', delta);
-    
-    if (!delta || Math.abs(delta.change) === 0) {
-      console.log('no delta or zero change');
-      return null;
-    }
+    if (!delta || Math.abs(delta.change) === 0) return null;
 
     const isPositive = delta.direction === 'up';
     const arrow = isPositive ? '↗️' : '↘️';
     const color = isPositive ? '#00FF88' : '#FF4444';
-    
-    console.log('rendering delta:', { arrow, change: delta.change, color });
 
-    return (
-      <span className={styles.deltaIndicator} style={{ color }}>
-        {arrow} {Math.abs(delta.change)}
-      </span>
-    );
+    return {
+      arrow,
+      change: Math.abs(delta.change),
+      color
+    };
   }, [weeklyDeltas]);
 
   if (loading) {

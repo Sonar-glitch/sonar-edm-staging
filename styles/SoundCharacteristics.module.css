@@ -93,6 +93,22 @@
   font-weight: 700;
   color: #FF00CC; /* TIKO action button color */
   text-shadow: 0 0 15px rgba(255, 0, 204, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deltaIndicator {
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* TIKO-THEMED DELTA TOOLTIP */
