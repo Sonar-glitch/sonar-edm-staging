@@ -319,11 +319,6 @@ export default function EnhancedPersonalizedDashboard() {
 
   return (
     <div className={styles.container}>
-      {/* DEBUG: Show the entire weeklyDeltas object for troubleshooting */}
-      <div style={{ background: '#222', color: '#0ff', fontSize: 12, padding: 8, margin: 8, borderRadius: 4 }}>
-        <strong>DEBUG weeklyDeltas:</strong>
-        <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{JSON.stringify(weeklyDeltas, null, 2)}</pre>
-      </div>
       <div className={styles.dashboard}>
         {/* ROW 1: TOP 5 GENRES + SEASONAL VIBES */}
         <div className={styles.row1}>
