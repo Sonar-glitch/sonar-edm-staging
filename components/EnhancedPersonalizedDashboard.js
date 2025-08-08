@@ -147,11 +147,28 @@ export default function EnhancedPersonalizedDashboard() {
         console.log('⚡ Setting weekly deltas state...');
         setWeeklyDeltas(data.deltas);
       } else {
-          // Use the fallback data from the API response
-          setDataSources(prev => ({
-            ...prev,
-            weeklyDeltas: data.dataSource
-          }));        setWeeklyDeltas(fallbackDeltas);
+          // Use the fallback data
+      const fallbackDeltas = {
+        genres: {
+          'melodic techno': { change: 5, direction: 'up' },
+          'melodic house': { change: 2, direction: 'up' },
+          'progressive house': { change: 10, direction: 'up' },
+          'organic house': { change: -3, direction: 'down' },
+          'techno': { change: 1, direction: 'up' }
+        },
+        soundCharacteristics: {
+          energy: { change: 3, direction: 'up' },
+          danceability: { change: 2, direction: 'up' },
+          positivity: { change: -1, direction: 'down' },
+          acoustic: { change: 1, direction: 'up' }
+        }
+      };
+      
+      setDataSources(prev => ({
+        ...prev,
+        weeklyDeltas: data.dataSource
+      }));
+      setWeeklyDeltas(fallbackDeltas);
       }
     } catch (err) {
       console.error('❌ Weekly deltas loading error:', err);
