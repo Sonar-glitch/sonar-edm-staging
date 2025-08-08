@@ -57,11 +57,9 @@ export default function EnhancedPersonalizedDashboard() {
   });
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      loadDashboardData();
-      loadWeeklyDeltas();
-    }
-  }, [status]);
+    loadDashboardData();
+    loadWeeklyDeltas(); // Load regardless of auth status
+  }, []);
 
   // ENHANCED: Load dashboard data with comprehensive data source tracking
   const loadDashboardData = async () => {
