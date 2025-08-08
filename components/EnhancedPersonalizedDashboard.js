@@ -28,10 +28,21 @@ export default function EnhancedPersonalizedDashboard() {
     seasonal: { isReal: false, error: 'STATIC_DATA', lastFetch: null }
   });
 
-  // NEW: Weekly delta tracking state
+  // Weekly delta tracking state with initial demo data
   const [weeklyDeltas, setWeeklyDeltas] = useState({
-    genres: {},
-    soundCharacteristics: {}
+    genres: {
+      'melodic techno': { change: 5, direction: 'up' },
+      'melodic house': { change: 2, direction: 'up' },
+      'progressive house': { change: 10, direction: 'up' },
+      'organic house': { change: -3, direction: 'down' },
+      'techno': { change: 1, direction: 'up' }
+    },
+    soundCharacteristics: {
+      energy: { change: 3, direction: 'up' },
+      danceability: { change: 2, direction: 'up' },
+      positivity: { change: -1, direction: 'down' },
+      acoustic: { change: 1, direction: 'up' }
+    }
   });
 
   // NEW: Tooltip state management
@@ -120,17 +131,15 @@ export default function EnhancedPersonalizedDashboard() {
     }
   };
 
-  // ENHANCED: Load weekly deltas with real data and fallback mechanism
+  // Load weekly deltas with real data and fallback mechanism
   const loadWeeklyDeltas = async () => {
     try {
-      console.log('🎯 Loading weekly deltas...');
       const response = await fetch('/api/user/weekly-deltas');
       const data = await response.json();
-      console.log('📊 Weekly deltas response:', data);
       
-      if (data.success && data.deltas) {
-        console.log('✅ Got weekly deltas data:', data.deltas);
-        // Update data source tracking for deltas
+      // Whether real or fallback data, if the API call succeeds, use the data
+      if (data.success) {
+        // Update data source tracking
         setDataSources(prev => ({
           ...prev,
           weeklyDeltas: {
@@ -144,7 +153,7 @@ export default function EnhancedPersonalizedDashboard() {
           }
         }));
         
-        console.log('⚡ Setting weekly deltas state...');
+        // Set the deltas from API (could be real or fallback)
         setWeeklyDeltas(data.deltas);
       } else {
           // Use the fallback data
@@ -258,43 +267,21 @@ export default function EnhancedPersonalizedDashboard() {
     }
   }, [activeTooltip]);
 
-  // Delta indicator component with enhanced debugging
+  // Delta indicator component
   const getDeltaIndicator = useCallback((type, key) => {
-    // DEBUG: Log the entire weeklyDeltas state on every call
-    if (typeof window !== 'undefined') {
-      window._DEBUG_WEEKLY_DELTAS = weeklyDeltas;
-    }
-    console.log('🔍 getDeltaIndicator called with:', { type, key, weeklyDeltas });
+    if (!weeklyDeltas || !weeklyDeltas[type]) return null;
     
-    if (!weeklyDeltas || !weeklyDeltas[type]) {
-      console.log('❌ No weeklyDeltas data available for type:', type);
-      return null;
-    }
-
-    console.log(`📊 Weekly deltas for ${type}:`, weeklyDeltas[type]);
-    const delta = weeklyDeltas[type][key];
+    const delta = weeklyDeltas[type][key.toLowerCase()];
+    if (!delta || typeof delta.change === 'undefined') return null;
     
-    if (!delta || typeof delta.change === 'undefined') {
-      console.log(`❌ No delta found for ${type}.${key}`);
-      return null;
-    }
-
-    console.log(`✨ Found delta for ${type}.${key}:`, delta);
-
-    if (Math.abs(delta.change) === 0) {
-      console.log('⚠️ Delta change is zero');
-      return null;
-    }
+    if (Math.abs(delta.change) === 0) return null;
 
     const isPositive = delta.direction === 'up';
-    const indicator = {
+    return {
       arrow: isPositive ? '↗️' : '↘️',
       change: `${Math.abs(delta.change)}%`,
       color: isPositive ? '#00FF88' : '#FF4444'
     };
-
-    console.log('✅ Returning indicator:', indicator);
-    return indicator;
   }, [weeklyDeltas]);
 
   if (loading) {
@@ -434,22 +421,6 @@ export default function EnhancedPersonalizedDashboard() {
         </div>
       )}
 
-      {/* DEBUG: Display weeklyDeltas state */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        background: '#000',
-        color: '#fff',
-        padding: '10px',
-        zIndex: 1000,
-        fontSize: '12px',
-        maxWidth: '300px',
-        overflow: 'auto',
-        borderRadius: '4px'
-      }}>
-        <pre>{JSON.stringify(weeklyDeltas, null, 2)}</pre>
-      </div>
     </div>
   );
 }
