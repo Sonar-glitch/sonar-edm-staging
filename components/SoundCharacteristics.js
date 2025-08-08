@@ -174,18 +174,22 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
                 <span className={styles.characteristicValue}>
                   {char.value}%
                 </span>
-                {/* FORCE TEST: Always show a test delta for Energy */}
-                {key.toLowerCase() === 'energy' ? (
-                  <span style={{ color: '#00FF88', fontWeight: 'bold', marginLeft: 8 }}>
-                    ↗️ 99% (TEST)
-                  </span>
-                ) : (
-                  <DeltaIndicator
-                    type="soundCharacteristics"
-                    characteristicKey={key.toLowerCase()}
-                    getDeltaIndicator={getDeltaIndicator}
-                  />
-                )}
+                {/* DEBUG: Show what getDeltaIndicator returns for each key */}
+                {(() => {
+                  const delta = getDeltaIndicator && getDeltaIndicator('soundCharacteristics', key.toLowerCase());
+                  return (
+                    <>
+                      <span style={{ color: '#888', fontSize: '10px', marginLeft: 8 }}>
+                        [delta: {delta ? JSON.stringify(delta) : 'null'}]
+                      </span>
+                      <DeltaIndicator
+                        type="soundCharacteristics"
+                        characteristicKey={key.toLowerCase()}
+                        getDeltaIndicator={getDeltaIndicator}
+                      />
+                    </>
+                  );
+                })()}
               </div>
             </div>
 
