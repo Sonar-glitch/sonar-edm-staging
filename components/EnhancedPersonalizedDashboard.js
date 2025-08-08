@@ -317,6 +317,11 @@ export default function EnhancedPersonalizedDashboard() {
 
   return (
     <div className={styles.container}>
+      {/* DEBUG: Show the entire weeklyDeltas object for troubleshooting */}
+      <div style={{ background: '#222', color: '#0ff', fontSize: 12, padding: 8, margin: 8, borderRadius: 4 }}>
+        <strong>DEBUG weeklyDeltas:</strong>
+        <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{JSON.stringify(weeklyDeltas, null, 2)}</pre>
+      </div>
       <div className={styles.dashboard}>
         {/* ROW 1: TOP 5 GENRES + SEASONAL VIBES */}
         <div className={styles.row1}>
@@ -411,6 +416,23 @@ export default function EnhancedPersonalizedDashboard() {
           <div className={styles.tooltipArrow}></div>
         </div>
       )}
+
+      {/* DEBUG: Display weeklyDeltas state */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        background: '#000',
+        color: '#fff',
+        padding: '10px',
+        zIndex: 1000,
+        fontSize: '12px',
+        maxWidth: '300px',
+        overflow: 'auto',
+        borderRadius: '4px'
+      }}>
+        <pre>{JSON.stringify(weeklyDeltas, null, 2)}</pre>
+      </div>
     </div>
   );
 }
