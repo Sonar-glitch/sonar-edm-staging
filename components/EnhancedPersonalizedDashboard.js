@@ -243,6 +243,10 @@ export default function EnhancedPersonalizedDashboard() {
 
   // Delta indicator component with enhanced debugging
   const getDeltaIndicator = useCallback((type, key) => {
+    // DEBUG: Log the entire weeklyDeltas state on every call
+    if (typeof window !== 'undefined') {
+      window._DEBUG_WEEKLY_DELTAS = weeklyDeltas;
+    }
     console.log('🔍 getDeltaIndicator called with:', { type, key, weeklyDeltas });
     
     if (!weeklyDeltas || !weeklyDeltas[type]) {
