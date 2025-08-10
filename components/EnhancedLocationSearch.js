@@ -355,25 +355,28 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                     </div>
                   )}
                   
-                  {suggestions.map((suggestion, index) => (
-                    <div
-                      key={suggestion.place_id || index}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      style={{
-                        padding: '0.5rem',
-                        cursor: 'pointer',
-                        borderBottom: index < suggestions.length - 1 ? '1px solid #444' : 'none',
-                        fontSize: '0.9rem',
-                        ':hover': {
-                          background: '#333'
-                        }
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = '#333'}
-                      onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                    >
-                      {suggestion.formatted_address}
-                    </div>
-                  ))}
+                  {suggestions.map((suggestion, index) => {
+                    const suggestionKey = suggestion.place_id || `suggestion-${index}`;
+                    return (
+                      <div
+                        key={suggestionKey}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        style={{
+                          padding: '0.5rem',
+                          cursor: 'pointer',
+                          borderBottom: index < suggestions.length - 1 ? '1px solid #444' : 'none',
+                          fontSize: '0.9rem',
+                          ':hover': {
+                            background: '#333'
+                          }
+                        }}
+                        onMouseEnter={(e) => e.target.style.background = '#333'}
+                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                      >
+                        {suggestion.formatted_address}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

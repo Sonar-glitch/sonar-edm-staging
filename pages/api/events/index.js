@@ -46,7 +46,7 @@ export default async function handler(req, res) {
       console.log(`🚀 Cache hit - returning ${cachedEvents.length} cached personalized events`);
       return res.status(200).json({
   events: cachedEvents,
-  source: "cache",
+  source: "real", // Mark cached data as real data
   isRealData: true,
   city: targetCity,
   totalEvents: cachedEvents.length,
