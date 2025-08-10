@@ -278,32 +278,16 @@ export default function EnhancedPersonalizedDashboard() {
 
   // Delta indicator component
   const getDeltaIndicator = useCallback((type, key) => {
-    console.log('🔍 getDeltaIndicator called:', { type, key, weeklyDeltas });
-    
-    if (!weeklyDeltas || !weeklyDeltas[type]) {
-      console.log('❌ No weeklyDeltas for type:', type);
-      return null;
-    }
-    
-    // Normalize key for matching (handle spaces and case)
+    if (!weeklyDeltas || !weeklyDeltas[type]) return null;
     const normalizedKey = key.toLowerCase().trim();
     const delta = weeklyDeltas[type][normalizedKey];
-    
-    console.log('🔍 Looking for key:', normalizedKey, 'Found:', delta);
-    console.log('🔍 Available keys:', Object.keys(weeklyDeltas[type]));
-    
-    if (!delta || typeof delta.change === 'undefined' || Math.abs(delta.change) === 0) {
-      console.log('❌ No valid delta found for:', normalizedKey);
-      return null;
-    }
+    if (!delta || typeof delta.change === 'undefined' || Math.abs(delta.change) === 0) return null;
     const isPositive = delta.direction === 'up';
-    const result = {
+    return {
       arrow: isPositive ? '↗️' : '↘️',
       change: `${Math.abs(delta.change)}%`,
       color: isPositive ? '#00FF88' : '#FF4444'
     };
-    console.log('✅ Returning delta:', result);
-    return result;
   }, [weeklyDeltas]);
 
   if (loading) {
@@ -344,12 +328,6 @@ export default function EnhancedPersonalizedDashboard() {
   return (
     <div className={styles.container}>
       <div className={styles.dashboard}>
-        {/* DEBUG: Show weeklyDeltas data temporarily */}
-        <div style={{ background: '#222', color: '#fff', padding: '10px', margin: '10px', fontSize: '12px', fontFamily: 'monospace' }}>
-          <strong>DEBUG - weeklyDeltas:</strong>
-          <pre>{JSON.stringify(weeklyDeltas, null, 2)}</pre>
-        </div>
-
         {/* ROW 1: TOP 5 GENRES + SEASONAL VIBES */}
         <div className={styles.row1}>
           <div className={styles.leftHalf}>
