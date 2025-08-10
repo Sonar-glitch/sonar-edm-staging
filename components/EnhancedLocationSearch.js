@@ -96,12 +96,20 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
     try {
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
       console.log('🔍 [EnhancedLocationSearch] API Key available:', !!apiKey);
+      console.log('🔍 [EnhancedLocationSearch] API Key length:', apiKey ? apiKey.length : 0);
       
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`
-      );
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
+      console.log('🔍 [EnhancedLocationSearch] Full URL:', url.replace(apiKey, 'HIDDEN_KEY'));
+      
+      const response = await fetch(url);
       
       console.log('🔍 [EnhancedLocationSearch] API Response status:', response.status);
+      console.log('🔍 [EnhancedLocationSearch] API Response ok:', response.ok);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       console.log('🔍 [EnhancedLocationSearch] API Response data:', data);
       
@@ -122,15 +130,21 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
             name: extractCityName(result.address_components) || result.formatted_address.split(',')[0]
           }));
 
+        console.log('🔍 [EnhancedLocationSearch] Setting suggestions:', cityResults.length);
         setSuggestions(cityResults);
       } else if (data.status === 'ZERO_RESULTS') {
+        console.log('🔍 [EnhancedLocationSearch] No results found for query');
         setSuggestions([]);
       } else {
-        setError(`Search failed: ${data.status}`);
+        console.error('🔍 [EnhancedLocationSearch] API Error:', data.status, data.error_message);
+        setError(`Search failed: ${data.status} - ${data.error_message || 'Unknown error'}`);
+        setSuggestions([]);
       }
     } catch (error) {
-      console.error('Error searching cities:', error);
-      setError('Failed to search cities. Please try again.');
+      console.error('🔍 [EnhancedLocationSearch] Network Error:', error.message);
+      console.error('🔍 [EnhancedLocationSearch] Full Error:', error);
+      setError(`Network error: ${error.message}`);
+      setSuggestions([]);
     } finally {
       setIsLoading(false);
     }
