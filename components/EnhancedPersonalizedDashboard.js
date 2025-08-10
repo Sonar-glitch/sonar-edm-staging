@@ -396,6 +396,12 @@ export default function EnhancedPersonalizedDashboard() {
                 <EnhancedEventList 
                   userTaste={dashboardData}
                   filters={eventFilters}
+                  onDataSourceUpdate={(dataSource) => {
+                    setDataSources(prev => ({
+                      ...prev,
+                      events: dataSource
+                    }));
+                  }}
                 />
               </div>
             </div>
