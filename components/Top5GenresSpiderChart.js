@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import styles from '../styles/Top5GenresSpiderChart.module.css';
 
@@ -6,22 +6,14 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [genreDeltas, setGenreDeltas] = useState({});
 
   useEffect(() => {
-    loadChartData();
-  }, [data]);
-
-  const loadChartData = async () => {
     try {
       setLoading(true);
-
       let genreData;
-
       if (data && data.topGenres && data.topGenres.length > 0) {
         genreData = data.topGenres.slice(0, 5);
       } else {
-        // Fallback genre data
         genreData = [
           { name: 'Melodic Techno', percentage: 95 },
           { name: 'Melodic House', percentage: 95 },
@@ -30,83 +22,58 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
           { name: 'Organic House', percentage: 15 }
         ];
       }
-
-      // Convert data format for Recharts and pre-calculate deltas
-      const rechartData = genreData.map(genre => ({
-        genre: genre.name,
-        value: genre.percentage
-      }));
-
-      const deltas = {};
-      if (getDeltaIndicator && typeof getDeltaIndicator === 'function') {
-        genreData.forEach(genre => {
-          const genreKey = genre.name.toLowerCase().replace(/\s+/g, ' ').trim();
-          const delta = getDeltaIndicator('genres', genreKey);
-          if (delta) {
-            deltas[genre.name] = delta;
-          }
-        });
-      }
-
-      setGenreDeltas(deltas);
+      const rechartData = genreData.map(g => ({ genre: g.name, value: g.percentage }));
       setChartData(rechartData);
-
     } catch (err) {
       console.error('Chart data loading error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [data]);
+
+  // Compute deltas each render to avoid stale snapshot & parsing issues
+  const genreDeltas = useMemo(() => {
+    if (!chartData || !getDeltaIndicator) return {};
+    const map = {};
+    chartData.forEach(item => {
+      // Normalize key to match weeklyDeltas structure
+      const key = item.genre.toLowerCase().trim();
+      const delta = getDeltaIndicator('genres', key);
+      if (delta) map[item.genre] = delta;
+    });
+    return map;
+  }, [chartData, getDeltaIndicator]);
 
 
   // Enhanced CustomTooltip with protocol-compliant delta and tooltip logic
   const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const value = payload[0].value;
-      const deltaInfo = genreDeltas[label];
-      // Try to extract delta value and direction
-      let change = 0;
-      let direction = '';
-      if (deltaInfo) {
-        const match = /([↗↘])\s*(\d+)/.exec(deltaInfo);
-        if (match) {
-          direction = match[1] === '↗️' ? 'up' : 'down';
-          change = parseInt(match[2], 10);
-        }
-      }
-      // Determine data source (real or fallback)
-      let isReal = false;
-      if (dataSource && dataSource.isReal) {
-        isReal = true;
-      }
-      // Tooltip message per protocol
-      let tooltip = '';
-      if (isReal && change !== 0) {
-        tooltip = `Your ${label} taste ${direction === 'up' ? 'increased' : 'decreased'} ${change}% in the last 7 days`;
-      } else if (!isReal) {
-        if (dataSource && dataSource.error === 'API_ERROR') {
-          tooltip = 'Demo data - waiting for your music activity';
-        } else {
-          tooltip = 'Demo data - personalizing your experience (3 more days)';
-        }
-      }
-      return (
-        <div className={styles.customTooltip}>
-          <p className={styles.tooltipGenre}>{label}</p>
-          <p className={styles.tooltipValue}>
-            {value}% 
-            {deltaInfo && (
-              <span className={styles.deltaIndicator} style={{ color: deltaInfo.color }}>
-                {deltaInfo.arrow} {deltaInfo.change}
-              </span>
-            )}
-          </p>
-          <p className={styles.tooltipDelta}>{tooltip}</p>
-        </div>
-      );
+    if (!active || !payload || !payload.length) return null;
+    const value = payload[0].value;
+    const deltaInfo = genreDeltas[label];
+    const isReal = !!(dataSource && dataSource.isReal);
+    let tooltip = '';
+    if (isReal && deltaInfo) {
+      tooltip = `Your ${label} taste ${deltaInfo.arrow === '↗️' ? 'increased' : 'decreased'} ${deltaInfo.change} in the last 7 days`;
+    } else if (!isReal) {
+      tooltip = dataSource?.error === 'API_ERROR'
+        ? 'Demo data - waiting for your music activity'
+        : 'Demo data - personalizing your experience (3 more days)';
     }
-    return null;
+    return (
+      <div className={styles.customTooltip}>
+        <p className={styles.tooltipGenre}>{label}</p>
+        <p className={styles.tooltipValue}>
+          {value}%
+          {deltaInfo && (
+            <span className={styles.deltaIndicator} style={{ color: deltaInfo.color }}>
+              {deltaInfo.arrow} {deltaInfo.change}
+            </span>
+          )}
+        </p>
+        <p className={styles.tooltipDelta}>{tooltip}</p>
+      </div>
+    );
   };
 
 
@@ -115,7 +82,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
     if (!payload || !payload.value) {
       return null;
     }
-    const deltaInfo = genreDeltas[payload.value];
+  const deltaInfo = genreDeltas[payload.value];
     return (
       <g>
         <text
@@ -177,21 +144,6 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
   return (
     <div className={styles.container}>
       <div className={styles.chartContainer}>
-        {/* DEBUG MARKER - REMOVE AFTER VERIFICATION */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          background: '#FF00CC',
-          color: '#FFFFFF',
-          padding: '4px 8px',
-          borderRadius: '4px',
-          zIndex: 1000,
-          fontSize: '12px',
-          fontWeight: 'bold'
-        }}>
-          DEBUG 2025-08-07
-        </div>
         <ResponsiveContainer width="100%" height={300}>
           <RadarChart
             data={chartData}
