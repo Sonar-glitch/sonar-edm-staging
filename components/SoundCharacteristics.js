@@ -144,21 +144,6 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
 
   return (
     <div className={styles.container}>
-      {/* DEBUG MARKER - REMOVE AFTER VERIFICATION */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        background: '#FF00CC',
-        color: '#FFFFFF',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        zIndex: 1000,
-        fontSize: '12px',
-        fontWeight: 'bold'
-      }}>
-        DEBUG 2025-08-07
-      </div>
       <div className={styles.characteristicsGrid}>
         {Object.entries(characteristics).map(([key, char]) => (
           <div 
@@ -174,22 +159,11 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
                 <span className={styles.characteristicValue}>
                   {char.value}%
                 </span>
-                {/* DEBUG: Show what getDeltaIndicator returns for each key */}
-                {(() => {
-                  const delta = getDeltaIndicator && getDeltaIndicator('soundCharacteristics', key.toLowerCase());
-                  return (
-                    <>
-                      <span style={{ color: '#888', fontSize: '10px', marginLeft: 8 }}>
-                        [delta: {delta ? JSON.stringify(delta) : 'null'}]
-                      </span>
-                      <DeltaIndicator
-                        type="soundCharacteristics"
-                        characteristicKey={key.toLowerCase()}
-                        getDeltaIndicator={getDeltaIndicator}
-                      />
-                    </>
-                  );
-                })()}
+                <DeltaIndicator
+                  type="soundCharacteristics"
+                  characteristicKey={key.toLowerCase()}
+                  getDeltaIndicator={getDeltaIndicator}
+                />
               </div>
             </div>
 

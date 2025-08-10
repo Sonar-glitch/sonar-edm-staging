@@ -267,19 +267,36 @@ export default function EnhancedPersonalizedDashboard() {
 
   // Delta indicator component
   const getDeltaIndicator = useCallback((type, key) => {
-    if (!weeklyDeltas || !weeklyDeltas[type]) return null;
+    console.log('🔍 getDeltaIndicator called with:', { type, key });
+    console.log('🔍 Current weeklyDeltas state:', weeklyDeltas);
+    
+    if (!weeklyDeltas || !weeklyDeltas[type]) {
+      console.log('❌ No weeklyDeltas data for type:', type);
+      return null;
+    }
     
     const delta = weeklyDeltas[type][key.toLowerCase()];
-    if (!delta || typeof delta.change === 'undefined') return null;
+    console.log('🔍 Found delta for key:', key.toLowerCase(), delta);
     
-    if (Math.abs(delta.change) === 0) return null;
+    if (!delta || typeof delta.change === 'undefined') {
+      console.log('❌ No valid delta found');
+      return null;
+    }
+    
+    if (Math.abs(delta.change) === 0) {
+      console.log('⚠️ Delta change is zero');
+      return null;
+    }
 
     const isPositive = delta.direction === 'up';
-    return {
+    const result = {
       arrow: isPositive ? '↗️' : '↘️',
       change: `${Math.abs(delta.change)}%`,
       color: isPositive ? '#00FF88' : '#FF4444'
     };
+    
+    console.log('✅ Returning delta indicator:', result);
+    return result;
   }, [weeklyDeltas]);
 
   if (loading) {
