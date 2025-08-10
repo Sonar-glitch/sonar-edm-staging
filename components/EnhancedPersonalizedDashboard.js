@@ -234,7 +234,7 @@ export default function EnhancedPersonalizedDashboard() {
     // Enhanced tooltip content based on source type
     let tooltipContent = '';
     if (isReal) {
-      if (sourceType === 'events') {
+      if (sourceKey === 'events') {
         // Events-specific tooltip
         tooltipContent = `Real Data\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%\nSource: Event APIs\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
       } else {
@@ -245,7 +245,7 @@ export default function EnhancedPersonalizedDashboard() {
     } else {
       const errorCode = source.error || 'UNKNOWN_ERROR';
       const fallbackReason = source.fallbackReason || 'Data source unavailable';
-      if (sourceType === 'events') {
+      if (sourceKey === 'events') {
         tooltipContent = `Fallback Data\nError: ${errorCode}\nReason: ${fallbackReason}\nUsing demo events for display`;
       } else {
         tooltipContent = `Fallback Data\nError: ${errorCode}\nReason: ${fallbackReason}\nUsing demo data for display`;
