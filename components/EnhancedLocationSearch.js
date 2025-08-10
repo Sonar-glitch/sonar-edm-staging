@@ -89,15 +89,21 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   }, [searchQuery]);
 
   const searchCities = async (query) => {
+    console.log('🔍 [EnhancedLocationSearch] Starting search for:', query);
     setIsLoading(true);
     setError(null);
 
     try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      console.log('🔍 [EnhancedLocationSearch] API Key available:', !!apiKey);
+      
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`
       );
       
+      console.log('🔍 [EnhancedLocationSearch] API Response status:', response.status);
       const data = await response.json();
+      console.log('🔍 [EnhancedLocationSearch] API Response data:', data);
       
       if (data.status === 'OK' && data.results) {
         // Filter and format results for cities

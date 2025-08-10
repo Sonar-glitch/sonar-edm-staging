@@ -234,12 +234,22 @@ export default function EnhancedPersonalizedDashboard() {
     // Enhanced tooltip content based on source type
     let tooltipContent = '';
     if (isReal) {
-      const timePeriod = source.trackSelectionContext?.description || "recent tracks";
-      tooltipContent = `Real Data\n${source.tracksAnalyzed || 0} tracks analyzed\nConfidence: ${Math.round((source.confidence || 0) * 100)}%\nSource: ${source.source || 'spotify'}\nPeriod: ${timePeriod}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+      if (sourceType === 'events') {
+        // Events-specific tooltip
+        tooltipContent = `Real Data\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%\nSource: Event APIs\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+      } else {
+        // Music taste tooltip
+        const timePeriod = source.trackSelectionContext?.description || "recent tracks";
+        tooltipContent = `Real Data\n${source.tracksAnalyzed || 0} tracks analyzed\nConfidence: ${Math.round((source.confidence || 0) * 100)}%\nSource: ${source.source || 'spotify'}\nPeriod: ${timePeriod}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+      }
     } else {
       const errorCode = source.error || 'UNKNOWN_ERROR';
       const fallbackReason = source.fallbackReason || 'Data source unavailable';
-      tooltipContent = `Fallback Data\nError: ${errorCode}\nReason: ${fallbackReason}\nUsing demo data for display`;
+      if (sourceType === 'events') {
+        tooltipContent = `Fallback Data\nError: ${errorCode}\nReason: ${fallbackReason}\nUsing demo events for display`;
+      } else {
+        tooltipContent = `Fallback Data\nError: ${errorCode}\nReason: ${fallbackReason}\nUsing demo data for display`;
+      }
     }
 
     return (

@@ -56,10 +56,17 @@ console.log('🔍 [EnhancedEventList] Location processing analysis:', {
 console.log('🚀 [EnhancedEventList] Making API request:', {
   method: 'GET',
   url: apiUrl,
-  expectedBackendParams: {
-    lat: new URLSearchParams(apiUrl.split('?')[1]).get('lat'),
-    lon: new URLSearchParams(apiUrl.split('?')[1]).get('lon')
-  }
+  expectedBackendParams: (() => {
+    const urlParts = apiUrl.split('?');
+    if (urlParts.length > 1) {
+      const searchParams = new URLSearchParams(urlParts[1]);
+      return {
+        lat: searchParams.get('lat'),
+        lon: searchParams.get('lon')
+      };
+    }
+    return { lat: null, lon: null };
+  })()
 });
 
           const locationResponse = await fetch('/api/user/get-location');
