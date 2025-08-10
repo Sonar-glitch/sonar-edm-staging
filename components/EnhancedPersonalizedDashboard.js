@@ -150,9 +150,20 @@ export default function EnhancedPersonalizedDashboard() {
             fallbackReason: data.dataSource?.fallbackReason
           }
         }));
-        
-        // Set the deltas from API (could be real or fallback)
-        setWeeklyDeltas(data.deltas);
+
+        // Merge (do not overwrite) so previously visible demo deltas remain when real data omits small/zero changes
+        setWeeklyDeltas(prev => ({
+          genres: {
+            ...(prev?.genres || {}),
+            ...(data.deltas?.genres || {})
+          },
+            soundCharacteristics: {
+            ...(prev?.soundCharacteristics || {}),
+            ...(data.deltas?.soundCharacteristics || {})
+          },
+          summary: data.deltas?.summary || prev?.summary,
+          dataQuality: data.deltas?.dataQuality || prev?.dataQuality
+        }));
       } else {
           // Use the fallback data
       const fallbackDeltas = {
@@ -267,35 +278,31 @@ export default function EnhancedPersonalizedDashboard() {
 
   // Delta indicator component
   const getDeltaIndicator = useCallback((type, key) => {
-    console.log('🔍 getDeltaIndicator called with:', { type, key });
-    console.log('🔍 Current weeklyDeltas state:', weeklyDeltas);
+    console.log('🔍 getDeltaIndicator called:', { type, key, weeklyDeltas });
     
     if (!weeklyDeltas || !weeklyDeltas[type]) {
-      console.log('❌ No weeklyDeltas data for type:', type);
+      console.log('❌ No weeklyDeltas for type:', type);
       return null;
     }
     
-    const delta = weeklyDeltas[type][key.toLowerCase()];
-    console.log('🔍 Found delta for key:', key.toLowerCase(), delta);
+    // Normalize key for matching (handle spaces and case)
+    const normalizedKey = key.toLowerCase().trim();
+    const delta = weeklyDeltas[type][normalizedKey];
     
-    if (!delta || typeof delta.change === 'undefined') {
-      console.log('❌ No valid delta found');
+    console.log('🔍 Looking for key:', normalizedKey, 'Found:', delta);
+    console.log('🔍 Available keys:', Object.keys(weeklyDeltas[type]));
+    
+    if (!delta || typeof delta.change === 'undefined' || Math.abs(delta.change) === 0) {
+      console.log('❌ No valid delta found for:', normalizedKey);
       return null;
     }
-    
-    if (Math.abs(delta.change) === 0) {
-      console.log('⚠️ Delta change is zero');
-      return null;
-    }
-
     const isPositive = delta.direction === 'up';
     const result = {
       arrow: isPositive ? '↗️' : '↘️',
       change: `${Math.abs(delta.change)}%`,
       color: isPositive ? '#00FF88' : '#FF4444'
     };
-    
-    console.log('✅ Returning delta indicator:', result);
+    console.log('✅ Returning delta:', result);
     return result;
   }, [weeklyDeltas]);
 
@@ -337,6 +344,12 @@ export default function EnhancedPersonalizedDashboard() {
   return (
     <div className={styles.container}>
       <div className={styles.dashboard}>
+        {/* DEBUG: Show weeklyDeltas data temporarily */}
+        <div style={{ background: '#222', color: '#fff', padding: '10px', margin: '10px', fontSize: '12px', fontFamily: 'monospace' }}>
+          <strong>DEBUG - weeklyDeltas:</strong>
+          <pre>{JSON.stringify(weeklyDeltas, null, 2)}</pre>
+        </div>
+
         {/* ROW 1: TOP 5 GENRES + SEASONAL VIBES */}
         <div className={styles.row1}>
           <div className={styles.leftHalf}>
@@ -379,6 +392,7 @@ export default function EnhancedPersonalizedDashboard() {
               <div className={styles.cardContent}>
                 <SoundCharacteristics 
                   data={dashboardData.soundCharacteristics}
+                  dataSource={dataSources.soundstat}
                   getDeltaIndicator={getDeltaIndicator}
                 />
               </div>
