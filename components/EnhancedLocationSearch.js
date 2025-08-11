@@ -108,9 +108,9 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
       if (inHouseResponse.ok) {
         const inHouseData = await inHouseResponse.json();
         
-        if (inHouseData.success && inHouseData.results && inHouseData.results.length > 0) {
+        if (inHouseData.success && inHouseData.suggestions && inHouseData.suggestions.length > 0) {
           // Format in-house results to match our expected structure
-          const inHouseResults = inHouseData.results.map(city => ({
+          const inHouseResults = inHouseData.suggestions.map(city => ({
             place_id: `inhouse_${city.name.toLowerCase().replace(/\s+/g, '_')}`,
             formatted_address: `${city.name}, ${city.region}, ${city.country}`,
             geometry: {
