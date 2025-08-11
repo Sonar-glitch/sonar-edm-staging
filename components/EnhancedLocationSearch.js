@@ -19,11 +19,12 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [displayLocation, setDisplayLocation] = useState(selectedLocation); // Track display location separately
   const inputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
 
   // Default location (Toronto fallback)
-  const currentLocation = selectedLocation || {
+  const currentLocation = displayLocation || selectedLocation || {
     city: 'Toronto',
     stateCode: 'ON',
     countryCode: 'CA',
@@ -204,6 +205,9 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
       country: locationData.country
     });
     
+    // Update the display location immediately
+    setDisplayLocation(locationData);
+    
     // Update the display
     setIsSearchMode(false);
     setSearchQuery('');
@@ -299,28 +303,41 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   return (
     <div style={{ 
       padding: '1rem', 
-      background: '#1a1a1a', 
+      background: 'rgba(21, 21, 31, 0.8)', // Glassmorphic background
+      backdropFilter: 'blur(20px)',
       borderRadius: '8px',
-      border: '1px solid #333',
-      color: '#fff',
+      border: '1px solid rgba(0, 255, 255, 0.1)', // Subtle cyan glow
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)', // Multi-layer depth
+      color: '#DADADA', // Primary text color
       position: 'relative'
     }}>
       {!isSearchMode ? (
         // Display Mode - Shows current location
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: '#ff1493' }}>📍</span>
-            <span>{formatLocationDisplay(currentLocation)}</span>
+            <span style={{ color: '#00CFFF' }}>📍</span> {/* Cyan interactive highlight */}
+            <span style={{ color: '#DADADA' }}>{formatLocationDisplay(currentLocation)}</span>
             <button 
               onClick={handleChangeClick}
               style={{
-                background: 'linear-gradient(90deg, #00c6ff, #ff00ff)',
+                background: 'linear-gradient(90deg, #00CFFF, #FF00CC)', // TIKO gradient
                 border: 'none',
                 padding: '0.25rem 0.5rem',
                 borderRadius: '4px',
-                color: 'white',
+                color: '#000000', // Black text for gradient buttons
                 fontSize: '0.8rem',
-                cursor: 'pointer'
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(255, 0, 204, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(255, 0, 204, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(255, 0, 204, 0.3)';
               }}
             >
               Change
@@ -331,7 +348,7 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
         // Search Mode - Shows input field with suggestions
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <span style={{ color: '#ff1493' }}>📍</span>
+            <span style={{ color: '#00CFFF' }}>📍</span> {/* Cyan interactive highlight */}
             <div style={{ flex: 1, position: 'relative' }}>
               <input
                 ref={inputRef}
@@ -343,12 +360,22 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  background: '#2a2a2a',
-                  border: '1px solid #444',
+                  background: 'rgba(17, 24, 39, 0.8)', // Dark glassmorphic input
+                  border: '1px solid rgba(0, 255, 255, 0.3)', // Cyan border
                   borderRadius: '4px',
-                  color: '#fff',
+                  color: '#DADADA', // Primary text
                   fontSize: '0.9rem',
-                  outline: 'none'
+                  outline: 'none',
+                  backdropFilter: 'blur(10px)',
+                  transition: 'border-color 0.2s ease'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'rgba(0, 207, 255, 0.6)';
+                  e.target.style.boxShadow = '0 0 0 2px rgba(0, 207, 255, 0.2)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(0, 255, 255, 0.3)';
+                  e.target.style.boxShadow = 'none';
                 }}
               />
               
@@ -359,20 +386,21 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                   top: '100%',
                   left: 0,
                   right: 0,
-                  background: '#1e1e1e',
-                  border: '1px solid #555',
+                  background: 'rgba(21, 21, 31, 0.95)', // Enhanced glassmorphic background
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(0, 255, 255, 0.2)', // Cyan border
                   borderTop: 'none',
                   borderRadius: '0 0 4px 4px',
                   maxHeight: '200px',
                   overflowY: 'auto',
-                  zIndex: 9999, // CRITICAL: Much higher z-index
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                  zIndex: 9999,
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 255, 255, 0.1)'
                 }}>
                   
                   {isLoading && (
                     <div style={{
                       padding: '0.5rem',
-                      color: '#888',
+                      color: '#999999', // Secondary text
                       fontSize: '0.9rem'
                     }}>
                       Searching...
@@ -399,24 +427,26 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                         style={{
                           padding: '0.75rem',
                           cursor: 'pointer',
-                          borderBottom: index < suggestions.length - 1 ? '1px solid #333' : 'none',
+                          borderBottom: index < suggestions.length - 1 ? '1px solid rgba(0, 255, 255, 0.1)' : 'none',
                           fontSize: '0.9rem',
-                          color: '#ffffff !important', // Force white text with !important
+                          color: '#DADADA', // Primary text
                           backgroundColor: 'transparent',
-                          transition: 'background-color 0.2s ease',
+                          transition: 'all 0.2s ease',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center'
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.background = '#404040';
+                          e.target.style.background = 'rgba(0, 207, 255, 0.1)'; // Cyan hover
+                          e.target.style.transform = 'translateY(-1px)';
                         }}
                         onMouseLeave={(e) => {
                           e.target.style.background = 'transparent';
+                          e.target.style.transform = 'translateY(0)';
                         }}
                       >
                         <span style={{ 
-                          color: '#ffffff !important',
+                          color: '#DADADA',
                           display: 'block',
                           width: '100%'
                         }}>
@@ -425,7 +455,7 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                         {isInHouse && (
                           <span style={{
                             fontSize: '0.7rem',
-                            color: '#00ff88',
+                            color: '#00CFFF', // Cyan for TIKO brand
                             fontWeight: 'bold',
                             marginLeft: '0.5rem'
                           }}>
@@ -441,19 +471,29 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
             <button 
               onClick={handleCancelSearch}
               style={{
-                background: '#666',
-                border: 'none',
+                background: 'rgba(102, 102, 102, 0.8)', // Glassmorphic gray
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 padding: '0.25rem 0.5rem',
                 borderRadius: '4px',
-                color: 'white',
+                color: '#DADADA',
                 fontSize: '0.8rem',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(102, 102, 102, 1)';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(102, 102, 102, 0.8)';
+                e.target.style.transform = 'translateY(0)';
               }}
             >
               Cancel
             </button>
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#888' }}>
+          <div style={{ fontSize: '0.8rem', color: '#999999' }}> {/* Secondary text */}
             Start typing to search for cities worldwide
           </div>
         </div>
