@@ -1,5 +1,16 @@
 // PRESERVES: All existing functionality and UI theme
-// ADDS: Custom themed tooltips, weekly delta indicators, comprehensive data source info
+// ADDS: Custom themed tooltips, weekly delta i          },
+          (error) => {
+            tryIPLocation();
+          },
+          { timeout: 10000, enableHighAccuracy: false }
+        );
+      } else {
+        tryIPLocation();
+      }
+    } catch (error) {
+      // Silent fail - will use fallback location
+      setUserLocation(fallbackLocation);prehensive data source info
 // REMOVES: Redundant red section as requested
 
 import { useState, useEffect, useCallback } from 'react';
@@ -76,7 +87,6 @@ export default function EnhancedPersonalizedDashboard() {
               );
               if (response.ok) {
                 const locationData = await response.json();
-                console.log('🌍 [Dashboard] Browser location detected:', locationData);
                 setUserLocation(locationData);
                 setEventFilters(prev => ({
                   ...prev,
@@ -85,7 +95,7 @@ export default function EnhancedPersonalizedDashboard() {
                 return;
               }
             } catch (error) {
-              console.error('🌍 [Dashboard] Reverse geocoding failed:', error);
+              // Silent fail - will try IP location fallback
             }
             
             // If reverse geocoding fails, use coordinates directly
@@ -124,7 +134,6 @@ export default function EnhancedPersonalizedDashboard() {
       const response = await fetch('/api/user/get-location');
       if (response.ok) {
         const locationData = await response.json();
-        console.log('🌍 [Dashboard] IP location detected:', locationData);
         setUserLocation(locationData);
         setEventFilters(prev => ({
           ...prev,
@@ -134,7 +143,6 @@ export default function EnhancedPersonalizedDashboard() {
         throw new Error('IP location API failed');
       }
     } catch (error) {
-      console.log('🌍 [Dashboard] IP location failed:', error.message);
       useTorontoFallback();
     }
   };
@@ -150,7 +158,6 @@ export default function EnhancedPersonalizedDashboard() {
       lat: 43.6532,
       lon: -79.3832
     };
-    console.log('🌍 [Dashboard] Using Toronto fallback location');
     setUserLocation(torontoLocation);
     setEventFilters(prev => ({
       ...prev,
@@ -514,10 +521,12 @@ export default function EnhancedPersonalizedDashboard() {
                     }))}
                     style={{
                       width: '100%',
-                      height: '4px',
-                      background: 'linear-gradient(90deg, #ff4444 0%, #ffaa44 50%, #44ff44 100%)',
-                      borderRadius: '2px',
-                      outline: 'none'
+                      height: '6px',
+                      background: 'linear-gradient(90deg, #00CFFF, #FF00CC)', // TIKO gradient
+                      borderRadius: '3px',
+                      outline: 'none',
+                      WebkitAppearance: 'none',
+                      cursor: 'pointer'
                     }}
                   />
                 </div>

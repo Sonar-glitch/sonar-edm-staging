@@ -25,30 +25,12 @@ export default function EnhancedEventList({
   }, [userProfile, location, vibeMatch]);
 
   const loadEvents = async () => {
-    // INSERT after "const loadEvents = async () => {"
-console.log('🔍 [EnhancedEventList] loadEvents() called:', {
-  timestamp: new Date().toISOString(),
-  propsReceived: {
-    location: location,
-    locationType: typeof location,
-    locationKeys: location ? Object.keys(location) : null,
-    vibeMatch: vibeMatch,
-    userProfile: !!userProfile
-  }
-});
-
     try {
       setLoading(true);
       setDebugInfo({ query: 'Loading events...', timestamp: new Date().toISOString() });
 
       // SURGICAL ADDITION: Use provided location or get user location
       let locationData = location;
-      // INSERT after "let locationData = location;"
-console.log('🔍 [EnhancedEventList] Location processing analysis:', {
-  receivedLocationProp: location,
-  assignedLocationData: locationData,
-  willUseProvidedLocation: !!locationData
-});
 
       if (!locationData) {
         try {
@@ -58,12 +40,9 @@ console.log('🔍 [EnhancedEventList] Location processing analysis:', {
           if (locationResponse.ok) {
             locationData = await locationResponse.json();
             setUserLocation(locationData);
-            console.log('User location obtained:', locationData);
-          } else {
-            console.warn('Location API failed, using fallback');
           }
         } catch (locationError) {
-          console.error('Location detection error:', locationError);
+          // Silent fail - use fallback
         }
       } else {
         setUserLocation(locationData);
@@ -117,13 +96,6 @@ console.log('🔍 [EnhancedEventList] Location processing analysis:', {
       }
 
       const data = await response.json();
-// INSERT after "const data = await response.json();"
-console.log('📊 [EnhancedEventList] API response data:', {
-  success: data.success,
-  eventsCount: data.events ? data.events.length : 0,
-  source: data.source,
-  error: data.error
-});
 
       // PRESERVED: All existing response handling logic (unchanged)
       if (data.events && data.events.length > 0) {

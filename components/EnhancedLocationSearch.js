@@ -129,8 +129,6 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
             source: 'inhouse'
           }));
           
-          // CRITICAL DEBUG: Only log when we have results
-          console.log('🎯 CITY SEARCH:', { query, found: inHouseResults.length, firstResult: inHouseResults[0]?.formatted_address });
           setSuggestions(inHouseResults);
           setIsLoading(false);
           return;
@@ -138,7 +136,6 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
       }
       
       // STEP 2: Google API temporarily disabled due to billing requirements
-      console.log('🏠 No in-house results found for:', query);
       setSuggestions([]);
       setError('No cities found. Try typing a major city name.');
     } catch (error) {
@@ -198,13 +195,6 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   };
 
   const handleLocationSelect = async (locationData) => {
-    console.log('🎯 [Location Selected]:', {
-      city: locationData.city,
-      latitude: locationData.latitude,
-      longitude: locationData.longitude,
-      country: locationData.country
-    });
-    
     // Update the display location immediately
     setDisplayLocation(locationData);
     
@@ -228,8 +218,6 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
           countryName = countryCodeToName[locationData.countryCode];
         }
         
-        console.log('Country being sent to API:', countryName);
-        
         const response = await fetch('/api/events/request-city', {
           method: 'POST',
           headers: {
@@ -244,12 +232,10 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
         });
 
         if (!response.ok) {
-          console.error('City expansion request failed:', response.status);
-        } else {
-          console.log('City expansion request successful');
+          // Silent fail - city expansion is not critical
         }
       } catch (error) {
-        console.error('Error requesting city expansion:', error);
+        // Silent fail - city expansion is not critical
       }
     }
   };
@@ -303,6 +289,7 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   return (
     <div style={{ 
       padding: '1rem', 
+      marginBottom: '2rem', // Add spacing between sections
       background: 'rgba(21, 21, 31, 0.8)', // Glassmorphic background
       backdropFilter: 'blur(20px)',
       borderRadius: '8px',
@@ -314,9 +301,11 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
       {!isSearchMode ? (
         // Display Mode - Shows current location
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: '#00CFFF' }}>📍</span> {/* Cyan interactive highlight */}
-            <span style={{ color: '#DADADA' }}>{formatLocationDisplay(currentLocation)}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: '#00CFFF' }}>📍</span> {/* Cyan interactive highlight */}
+              <span style={{ color: '#DADADA' }}>{formatLocationDisplay(currentLocation)}</span>
+            </div>
             <button 
               onClick={handleChangeClick}
               style={{
