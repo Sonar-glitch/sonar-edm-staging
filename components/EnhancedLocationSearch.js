@@ -265,8 +265,8 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
 
   const handleInputChange = (e) => {
     const value = e.target.value;
-    console.log('🔍 [EnhancedLocationSearch] Input changed:', value);
     setSearchQuery(value);
+    setQuery(value); // Also update the main query state that triggers search
   };
 
   const handleKeyDown = (e) => {
@@ -394,12 +394,18 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                           cursor: 'pointer',
                           borderBottom: index < suggestions.length - 1 ? '1px solid #444' : 'none',
                           fontSize: '0.9rem',
+                          color: '#fff', // FIXED: Add explicit white text color
+                          backgroundColor: 'transparent',
                           ':hover': {
                             background: '#333'
                           }
                         }}
-                        onMouseEnter={(e) => e.target.style.background = '#333'}
-                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = '#333';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'transparent';
+                        }}
                       >
                         {suggestion.formatted_address}
                       </div>

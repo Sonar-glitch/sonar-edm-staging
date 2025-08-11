@@ -146,6 +146,10 @@ console.log('🚀 [EnhancedEventList] Making API request:', {
         }
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
 // INSERT after "const data = await response.json();"
 console.log('📊 [EnhancedEventList] API response data:', {
@@ -306,18 +310,18 @@ console.log('📊 [EnhancedEventList] API response data:', {
   return (
     <div className={styles.container}>
       <div className={styles.eventsList}>
-        {events.map((event, index) => (
+        {(events || []).filter(event => event && typeof event === 'object').map((event, index) => (
           <div key={event.id || index} className={styles.eventCard}>
             <div className={styles.eventHeader}>
-              <h3 className={styles.eventTitle}>{event.name}</h3>
+              <h3 className={styles.eventTitle}>{event.name || 'Untitled Event'}</h3>
               <div className={styles.eventDate}>
-                {new Date(event.date).toLocaleDateString()}
+                {event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD'}
               </div>
             </div>
 
             <div className={styles.eventDetails}>
-              <p className={styles.eventVenue}>{event.venue}</p>
-              <p className={styles.eventLocation}>{event.location}</p>
+              <p className={styles.eventVenue}>{event.venue || 'Venue TBD'}</p>
+              <p className={styles.eventLocation}>{event.location || 'Location TBD'}</p>
 
               {event.artists && event.artists.length > 0 && (
                 <div className={styles.eventArtists}>
