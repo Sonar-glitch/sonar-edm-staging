@@ -7,13 +7,13 @@ import { getUserLocationFromBrowser, getUserLocationFromIP } from '@/lib/locatio
 import styles from '../styles/MinimalEventFilters.module.css';
 
 export default function MinimalEventFilters({ 
+  userLocation,
   onLocationChange, 
-  onVibeMatchChange, 
-  initialLocation, 
-  initialVibeMatch = 50 
+  filters,
+  onFiltersChange
 }) {
-  const [vibeMatch, setVibeMatch] = useState(initialVibeMatch);
-  const [location, setLocation] = useState(initialLocation || '');
+  const [vibeMatch, setVibeMatch] = useState(filters?.vibeMatch || 50);
+  const [location, setLocation] = useState(userLocation ? `${userLocation.city}, ${userLocation.region}, ${userLocation.country}` : '');
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
@@ -22,7 +22,10 @@ export default function MinimalEventFilters({
   const handleVibeMatchChange = (e) => {
     const value = parseInt(e.target.value);
     setVibeMatch(value);
-    onVibeMatchChange(value);
+    onFiltersChange({
+      ...filters,
+      vibeMatch: value
+    });
   };
 
   // Handle location search input
@@ -54,9 +57,14 @@ export default function MinimalEventFilters({
 
   // Handle location selection from suggestions
   const handleLocationSelect = (selectedLocation) => {
-    setLocation(selectedLocation.description);
+    const locationString = `${selectedLocation.city}, ${selectedLocation.region}, ${selectedLocation.country}`;
+    setLocation(locationString);
     setShowSuggestions(false);
     onLocationChange(selectedLocation);
+    onFiltersChange({
+      ...filters,
+      location: selectedLocation
+    });
   };
 
   // Auto-detect user location
@@ -69,6 +77,10 @@ export default function MinimalEventFilters({
         const locationString = `${locationData.city}, ${locationData.region}, ${locationData.country}`;
         setLocation(locationString);
         onLocationChange(locationData);
+        onFiltersChange({
+          ...filters,
+          location: locationData
+        });
         return; // Success, exit early
       } catch (browserError) {
         console.log('Browser geolocation failed, trying client-side IP detection:', browserError.message);
@@ -80,6 +92,10 @@ export default function MinimalEventFilters({
         const locationString = `${locationData.city}, ${locationData.region}, ${locationData.country}`;
         setLocation(locationString);
         onLocationChange(locationData);
+        onFiltersChange({
+          ...filters,
+          location: locationData
+        });
         return; // Success, exit early
       } catch (ipError) {
         console.log('Client-side IP detection failed, defaulting to Toronto:', ipError.message);
@@ -91,10 +107,16 @@ export default function MinimalEventFilters({
         region: 'Ontario',
         country: 'Canada',
         lat: 43.6532,
-        lon: -79.3832
+        lon: -79.3832,
+        latitude: 43.6532,
+        longitude: -79.3832
       };
       setLocation('Toronto, Ontario, Canada');
       onLocationChange(torontoData);
+      onFiltersChange({
+        ...filters,
+        location: torontoData
+      });
       
     } catch (error) {
       console.error('Auto location error:', error);

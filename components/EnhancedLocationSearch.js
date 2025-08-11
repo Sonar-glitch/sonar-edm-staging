@@ -92,16 +92,14 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   const searchCities = async (query) => {
     setIsLoading(true);
     setError(null);
+    setSuggestions([]);
 
     try {
       // STEP 1: Search our in-house city database first
-      console.log('🏠 [EnhancedLocationSearch] Searching in-house city database for:', query);
-      
       const inHouseResponse = await fetch(`/api/location/search?q=${encodeURIComponent(query)}`);
       
       if (inHouseResponse.ok) {
         const inHouseData = await inHouseResponse.json();
-        console.log('🏠 [EnhancedLocationSearch] In-house results:', inHouseData);
         
         if (inHouseData.success && inHouseData.results && inHouseData.results.length > 0) {
           // Format in-house results to match our expected structure
@@ -123,11 +121,21 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
             source: 'inhouse'
           }));
           
-          console.log('✅ [EnhancedLocationSearch] Using in-house results:', inHouseResults.length);
+          // CRITICAL DEBUG: Only log when we have results
+          console.log('🎯 CITY SEARCH:', { query, found: inHouseResults.length, firstResult: inHouseResults[0]?.formatted_address });
           setSuggestions(inHouseResults);
           setIsLoading(false);
-          return; // Exit early - we found results in our database
+          return;
         }
+      }
+      
+      // STEP 2: Fallback to Google API if no in-house results found
+          return; // Exit early - we found results in our database
+        } else {
+          console.log('🏠 [DEBUG] No in-house results found');
+        }
+      } else {
+        console.log('🏠 [DEBUG] In-house API failed:', inHouseResponse.status);
       }
       
       // STEP 2: Fallback to Google API if no in-house results found
@@ -392,15 +400,16 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                   top: '100%',
                   left: 0,
                   right: 0,
-                  background: '#1e1e1e', // Even darker background
+                  background: '#1e1e1e',
                   border: '1px solid #555',
                   borderTop: 'none',
                   borderRadius: '0 0 4px 4px',
                   maxHeight: '200px',
                   overflowY: 'auto',
-                  zIndex: 1000,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)' // Better shadow
+                  zIndex: 9999, // CRITICAL: Much higher z-index
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
                 }}>
+                  
                   {isLoading && (
                     <div style={{
                       padding: '0.5rem',
@@ -433,7 +442,7 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                           cursor: 'pointer',
                           borderBottom: index < suggestions.length - 1 ? '1px solid #333' : 'none',
                           fontSize: '0.9rem',
-                          color: '#ffffff', // Ensure bright white text
+                          color: '#ffffff !important', // Force white text with !important
                           backgroundColor: 'transparent',
                           transition: 'background-color 0.2s ease',
                           display: 'flex',
@@ -447,7 +456,13 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                           e.target.style.background = 'transparent';
                         }}
                       >
-                        <span>{suggestion.formatted_address}</span>
+                        <span style={{ 
+                          color: '#ffffff !important',
+                          display: 'block',
+                          width: '100%'
+                        }}>
+                          {suggestion.formatted_address || suggestion.name || 'Unknown Location'}
+                        </span>
                         {isInHouse && (
                           <span style={{
                             fontSize: '0.7rem',

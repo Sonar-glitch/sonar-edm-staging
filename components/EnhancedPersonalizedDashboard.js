@@ -12,7 +12,7 @@ const Top5GenresSpiderChart = dynamic(() => import('./Top5GenresSpiderChart'), {
 const CompactSeasonalVibes = dynamic(() => import('./CompactSeasonalVibes'), { ssr: false });
 const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
 const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: false });
-const MinimalEventFilters = dynamic(() => import('./MinimalEventFilters'), { ssr: false });
+const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'), { ssr: false });
 
 export default function EnhancedPersonalizedDashboard() {
   const { data: session, status } = useSession();
@@ -59,7 +59,104 @@ export default function EnhancedPersonalizedDashboard() {
   useEffect(() => {
     loadDashboardData();
     loadWeeklyDeltas(); // Load regardless of auth status
+    autoDetectLocation(); // Auto-detect user location on load
   }, []);
+
+  // Auto-detect user location with proper fallback chain
+  const autoDetectLocation = async () => {
+    try {
+      // Method 1: Try browser geolocation first
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              // Reverse geocode coordinates to get city name
+              const response = await fetch(
+                `/api/location/reverse-geocode?lat=${position.coords.latitude}&lon=${position.coords.longitude}`
+              );
+              if (response.ok) {
+                const locationData = await response.json();
+                console.log('🌍 [Dashboard] Browser location detected:', locationData);
+                setUserLocation(locationData);
+                setEventFilters(prev => ({
+                  ...prev,
+                  location: locationData
+                }));
+                return;
+              }
+            } catch (error) {
+              console.error('🌍 [Dashboard] Reverse geocoding failed:', error);
+            }
+            
+            // If reverse geocoding fails, use coordinates directly
+            const fallbackLocation = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              city: 'Your Location',
+              country: 'Unknown',
+              region: 'Unknown'
+            };
+            setUserLocation(fallbackLocation);
+            setEventFilters(prev => ({
+              ...prev,
+              location: fallbackLocation
+            }));
+          },
+          (error) => {
+            console.log('🌍 [Dashboard] Browser geolocation failed:', error.message);
+            tryIPLocation();
+          },
+          { timeout: 10000, enableHighAccuracy: false }
+        );
+      } else {
+        console.log('🌍 [Dashboard] Geolocation not supported, trying IP location');
+        tryIPLocation();
+      }
+    } catch (error) {
+      console.error('🌍 [Dashboard] Location detection error:', error);
+      useTorontoFallback();
+    }
+  };
+
+  // Method 2: IP-based location detection
+  const tryIPLocation = async () => {
+    try {
+      const response = await fetch('/api/user/get-location');
+      if (response.ok) {
+        const locationData = await response.json();
+        console.log('🌍 [Dashboard] IP location detected:', locationData);
+        setUserLocation(locationData);
+        setEventFilters(prev => ({
+          ...prev,
+          location: locationData
+        }));
+      } else {
+        throw new Error('IP location API failed');
+      }
+    } catch (error) {
+      console.log('🌍 [Dashboard] IP location failed:', error.message);
+      useTorontoFallback();
+    }
+  };
+
+  // Method 3: Toronto fallback
+  const useTorontoFallback = () => {
+    const torontoLocation = {
+      city: 'Toronto',
+      region: 'Ontario', 
+      country: 'Canada',
+      latitude: 43.6532,
+      longitude: -79.3832,
+      lat: 43.6532,
+      lon: -79.3832
+    };
+    console.log('🌍 [Dashboard] Using Toronto fallback location');
+    setUserLocation(torontoLocation);
+    setEventFilters(prev => ({
+      ...prev,
+      location: torontoLocation
+    }));
+  };
 
   // ENHANCED: Load dashboard data with comprehensive data source tracking
   const loadDashboardData = async () => {
@@ -397,15 +494,46 @@ export default function EnhancedPersonalizedDashboard() {
                 {getDataIndicator('events')}
               </div>
               <div className={styles.cardContent}>
-                <MinimalEventFilters 
-                  userLocation={userLocation}
-                  onLocationChange={setUserLocation}
-                  filters={eventFilters}
-                  onFiltersChange={setEventFilters}
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem', 
+                    color: '#fff', 
+                    fontSize: '0.9rem' 
+                  }}>
+                    Vibe Match: {eventFilters.vibeMatch}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={eventFilters.vibeMatch}
+                    onChange={(e) => setEventFilters(prev => ({
+                      ...prev,
+                      vibeMatch: parseInt(e.target.value)
+                    }))}
+                    style={{
+                      width: '100%',
+                      height: '4px',
+                      background: 'linear-gradient(90deg, #ff4444 0%, #ffaa44 50%, #44ff44 100%)',
+                      borderRadius: '2px',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+                <EnhancedLocationSearch 
+                  onLocationSelect={(locationData) => {
+                    setUserLocation(locationData);
+                    setEventFilters(prev => ({
+                      ...prev,
+                      location: locationData
+                    }));
+                  }}
                 />
                 <EnhancedEventList 
-                  userTaste={dashboardData}
-                  filters={eventFilters}
+                  userProfile={dashboardData}
+                  location={eventFilters.location || userLocation}
+                  vibeMatch={eventFilters.vibeMatch}
                   onDataSourceUpdate={(dataSource) => {
                     setDataSources(prev => ({
                       ...prev,
