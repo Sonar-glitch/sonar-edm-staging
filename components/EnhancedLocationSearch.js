@@ -137,17 +137,6 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
       }
       
       // STEP 2: Fallback to Google API if no in-house results found
-          return; // Exit early - we found results in our database
-        } else {
-          console.log('🏠 [DEBUG] No in-house results found');
-        }
-      } else {
-        console.log('🏠 [DEBUG] In-house API failed:', inHouseResponse.status);
-      }
-      
-      // STEP 2: Fallback to Google API if no in-house results found
-      console.log('🌐 [EnhancedLocationSearch] No in-house results, falling back to Google API');
-      
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
       
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
