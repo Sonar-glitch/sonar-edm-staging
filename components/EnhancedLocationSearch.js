@@ -103,7 +103,7 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
 
     try {
       // STEP 1: Search our in-house city database first
-      const inHouseResponse = await fetch(`/api/location/search?q=${encodeURIComponent(query)}`);
+      const inHouseResponse = await fetch(`/api/location/search?query=${encodeURIComponent(query)}`);
       
       if (inHouseResponse.ok) {
         const inHouseData = await inHouseResponse.json();
@@ -136,47 +136,10 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
         }
       }
       
-      // STEP 2: Fallback to Google API if no in-house results found
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-      
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
-      
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.status === 'OK' && data.results) {
-        // Filter and format results for cities
-        const cityResults = data.results
-          .filter(result => 
-            result.types.includes('locality') || 
-            result.types.includes('administrative_area_level_1') ||
-            result.types.includes('political')
-          )
-          .slice(0, 5) // Limit to 5 suggestions
-          .map(result => ({
-            place_id: result.place_id,
-            formatted_address: result.formatted_address,
-            geometry: result.geometry,
-            address_components: result.address_components,
-            name: extractCityName(result.address_components) || (result.formatted_address ? result.formatted_address.split(',')[0] : 'Unknown City'),
-            source: 'google'
-          }));
-
-        console.log('🌐 [EnhancedLocationSearch] Using Google API results:', cityResults.length);
-        setSuggestions(cityResults);
-      } else if (data.status === 'ZERO_RESULTS') {
-        console.log('🌐 [EnhancedLocationSearch] No Google results found');
-        setSuggestions([]);
-      } else {
-        console.error('🌐 [EnhancedLocationSearch] Google API Error:', data.status, data.error_message);
-        setError(`Search failed: ${data.status} - ${data.error_message || 'Unknown error'}`);
-        setSuggestions([]);
-      }
+      // STEP 2: Google API temporarily disabled due to billing requirements
+      console.log('🏠 No in-house results found for:', query);
+      setSuggestions([]);
+      setError('No cities found. Try typing a major city name.');
     } catch (error) {
       console.error('🔍 [EnhancedLocationSearch] Search Error:', error.message);
       setError(`Search error: ${error.message}`);
