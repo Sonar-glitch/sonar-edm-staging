@@ -69,7 +69,7 @@ export default function EnhancedEventCard({ event }) {
       <div className={styles.header}>
         <h3 className={styles.title}>{event.name}</h3>
         <p className={styles.venue}>
-          {event.venue} {venueType && <span className={styles.venueType}>• {venueType}</span>}
+          {typeof event.venue === 'object' ? (event.venue?.name || 'Venue TBA') : (event.venue || 'Venue TBA')} {venueType && <span className={styles.venueType}>• {venueType}</span>}
         </p>
       </div>
       

@@ -308,8 +308,12 @@ export default function EnhancedEventList({
 
               <div className={styles.eventDetails}>
                 <div className={styles.venueInfo}>
-                  <p className={styles.eventVenue}>{event.venue || 'Venue TBD'}</p>
-                  <p className={styles.eventLocation}>{event.location || 'Location TBD'}</p>
+                  <p className={styles.eventVenue}>
+                    {typeof event.venue === 'object' ? (event.venue?.name || 'Venue TBD') : (event.venue || 'Venue TBD')}
+                  </p>
+                  <p className={styles.eventLocation}>
+                    {typeof event.location === 'object' ? (event.location?.city || event.location?.name || 'Location TBD') : (event.location || 'Location TBD')}
+                  </p>
                 </div>
 
                 {event.artists && event.artists.length > 0 && (

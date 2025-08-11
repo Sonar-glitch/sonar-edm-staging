@@ -66,10 +66,10 @@ export default function EventRecommendation({ events, userGenres }) {
               
               <div className={styles.eventDetails}>
                 <h3 className={styles.eventName}>
-                  {event.venue} - {event.name}
+                  {typeof event.venue === 'object' ? (event.venue?.name || 'Venue TBD') : (event.venue || 'Venue TBD')} - {event.name}
                 </h3>
                 <div className={styles.eventMeta}>
-                  <span>{event.location}</span>
+                  <span>{typeof event.location === 'object' ? (event.location?.city || event.location?.name || 'Location TBD') : (event.location || 'Location TBD')}</span>
                   <span className={styles.bulletSeparator}>•</span>
                   <span>{formatEventDate(event.date)}</span>
                   <span className={styles.bulletSeparator}>•</span>
