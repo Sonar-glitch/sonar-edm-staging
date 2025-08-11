@@ -1,0 +1,381 @@
+/* TASTE MATCH VISUALS - TIKO GLASSMORPHIC THEME */
+
+.visualContainer {
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+}
+
+.compactDisplay {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5rem;
+  background: rgba(0, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+
+.quickInsights {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.insightChip {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(21, 21, 31, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #DADADA;
+  backdrop-filter: blur(10px);
+}
+
+.insightChip.direct_artist_match {
+  border-color: rgba(255, 107, 107, 0.4);
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.insightChip.similar_artist_match {
+  border-color: rgba(78, 205, 196, 0.4);
+  background: rgba(78, 205, 196, 0.1);
+}
+
+.insightChip.genre_affinity {
+  border-color: rgba(69, 183, 209, 0.4);
+  background: rgba(69, 183, 209, 0.1);
+}
+
+.insightChip.audio_dna_match {
+  border-color: rgba(150, 206, 180, 0.4);
+  background: rgba(150, 206, 180, 0.1);
+}
+
+.insightIcon {
+  font-size: 0.8rem;
+}
+
+.insightText {
+  font-weight: 500;
+}
+
+.insightStrength {
+  font-weight: 700;
+  color: #00FF88;
+  font-size: 0.7rem;
+}
+
+.miniRadar {
+  flex-shrink: 0;
+}
+
+.insightsSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.insightBadge {
+  background: rgba(21, 21, 31, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.insightBadge:hover {
+  border-color: rgba(0, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.2);
+}
+
+.insightBadge.direct_artist_match {
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.insightBadge.similar_artist_match {
+  border-color: rgba(78, 205, 196, 0.3);
+}
+
+.insightBadge.genre_affinity {
+  border-color: rgba(69, 183, 209, 0.3);
+}
+
+.insightBadge.audio_dna_match {
+  border-color: rgba(150, 206, 180, 0.3);
+}
+
+.insightHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.insightContent {
+  color: #DADADA;
+  font-size: 0.85rem;
+}
+
+.chartSection {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: rgba(0, 255, 255, 0.03);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.chartSection h4 {
+  margin: 0 0 0.75rem 0;
+  color: #00FFFF;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.radarContainer {
+  position: relative;
+}
+
+.similarityScore {
+  text-align: center;
+  margin-top: 0.5rem;
+  color: #00FF88;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.wheelContainer {
+  position: relative;
+}
+
+.overallScore {
+  text-align: center;
+  margin-top: 0.5rem;
+  color: #00FFFF;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.networkDisplay {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.networkNodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.networkNode {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+  border: 1px solid;
+  backdrop-filter: blur(10px);
+}
+
+.networkNode.event_artist {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: rgba(0, 255, 255, 0.4);
+  color: #00FFFF;
+}
+
+.networkNode.user_artist {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: rgba(0, 255, 136, 0.4);
+  color: #00FF88;
+}
+
+.nodeName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.networkConnections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.connectionInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.connectionStrength {
+  color: #00FF88;
+  font-weight: 600;
+}
+
+.sharedGenres {
+  color: #00FFFF;
+  font-style: italic;
+}
+
+.heatmapDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.heatmapGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  max-width: 150px;
+}
+
+.heatmapCell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #000;
+  min-height: 30px;
+}
+
+.cellValue {
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+}
+
+.heatmapLegend {
+  font-size: 0.75rem;
+  color: #999;
+  text-align: center;
+}
+
+.artistList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.artistName {
+  background: rgba(255, 107, 107, 0.2);
+  color: #FF6B6B;
+  padding: 0.15rem 0.4rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.correlation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.eventArtist {
+  color: #00FFFF;
+  font-weight: 500;
+}
+
+.similarity {
+  color: #00FF88;
+  font-weight: 600;
+}
+
+.userArtist {
+  color: #DADADA;
+}
+
+.genreList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.genreMatch {
+  background: rgba(69, 183, 209, 0.2);
+  color: #45B7D1;
+  padding: 0.15rem 0.4rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.featureList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.featureMatch {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.featureName {
+  color: #DADADA;
+  text-transform: capitalize;
+}
+
+.featureSimilarity {
+  color: #00FF88;
+  font-weight: 600;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .insightsSummary {
+    grid-template-columns: 1fr;
+  }
+  
+  .compactDisplay {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .quickInsights {
+    justify-content: center;
+  }
+  
+  .chartSection {
+    padding: 0.5rem;
+  }
+}
+
+/* Animation for insight badges */
+@keyframes insightPulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0); }
+}
+
+.insightBadge:hover {
+  animation: insightPulse 2s infinite;
+}

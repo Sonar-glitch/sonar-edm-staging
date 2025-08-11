@@ -14,6 +14,11 @@ const AppLayout = ({ children }) => {
       <Head>
         <title>TIKO - Your Music Universe</title>
         <meta name="description" content="Your personalized EDM event discovery platform" />
+        <script
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+          async
+          defer
+        />
       </Head>
 
       <header className={styles.mainHeader}>

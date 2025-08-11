@@ -351,6 +351,235 @@
   }
 }
 
+/* ENHANCED EVENT HEADER WITH MATCH SCORE */
+.eventHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.eventTitleSection {
+  flex: 1;
+}
+
+.eventTitle {
+  color: #DADADA;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 0 15px rgba(218, 218, 218, 0.4);
+  line-height: 1.3;
+}
+
+.eventDate {
+  color: #00FFFF;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* MATCH SCORE SECTION */
+.matchScoreSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 60px;
+}
+
+.matchScore {
+  font-size: 1.4rem;
+  font-weight: 700;
+  padding: 0.5rem;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 50px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.highMatch {
+  background: linear-gradient(135deg, #00ff88, #00ffcc);
+  color: #000;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+}
+
+.goodMatch {
+  background: linear-gradient(135deg, #00ffff, #0088ff);
+  color: #000;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+}
+
+.fairMatch {
+  background: linear-gradient(135deg, #ffaa00, #ff6600);
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 170, 0, 0.8);
+}
+
+.lowMatch {
+  background: linear-gradient(135deg, #ff4444, #cc2222);
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 68, 68, 0.8);
+}
+
+.matchLabel {
+  color: #999;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ENHANCED VENUE INFO */
+.venueInfo {
+  margin-bottom: 0.75rem;
+}
+
+.eventVenue {
+  color: #DADADA !important;
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 0.25rem 0 !important;
+}
+
+.eventLocation {
+  color: #00FFFF !important;
+  font-size: 0.85rem;
+  margin: 0 !important;
+  font-style: italic;
+}
+
+/* ENHANCED GENRE DISPLAY */
+.eventGenres {
+  margin: 0.75rem 0;
+}
+
+.genreList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.genreTag {
+  background: rgba(0, 255, 255, 0.1);
+  color: #00FFFF;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  backdrop-filter: blur(5px);
+}
+
+.genreMore {
+  color: #999;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+/* TASTE MATCH EXPLANATION SECTION */
+.tasteMatchSection {
+  background: rgba(0, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  backdrop-filter: blur(5px);
+}
+
+.tasteExplanation {
+  color: #DADADA;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.tasteReasons {
+  margin: 0.5rem 0;
+}
+
+.tasteReason {
+  color: #00FFFF;
+  font-size: 0.8rem;
+  margin: 0.25rem 0;
+  padding-left: 0.5rem;
+}
+
+.tasteMetadata {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.confidenceLevel {
+  color: #999;
+}
+
+.methodology {
+  color: #666;
+  text-transform: capitalize;
+}
+
+/* ENHANCED EVENT ACTIONS */
+.eventActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.ticketButton {
+  background: linear-gradient(135deg, #00FFFF, #0088CC);
+  color: #000;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.ticketButton:hover {
+  background: linear-gradient(135deg, #00CCCC, #006699);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.priceInfo {
+  color: #999;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* DATE PROXIMITY STYLING */
+.pastEvent {
+  opacity: 0.6;
+  border-color: rgba(136, 136, 136, 0.2);
+}
+
+.todayEvent {
+  border-color: rgba(255, 68, 68, 0.6);
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+}
+
+.soonEvent {
+  border-color: rgba(0, 255, 136, 0.6);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+.thisMonthEvent {
+  border-color: rgba(0, 255, 255, 0.4);
+}
+
+.futureEvent {
+  border-color: rgba(0, 255, 255, 0.2);
+}
+
 /* GLASSMORPHIC ENHANCEMENT DETAILS */
 .eventCard::before {
   content: '';

@@ -3,6 +3,7 @@
 // PRESERVES: All existing functionality, styling, error handling, and component behavior
 
 import { useState, useEffect } from 'react';
+import TasteMatchVisuals from './TasteMatchVisuals';
 import styles from '../styles/EnhancedEventList.module.css';
 
 export default function EnhancedEventList({ 
@@ -248,60 +249,114 @@ export default function EnhancedEventList({
   return (
     <div className={styles.container}>
       <div className={styles.eventsList}>
-        {(events || []).filter(event => event && typeof event === 'object').map((event, index) => (
-          <div key={event.id || index} className={styles.eventCard}>
-            <div className={styles.eventHeader}>
-              <h3 className={styles.eventTitle}>{event.name || 'Untitled Event'}</h3>
-              <div className={styles.eventDate}>
-                {event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD'}
+        {(events || []).filter(event => event && typeof event === 'object').map((event, index) => {
+          // Format date for better display
+          const eventDate = event.date ? new Date(event.date) : null;
+          const now = new Date();
+          const daysUntilEvent = eventDate ? Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24)) : null;
+          
+          let dateDisplay = 'Date TBD';
+          let urgencyClass = '';
+          
+          if (eventDate) {
+            const dateStr = eventDate.toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric' 
+            });
+            
+            if (daysUntilEvent < 0) {
+              dateDisplay = `${dateStr} (Past)`;
+              urgencyClass = styles.pastEvent;
+            } else if (daysUntilEvent === 0) {
+              dateDisplay = `${dateStr} (Today!)`;
+              urgencyClass = styles.todayEvent;
+            } else if (daysUntilEvent <= 7) {
+              dateDisplay = `${dateStr} (${daysUntilEvent} days)`;
+              urgencyClass = styles.soonEvent;
+            } else if (daysUntilEvent <= 30) {
+              dateDisplay = `${dateStr} (${daysUntilEvent} days)`;
+              urgencyClass = styles.thisMonthEvent;
+            } else {
+              dateDisplay = `${dateStr} (${daysUntilEvent} days)`;
+              urgencyClass = styles.futureEvent;
+            }
+          }
+          
+          return (
+            <div key={event.id || index} className={`${styles.eventCard} ${urgencyClass}`}>
+              <div className={styles.eventHeader}>
+                <div className={styles.eventTitleSection}>
+                  <h3 className={styles.eventTitle}>{event.name || 'Untitled Event'}</h3>
+                  <div className={styles.eventDate}>
+                    {dateDisplay}
+                  </div>
+                </div>
+                
+                {/* Enhanced match score display */}
+                <div className={styles.matchScoreSection}>
+                  <div className={`${styles.matchScore} ${
+                    event.personalizedScore >= 80 ? styles.highMatch :
+                    event.personalizedScore >= 60 ? styles.goodMatch :
+                    event.personalizedScore >= 40 ? styles.fairMatch : styles.lowMatch
+                  }`}>
+                    {Math.round(event.personalizedScore || 50)}%
+                  </div>
+                  <div className={styles.matchLabel}>Match</div>
+                </div>
               </div>
-            </div>
 
-            <div className={styles.eventDetails}>
-              <p className={styles.eventVenue}>{event.venue || 'Venue TBD'}</p>
-              <p className={styles.eventLocation}>{event.location || 'Location TBD'}</p>
-
-              {event.artists && event.artists.length > 0 && (
-                <div className={styles.eventArtists}>
-                  <strong>Artists:</strong> {event.artists.map(artist => typeof artist === 'object' ? artist.name : artist).join(', ')}
+              <div className={styles.eventDetails}>
+                <div className={styles.venueInfo}>
+                  <p className={styles.eventVenue}>{event.venue || 'Venue TBD'}</p>
+                  <p className={styles.eventLocation}>{event.location || 'Location TBD'}</p>
                 </div>
-              )}
 
-              {event.genres && event.genres.length > 0 && (
-                <div className={styles.eventGenres}>
-                  <strong>Genres:</strong> {event.genres.join(', ')}
-                </div>
-              )}
+                {event.artists && event.artists.length > 0 && (
+                  <div className={styles.eventArtists}>
+                    <strong>Artists:</strong> {event.artists.map(artist => 
+                      typeof artist === 'object' ? artist.name : artist
+                    ).join(', ')}
+                  </div>
+                )}
 
-              {/* ENHANCED: Show vibe match score when available */}
-              {event.vibeMatchScore !== undefined && (
-                <div className={styles.eventScore}>
-                  <strong>Vibe Match:</strong> {Math.round(event.vibeMatchScore)}%
-                </div>
-              )}
-              
-              {/* PRESERVED: Fallback to personalizedScore */}
-              {event.vibeMatchScore === undefined && event.personalizedScore && (
-                <div className={styles.eventScore}>
-                  <strong>Match Score:</strong> {Math.round(event.personalizedScore)}%
-                </div>
-              )}
-            </div>
+                {event.genres && event.genres.length > 0 && (
+                  <div className={styles.eventGenres}>
+                    <div className={styles.genreList}>
+                      {event.genres.slice(0, 3).map((genre, idx) => (
+                        <span key={idx} className={styles.genreTag}>{genre}</span>
+                      ))}
+                      {event.genres.length > 3 && (
+                        <span className={styles.genreMore}>+{event.genres.length - 3} more</span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
-            {event.ticketUrl && (
-              <div className={styles.eventActions}>
-                <a
-                  href={event.ticketUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.ticketButton}
-                >
-                  Get Tickets
-                </a>
+                {/* Enhanced taste match visualization */}
+                {event.tasteMatch && (
+                  <TasteMatchVisuals tasteMatch={event.tasteMatch} compact={true} />
+                )}
               </div>
-            )}
-          </div>
-        ))}
+
+              {event.ticketUrl && (
+                <div className={styles.eventActions}>
+                  <a
+                    href={event.ticketUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.ticketButton}
+                  >
+                    Get Tickets
+                  </a>
+                  <div className={styles.priceInfo}>
+                    {event.priceRange || 'Price TBA'}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* PRESERVED: Debug information for successful loads (unchanged) */}

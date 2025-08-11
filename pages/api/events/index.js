@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { connectToDatabase } from '@/lib/mongodb';
-import EnhancedAudioAnalysisService from '@/lib/enhancedAudioAnalysisService';
+import TIKOSoundStatIntegration from '@/lib/tikoSoundStatIntegration';
 
 // PHASE 2: SoundStat API configuration
 const SOUNDSTAT_API_KEY = '4Bwbb8OrfpHukJBZSOaIolUMZat0rj3I-baIzASBVw0';
@@ -222,13 +222,10 @@ function buildEnhancedMusicEventsQuery(lat, lon, radius) {
       // Events with music-related genres
       { 'genres': { $regex: /(music|concert|festival|electronic|house|techno|trance|dance|dj|club|rave)/i } },
       
-      // Events with EDM classification from Phase 1
-      { 'enhancedGenres.edmClassification': { $exists: true } },
-      
-      // Events with sound characteristics (likely music)
+      // Events with sound characteristics from workers
       { 'soundCharacteristics': { $exists: true } },
       
-      // Events with artist metadata
+      // Events with artist metadata from workers
       { 'artistMetadata': { $exists: true } }
     ],
     
@@ -244,16 +241,35 @@ function buildEnhancedMusicEventsQuery(lat, lon, radius) {
 // PHASE 2: Check if event is non-musical (safety filter)
 function isNonMusicalEvent(event) {
   const nonMusicalKeywords = [
+    // Arts & Culture (non-musical)
     'exhibition', 'museum', 'art show', 'gallery', 'conference', 
-    'seminar', 'workshop', 'tour', 'sports', 'game', 'match',
-    'ballpark', 'stadium tour', 'van gogh', 'immersive experience'
+    'seminar', 'workshop', 'tour', 'theater', 'play', 'comedy',
+    'spoken word', 'lecture', 'talk', 'presentation',
+    
+    // Sports & Recreation
+    'sports', 'game', 'match', 'ballpark', 'stadium tour', 
+    'baseball', 'football', 'basketball', 'soccer', 'hockey',
+    
+    // Educational & Business
+    'conference', 'convention', 'expo', 'fair', 'market',
+    'networking', 'business', 'corporate', 'training',
+    
+    // Special Experiences (non-musical)
+    'van gogh', 'immersive experience', 'planetarium', 
+    'aquarium', 'zoo', 'food', 'wine tasting', 'culinary'
   ];
   
   const eventName = (event.name || '').toLowerCase();
   const eventGenres = (event.genres || []).join(' ').toLowerCase();
+  const eventDescription = (event.description || '').toLowerCase();
+  const venueName = (event.venue?.name || '').toLowerCase();
   
+  // Check multiple fields for non-musical indicators
   return nonMusicalKeywords.some(keyword => 
-    eventName.includes(keyword) || eventGenres.includes(keyword)
+    eventName.includes(keyword) || 
+    eventGenres.includes(keyword) ||
+    eventDescription.includes(keyword) ||
+    venueName.includes(keyword)
   );
 }
 
@@ -267,8 +283,8 @@ async function buildUserSoundDNA(userTracks) {
   console.log(`🧬 Building user sound DNA from ${userTracks.length} tracks using TIKOSoundStatIntegration`);
 
   try {
-const enhancedAudioAnalysis = new EnhancedAudioAnalysisService();
-const result = await enhancedAudioAnalysis.analyzeUserTracks(userTracks);
+const tikoSoundStat = new TIKOSoundStatIntegration();
+const result = await tikoSoundStat.analyzeUserTracks(userTracks);
     
     // Convert TIKOSoundStatIntegration format to Events API format
     return {
@@ -675,7 +691,19 @@ function calculateThreeDimensionalScore(event, enhancedUserProfile) {
   
   // PHASE 2: Confidence adjustment based on data quality
   const confidence = enhancedUserProfile.soundCharacteristics.confidenceScore || 0;
-  const adjustedScore = (rawScore * confidence) + (50 * (1 - confidence)); // Default to 50% when no confidence
+  
+  // More conservative fallback scoring - unknown events get lower scores
+  let adjustedScore;
+  if (confidence > 0.7) {
+    // High confidence - use raw score
+    adjustedScore = rawScore;
+  } else if (confidence > 0.3) {
+    // Medium confidence - blend with conservative fallback
+    adjustedScore = (rawScore * confidence) + (35 * (1 - confidence));
+  } else {
+    // Low confidence - very conservative scoring
+    adjustedScore = (rawScore * confidence) + (25 * (1 - confidence));
+  }
   
   const finalScore = Math.max(8, Math.min(96, Math.round(adjustedScore)));
   
@@ -978,7 +1006,7 @@ function calculateTemporalRelevanceScore(event, temporalProfile) {
 
 // PRESERVED: All original functions from the 1,067 line version
 async function processEventsWithPhase1Scoring(events, city, session) {
-  console.log(`🎯 Processing ${events.length} events with Phase 1 scoring for ${city}`);
+  console.log(`🎯 Processing ${events.length} events with enhanced Phase 1 scoring for ${city}`);
   
   if (!events || events.length === 0) {
     return [];
@@ -995,18 +1023,45 @@ async function processEventsWithPhase1Scoring(events, city, session) {
     console.error('⚠️ Failed to load user taste profile:', error.message);
   }
 
-  // Apply comprehensive Phase 1 metadata scoring
+  // Apply comprehensive Phase 1 metadata scoring with enhancements
   const scoredEvents = await applyComprehensivePhase1MetadataScoring(events, userTaste);
   
-  // Apply advanced taste filtering
-  const filteredEvents = applyAdvancedTasteFiltering(scoredEvents, userTaste);
+  // Apply smart sorting instead of basic filtering
+  const sortedEvents = smartSortEvents(scoredEvents);
+  
+  // Filter out very low scoring events (below 30%)
+  const filteredEvents = sortedEvents.filter(event => (event.personalizedScore || 0) >= 30);
   
   // Deduplicate events
   const uniqueEvents = deduplicateEvents(filteredEvents);
   
-  console.log(`✅ Phase 1 processing complete: ${uniqueEvents.length} unique events`);
+  // Add enhanced venue and explanation data to Phase 1 events
+  const enhancedEvents = uniqueEvents.map(event => {
+    const venueDetails = extractVenues(event)[0] || { 
+      name: 'Unknown Venue', 
+      city: `${city}, Canada`,
+      country: 'Canada',
+      fullAddress: `${city}, Canada`
+    };
+    
+    const tasteExplanation = generateAdvancedTasteMatchAnalysis(event, userTaste, event.personalizedScore);
+    
+    return {
+      ...event,
+      location: venueDetails.fullAddress,
+      venues: [venueDetails],
+      tasteMatch: {
+        score: event.personalizedScore,
+        analysis: tasteExplanation,
+        confidence: tasteExplanation.confidence,
+        methodology: event.scoringMethod || 'phase1_enhanced'
+      }
+    };
+  });
   
-  return uniqueEvents;
+  console.log(`✅ Enhanced Phase 1 processing complete: ${enhancedEvents.length} unique events with smart sorting`);
+  
+  return enhancedEvents;
 }
 
 async function applyComprehensivePhase1MetadataScoring(events, userTaste) {
@@ -1431,25 +1486,51 @@ function estimateAudioFeaturesFromGenres(genres) {
 function extractVenues(event) {
   const venues = [];
   
+  // Helper function to ensure complete address with city and country
+  const formatCompleteAddress = (venue, fallbackCity = 'Unknown City') => {
+    let city = venue.city || event.city || fallbackCity;
+    let country = venue.country || event.country || 'Canada'; // Default to Canada for most events
+    
+    // Enhance city/country based on common patterns
+    if (city.toLowerCase().includes('toronto') || city.toLowerCase().includes('ontario')) {
+      city = city.includes(',') ? city : `${city}, ON`;
+      country = 'Canada';
+    } else if (city.toLowerCase().includes('vancouver') || city.toLowerCase().includes('british columbia')) {
+      city = city.includes(',') ? city : `${city}, BC`;
+      country = 'Canada';
+    } else if (city.toLowerCase().includes('montreal') || city.toLowerCase().includes('quebec')) {
+      city = city.includes(',') ? city : `${city}, QC`;
+      country = 'Canada';
+    }
+    
+    // Ensure proper formatting: "City, Province/State, Country"
+    const parts = city.split(',').map(part => part.trim());
+    if (parts.length === 1) {
+      // Just city name, add country
+      city = `${parts[0]}, ${country}`;
+    } else if (parts.length === 2 && !parts[1].match(/^[A-Z]{2}$/)) {
+      // City, Region but no country abbreviation
+      city = `${parts[0]}, ${parts[1]}, ${country}`;
+    }
+    
+    return {
+      name: venue.name || 'Unknown Venue',
+      city: city,
+      country: country,
+      fullAddress: venue.address ? `${venue.address}, ${city}` : city,
+      coordinates: venue.coordinates
+    };
+  };
+  
   if (event.venue) {
-    venues.push({
-      name: event.venue.name || 'Unknown Venue',
-      city: event.venue.city || event.city || 'Unknown City',
-      address: event.venue.address || '',
-      coordinates: event.venue.coordinates || event.location?.coordinates
-    });
+    venues.push(formatCompleteAddress(event.venue));
   } else if (event.venues && Array.isArray(event.venues)) {
     event.venues.forEach(venue => {
-      venues.push({
-        name: venue.name || 'Unknown Venue',
-        city: venue.city || event.city || 'Unknown City',
-        address: venue.address || '',
-        coordinates: venue.coordinates
-      });
+      venues.push(formatCompleteAddress(venue));
     });
   }
   
-  return venues.length > 0 ? venues : [{ name: 'Unknown Venue', city: 'Unknown City' }];
+  return venues.length > 0 ? venues : [formatCompleteAddress({ name: 'Unknown Venue' })];
 }
 
 function extractArtists(event) {
@@ -1559,6 +1640,569 @@ function calculateTasteScore(event, userTaste) {
   return Math.max(10, Math.min(95, Math.round(score)));
 }
 
+function generateAdvancedTasteMatchAnalysis(event, userTaste, personalizedScore) {
+  const analysis = {
+    score: personalizedScore,
+    matchFactors: {
+      artistCorrelation: null,
+      genreMatrix: null,
+      trackSimilarity: null,
+      soundProfile: null,
+      venueAffinity: null
+    },
+    visualData: {
+      matchWheel: null,
+      genreHeatmap: null,
+      artistNetwork: null,
+      soundRadar: null
+    },
+    insights: [],
+    confidence: 'medium'
+  };
+  
+  if (!userTaste) {
+    return {
+      ...analysis,
+      confidence: 'low',
+      insights: ['Limited personalization data available']
+    };
+  }
+
+  // 1. ARTIST CORRELATION ANALYSIS
+  if (event.artists && userTaste.topArtists) {
+    const artistAnalysis = analyzeArtistCorrelations(event.artists, userTaste.topArtists, userTaste);
+    analysis.matchFactors.artistCorrelation = artistAnalysis;
+    
+    if (artistAnalysis.directMatches.length > 0) {
+      analysis.insights.push({
+        type: 'direct_artist_match',
+        strength: artistAnalysis.directMatches.length * 25,
+        artists: artistAnalysis.directMatches,
+        icon: '🎤'
+      });
+    }
+    
+    if (artistAnalysis.similarArtists.length > 0) {
+      analysis.insights.push({
+        type: 'similar_artist_match',
+        strength: artistAnalysis.similarArtists.length * 15,
+        correlations: artistAnalysis.similarArtists,
+        icon: '🔗'
+      });
+    }
+  }
+
+  // 2. GENRE MATRIX ANALYSIS
+  if (event.genres && userTaste.genres) {
+    const genreAnalysis = analyzeGenreMatrix(event.genres, userTaste.genres);
+    analysis.matchFactors.genreMatrix = genreAnalysis;
+    
+    if (genreAnalysis.primaryMatches.length > 0) {
+      analysis.insights.push({
+        type: 'genre_affinity',
+        strength: genreAnalysis.primaryMatches.length * 20,
+        genres: genreAnalysis.primaryMatches,
+        subgenres: genreAnalysis.subgenreMatches,
+        icon: '🎵'
+      });
+    }
+  }
+
+  // 3. TRACK SIMILARITY ANALYSIS
+  if (event.soundCharacteristics && userTaste.audioFeatures) {
+    const trackAnalysis = analyzeTrackSimilarity(event.soundCharacteristics, userTaste.audioFeatures);
+    analysis.matchFactors.trackSimilarity = trackAnalysis;
+    
+    if (trackAnalysis.similarity > 0.7) {
+      analysis.insights.push({
+        type: 'audio_dna_match',
+        strength: trackAnalysis.similarity * 100,
+        features: trackAnalysis.matchingFeatures,
+        icon: '🧬'
+      });
+    }
+  }
+
+  // 4. SOUND PROFILE RADAR
+  analysis.visualData.soundRadar = generateSoundRadarData(event, userTaste);
+  
+  // 5. ARTIST NETWORK VISUALIZATION
+  if (analysis.matchFactors.artistCorrelation) {
+    analysis.visualData.artistNetwork = generateArtistNetworkData(
+      event.artists, 
+      userTaste.topArtists,
+      analysis.matchFactors.artistCorrelation
+    );
+  }
+
+  // 6. GENRE HEATMAP
+  if (analysis.matchFactors.genreMatrix) {
+    analysis.visualData.genreHeatmap = generateGenreHeatmapData(
+      event.genres,
+      userTaste.genres,
+      analysis.matchFactors.genreMatrix
+    );
+  }
+
+  // 7. MATCH WHEEL (Overall visualization)
+  analysis.visualData.matchWheel = generateMatchWheelData(analysis.matchFactors);
+
+  // Determine confidence level
+  const insightCount = analysis.insights.length;
+  if (insightCount >= 3) analysis.confidence = 'high';
+  else if (insightCount >= 2) analysis.confidence = 'medium';
+  else analysis.confidence = 'low';
+
+  return analysis;
+}
+
+function analyzeArtistCorrelations(eventArtists, userTopArtists, userTaste) {
+  const directMatches = [];
+  const similarArtists = [];
+  const genreConnections = [];
+  
+  // Artist genre mapping (expanded database)
+  const artistGenreMap = {
+    'charlotte de witte': ['techno', 'melodic techno', 'minimal techno'],
+    'anna': ['techno', 'industrial techno', 'hard techno'],
+    'amelie lens': ['techno', 'acid techno', 'minimal techno'],
+    'chris liebing': ['techno', 'industrial techno', 'minimal techno'],
+    'adam beyer': ['techno', 'melodic techno', 'progressive techno'],
+    'tale of us': ['melodic techno', 'progressive house', 'deep house'],
+    'maceo plex': ['melodic techno', 'progressive house', 'tech house'],
+    'solomun': ['deep house', 'melodic house', 'progressive house'],
+    'dixon': ['deep house', 'minimal house', 'tech house'],
+    'ben böhmer': ['melodic house', 'progressive house', 'ambient techno'],
+    'artbat': ['melodic techno', 'progressive house', 'melodic house'],
+    'boris brejcha': ['minimal techno', 'high-tech minimal', 'melodic techno'],
+    'stephan bodzin': ['melodic techno', 'progressive techno', 'ambient techno'],
+    'paul kalkbrenner': ['melodic techno', 'berlin techno', 'minimal techno'],
+    'nina kraviz': ['techno', 'acid techno', 'experimental techno']
+  };
+  
+  const eventArtistNames = eventArtists.map(a => 
+    (typeof a === 'object' ? a.name : a).toLowerCase()
+  );
+  const userArtistNames = userTopArtists.map(a => a.toLowerCase());
+  
+  // 1. Direct artist matches
+  eventArtistNames.forEach(eventArtist => {
+    if (userArtistNames.includes(eventArtist)) {
+      directMatches.push({
+        artist: eventArtist,
+        matchType: 'exact',
+        strength: 100
+      });
+    }
+  });
+  
+  // 2. Similar artist analysis through genre correlation
+  eventArtistNames.forEach(eventArtist => {
+    const eventArtistGenres = artistGenreMap[eventArtist] || [];
+    
+    userArtistNames.forEach(userArtist => {
+      const userArtistGenres = artistGenreMap[userArtist] || [];
+      
+      // Calculate genre overlap
+      const genreOverlap = eventArtistGenres.filter(genre =>
+        userArtistGenres.some(userGenre => 
+          genre.includes(userGenre) || userGenre.includes(genre)
+        )
+      );
+      
+      if (genreOverlap.length > 0 && !directMatches.some(m => m.artist === eventArtist)) {
+        const similarity = (genreOverlap.length / Math.max(eventArtistGenres.length, userArtistGenres.length)) * 100;
+        
+        if (similarity > 30) {
+          similarArtists.push({
+            eventArtist: eventArtist,
+            userArtist: userArtist,
+            similarity: Math.round(similarity),
+            sharedGenres: genreOverlap,
+            matchType: 'genre_correlation'
+          });
+        }
+      }
+    });
+  });
+  
+  // 3. Genre-based artist connections
+  const userGenres = userTaste.genres || [];
+  eventArtistNames.forEach(eventArtist => {
+    const eventArtistGenres = artistGenreMap[eventArtist] || [];
+    const genreMatches = eventArtistGenres.filter(genre =>
+      userGenres.some(userGenre => 
+        genre.toLowerCase().includes(userGenre.toLowerCase()) ||
+        userGenre.toLowerCase().includes(genre.toLowerCase())
+      )
+    );
+    
+    if (genreMatches.length > 0) {
+      genreConnections.push({
+        artist: eventArtist,
+        genres: genreMatches,
+        strength: (genreMatches.length / eventArtistGenres.length) * 100
+      });
+    }
+  });
+  
+  return {
+    directMatches,
+    similarArtists: similarArtists.slice(0, 3), // Top 3 correlations
+    genreConnections,
+    totalStrength: (directMatches.length * 25) + (similarArtists.length * 15)
+  };
+}
+
+function analyzeGenreMatrix(eventGenres, userGenres) {
+  // Enhanced genre relationship matrix
+  const genreRelationships = {
+    'techno': {
+      'melodic techno': 0.9,
+      'minimal techno': 0.8,
+      'progressive techno': 0.8,
+      'industrial techno': 0.7,
+      'acid techno': 0.7,
+      'house': 0.6,
+      'tech house': 0.7,
+      'electronic': 0.8
+    },
+    'house': {
+      'deep house': 0.9,
+      'tech house': 0.8,
+      'progressive house': 0.8,
+      'melodic house': 0.8,
+      'minimal house': 0.7,
+      'techno': 0.6,
+      'electronic': 0.8
+    },
+    'melodic techno': {
+      'techno': 0.9,
+      'progressive house': 0.7,
+      'melodic house': 0.7,
+      'progressive techno': 0.8,
+      'minimal techno': 0.6
+    },
+    'progressive house': {
+      'house': 0.8,
+      'deep house': 0.7,
+      'melodic house': 0.8,
+      'melodic techno': 0.7,
+      'trance': 0.6
+    }
+  };
+  
+  const primaryMatches = [];
+  const subgenreMatches = [];
+  const relatedGenres = [];
+  
+  const normalizedEventGenres = eventGenres.map(g => g.toLowerCase());
+  const normalizedUserGenres = userGenres.map(g => g.toLowerCase());
+  
+  // 1. Direct genre matches
+  normalizedEventGenres.forEach(eventGenre => {
+    if (normalizedUserGenres.includes(eventGenre)) {
+      primaryMatches.push({
+        genre: eventGenre,
+        matchType: 'exact',
+        strength: 100
+      });
+    }
+  });
+  
+  // 2. Subgenre and related genre analysis
+  normalizedEventGenres.forEach(eventGenre => {
+    normalizedUserGenres.forEach(userGenre => {
+      // Check if event genre is a subgenre of user preference
+      if (eventGenre.includes(userGenre) || userGenre.includes(eventGenre)) {
+        if (!primaryMatches.some(m => m.genre === eventGenre)) {
+          subgenreMatches.push({
+            eventGenre: eventGenre,
+            userGenre: userGenre,
+            matchType: 'subgenre',
+            strength: 80
+          });
+        }
+      }
+      
+      // Check genre relationship matrix
+      const relationships = genreRelationships[userGenre] || {};
+      if (relationships[eventGenre] && relationships[eventGenre] > 0.6) {
+        relatedGenres.push({
+          eventGenre: eventGenre,
+          userGenre: userGenre,
+          similarity: relationships[eventGenre] * 100,
+          matchType: 'related'
+        });
+      }
+    });
+  });
+  
+  return {
+    primaryMatches,
+    subgenreMatches,
+    relatedGenres: relatedGenres.slice(0, 3), // Top 3 relationships
+    matrixScore: (primaryMatches.length * 20) + (subgenreMatches.length * 15) + (relatedGenres.length * 10)
+  };
+}
+
+function analyzeTrackSimilarity(eventSound, userAudioFeatures) {
+  const matchingFeatures = [];
+  let totalSimilarity = 0;
+  let featureCount = 0;
+  
+  const features = ['energy', 'danceability', 'valence', 'acousticness', 'instrumentalness'];
+  
+  features.forEach(feature => {
+    if (eventSound[feature] !== undefined && userAudioFeatures[feature] !== undefined) {
+      const similarity = 1 - Math.abs(eventSound[feature] - userAudioFeatures[feature]);
+      totalSimilarity += similarity;
+      featureCount++;
+      
+      if (similarity > 0.8) {
+        matchingFeatures.push({
+          feature: feature,
+          similarity: similarity,
+          eventValue: eventSound[feature],
+          userValue: userAudioFeatures[feature],
+          match: 'high'
+        });
+      } else if (similarity > 0.6) {
+        matchingFeatures.push({
+          feature: feature,
+          similarity: similarity,
+          eventValue: eventSound[feature],
+          userValue: userAudioFeatures[feature],
+          match: 'medium'
+        });
+      }
+    }
+  });
+  
+  return {
+    similarity: featureCount > 0 ? totalSimilarity / featureCount : 0,
+    matchingFeatures: matchingFeatures.sort((a, b) => b.similarity - a.similarity),
+    audioCompatibility: featureCount > 0 ? (totalSimilarity / featureCount) * 100 : 50
+  };
+}
+
+function generateSoundRadarData(event, userTaste) {
+  const features = ['energy', 'danceability', 'valence', 'acousticness', 'instrumentalness'];
+  const eventData = [];
+  const userData = [];
+  
+  features.forEach(feature => {
+    const eventValue = event.soundCharacteristics?.[feature] || 0.5;
+    const userValue = userTaste?.audioFeatures?.[feature] || 0.5;
+    
+    eventData.push({
+      feature: feature.charAt(0).toUpperCase() + feature.slice(1),
+      value: Math.round(eventValue * 100),
+      fullMark: 100
+    });
+    
+    userData.push({
+      feature: feature.charAt(0).toUpperCase() + feature.slice(1),
+      value: Math.round(userValue * 100),
+      fullMark: 100
+    });
+  });
+  
+  return {
+    eventProfile: eventData,
+    userProfile: userData,
+    similarity: calculateRadarSimilarity(eventData, userData)
+  };
+}
+
+function generateArtistNetworkData(eventArtists, userTopArtists, correlationAnalysis) {
+  const nodes = [];
+  const links = [];
+  
+  // Add event artists as nodes
+  eventArtists.forEach((artist, index) => {
+    const artistName = typeof artist === 'object' ? artist.name : artist;
+    nodes.push({
+      id: `event_${index}`,
+      name: artistName,
+      type: 'event_artist',
+      size: 20,
+      color: '#00FFFF'
+    });
+  });
+  
+  // Add user artists as nodes (top 5)
+  userTopArtists.slice(0, 5).forEach((artist, index) => {
+    nodes.push({
+      id: `user_${index}`,
+      name: artist,
+      type: 'user_artist',
+      size: 15,
+      color: '#00FF88'
+    });
+  });
+  
+  // Add correlation links
+  correlationAnalysis.similarArtists.forEach((correlation, index) => {
+    const eventNode = nodes.find(n => n.name.toLowerCase() === correlation.eventArtist);
+    const userNode = nodes.find(n => n.name.toLowerCase() === correlation.userArtist);
+    
+    if (eventNode && userNode) {
+      links.push({
+        source: eventNode.id,
+        target: userNode.id,
+        strength: correlation.similarity,
+        sharedGenres: correlation.sharedGenres,
+        strokeWidth: Math.max(2, correlation.similarity / 20)
+      });
+    }
+  });
+  
+  return { nodes, links };
+}
+
+function generateGenreHeatmapData(eventGenres, userGenres, genreAnalysis) {
+  const matrix = [];
+  
+  // Create matrix data for heatmap visualization
+  eventGenres.forEach((eventGenre, eventIndex) => {
+    userGenres.forEach((userGenre, userIndex) => {
+      let intensity = 0;
+      
+      // Check for exact matches
+      if (eventGenre.toLowerCase() === userGenre.toLowerCase()) {
+        intensity = 100;
+      } else {
+        // Check for subgenre matches
+        const subMatch = genreAnalysis.subgenreMatches.find(
+          m => m.eventGenre === eventGenre.toLowerCase() && m.userGenre === userGenre.toLowerCase()
+        );
+        if (subMatch) {
+          intensity = subMatch.strength;
+        } else {
+          // Check for related genre matches
+          const relatedMatch = genreAnalysis.relatedGenres.find(
+            m => m.eventGenre === eventGenre.toLowerCase() && m.userGenre === userGenre.toLowerCase()
+          );
+          if (relatedMatch) {
+            intensity = relatedMatch.similarity;
+          }
+        }
+      }
+      
+      matrix.push({
+        eventGenre: eventGenre,
+        userGenre: userGenre,
+        intensity: intensity,
+        x: eventIndex,
+        y: userIndex
+      });
+    });
+  });
+  
+  return {
+    matrix: matrix,
+    eventGenres: eventGenres,
+    userGenres: userGenres,
+    maxIntensity: Math.max(...matrix.map(m => m.intensity))
+  };
+}
+
+function generateMatchWheelData(matchFactors) {
+  const segments = [];
+  
+  if (matchFactors.artistCorrelation) {
+    segments.push({
+      name: 'Artist Match',
+      value: matchFactors.artistCorrelation.totalStrength,
+      color: '#FF6B6B',
+      icon: '🎤',
+      details: `${matchFactors.artistCorrelation.directMatches.length} direct, ${matchFactors.artistCorrelation.similarArtists.length} similar`
+    });
+  }
+  
+  if (matchFactors.genreMatrix) {
+    segments.push({
+      name: 'Genre Affinity',
+      value: matchFactors.genreMatrix.matrixScore,
+      color: '#4ECDC4',
+      icon: '🎵',
+      details: `${matchFactors.genreMatrix.primaryMatches.length} primary matches`
+    });
+  }
+  
+  if (matchFactors.trackSimilarity) {
+    segments.push({
+      name: 'Audio DNA',
+      value: matchFactors.trackSimilarity.audioCompatibility,
+      color: '#45B7D1',
+      icon: '🧬',
+      details: `${Math.round(matchFactors.trackSimilarity.similarity * 100)}% similarity`
+    });
+  }
+  
+  // Add date proximity if available
+  const now = new Date();
+  segments.push({
+    name: 'Timing',
+    value: 75, // Placeholder, would be calculated based on date
+    color: '#96CEB4',
+    icon: '⏰',
+    details: 'Optimal timing'
+  });
+  
+  return {
+    segments: segments,
+    totalScore: segments.reduce((sum, seg) => sum + seg.value, 0) / segments.length
+  };
+}
+
+function calculateBalancedEventScore(event, userTaste) {
+  // Base taste score calculation
+  const baseScore = calculateTasteScore(event, userTaste);
+  
+  // Date proximity factor (events happening sooner get bonus)
+  let dateScore = 0;
+  if (event.date) {
+    const eventDate = new Date(event.date);
+    const now = new Date();
+    const daysUntilEvent = Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilEvent >= 0) {
+      if (daysUntilEvent <= 7) dateScore = 20;        // This week: high bonus
+      else if (daysUntilEvent <= 30) dateScore = 15;  // This month: medium bonus
+      else if (daysUntilEvent <= 90) dateScore = 10;  // This quarter: small bonus
+      else dateScore = 0;                             // Too far: no bonus
+    }
+  }
+  
+  // Combine taste and date factors (80% taste, 20% date proximity)
+  const combinedScore = (baseScore * 0.8) + (dateScore * 0.2);
+  
+  return {
+    personalizedScore: Math.round(combinedScore),
+    baseScore,
+    dateScore,
+    method: 'balanced_taste_date'
+  };
+}
+
+function calculateRadarSimilarity(eventData, userData) {
+  let totalDifference = 0;
+  let count = 0;
+  
+  eventData.forEach((eventPoint, index) => {
+    if (userData[index]) {
+      const diff = Math.abs(eventPoint.value - userData[index].value);
+      totalDifference += diff;
+      count++;
+    }
+  });
+  
+  const averageDifference = count > 0 ? totalDifference / count : 100;
+  return Math.max(0, 100 - averageDifference);
+}
+
 function deduplicateEvents(events) {
   const seen = new Set();
   const uniqueEvents = [];
@@ -1575,20 +2219,47 @@ function deduplicateEvents(events) {
   return uniqueEvents;
 }
 
-function applyAdvancedTasteFiltering(events, userTaste) {
-  if (!userTaste || !userTaste.genres) {
-    return events; // No filtering without user taste
-  }
-  
-  // Sort by personalized score (highest first)
-  const sortedEvents = events.sort((a, b) => (b.personalizedScore || 0) - (a.personalizedScore || 0));
-  
-  // Filter out very low scoring events (below 30%)
-  const filteredEvents = sortedEvents.filter(event => (event.personalizedScore || 0) >= 30);
-  
-  console.log(`🎯 Advanced taste filtering: ${events.length} → ${filteredEvents.length} events (removed ${events.length - filteredEvents.length} low-scoring events)`);
-  
-  return filteredEvents;
+function smartSortEvents(events) {
+  return events.sort((a, b) => {
+    const aScore = a.personalizedScore || 50;
+    const bScore = b.personalizedScore || 50;
+    
+    // Parse event dates
+    const aDate = a.date ? new Date(a.date) : null;
+    const bDate = b.date ? new Date(b.date) : null;
+    const now = new Date();
+    
+    // Calculate days until event
+    const aDays = aDate ? Math.ceil((aDate - now) / (1000 * 60 * 60 * 24)) : 9999;
+    const bDays = bDate ? Math.ceil((bDate - now) / (1000 * 60 * 60 * 24)) : 9999;
+    
+    // Skip past events
+    if (aDays < 0 && bDays >= 0) return 1;
+    if (bDays < 0 && aDays >= 0) return -1;
+    if (aDays < 0 && bDays < 0) return bDays - aDays; // More recent past events first
+    
+    // For future events, apply smart sorting logic
+    const scoreDiff = bScore - aScore;
+    
+    // If scores are very close (within 10 points), prioritize sooner events
+    if (Math.abs(scoreDiff) <= 10) {
+      return aDays - bDays; // Sooner events first
+    }
+    
+    // If one event is much higher scoring (20+ points difference), prioritize it
+    if (Math.abs(scoreDiff) >= 20) {
+      return scoreDiff; // Higher score first
+    }
+    
+    // For medium score differences (10-20 points), balance score and date
+    const aDateWeight = aDays <= 30 ? 1.2 : (aDays <= 90 ? 1.0 : 0.8); // Sooner events get weight boost
+    const bDateWeight = bDays <= 30 ? 1.2 : (bDays <= 90 ? 1.0 : 0.8);
+    
+    const aWeightedScore = aScore * aDateWeight;
+    const bWeightedScore = bScore * bDateWeight;
+    
+    return bWeightedScore - aWeightedScore;
+  });
 }
 
 // PHASE 2: Process events with enhanced three-dimensional scoring
@@ -1599,47 +2270,91 @@ async function processEventsWithPhase2Enhancement(events, city, session) {
     return [];
   }
 
-  // Fetch enhanced user taste profile
+  // Fetch enhanced user taste profile (with caching)
   let enhancedUserProfile = null;
   try {
     if (session?.accessToken) {
-      enhancedUserProfile = await fetchEnhancedUserTasteProfile(session.accessToken);
-      console.log(`✅ Enhanced user profile loaded with Phase 2 data`);
+      // PHASE 1: Check for cached user profile first
+      const cachedProfile = await db.collection('user_sound_profiles').findOne({
+        userId,
+        expiresAt: { $gt: new Date() }
+      });
+      
+      if (cachedProfile) {
+        console.log(`✅ Using cached user profile (age: ${Math.floor((new Date() - cachedProfile.createdAt) / 1000 / 60)} min)`);
+        enhancedUserProfile = cachedProfile;
+      } else {
+        console.log(`🔄 No cached profile found, generating fresh profile for ${userId}`);
+        enhancedUserProfile = await fetchEnhancedUserTasteProfile(session.accessToken);
+        
+        // Store fresh profile with 24-hour TTL
+        const profileWithTTL = {
+          ...enhancedUserProfile,
+          userId,
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+        };
+        
+        await db.collection('user_sound_profiles').replaceOne(
+          { userId },
+          profileWithTTL,
+          { upsert: true }
+        );
+        
+        console.log(`✅ Fresh user profile generated and cached for ${userId}`);
+      }
     }
   } catch (error) {
     console.error('⚠️ Failed to load enhanced user profile:', error.message);
     enhancedUserProfile = getDefaultEnhancedProfile();
   }
 
-  // Apply three-dimensional scoring
+  // Apply enhanced scoring with complete venue and explanation data
   const enhancedEvents = events.map(event => {
     try {
-      const phase2Result = calculateThreeDimensionalScore(event, enhancedUserProfile);
+      // Enhanced venue information with complete address
+      const venueDetails = extractVenues(event)[0] || { 
+        name: 'Unknown Venue', 
+        city: `${city}, Canada`,
+        country: 'Canada',
+        fullAddress: `${city}, Canada`
+      };
       
-      // HOTFIX: Extract venue information for proper data structure
-      const venueObj = extractVenues(event)[0] || { name: 'Unknown Venue', city: city };
+      // Calculate balanced score (taste + date proximity)
+      const scoringResult = calculateBalancedEventScore(event, enhancedUserProfile);
       
-      // Format for frontend
+      // Generate advanced taste match analysis with visual data
+      const advancedAnalysis = generateAdvancedTasteMatchAnalysis(event, enhancedUserProfile, scoringResult.personalizedScore);
+      
+      // Format for frontend with enhanced data
       return {
         _id: event._id || event.id,
         name: event.name || event.title,
         date: event.date || event.datetime,
-        venue: venueObj.name || 'Unknown Venue',  // ✅ STRING (React compatible)
-        venues: [venueObj],                       // ✅ ARRAY (detailed data)
+        venue: venueDetails.name,
+        location: venueDetails.fullAddress, // Complete address with city and country
+        venues: [venueDetails], // Detailed venue array
         artists: extractArtists(event),
         genres: event.genres || [],
-        personalizedScore: phase2Result.personalizedScore,
+        personalizedScore: scoringResult.personalizedScore,
         ticketUrl: event.ticketUrl || event.url,
         imageUrl: event.imageUrl || event.image,
         description: event.description || '',
         priceRange: event.priceRange || 'Price TBA',
         
+        // Advanced match analysis with visual data
+        tasteMatch: {
+          score: scoringResult.personalizedScore,
+          analysis: advancedAnalysis,
+          confidence: advancedAnalysis.confidence,
+          methodology: 'advanced_correlation_analysis'
+        },
+        
         // Phase 2 metadata
-        phase1Applied: phase2Result.phase1Applied,
-        phase2Applied: phase2Result.phase2Applied,
-        scoringMethod: phase2Result.scoringMethod,
-        confidence: phase2Result.confidence,
-        dimensions: phase2Result.dimensions,
+        phase1Applied: !!event.soundCharacteristics || !!event.artistMetadata,
+        phase2Applied: true,
+        scoringMethod: scoringResult.method,
+        dateProximity: scoringResult.dateScore,
         
         // Phase 1 metadata (preserved)
         soundCharacteristics: event.soundCharacteristics,
@@ -1656,13 +2371,13 @@ async function processEventsWithPhase2Enhancement(events, city, session) {
     }
   }).filter(event => event !== null);
 
-  // Sort by personalized score (highest first)
-  const sortedEvents = enhancedEvents.sort((a, b) => b.personalizedScore - a.personalizedScore);
+  // Apply smart sorting (balance taste and date proximity)
+  const sortedEvents = smartSortEvents(enhancedEvents);
   
-  // Filter out very low scoring events (below 20%)
-  const filteredEvents = sortedEvents.filter(event => event.personalizedScore >= 20);
+  // Filter out very low scoring events (below 25%)
+  const filteredEvents = sortedEvents.filter(event => event.personalizedScore >= 25);
   
-  console.log(`✅ Phase 2 enhancement complete: ${filteredEvents.length} events with three-dimensional scoring`);
+  console.log(`✅ Phase 2 enhancement complete: ${filteredEvents.length} events with enhanced sorting and explanations`);
   
   return filteredEvents;
 }

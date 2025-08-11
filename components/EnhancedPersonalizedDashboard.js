@@ -503,25 +503,32 @@ export default function EnhancedPersonalizedDashboard() {
                   }}>
                     Vibe Match: {eventFilters.vibeMatch}%
                   </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={eventFilters.vibeMatch}
-                    onChange={(e) => setEventFilters(prev => ({
-                      ...prev,
-                      vibeMatch: parseInt(e.target.value)
-                    }))}
-                    style={{
-                      width: '100%',
-                      height: '6px',
-                      background: 'linear-gradient(90deg, #00CFFF, #FF00CC)', // TIKO gradient
-                      borderRadius: '3px',
-                      outline: 'none',
-                      WebkitAppearance: 'none',
-                      cursor: 'pointer'
-                    }}
-                  />
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={eventFilters.vibeMatch}
+                      onChange={(e) => setEventFilters(prev => ({
+                        ...prev,
+                        vibeMatch: parseInt(e.target.value)
+                      }))}
+                      style={{
+                        width: '100%',
+                        height: '6px',
+                        background: `linear-gradient(to right, 
+                          #00CFFF 0%, 
+                          #FF00CC ${eventFilters.vibeMatch}%, 
+                          rgba(255, 255, 255, 0.1) ${eventFilters.vibeMatch}%, 
+                          rgba(255, 255, 255, 0.1) 100%)`,
+                        borderRadius: '3px',
+                        outline: 'none',
+                        WebkitAppearance: 'none',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s ease'
+                      }}
+                    />
+                  </div>
                 </div>
                 <EnhancedLocationSearch 
                   onLocationSelect={(locationData) => {
