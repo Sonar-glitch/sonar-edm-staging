@@ -66,6 +66,8 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
 
   // Debounced search function
   useEffect(() => {
+    console.log('🔍 [EnhancedLocationSearch] Search query changed:', searchQuery, 'Length:', searchQuery.length);
+    
     if (searchQuery.length >= 2) {
       // Clear previous timeout
       if (searchTimeoutRef.current) {
@@ -73,11 +75,15 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
       }
 
       // Set new timeout for debounced search
+      console.log('🔍 [EnhancedLocationSearch] Setting search timeout for:', searchQuery);
       searchTimeoutRef.current = setTimeout(() => {
+        console.log('🔍 [EnhancedLocationSearch] Timeout executed, calling searchCities');
         searchCities(searchQuery);
       }, 300);
     } else {
+      console.log('🔍 [EnhancedLocationSearch] Query too short, clearing suggestions');
       setSuggestions([]);
+    }
     }
 
     // Cleanup timeout on unmount
@@ -127,7 +133,7 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
             formatted_address: result.formatted_address,
             geometry: result.geometry,
             address_components: result.address_components,
-            name: extractCityName(result.address_components) || result.formatted_address.split(',')[0]
+            name: extractCityName(result.address_components) || (result.formatted_address ? result.formatted_address.split(',')[0] : 'Unknown City')
           }));
 
         console.log('🔍 [EnhancedLocationSearch] Setting suggestions:', cityResults.length);
@@ -258,7 +264,9 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   };
 
   const handleInputChange = (e) => {
-    setSearchQuery(e.target.value);
+    const value = e.target.value;
+    console.log('🔍 [EnhancedLocationSearch] Input changed:', value);
+    setSearchQuery(value);
   };
 
   const handleKeyDown = (e) => {
