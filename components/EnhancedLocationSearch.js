@@ -79,7 +79,6 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
     } else {
       setSuggestions([]);
     }
-    }
 
     // Cleanup timeout on unmount
     return () => {
