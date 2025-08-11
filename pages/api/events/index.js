@@ -1342,16 +1342,29 @@ async function processEventWithPhase1(event, city, userTaste) {
     // Calculate taste score
     const tasteScore = calculateTasteScore(event, userTaste);
     
-    // HOTFIX: Extract venue information for proper data structure
+    // CRITICAL HOTFIX: Normalize venue structure to prevent React rendering crashes
     const venueObj = venues[0] || { name: 'Unknown Venue', city: city };
+    
+    // Ensure consistent venue object structure (prevent React Error #31)
+    const normalizedVenue = {
+      name: String(venueObj.name || 'Unknown Venue'),
+      address: String(venueObj.address || ''),
+      city: String(venueObj.city || city || ''),
+      state: String(venueObj.state || ''),
+      country: String(venueObj.country || 'Canada'),
+      type: String(venueObj.type || 'venue'),
+      capacity: venueObj.capacity || null,
+      url: String(venueObj.url || '')
+    };
     
     // Format for frontend
     return {
       _id: event._id || event.id,
       name: event.name || event.title,
       date: event.date || event.datetime,
-      venue: venueObj.name || 'Unknown Venue',  // ✅ STRING (React compatible)
-      venues: [venueObj],                       // ✅ ARRAY (detailed data)
+      venue: normalizedVenue.name,              // ✅ STRING (React compatible)
+      location: `${normalizedVenue.address}, ${normalizedVenue.city}`.replace(/^,\s*/, ''),
+      venues: [normalizedVenue],                // ✅ ARRAY (consistent structure)
       artists: artists,
       genres: genres,
       personalizedScore: tasteScore,
@@ -1514,9 +1527,14 @@ function extractVenues(event) {
     }
     
     return {
-      name: venue.name || 'Unknown Venue',
-      city: city,
-      country: country,
+      name: String(venue.name || 'Unknown Venue'),
+      address: String(venue.address || ''),
+      city: String(city),
+      state: String(venue.state || ''),
+      country: String(country),
+      type: String(venue.type || 'venue'),
+      capacity: venue.capacity || null,
+      url: String(venue.url || ''),
       fullAddress: venue.address ? `${venue.address}, ${city}` : city,
       coordinates: venue.coordinates
     };
@@ -2314,12 +2332,24 @@ async function processEventsWithPhase2Enhancement(events, city, session, userId)
   // Apply enhanced scoring with complete venue and explanation data
   const enhancedEvents = events.map(event => {
     try {
-      // Enhanced venue information with complete address
+      // CRITICAL HOTFIX: Normalize venue structure to prevent React rendering crashes
       const venueDetails = extractVenues(event)[0] || { 
         name: 'Unknown Venue', 
         city: `${city}, Canada`,
         country: 'Canada',
         fullAddress: `${city}, Canada`
+      };
+      
+      // Ensure consistent venue object structure (prevent React Error #31)
+      const normalizedVenue = {
+        name: String(venueDetails.name || 'Unknown Venue'),
+        address: String(venueDetails.address || ''),
+        city: String(venueDetails.city || city || ''),
+        state: String(venueDetails.state || ''),
+        country: String(venueDetails.country || 'Canada'),
+        type: String(venueDetails.type || 'venue'),
+        capacity: venueDetails.capacity || null,
+        url: String(venueDetails.url || '')
       };
       
       // Calculate balanced score (taste + date proximity)
@@ -2333,9 +2363,9 @@ async function processEventsWithPhase2Enhancement(events, city, session, userId)
         _id: event._id || event.id,
         name: event.name || event.title,
         date: event.date || event.datetime,
-        venue: venueDetails.name,
-        location: venueDetails.fullAddress, // Complete address with city and country
-        venues: [venueDetails], // Detailed venue array
+        venue: normalizedVenue.name,
+        location: `${normalizedVenue.address}, ${normalizedVenue.city}`.replace(/^,\s*/, ''),
+        venues: [normalizedVenue], // ✅ ARRAY (consistent structure)
         artists: extractArtists(event),
         genres: event.genres || [],
         personalizedScore: scoringResult.personalizedScore,
