@@ -82,7 +82,7 @@ export default async function handler(req, res) {
         
         if (rawEvents.length > 0) {
           // PHASE 2: Process events with enhanced three-dimensional scoring
-          events = await processEventsWithPhase2Enhancement(rawEvents, targetCity, session);
+          events = await processEventsWithPhase2Enhancement(rawEvents, targetCity, session, userId);
           
           // PRESERVED: Also run original Phase 1 processing for compatibility
           const phase1Events = await processEventsWithPhase1Scoring(rawEvents, targetCity, session);
@@ -2263,12 +2263,14 @@ function smartSortEvents(events) {
 }
 
 // PHASE 2: Process events with enhanced three-dimensional scoring
-async function processEventsWithPhase2Enhancement(events, city, session) {
-  console.log(`🚀 Processing ${events.length} events with Phase 2 three-dimensional enhancement`);
+async function processEventsWithPhase2Enhancement(events, city, session, userId) {
+  console.log(`🚀 Processing ${events.length} events with Phase 2 three-dimensional enhancement for user ${userId}`);
   
   if (!events || events.length === 0) {
     return [];
   }
+
+  const { db } = await connectToDatabase();
 
   // Fetch enhanced user taste profile (with caching)
   let enhancedUserProfile = null;

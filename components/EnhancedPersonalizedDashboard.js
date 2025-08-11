@@ -321,31 +321,45 @@ export default function EnhancedPersonalizedDashboard() {
     }
   };
 
-  // NEW: Enhanced data indicator with themed tooltips (CLEANED - NO DEBUG LOGGING)
+  // NEW: Enhanced data indicator with themed tooltips (HONEST DATA DETECTION)
   const getDataIndicator = useCallback((sourceKey) => {
     const source = dataSources[sourceKey];
     if (!source) return null;
 
-    const isReal = source.isReal || source.isRealData;
+    // HONEST DATA DETECTION: Check actual data quality, not just API flags
+    let isReal = false;
+    let confidence = 0;
     
-    // Enhanced tooltip content based on source type
+    if (sourceKey === 'spotify' || sourceKey === 'soundstat') {
+      // For music data: require actual tracks analyzed and reasonable confidence
+      const tracksAnalyzed = source.tracksAnalyzed || 0;
+      confidence = source.confidence || 0;
+      isReal = tracksAnalyzed > 5 && confidence > 0.5 && !source.error;
+    } else if (sourceKey === 'events') {
+      // For events: require actual events found and valid location
+      const eventsFound = source.eventsFound || 0;
+      isReal = eventsFound > 0 && !source.error && source.location !== 'Unknown';
+    } else {
+      // For other sources: trust the API but validate
+      isReal = (source.isReal || source.isRealData) && !source.error;
+    }
+    
+    // Enhanced tooltip content based on actual data quality
     let tooltipContent = '';
     if (isReal) {
       if (sourceKey === 'events') {
-        // Events-specific tooltip
-        tooltipContent = `Real Data\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%\nSource: Event APIs\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+        tooltipContent = `✅ Real Data\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%\nSource: Event APIs\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
       } else {
-        // Music taste tooltip
         const timePeriod = source.trackSelectionContext?.description || "recent tracks";
-        tooltipContent = `Real Data\n${source.tracksAnalyzed || 0} tracks analyzed\nConfidence: ${Math.round((source.confidence || 0) * 100)}%\nSource: ${source.source || 'spotify'}\nPeriod: ${timePeriod}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+        tooltipContent = `✅ Real Data\n${source.tracksAnalyzed || 0} tracks analyzed\nConfidence: ${Math.round(confidence * 100)}%\nSource: ${source.source || 'spotify'}\nPeriod: ${timePeriod}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
       }
     } else {
-      const errorCode = source.error || 'UNKNOWN_ERROR';
-      const fallbackReason = source.fallbackReason || 'Data source unavailable';
+      const errorCode = source.error || 'LOW_QUALITY_DATA';
+      const fallbackReason = source.fallbackReason || 'Insufficient data for personalization';
       if (sourceKey === 'events') {
-        tooltipContent = `Fallback Data\nError: ${errorCode}\nReason: ${fallbackReason}\nUsing demo events for display`;
+        tooltipContent = `⚠️ Demo Data\nReason: ${fallbackReason}\nTracks: ${source.tracksAnalyzed || 0}\nConfidence: ${Math.round(confidence * 100)}%\nUsing demonstration events`;
       } else {
-        tooltipContent = `Fallback Data\nError: ${errorCode}\nReason: ${fallbackReason}\nUsing demo data for display`;
+        tooltipContent = `⚠️ Demo Data\nReason: ${fallbackReason}\nTracks: ${source.tracksAnalyzed || 0}\nConfidence: ${Math.round(confidence * 100)}%\nUsing genre-based estimates`;
       }
     }
 
@@ -357,7 +371,7 @@ export default function EnhancedPersonalizedDashboard() {
         onMouseMove={handleMouseMove}
         data-tooltip={tooltipContent}
       >
-        {isReal ? 'Real Data' : 'Fallback'}
+        {isReal ? '✅ Real Data' : '⚠️ Demo Data'}
       </div>
     );
   }, [dataSources]);
