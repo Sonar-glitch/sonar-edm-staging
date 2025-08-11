@@ -52,23 +52,6 @@ console.log('🔍 [EnhancedEventList] Location processing analysis:', {
 
       if (!locationData) {
         try {
-          // INSERT before the fetch() call
-console.log('🚀 [EnhancedEventList] Making API request:', {
-  method: 'GET',
-  url: apiUrl,
-  expectedBackendParams: (() => {
-    const urlParts = apiUrl.split('?');
-    if (urlParts.length > 1) {
-      const searchParams = new URLSearchParams(urlParts[1]);
-      return {
-        lat: searchParams.get('lat'),
-        lon: searchParams.get('lon')
-      };
-    }
-    return { lat: null, lon: null };
-  })()
-});
-
           const locationResponse = await fetch('/api/user/get-location');
          
 
@@ -122,23 +105,6 @@ console.log('🚀 [EnhancedEventList] Making API request:', {
       }
 
       // SURGICAL CHANGE: GET request instead of POST
-      // INSERT before the fetch() call
-console.log('🚀 [EnhancedEventList] Making API request:', {
-  method: 'GET',
-  url: apiUrl,
-  expectedBackendParams: (() => {
-    const urlParts = apiUrl.split('?');
-    if (urlParts.length > 1) {
-      const searchParams = new URLSearchParams(urlParts[1]);
-      return {
-        lat: searchParams.get('lat'),
-        lon: searchParams.get('lon')
-      };
-    }
-    return { lat: null, lon: null };
-  })()
-});
-
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {

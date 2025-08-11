@@ -66,8 +66,6 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
 
   // Debounced search function
   useEffect(() => {
-    console.log('🔍 [EnhancedLocationSearch] Search query changed:', searchQuery, 'Length:', searchQuery.length);
-    
     if (searchQuery.length >= 2) {
       // Clear previous timeout
       if (searchTimeoutRef.current) {
@@ -75,13 +73,10 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
       }
 
       // Set new timeout for debounced search
-      console.log('🔍 [EnhancedLocationSearch] Setting search timeout for:', searchQuery);
       searchTimeoutRef.current = setTimeout(() => {
-        console.log('🔍 [EnhancedLocationSearch] Timeout executed, calling searchCities');
         searchCities(searchQuery);
       }, 300);
     } else {
-      console.log('🔍 [EnhancedLocationSearch] Query too short, clearing suggestions');
       setSuggestions([]);
     }
     }
@@ -95,29 +90,60 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   }, [searchQuery]);
 
   const searchCities = async (query) => {
-    console.log('🔍 [EnhancedLocationSearch] Starting search for:', query);
     setIsLoading(true);
     setError(null);
 
     try {
+      // STEP 1: Search our in-house city database first
+      console.log('🏠 [EnhancedLocationSearch] Searching in-house city database for:', query);
+      
+      const inHouseResponse = await fetch(`/api/location/search?q=${encodeURIComponent(query)}`);
+      
+      if (inHouseResponse.ok) {
+        const inHouseData = await inHouseResponse.json();
+        console.log('🏠 [EnhancedLocationSearch] In-house results:', inHouseData);
+        
+        if (inHouseData.success && inHouseData.results && inHouseData.results.length > 0) {
+          // Format in-house results to match our expected structure
+          const inHouseResults = inHouseData.results.map(city => ({
+            place_id: `inhouse_${city.name.toLowerCase().replace(/\s+/g, '_')}`,
+            formatted_address: `${city.name}, ${city.region}, ${city.country}`,
+            geometry: {
+              location: {
+                lat: city.lat,
+                lng: city.lon
+              }
+            },
+            address_components: [
+              { long_name: city.name, types: ['locality'] },
+              { long_name: city.region, short_name: city.region, types: ['administrative_area_level_1'] },
+              { long_name: city.country, short_name: city.countryCode, types: ['country'] }
+            ],
+            name: city.name,
+            source: 'inhouse'
+          }));
+          
+          console.log('✅ [EnhancedLocationSearch] Using in-house results:', inHouseResults.length);
+          setSuggestions(inHouseResults);
+          setIsLoading(false);
+          return; // Exit early - we found results in our database
+        }
+      }
+      
+      // STEP 2: Fallback to Google API if no in-house results found
+      console.log('🌐 [EnhancedLocationSearch] No in-house results, falling back to Google API');
+      
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-      console.log('🔍 [EnhancedLocationSearch] API Key available:', !!apiKey);
-      console.log('🔍 [EnhancedLocationSearch] API Key length:', apiKey ? apiKey.length : 0);
       
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
-      console.log('🔍 [EnhancedLocationSearch] Full URL:', url.replace(apiKey, 'HIDDEN_KEY'));
       
       const response = await fetch(url);
-      
-      console.log('🔍 [EnhancedLocationSearch] API Response status:', response.status);
-      console.log('🔍 [EnhancedLocationSearch] API Response ok:', response.ok);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log('🔍 [EnhancedLocationSearch] API Response data:', data);
       
       if (data.status === 'OK' && data.results) {
         // Filter and format results for cities
@@ -133,23 +159,23 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
             formatted_address: result.formatted_address,
             geometry: result.geometry,
             address_components: result.address_components,
-            name: extractCityName(result.address_components) || (result.formatted_address ? result.formatted_address.split(',')[0] : 'Unknown City')
+            name: extractCityName(result.address_components) || (result.formatted_address ? result.formatted_address.split(',')[0] : 'Unknown City'),
+            source: 'google'
           }));
 
-        console.log('🔍 [EnhancedLocationSearch] Setting suggestions:', cityResults.length);
+        console.log('🌐 [EnhancedLocationSearch] Using Google API results:', cityResults.length);
         setSuggestions(cityResults);
       } else if (data.status === 'ZERO_RESULTS') {
-        console.log('🔍 [EnhancedLocationSearch] No results found for query');
+        console.log('🌐 [EnhancedLocationSearch] No Google results found');
         setSuggestions([]);
       } else {
-        console.error('🔍 [EnhancedLocationSearch] API Error:', data.status, data.error_message);
+        console.error('🌐 [EnhancedLocationSearch] Google API Error:', data.status, data.error_message);
         setError(`Search failed: ${data.status} - ${data.error_message || 'Unknown error'}`);
         setSuggestions([]);
       }
     } catch (error) {
-      console.error('🔍 [EnhancedLocationSearch] Network Error:', error.message);
-      console.error('🔍 [EnhancedLocationSearch] Full Error:', error);
-      setError(`Network error: ${error.message}`);
+      console.error('🔍 [EnhancedLocationSearch] Search Error:', error.message);
+      setError(`Search error: ${error.message}`);
       setSuggestions([]);
     } finally {
       setIsLoading(false);
@@ -166,12 +192,18 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   };
 
   const extractLocationData = (place) => {
+    // Handle both direct lat/lng and geometry.location
+    const lat = place.geometry?.location?.lat || place.lat;
+    const lng = place.geometry?.location?.lng || place.lng;
+    
     const location = {
       placeId: place.place_id,
       name: place.name,
       formattedAddress: place.formatted_address,
-      lat: place.geometry.location.lat,
-      lon: place.geometry.location.lng
+      lat: lat,
+      lon: lng,
+      latitude: lat, // Add this for compatibility with EnhancedEventList
+      longitude: lng // Add this for compatibility with EnhancedEventList
     };
 
     // Extract city, state, and country from address components
@@ -198,7 +230,12 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
   };
 
   const handleLocationSelect = async (locationData) => {
-    console.log('Location selected:', locationData);
+    console.log('🎯 [Location Selected]:', {
+      city: locationData.city,
+      latitude: locationData.latitude,
+      longitude: locationData.longitude,
+      country: locationData.country
+    });
     
     // Update the display
     setIsSearchMode(false);
@@ -355,13 +392,14 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                   top: '100%',
                   left: 0,
                   right: 0,
-                  background: '#2a2a2a',
-                  border: '1px solid #444',
+                  background: '#1e1e1e', // Even darker background
+                  border: '1px solid #555',
                   borderTop: 'none',
                   borderRadius: '0 0 4px 4px',
                   maxHeight: '200px',
                   overflowY: 'auto',
-                  zIndex: 1000
+                  zIndex: 1000,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)' // Better shadow
                 }}>
                   {isLoading && (
                     <div style={{
@@ -385,29 +423,41 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                   
                   {suggestions.map((suggestion, index) => {
                     const suggestionKey = suggestion.place_id || `suggestion-${index}`;
+                    const isInHouse = suggestion.source === 'inhouse';
                     return (
                       <div
                         key={suggestionKey}
                         onClick={() => handleSuggestionClick(suggestion)}
                         style={{
-                          padding: '0.5rem',
+                          padding: '0.75rem',
                           cursor: 'pointer',
-                          borderBottom: index < suggestions.length - 1 ? '1px solid #444' : 'none',
+                          borderBottom: index < suggestions.length - 1 ? '1px solid #333' : 'none',
                           fontSize: '0.9rem',
-                          color: '#fff', // FIXED: Add explicit white text color
+                          color: '#ffffff', // Ensure bright white text
                           backgroundColor: 'transparent',
-                          ':hover': {
-                            background: '#333'
-                          }
+                          transition: 'background-color 0.2s ease',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.background = '#333';
+                          e.target.style.background = '#404040';
                         }}
                         onMouseLeave={(e) => {
                           e.target.style.background = 'transparent';
                         }}
                       >
-                        {suggestion.formatted_address}
+                        <span>{suggestion.formatted_address}</span>
+                        {isInHouse && (
+                          <span style={{
+                            fontSize: '0.7rem',
+                            color: '#00ff88',
+                            fontWeight: 'bold',
+                            marginLeft: '0.5rem'
+                          }}>
+                            ⚡ TIKO
+                          </span>
+                        )}
                       </div>
                     );
                   })}
