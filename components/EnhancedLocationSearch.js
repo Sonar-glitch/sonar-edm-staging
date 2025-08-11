@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 /**
- * Enhanced Location Search component with Google Places autocomplete
- * Preserves the original dark theme styling while adding search functionality
+ * Enhanced Location Search component with Google Plac          // CRITICAL DEBUG: Only log when we have results
+          console.log('🎯 CITY SEARCH:', { query, found: inHouseResults.length, firstResult: inHouseResults[0]?.formatted_address });
+          setSuggestions(inHouseResults);
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      // STEP 2: Fallback to Google API if no in-house results found
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY; Preserves the original dark theme styling while adding search functionality
  * Updated to use non-deprecated Google Geocoding API
  */
 export default function EnhancedLocationSearch({ selectedLocation, onLocationSelect }) {
