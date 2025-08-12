@@ -181,84 +181,82 @@
   text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
 }
 
-/* ENHANCED PIE CHART MATCH SCORE */
-.pieChartContainer {
+/* ENHANCED CIRCULAR PROGRESS - SOLID COMPLETION CIRCLE */
+.circularProgressEnhanced {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 120px;
-  height: 120px;
-  cursor: pointer;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto; /* CENTER ALIGNED */
 }
 
-.pieChartSvg {
-  filter: drop-shadow(0 0 15px rgba(255, 0, 204, 0.4));
-  transition: all 0.3s ease;
+.progressSvgEnhanced {
+  position: absolute;
 }
 
-.pieChartContainer:hover .pieChartSvg {
-  filter: drop-shadow(0 0 20px rgba(255, 0, 204, 0.6));
-  transform: scale(1.05);
+.progressCircleEnhanced {
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.pieChartText {
+.progressTextEnhanced {
   position: absolute;
   display: flex;
   align-items: baseline;
   justify-content: center;
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
-  text-shadow: 
-    0 0 20px rgba(218, 218, 218, 1),
-    0 0 40px rgba(255, 255, 255, 0.8);
-  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.8));
+  text-shadow: 0 0 20px rgba(218, 218, 218, 0.8);
+  z-index: 2;
 }
 
-.piePercentageNumber {
-  font-size: 1.6rem;
+.percentageNumberEnhanced {
+  font-size: 1.4rem;
   color: #DADADA;
   line-height: 1;
+  font-weight: 700;
 }
 
-.piePercentageSymbol {
-  font-size: 1rem;
+.percentageSymbolEnhanced {
+  font-size: 0.9rem;
   color: #999;
   margin-left: 2px;
+  font-weight: 500;
 }
 
-/* ENHANCED PIE CHART TOOLTIP */
-.pieBreakdownTooltip {
+/* COMPACT CIRCULAR TOOLTIP */
+.circularTooltip {
   position: absolute;
-  top: -140px;
+  top: -130px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  min-width: 220px;
-  padding: 1rem;
+  min-width: 200px;
+  padding: 0.75rem;
   background: rgba(21, 21, 31, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.6),
+    0 8px 32px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 30px rgba(255, 0, 204, 0.3);
+    0 0 20px rgba(255, 0, 204, 0.2);
   color: #DADADA;
   font-family: 'Poppins', sans-serif;
-  font-size: 0.85rem;
-  animation: pieTooltipFadeIn 0.3s ease-out;
+  font-size: 0.8rem;
+  animation: circularTooltipFadeIn 0.2s ease-out;
 }
 
-@keyframes pieTooltipFadeIn {
+@keyframes circularTooltipFadeIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(10px) scale(0.9);
+    transform: translateX(-50%) translateY(5px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translateX(-50%) translateY(0);
   }
 }
 

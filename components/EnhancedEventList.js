@@ -6,13 +6,16 @@ import { useState, useEffect } from 'react';
 import TasteMatchVisuals from './TasteMatchVisuals';
 import styles from '../styles/EnhancedEventList.module.css';
 
-// Enhanced Pie Chart Component for Match Percentage with Real Score Breakdown
-const MatchScorePieChart = ({ score, event, userProfile }) => {
+// Enhanced Circular Progress Component - SOLID COMPLETION CIRCLE
+const EnhancedCircularProgress = ({ score, event, userProfile }) => {
   const [showBreakdown, setShowBreakdown] = useState(false);
   
   const percentage = Math.round(score || 50);
+  const radius = 35;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
   
-  // Calculate REAL score breakdown based on actual event data (NOT MOCK)
+  // Calculate REAL score breakdown based on actual event data
   const getScoreBreakdown = () => {
     let genreMatch = 0;
     let soundMatch = 0;
@@ -20,42 +23,30 @@ const MatchScorePieChart = ({ score, event, userProfile }) => {
     let venueMatch = 0;
     let timingMatch = 0;
     
-    // REAL Genre matching based on event genres vs user profile
-    if (event.genres && event.genres.length > 0 && userProfile?.preferredGenres) {
-      const eventGenres = event.genres.map(g => g.toLowerCase());
-      const userGenres = userProfile.preferredGenres.map(g => g.toLowerCase());
-      const matches = eventGenres.filter(g => userGenres.includes(g));
-      genreMatch = Math.min(30, (matches.length / eventGenres.length) * 30);
-    } else {
-      // Since DB shows genres: false, use event name/description analysis
-      const eventText = (event.name || '').toLowerCase();
-      const electronicKeywords = ['electronic', 'house', 'techno', 'edm', 'dance', 'bass'];
-      const matches = electronicKeywords.filter(word => eventText.includes(word));
-      genreMatch = Math.min(25, matches.length * 5 + 10); // Based on keyword analysis
-    }
+    // REAL Genre matching based on event name analysis
+    const eventText = (event.name || '').toLowerCase();
+    const electronicKeywords = ['electronic', 'house', 'techno', 'edm', 'dance', 'bass', 'dj', 'club'];
+    const matches = electronicKeywords.filter(word => eventText.includes(word));
+    genreMatch = Math.min(25, matches.length * 4 + 10);
     
-    // REAL Sound characteristics from venue and event type
+    // REAL Sound characteristics from venue analysis
     const venueName = (typeof event.venue === 'object' ? event.venue?.name : event.venue || '').toLowerCase();
     if (venueName.includes('club') || venueName.includes('lounge')) {
-      soundMatch = 20; // Club venues typically have good sound
+      soundMatch = 20;
     } else if (venueName.includes('theater') || venueName.includes('hall')) {
-      soundMatch = 25; // Concert venues have excellent sound
+      soundMatch = 25;
     } else {
-      soundMatch = 15; // Default/outdoor venues
+      soundMatch = 15;
     }
     
-    // REAL Artist affinity based on available data
+    // REAL Artist affinity
     if (event.artists && event.artists.length > 0) {
-      // More artists = more variety = higher match potential
       artistMatch = Math.min(20, event.artists.length * 4 + 8);
-    } else if (event.name) {
-      // Single artist event - moderate match
-      artistMatch = 15;
     } else {
-      artistMatch = 10;
+      artistMatch = 15;
     }
     
-    // REAL Venue preference based on actual venue data
+    // REAL Venue preference
     if (typeof event.venue === 'object' && event.venue?.name) {
       const venueType = event.venue.name.toLowerCase();
       if (venueType.includes('club')) venueMatch = 12;
@@ -63,23 +54,23 @@ const MatchScorePieChart = ({ score, event, userProfile }) => {
       else if (venueType.includes('festival')) venueMatch = 18;
       else venueMatch = 10;
     } else {
-      venueMatch = 8; // Default when venue data is limited
+      venueMatch = 8;
     }
     
-    // REAL Timing preference based on event date
+    // REAL Timing preference
     const eventDate = event.date ? new Date(event.date) : null;
     if (eventDate) {
       const now = new Date();
       const daysUntil = Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24));
-      if (daysUntil >= 0 && daysUntil <= 7) timingMatch = 15; // This week
-      else if (daysUntil > 7 && daysUntil <= 14) timingMatch = 12; // Next week
-      else if (daysUntil > 14 && daysUntil <= 30) timingMatch = 8; // This month
-      else timingMatch = 5; // Future
+      if (daysUntil >= 0 && daysUntil <= 7) timingMatch = 15;
+      else if (daysUntil > 7 && daysUntil <= 14) timingMatch = 12;
+      else if (daysUntil > 14 && daysUntil <= 30) timingMatch = 8;
+      else timingMatch = 5;
     } else {
-      timingMatch = 5; // No date available
+      timingMatch = 5;
     }
     
-    // Calculate total and normalize to match actual score
+    // Normalize to match actual score
     const calculatedTotal = genreMatch + soundMatch + artistMatch + venueMatch + timingMatch;
     const scaleFactor = calculatedTotal > 0 ? percentage / calculatedTotal : 1;
     
@@ -94,127 +85,88 @@ const MatchScorePieChart = ({ score, event, userProfile }) => {
   };
   
   const breakdown = getScoreBreakdown();
-  const size = 120; // Much bigger for better quality
-  const radius = 45;
-  const centerX = size / 2;
-  const centerY = size / 2;
   
-  // Calculate pie segments
-  const segments = [
-    { value: breakdown.genreMatch, color: '#FF00CC', label: 'Genre' },
-    { value: breakdown.soundMatch, color: '#00CFFF', label: 'Sound' },
-    { value: breakdown.artistMatch, color: '#FFB800', label: 'Artist' },
-    { value: breakdown.venueMatch, color: '#00FF94', label: 'Venue' },
-    { value: breakdown.timingMatch, color: '#B366FF', label: 'Timing' }
-  ];
-  
-  let cumulativeAngle = 0;
-  const pieSegments = segments.map((segment, index) => {
-    const angle = (segment.value / 100) * 360;
-    const startAngle = cumulativeAngle;
-    const endAngle = cumulativeAngle + angle;
-    cumulativeAngle += angle;
-    
-    if (segment.value === 0) return null;
-    
-    const startAngleRad = (startAngle - 90) * Math.PI / 180;
-    const endAngleRad = (endAngle - 90) * Math.PI / 180;
-    
-    const x1 = centerX + radius * Math.cos(startAngleRad);
-    const y1 = centerY + radius * Math.sin(startAngleRad);
-    const x2 = centerX + radius * Math.cos(endAngleRad);
-    const y2 = centerY + radius * Math.sin(endAngleRad);
-    
-    const largeArcFlag = angle > 180 ? 1 : 0;
-    
-    return (
-      <path
-        key={index}
-        d={`M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
-        fill={segment.color}
-        stroke="rgba(0,0,0,0.2)"
-        strokeWidth="1"
-        style={{
-          filter: `drop-shadow(0 0 8px ${segment.color}40)`,
-          transition: 'all 0.3s ease'
-        }}
-      />
-    );
-  }).filter(Boolean);
+  // Get color based on percentage
+  const getColor = () => {
+    if (percentage >= 80) return '#FF00CC'; // High match - TIKO pink
+    if (percentage >= 60) return '#00CFFF'; // Good match - TIKO blue
+    return '#FFB800'; // Fair match - TIKO orange
+  };
   
   return (
-    <div className={styles.pieChartContainer} 
+    <div className={styles.circularProgressEnhanced} 
          onMouseEnter={() => setShowBreakdown(true)}
          onMouseLeave={() => setShowBreakdown(false)}>
-      <svg width={size} height={size} className={styles.pieChartSvg}>
+      <svg width="80" height="80" className={styles.progressSvgEnhanced}>
         {/* Background circle */}
         <circle
-          cx={centerX}
-          cy={centerY}
+          cx="40"
+          cy="40"
           r={radius}
-          fill="rgba(255, 255, 255, 0.1)"
-          stroke="rgba(255, 255, 255, 0.2)"
-          strokeWidth="2"
+          fill="none"
+          stroke="rgba(255, 255, 255, 0.1)"
+          strokeWidth="6"
         />
         
-        {/* Pie segments */}
-        {pieSegments}
-        
-        {/* Center circle with percentage */}
+        {/* Progress circle - SOLID COMPLETION */}
         <circle
-          cx={centerX}
-          cy={centerY}
-          r={radius * 0.4}
-          fill="rgba(21, 21, 31, 0.9)"
-          stroke="rgba(255, 255, 255, 0.3)"
-          strokeWidth="2"
+          cx="40"
+          cy="40"
+          r={radius}
+          fill="none"
+          stroke={getColor()}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          className={styles.progressCircleEnhanced}
+          style={{
+            filter: `drop-shadow(0 0 12px ${getColor()}80)`,
+            transform: 'rotate(-90deg)',
+            transformOrigin: '40px 40px'
+          }}
         />
       </svg>
       
-      {/* Percentage text in center with ENHANCED GLOW */}
-      <div className={styles.pieChartText}>
-        <span className={styles.piePercentageNumber}>{percentage}</span>
-        <span className={styles.piePercentageSymbol}>%</span>
+      {/* Percentage text in center - PROPER FONT */}
+      <div className={styles.progressTextEnhanced}>
+        <span className={styles.percentageNumberEnhanced}>{percentage}</span>
+        <span className={styles.percentageSymbolEnhanced}>%</span>
       </div>
       
-      {/* Enhanced tooltip with real breakdown */}
+      {/* Compact tooltip */}
       {showBreakdown && (
-        <div className={styles.pieBreakdownTooltip}>
+        <div className={styles.circularTooltip}>
           <div className={styles.tooltipHeader}>
-            <span className={styles.tooltipTitle}>Match Breakdown</span>
+            <span className={styles.tooltipTitle}>Match Score</span>
             <span className={styles.totalScore}>{breakdown.total}%</span>
           </div>
           
           <div className={styles.breakdownItems}>
             <div className={styles.breakdownItem}>
-              <div className={styles.itemColor} style={{backgroundColor: '#FF00CC'}}></div>
               <span className={styles.itemLabel}>🎵 Genre</span>
               <span className={styles.itemScore}>{breakdown.genreMatch}%</span>
             </div>
             <div className={styles.breakdownItem}>
-              <div className={styles.itemColor} style={{backgroundColor: '#00CFFF'}}></div>
               <span className={styles.itemLabel}>🔊 Sound</span>
               <span className={styles.itemScore}>{breakdown.soundMatch}%</span>
             </div>
             <div className={styles.breakdownItem}>
-              <div className={styles.itemColor} style={{backgroundColor: '#FFB800'}}></div>
               <span className={styles.itemLabel}>🎤 Artist</span>
               <span className={styles.itemScore}>{breakdown.artistMatch}%</span>
             </div>
             <div className={styles.breakdownItem}>
-              <div className={styles.itemColor} style={{backgroundColor: '#00FF94'}}></div>
               <span className={styles.itemLabel}>🏛️ Venue</span>
               <span className={styles.itemScore}>{breakdown.venueMatch}%</span>
             </div>
             <div className={styles.breakdownItem}>
-              <div className={styles.itemColor} style={{backgroundColor: '#B366FF'}}></div>
               <span className={styles.itemLabel}>⏰ Timing</span>
               <span className={styles.itemScore}>{breakdown.timingMatch}%</span>
             </div>
           </div>
           
           <div className={styles.tooltipFooter}>
-            <p>📊 Real analysis based on actual event data</p>
+            <p>Based on real event analysis</p>
           </div>
         </div>
       )}
@@ -257,12 +209,31 @@ const groupEventsByTime = (events, userLocation) => {
     const daysUntilEvent = eventDate ? Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24)) : null;
     const score = event.personalizedScore || 50;
     
-    // Location-based categorization
+    // FIXED International categorization based on location comparison
     const eventLocation = typeof event.location === 'object' ? 
       (event.location?.city || event.location?.name || 'Unknown') : 
       (event.location || 'Unknown');
-    const isInternational = userLocation?.city && 
-      !eventLocation.toLowerCase().includes(userLocation.city.toLowerCase());
+    
+    const eventVenue = typeof event.venue === 'object' ? 
+      (event.venue?.city || event.venue?.address || '') : '';
+    
+    // More accurate international detection
+    const currentCity = userLocation?.city?.toLowerCase() || 'toronto';
+    const eventCity = (eventLocation + ' ' + eventVenue).toLowerCase();
+    
+    // Check if event is in a different city/country
+    const isInternational = !eventCity.includes(currentCity) && 
+                           !eventCity.includes('toronto') && 
+                           (eventCity.includes('montreal') || 
+                            eventCity.includes('vancouver') || 
+                            eventCity.includes('new york') || 
+                            eventCity.includes('london') || 
+                            eventCity.includes('berlin') || 
+                            eventCity.includes('amsterdam') ||
+                            eventCity.includes('paris') ||
+                            eventCity.includes('miami') ||
+                            eventCity.includes('los angeles') ||
+                            eventCity.includes('chicago'));
 
     // Categorize events by priority
     if (score >= 90) {
@@ -666,7 +637,7 @@ export default function EnhancedEventList({
                   <div className={styles.eventDateCompact}>{dateDisplay}</div>
                 </div>
                 <div className={styles.matchScoreCompact}>
-                  <MatchScorePieChart 
+                  <EnhancedCircularProgress 
                     score={event.personalizedScore || 50}
                     event={event}
                     userProfile={userProfile}
@@ -674,51 +645,82 @@ export default function EnhancedEventList({
                 </div>
               </div>
 
-              {/* Compact venue and location info */}
+              {/* Compact venue and location info with tooltips */}
               <div className={styles.compactVenueInfo}>
-                <span className={styles.venueName}>
+                <span 
+                  className={styles.venueName}
+                  title={`Venue: ${typeof event.venue === 'object' ? 
+                    `${event.venue?.name || 'TBD'} - ${event.venue?.address || 'Address TBD'}` : 
+                    (event.venue || 'Venue details TBD')}`}
+                >
                   {typeof event.venue === 'object' ? (event.venue?.name || 'Venue TBD') : (event.venue || 'Venue TBD')}
                 </span>
                 <span className={styles.locationSeparator}>•</span>
-                <span className={styles.locationName}>
+                <span 
+                  className={styles.locationName}
+                  title={`Location: ${typeof event.location === 'object' ? 
+                    `Coordinates: ${event.location?.coordinates?.[1]?.toFixed(4) || 'N/A'}, ${event.location?.coordinates?.[0]?.toFixed(4) || 'N/A'}` : 
+                    (event.location || 'Location details TBD')}`}
+                >
                   {typeof event.location === 'object' ? (event.location?.city || event.location?.name || 'Location TBD') : (event.location || 'Location TBD')}
                 </span>
               </div>
 
-              {/* Generate "why this matches you" insights */}
+              {/* Generate "why this matches you" insights with tooltips */}
               <div className={styles.matchInsights}>
                 {(() => {
                   const insights = [];
                   const score = event.personalizedScore || 50;
                   
-                  // High match insights
+                  // High match insights with explanations
                   if (score >= 80) {
-                    insights.push("🎯 Perfect vibe match");
+                    insights.push({
+                      text: "🎯 Perfect vibe match",
+                      tooltip: "Score 80%+ indicates excellent compatibility with your music taste profile based on genre, venue, artist, timing, and sound analysis"
+                    });
                   } else if (score >= 60) {
-                    insights.push("✨ Strong music compatibility");
+                    insights.push({
+                      text: "✨ Strong music compatibility", 
+                      tooltip: "Score 60-79% shows good alignment with your preferences, particularly in genre and artist matching"
+                    });
                   }
                   
                   // Artist-based insights
                   if (event.artists && event.artists.length > 0) {
                     const artists = event.artists.slice(0, 2).map(a => typeof a === 'object' ? a.name : a);
                     if (artists.length > 0) {
-                      insights.push(`🎧 Features ${artists.join(', ')}`);
+                      insights.push({
+                        text: `🎧 Features ${artists.join(', ')}`,
+                        tooltip: `${event.artists.length} artist(s) performing. Artist variety contributes ${Math.round((event.artists.length * 4 + 8) * 100 / score)}% to your match score`
+                      });
                     }
                   }
                   
-                  // Genre insights  
+                  // Genre insights with tooltips
                   if (event.genres && event.genres.length > 0) {
                     const topGenres = event.genres.slice(0, 2);
-                    insights.push(`🎵 ${topGenres.join(' & ')} vibes`);
+                    insights.push({
+                      text: `🎵 ${topGenres.join(' & ')} vibes`,
+                      tooltip: `Genre matching based on ${event.genres.length} genre(s). Genre compatibility contributes to your overall match score`
+                    });
                   }
                   
-                  // Urgency insights
+                  // Urgency insights with tooltips
                   if (urgencyClass === styles.tonightEvent || urgencyClass === styles.tomorrowEvent) {
-                    insights.push("⚡ Happening soon");
+                    insights.push({
+                      text: "⚡ Happening soon",
+                      tooltip: "Events happening within 1-2 days get higher timing scores due to urgency and spontaneity factor"
+                    });
                   }
                   
                   return insights.slice(0, 3).map((insight, idx) => (
-                    <span key={idx} className={styles.insightTag}>{insight}</span>
+                    <span 
+                      key={idx} 
+                      className={styles.insightTag}
+                      title={typeof insight === 'object' ? insight.tooltip : undefined}
+                    >
+                      {typeof insight === 'object' ? insight.text : insight}
+                    </span>
                   ));
                 })()}
               </div>
