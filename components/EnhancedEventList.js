@@ -24,6 +24,49 @@ const formatPrice = (priceRange) => {
   return 'Price TBA';
 };
 
+// Helper function to group events by time categories
+const groupEventsByTime = (events, userLocation) => {
+  const now = new Date();
+  const groups = {
+    mustSee: [],
+    tonight: [],
+    tomorrow: [],
+    thisWeekend: [],
+    nextWeekend: [],
+    international: []
+  };
+
+  events.forEach((event) => {
+    const eventDate = event.date ? new Date(event.date) : null;
+    const daysUntilEvent = eventDate ? Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24)) : null;
+    const score = event.personalizedScore || 50;
+    
+    // Location-based categorization
+    const eventLocation = typeof event.location === 'object' ? 
+      (event.location?.city || event.location?.name || 'Unknown') : 
+      (event.location || 'Unknown');
+    const isInternational = userLocation?.city && 
+      !eventLocation.toLowerCase().includes(userLocation.city.toLowerCase());
+
+    // Categorize events by priority
+    if (score >= 90) {
+      groups.mustSee.push(event);
+    } else if (isInternational && score >= 70) {
+      groups.international.push(event);
+    } else if (daysUntilEvent === 0) {
+      groups.tonight.push(event);
+    } else if (daysUntilEvent === 1) {
+      groups.tomorrow.push(event);
+    } else if (daysUntilEvent >= 2 && daysUntilEvent <= 7) {
+      groups.thisWeekend.push(event);
+    } else if (daysUntilEvent > 7 && daysUntilEvent <= 14) {
+      groups.nextWeekend.push(event);
+    }
+  });
+
+  return groups;
+};
+
 export default function EnhancedEventList({ 
   userProfile, 
   dataSource, 
@@ -272,10 +315,32 @@ export default function EnhancedEventList({
   }
 
   // PRESERVED: All existing events display logic (unchanged)
+  // Enhanced events display with grouping
+  const filteredEvents = (events || []).filter(event => event && typeof event === 'object');
+  const groupedEvents = groupEventsByTime(filteredEvents, userLocation);
+  
+  const groupTitles = {
+    mustSee: '🎯 Must See',
+    tonight: '🌙 Tonight',
+    tomorrow: '🌅 Tomorrow', 
+    thisWeekend: '🎉 This Weekend',
+    nextWeekend: '📅 Next Weekend',
+    international: '🌍 International'
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.eventsList}>
-        {(events || []).filter(event => event && typeof event === 'object').map((event, index) => {
+        {Object.entries(groupedEvents).map(([groupKey, groupEvents]) => {
+          if (groupEvents.length === 0) return null;
+
+          return (
+            <div key={groupKey} className={styles.eventGroup}>
+              <h3 className={styles.groupTitle}>
+                {groupTitles[groupKey]} ({groupEvents.length})
+              </h3>
+              <div className={styles.groupEvents}>
+                {groupEvents.map((event, index) => {
           // Format date for better display
           const eventDate = event.date ? new Date(event.date) : null;
           const now = new Date();
@@ -400,6 +465,10 @@ export default function EnhancedEventList({
                 <div className={styles.compactPrice}>
                   {formatPrice(event.priceRange)}
                 </div>
+              </div>
+            </div>
+          );
+        })}
               </div>
             </div>
           );
