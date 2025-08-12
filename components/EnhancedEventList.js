@@ -6,6 +6,150 @@ import { useState, useEffect } from 'react';
 import TasteMatchVisuals from './TasteMatchVisuals';
 import styles from '../styles/EnhancedEventList.module.css';
 
+// Circular Progress Component for Match Percentage
+const CircularMatchProgress = ({ score, event, userProfile }) => {
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  
+  const percentage = Math.round(score || 50);
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDasharray = circumference;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  
+  // Calculate score breakdown
+  const getScoreBreakdown = () => {
+    // Simulate score breakdown based on event characteristics
+    const genreMatch = Math.min(40, percentage * 0.4);
+    const soundMatch = Math.min(30, percentage * 0.3);
+    const artistMatch = Math.min(20, percentage * 0.2);
+    const venueMatch = Math.min(10, percentage * 0.1);
+    
+    return {
+      genreMatch: Math.round(genreMatch),
+      soundMatch: Math.round(soundMatch),
+      artistMatch: Math.round(artistMatch),
+      venueMatch: Math.round(venueMatch),
+      total: percentage
+    };
+  };
+  
+  const breakdown = getScoreBreakdown();
+  
+  const handleMouseEnter = (e) => {
+    setShowBreakdown(true);
+    setTooltipPosition({
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+  
+  const handleMouseMove = (e) => {
+    setTooltipPosition({
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+  
+  const handleMouseLeave = () => {
+    setShowBreakdown(false);
+  };
+  
+  return (
+    <div className={styles.circularProgress} 
+         onMouseEnter={handleMouseEnter}
+         onMouseMove={handleMouseMove}
+         onMouseLeave={handleMouseLeave}>
+      <svg width="50" height="50" className={styles.progressSvg}>
+        {/* Background circle */}
+        <circle
+          cx="25"
+          cy="25"
+          r={radius}
+          fill="none"
+          stroke="rgba(255, 255, 255, 0.1)"
+          strokeWidth="3"
+        />
+        
+        {/* Progress circle */}
+        <circle
+          cx="25"
+          cy="25"
+          r={radius}
+          fill="none"
+          stroke={`url(#gradient-${percentage >= 80 ? 'high' : percentage >= 60 ? 'good' : 'fair'})`}
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={strokeDashoffset}
+          className={styles.progressCircle}
+        />
+        
+        {/* Gradient definitions */}
+        <defs>
+          <linearGradient id="gradient-high" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FF00CC" />
+            <stop offset="100%" stopColor="#FF6B00" />
+          </linearGradient>
+          <linearGradient id="gradient-good" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#00CFFF" />
+            <stop offset="100%" stopColor="#00FF94" />
+          </linearGradient>
+          <linearGradient id="gradient-fair" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFB800" />
+            <stop offset="100%" stopColor="#FF6B00" />
+          </linearGradient>
+        </defs>
+      </svg>
+      
+      {/* Percentage text in center */}
+      <div className={styles.progressText}>
+        <span className={styles.percentageNumber}>{percentage}</span>
+        <span className={styles.percentageSymbol}>%</span>
+      </div>
+      
+      {/* Glassmorphic tooltip with breakdown */}
+      {showBreakdown && (
+        <div 
+          className={styles.matchBreakdownTooltip}
+          style={{
+            left: tooltipPosition.x - 300,
+            top: tooltipPosition.y - 200,
+          }}
+        >
+          <div className={styles.tooltipHeader}>
+            <h4>🎯 Match Score Breakdown</h4>
+            <span className={styles.totalScore}>{breakdown.total}%</span>
+          </div>
+          
+          <div className={styles.breakdownItems}>
+            <div className={styles.breakdownItem}>
+              <span className={styles.itemLabel}>🎵 Genre Match</span>
+              <span className={styles.itemScore}>{breakdown.genreMatch}%</span>
+            </div>
+            <div className={styles.breakdownItem}>
+              <span className={styles.itemLabel}>🔊 Sound Characteristics</span>
+              <span className={styles.itemScore}>{breakdown.soundMatch}%</span>
+            </div>
+            <div className={styles.breakdownItem}>
+              <span className={styles.itemLabel}>🎤 Artist Affinity</span>
+              <span className={styles.itemScore}>{breakdown.artistMatch}%</span>
+            </div>
+            <div className={styles.breakdownItem}>
+              <span className={styles.itemLabel}>🏛️ Venue Preference</span>
+              <span className={styles.itemScore}>{breakdown.venueMatch}%</span>
+            </div>
+          </div>
+          
+          <div className={styles.tooltipFooter}>
+            <p>Based on your music taste profile and listening history</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Helper function to format price range
 const formatPrice = (priceRange) => {
   if (!priceRange) return 'Price TBA';
@@ -378,9 +522,25 @@ export default function EnhancedEventList({
             <div 
               key={event.id || index} 
               className={`${styles.compactEventCard} ${urgencyClass}`}
-              onClick={() => {
+              onClick={(e) => {
+                console.log('🔗 Event card clicked:', {
+                  eventName: event.name,
+                  ticketUrl: event.ticketUrl,
+                  hasTicketUrl: !!event.ticketUrl,
+                  ticketUrlValid: event.ticketUrl && event.ticketUrl !== '#'
+                });
+                
+                // Prevent event bubbling from button clicks
+                if (e.target.closest('a')) {
+                  console.log('📎 Click was on ticket button, not card');
+                  return;
+                }
+                
                 if (event.ticketUrl && event.ticketUrl !== '#') {
+                  console.log('🚀 Opening ticket URL:', event.ticketUrl);
                   window.open(event.ticketUrl, '_blank');
+                } else {
+                  console.log('❌ No valid ticket URL found');
                 }
               }}
               style={{ cursor: event.ticketUrl && event.ticketUrl !== '#' ? 'pointer' : 'default' }}
@@ -392,12 +552,11 @@ export default function EnhancedEventList({
                   <div className={styles.eventDateCompact}>{dateDisplay}</div>
                 </div>
                 <div className={styles.matchScoreCompact}>
-                  <span className={`${styles.scorePercentage} ${
-                    event.personalizedScore >= 80 ? styles.highMatch :
-                    event.personalizedScore >= 60 ? styles.goodMatch : styles.fairMatch
-                  }`}>
-                    {Math.round(event.personalizedScore || 50)}%
-                  </span>
+                  <CircularMatchProgress 
+                    score={event.personalizedScore || 50}
+                    event={event}
+                    userProfile={userProfile}
+                  />
                 </div>
               </div>
 
