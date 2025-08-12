@@ -181,48 +181,168 @@
   text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
 }
 
-/* CIRCULAR PROGRESS MATCH SCORE - ENHANCED */
-.circularProgress {
+/* ENHANCED PIE CHART MATCH SCORE */
+.pieChartContainer {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 70px;
-  height: 70px;
+  width: 120px;
+  height: 120px;
+  cursor: pointer;
 }
 
-.progressSvg {
-  position: absolute;
-  transform: rotate(-90deg);
-  filter: drop-shadow(0 0 12px rgba(255, 0, 204, 0.6));
+.pieChartSvg {
+  filter: drop-shadow(0 0 15px rgba(255, 0, 204, 0.4));
+  transition: all 0.3s ease;
 }
 
-.progressCircle {
-  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 8px currentColor);
+.pieChartContainer:hover .pieChartSvg {
+  filter: drop-shadow(0 0 20px rgba(255, 0, 204, 0.6));
+  transform: scale(1.05);
 }
 
-.progressText {
+.pieChartText {
   position: absolute;
   display: flex;
   align-items: baseline;
   justify-content: center;
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
-  text-shadow: 0 0 15px rgba(218, 218, 218, 0.8);
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+  text-shadow: 
+    0 0 20px rgba(218, 218, 218, 1),
+    0 0 40px rgba(255, 255, 255, 0.8);
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.8));
 }
 
-.percentageNumber {
-  font-size: 1.1rem;
+.piePercentageNumber {
+  font-size: 1.6rem;
   color: #DADADA;
   line-height: 1;
 }
 
-.percentageSymbol {
-  font-size: 0.7rem;
+.piePercentageSymbol {
+  font-size: 1rem;
   color: #999;
-  margin-left: 1px;
+  margin-left: 2px;
+}
+
+/* ENHANCED PIE CHART TOOLTIP */
+.pieBreakdownTooltip {
+  position: absolute;
+  top: -140px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 220px;
+  padding: 1rem;
+  background: rgba(21, 21, 31, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 30px rgba(255, 0, 204, 0.3);
+  color: #DADADA;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  animation: pieTooltipFadeIn 0.3s ease-out;
+}
+
+@keyframes pieTooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.tooltipHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.tooltipTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, #FF00CC, #00CFFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.totalScore {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #00CFFF;
+  text-shadow: 0 0 10px rgba(0, 207, 255, 0.4);
+}
+
+.breakdownItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.breakdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid rgba(0, 255, 255, 0.3);
+  transition: all 0.2s ease;
+}
+
+.breakdownItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(2px);
+}
+
+.itemColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.itemLabel {
+  font-size: 0.75rem;
+  color: #BBB;
+  font-weight: 500;
+  flex: 1;
+}
+
+.itemScore {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #00CFFF;
+  text-shadow: 0 0 5px rgba(0, 207, 255, 0.3);
+}
+
+.tooltipFooter {
+  text-align: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.tooltipFooter p {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #888;
+  font-style: italic;
 }
 
 /* COMPACT BREAKDOWN TOOLTIP */
