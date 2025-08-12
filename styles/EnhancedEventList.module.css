@@ -45,7 +45,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem; /* INCREASED: More space to prevent touching events */
   background: rgba(21, 21, 31, 0.8);
   backdrop-filter: blur(10px);
   border-radius: 12px;
@@ -181,14 +181,14 @@
   text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
 }
 
-/* ENHANCED CIRCULAR PROGRESS - SOLID COMPLETION CIRCLE */
+/* ENHANCED CIRCULAR PROGRESS - BIGGER SOLID COMPLETION CIRCLE */
 .circularProgressEnhanced {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
+  width: 100px; /* BIGGER: Increased from 80px to 100px */
+  height: 100px; /* BIGGER: Increased from 80px to 100px */
   margin: 0 auto; /* CENTER ALIGNED */
 }
 
@@ -207,12 +207,12 @@
   justify-content: center;
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
-  text-shadow: 0 0 20px rgba(218, 218, 218, 0.8);
   z-index: 2;
+  /* Glow effect will be added inline via JavaScript */
 }
 
 .percentageNumberEnhanced {
-  font-size: 1.4rem;
+  font-size: 1.6rem; /* BIGGER: Increased from 1.4rem */
   color: #DADADA;
   line-height: 1;
   font-weight: 700;
@@ -225,27 +225,28 @@
   font-weight: 500;
 }
 
-/* COMPACT CIRCULAR TOOLTIP */
+/* COMPACT CIRCULAR TOOLTIP - SMALL AND ON TOP */
 .circularTooltip {
   position: absolute;
-  top: -130px;
+  top: -140px; /* HIGHER: More clearance above circle */
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  min-width: 200px;
-  padding: 0.75rem;
+  min-width: 180px; /* SMALLER: Reduced from 200px */
+  max-width: 220px;
+  padding: 0.6rem; /* SMALLER: Reduced from 0.75rem */
   background: rgba(21, 21, 31, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 12px;
+  border-radius: 10px; /* SMALLER: Reduced from 12px */
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 0 20px rgba(255, 0, 204, 0.2);
   color: #DADADA;
   font-family: 'Poppins', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.75rem; /* SMALLER: Reduced from 0.8rem */
   animation: circularTooltipFadeIn 0.2s ease-out;
 }
 

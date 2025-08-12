@@ -11,7 +11,7 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
   const [showBreakdown, setShowBreakdown] = useState(false);
   
   const percentage = Math.round(score || 50);
-  const radius = 35;
+  const radius = 45; // BIGGER: Increased from 35 to 45
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
   
@@ -97,11 +97,11 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
     <div className={styles.circularProgressEnhanced} 
          onMouseEnter={() => setShowBreakdown(true)}
          onMouseLeave={() => setShowBreakdown(false)}>
-      <svg width="80" height="80" className={styles.progressSvgEnhanced}>
+      <svg width="100" height="100" className={styles.progressSvgEnhanced}>
         {/* Background circle */}
         <circle
-          cx="40"
-          cy="40"
+          cx="50"
+          cy="50"
           r={radius}
           fill="none"
           stroke="rgba(255, 255, 255, 0.1)"
@@ -110,8 +110,8 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
         
         {/* Progress circle - SOLID COMPLETION */}
         <circle
-          cx="40"
-          cy="40"
+          cx="50"
+          cy="50"
           r={radius}
           fill="none"
           stroke={getColor()}
@@ -123,14 +123,16 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
           style={{
             filter: `drop-shadow(0 0 12px ${getColor()}80)`,
             transform: 'rotate(-90deg)',
-            transformOrigin: '40px 40px'
+            transformOrigin: '50px 50px'
           }}
         />
       </svg>
       
-      {/* Percentage text in center - PROPER FONT */}
+      {/* Percentage text in center - PROPER FONT WITH GLOW */}
       <div className={styles.progressTextEnhanced}>
-        <span className={styles.percentageNumberEnhanced}>{percentage}</span>
+        <span className={styles.percentageNumberEnhanced} style={{
+          textShadow: `0 0 20px ${getColor()}CC, 0 0 40px ${getColor()}88, 0 0 60px ${getColor()}44`
+        }}>{percentage}</span>
         <span className={styles.percentageSymbolEnhanced}>%</span>
       </div>
       
@@ -201,15 +203,20 @@ const groupEventsByTime = (events, userLocation) => {
     tomorrow: [],
     thisWeekend: [],
     nextWeekend: [],
+    national: [],
     international: []
   };
+
+  // Get user's country (default to Canada for Toronto)
+  const userCountry = userLocation?.country?.toLowerCase() || 'canada';
+  const userCity = userLocation?.city?.toLowerCase() || 'toronto';
 
   events.forEach((event) => {
     const eventDate = event.date ? new Date(event.date) : null;
     const daysUntilEvent = eventDate ? Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24)) : null;
     const score = event.personalizedScore || 50;
     
-    // FIXED International categorization based on location comparison
+    // FIXED: Proper International = Different Country, National = Different City
     const eventLocation = typeof event.location === 'object' ? 
       (event.location?.city || event.location?.name || 'Unknown') : 
       (event.location || 'Unknown');
@@ -217,29 +224,44 @@ const groupEventsByTime = (events, userLocation) => {
     const eventVenue = typeof event.venue === 'object' ? 
       (event.venue?.city || event.venue?.address || '') : '';
     
-    // More accurate international detection
-    const currentCity = userLocation?.city?.toLowerCase() || 'toronto';
-    const eventCity = (eventLocation + ' ' + eventVenue).toLowerCase();
+    const eventLocationText = (eventLocation + ' ' + eventVenue).toLowerCase();
     
-    // Check if event is in a different city/country
-    const isInternational = !eventCity.includes(currentCity) && 
-                           !eventCity.includes('toronto') && 
-                           (eventCity.includes('montreal') || 
-                            eventCity.includes('vancouver') || 
-                            eventCity.includes('new york') || 
-                            eventCity.includes('london') || 
-                            eventCity.includes('berlin') || 
-                            eventCity.includes('amsterdam') ||
-                            eventCity.includes('paris') ||
-                            eventCity.includes('miami') ||
-                            eventCity.includes('los angeles') ||
-                            eventCity.includes('chicago'));
+    // Country detection based on city/venue information
+    const isInternational = (
+      // US cities
+      eventLocationText.includes('new york') || eventLocationText.includes('los angeles') || 
+      eventLocationText.includes('chicago') || eventLocationText.includes('miami') || 
+      eventLocationText.includes('las vegas') || eventLocationText.includes('san francisco') ||
+      eventLocationText.includes('boston') || eventLocationText.includes('seattle') ||
+      eventLocationText.includes('detroit') || eventLocationText.includes('philadelphia') ||
+      // European cities
+      eventLocationText.includes('london') || eventLocationText.includes('berlin') || 
+      eventLocationText.includes('amsterdam') || eventLocationText.includes('paris') ||
+      eventLocationText.includes('madrid') || eventLocationText.includes('rome') ||
+      eventLocationText.includes('barcelona') || eventLocationText.includes('prague') ||
+      // Other international cities
+      eventLocationText.includes('tokyo') || eventLocationText.includes('sydney') ||
+      eventLocationText.includes('melbourne') || eventLocationText.includes('mexico city')
+    );
+    
+    // National = Different Canadian city (same country, different city)
+    const isNational = !isInternational && (
+      eventLocationText.includes('montreal') || eventLocationText.includes('vancouver') || 
+      eventLocationText.includes('calgary') || eventLocationText.includes('edmonton') ||
+      eventLocationText.includes('ottawa') || eventLocationText.includes('winnipeg') ||
+      eventLocationText.includes('halifax') || eventLocationText.includes('quebec city')
+    ) && !eventLocationText.includes(userCity);
+    
+    // Local = Same city (Toronto area)
+    const isLocal = !isInternational && !isNational;
 
     // Categorize events by priority
     if (score >= 90) {
       groups.mustSee.push(event);
     } else if (isInternational && score >= 70) {
       groups.international.push(event);
+    } else if (isNational && score >= 65) {
+      groups.national.push(event);
     } else if (daysUntilEvent === 0) {
       groups.tonight.push(event);
     } else if (daysUntilEvent === 1) {
@@ -267,8 +289,8 @@ export default function EnhancedEventList({
   const [debugInfo, setDebugInfo] = useState(null);
   // SURGICAL ADDITION: Location state for debugging
   const [userLocation, setUserLocation] = useState(null);
-  // SURGICAL ADDITION: Collapsible groups state
-  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
+  // SURGICAL ADDITION: Collapsible groups state - START COLLAPSED
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set(['mustSee', 'tonight', 'tomorrow', 'thisWeekend', 'nextWeekend', 'national', 'international']));
 
   // SURGICAL ADDITION: Trigger reload when filters change
   useEffect(() => {
@@ -513,6 +535,7 @@ export default function EnhancedEventList({
     tomorrow: 'Tomorrow', 
     thisWeekend: 'This Weekend',
     nextWeekend: 'Next Weekend',
+    national: 'National',
     international: 'International'
   };
 
@@ -549,7 +572,9 @@ export default function EnhancedEventList({
                      groupKey === 'tonight' ? '🌙' : 
                      groupKey === 'tomorrow' ? '🌅' : 
                      groupKey === 'thisWeekend' ? '🎉' : 
-                     groupKey === 'nextWeekend' ? '📅' : '🌍'}
+                     groupKey === 'nextWeekend' ? '📅' : 
+                     groupKey === 'national' ? '🍁' :
+                     groupKey === 'international' ? '🌍' : '🎵'}
                   </span>
                   <h3 className={styles.groupTitle}>
                     {groupTitles[groupKey]} ({groupEvents.length})
