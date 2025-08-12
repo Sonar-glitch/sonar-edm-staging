@@ -37,25 +37,32 @@
   font-weight: 600;
 }
 
-/* CORRECTED LAYOUT STRUCTURE - NEW COMPACT DESIGN */
+/* CORRECTED LAYOUT STRUCTURE */
 .dashboardGrid {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Reduced from 20px for more compact spacing */
+  gap: 20px;
 }
 
-/* ROW 1: MUSIC TASTE (100% - COMPACT) */
+/* ROW 1: TOP 5 GENRES (50%) + SEASONAL VIBES (50%) */
 .row1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  min-height: 300px;
+}
+
+.leftHalf,
+.rightHalf {
   display: flex;
   flex-direction: column;
-  min-height: auto; /* Auto height instead of fixed */
 }
 
-/* ROW 2: SEASONAL VIBES (100% - COMPACT) */
+/* ROW 2: SOUND CHARACTERISTICS (100% - LOWER HEIGHT) */
 .row2 {
   display: flex;
   flex-direction: column;
-  min-height: auto; /* Auto height instead of fixed */
+  min-height: 200px; /* Lower height as requested */
 }
 
 /* ROW 3: EVENTS MATCHING YOUR VIBE (100%) */

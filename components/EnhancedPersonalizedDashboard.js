@@ -7,10 +7,11 @@ import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
-// Dynamic imports for components - UPDATED for new compact design
-const CompactMusicTaste = dynamic(() => import('./CompactMusicTaste'), { ssr: false });
+// Dynamic imports for components (PRESERVED)
+const Top5GenresSpiderChart = dynamic(() => import('./Top5GenresSpiderChart'), { ssr: false });
 const CompactSeasonalVibes = dynamic(() => import('./CompactSeasonalVibes'), { ssr: false });
-const GroupedEventsList = dynamic(() => import('./GroupedEventsList'), { ssr: false });
+const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
+const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: false });
 const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'), { ssr: false });
 
 export default function EnhancedPersonalizedDashboard() {
@@ -87,13 +88,13 @@ export default function EnhancedPersonalizedDashboard() {
               console.error('🌍 [Dashboard] Reverse geocoding failed:', error);
             }
             
-            // Default to New York coordinates as requested instead of Toronto
+            // If reverse geocoding fails, use coordinates directly
             const fallbackLocation = {
-              latitude: 40.7128,
-              longitude: -74.0060,
-              city: 'New York',
-              country: 'United States',
-              region: 'NY'
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              city: 'Your Location',
+              country: 'Unknown',
+              region: 'Unknown'
             };
             setUserLocation(fallbackLocation);
             setEventFilters(prev => ({
@@ -138,7 +139,7 @@ export default function EnhancedPersonalizedDashboard() {
     }
   };
 
-  // Method 3: Toronto fallback (preserved default strategy)
+  // Method 3: Toronto fallback
   const useTorontoFallback = () => {
     const torontoLocation = {
       city: 'Toronto',
@@ -448,114 +449,51 @@ export default function EnhancedPersonalizedDashboard() {
   return (
     <div className={styles.container}>
       <div className={styles.dashboard}>
-        {/* Enhanced Profile Header */}
-        <div className={styles.profileHeader}>
-          <div className={styles.profileInfo}>
-            <h1 className={styles.profileTitle}>
-              Your personalized <span className={styles.highlight}>music taste profile</span> and matching events
-            </h1>
-          </div>
-        </div>
-
-        {/* NEW COMPACT LAYOUT: Vertical stacking with better space usage */}
-        <div className={styles.dashboardGrid}>
-          
-          {/* ROW 1: MUSIC TASTE (Compact, no spider chart) */}
-          <div className={styles.row1}>
-            <div className={styles.fullWidth}>
-              <CompactMusicTaste 
-                userProfile={dashboardData}
-                dataSource={dataSources}
-              />
-            </div>
-          </div>
-
-          {/* ROW 2: SEASONAL VIBES (Compact) */}
-          <div className={styles.row2}>
-            <div className={styles.fullWidth}>
-              <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                  <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
-                  {getDataIndicator('seasonal')}
-                </div>
-                <div className={styles.cardContent}>
-                  <CompactSeasonalVibes 
-                    data={dashboardData.seasonalProfile}
-                  />
-                </div>
+        {/* ROW 1: TOP 5 GENRES + SEASONAL VIBES */}
+        <div className={styles.row1}>
+          <div className={styles.leftHalf}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Your Top 5 Genres</h2>
+                {getDataIndicator('spotify')}
+              </div>
+              <div className={styles.cardContent}>
+                <Top5GenresSpiderChart 
+                  data={dashboardData.genreProfile}
+                  dataSource={dataSources.spotify}
+                  getDeltaIndicator={getDeltaIndicator}
+                />
               </div>
             </div>
           </div>
+          
+          <div className={styles.rightHalf}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Seasonal Vibes</h2>
+                {getDataIndicator('seasonal')}
+              </div>
+              <div className={styles.cardContent}>
+                <CompactSeasonalVibes data={dashboardData.seasonalProfile} />
+              </div>
+            </div>
+          </div>
+        </div>
 
-          {/* ROW 3: EVENTS MATCHING YOUR VIBE (Grouped by time periods) */}
-          <div className={styles.row3}>
-            <div className={styles.fullWidth}>
-              <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                  <h2 className={styles.cardTitle}>Events Matching Your Vibe</h2>
-                  {getDataIndicator('events')}
-                </div>
-                <div className={styles.cardContent}>
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '0.5rem', 
-                      color: '#DADADA', 
-                      fontSize: '0.9rem',
-                      fontWeight: '500',
-                      fontFamily: 'Poppins, sans-serif'
-                    }}>
-                      Vibe Match: {eventFilters.vibeMatch}%
-                    </label>
-                    <div style={{ position: 'relative', width: '100%' }}>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={eventFilters.vibeMatch}
-                        onChange={(e) => setEventFilters(prev => ({
-                          ...prev,
-                          vibeMatch: parseInt(e.target.value)
-                        }))}
-                        style={{
-                          width: '100%',
-                          height: '6px',
-                          background: `linear-gradient(to right, 
-                            #00CFFF 0%, 
-                            #FF00CC ${eventFilters.vibeMatch}%, 
-                            rgba(255, 255, 255, 0.1) ${eventFilters.vibeMatch}%, 
-                            rgba(255, 255, 255, 0.1) 100%)`,
-                          borderRadius: '3px',
-                          outline: 'none',
-                          WebkitAppearance: 'none',
-                          cursor: 'pointer',
-                          transition: 'background 0.2s ease'
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <EnhancedLocationSearch 
-                    onLocationSelect={(locationData) => {
-                      console.log('🌍 [Dashboard] Location selected:', locationData);
-                      setUserLocation(locationData);
-                      setEventFilters(prev => ({
-                        ...prev,
-                        location: locationData
-                      }));
-                    }}
-                  />
-                  <GroupedEventsList 
-                    userProfile={dashboardData}
-                    location={eventFilters.location || userLocation}
-                    vibeMatch={eventFilters.vibeMatch}
-                    onDataSourceUpdate={(dataSource) => {
-                      setDataSources(prev => ({
-                        ...prev,
-                        events: dataSource
-                      }));
-                    }}
-                  />
-                </div>
+        {/* ROW 2: SOUND CHARACTERISTICS (ENHANCED - NO RED SECTION) */}
+        <div className={styles.row2}>
+          <div className={styles.fullWidth}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>Your Sound Characteristics</h2>
+                {getDataIndicator('soundstat')}
+              </div>
+              <div className={styles.cardContent}>
+                <SoundCharacteristics 
+                  data={dashboardData.soundCharacteristics}
+                  dataSource={dataSources.soundstat}
+                  getDeltaIndicator={getDeltaIndicator}
+                />
               </div>
             </div>
           </div>
@@ -608,7 +546,6 @@ export default function EnhancedPersonalizedDashboard() {
                 </div>
                 <EnhancedLocationSearch 
                   onLocationSelect={(locationData) => {
-                    console.log('🌍 [Dashboard] Location selected:', locationData);
                     setUserLocation(locationData);
                     setEventFilters(prev => ({
                       ...prev,
@@ -616,7 +553,7 @@ export default function EnhancedPersonalizedDashboard() {
                     }));
                   }}
                 />
-                <GroupedEventsList 
+                <EnhancedEventList 
                   userProfile={dashboardData}
                   location={eventFilters.location || userLocation}
                   vibeMatch={eventFilters.vibeMatch}
