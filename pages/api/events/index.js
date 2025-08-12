@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     console.log(`🎯 Processing events request for user ${userId} in ${city} (${lat}, ${lon}) with ${vibeMatch}% vibe match`);
 
 
-    // ENHANCED: Accept city/country parameters but keep Toronto as fallback for compatibility
+    // ENHANCED: Accept city/country parameters with Toronto as fallback (preserving location strategy)
     const targetCity = city || 'Toronto';
     
     // ENHANCED: Cache key includes user ID for personalized caching
