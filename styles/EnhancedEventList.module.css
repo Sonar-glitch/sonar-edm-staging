@@ -35,7 +35,7 @@
   flex: 1;
 }
 
-/* EVENT GROUPING STYLES */
+/* EVENT GROUPING STYLES - ENHANCED */
 .eventGroup {
   margin-bottom: 2rem;
 }
@@ -44,25 +44,27 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
   background: rgba(21, 21, 31, 0.8);
   backdrop-filter: blur(10px);
-  border-radius: 8px;
+  border-radius: 12px;
   border-left: 4px solid #FF00CC;
-  margin-bottom: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .groupHeader:hover {
   background: rgba(21, 21, 31, 0.9);
   transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(255, 0, 204, 0.2);
 }
 
 .groupHeaderLeft {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .groupHeaderRight {
@@ -77,28 +79,24 @@
 
 .groupTitle {
   color: #DADADA;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 600;
   margin: 0;
   text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
-}
-
-.eventCount {
-  color: #999;
-  font-size: 0.9rem;
-  font-weight: 400;
-}
-
-.groupDescription {
-  color: #BBB;
-  font-size: 0.8rem;
-  font-style: italic;
 }
 
 .collapseIcon {
   color: #DADADA;
   font-size: 1rem;
   transition: transform 0.3s ease;
+  font-weight: bold;
+}
+
+.groupEvents {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-left: 1rem;
 }
 
 /* Urgency-based group styling */
@@ -183,25 +181,25 @@
   text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
 }
 
-/* CIRCULAR PROGRESS MATCH SCORE */
+/* CIRCULAR PROGRESS MATCH SCORE - ENHANCED */
 .circularProgress {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
+  width: 70px;
+  height: 70px;
 }
 
 .progressSvg {
   position: absolute;
   transform: rotate(-90deg);
-  filter: drop-shadow(0 0 8px rgba(255, 0, 204, 0.4));
+  filter: drop-shadow(0 0 12px rgba(255, 0, 204, 0.6));
 }
 
 .progressCircle {
   transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 4px currentColor);
+  filter: drop-shadow(0 0 8px currentColor);
 }
 
 .progressText {
@@ -211,49 +209,54 @@
   justify-content: center;
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
-  text-shadow: 0 0 8px rgba(218, 218, 218, 0.5);
+  text-shadow: 0 0 15px rgba(218, 218, 218, 0.8);
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
 }
 
 .percentageNumber {
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   color: #DADADA;
   line-height: 1;
 }
 
 .percentageSymbol {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: #999;
   margin-left: 1px;
 }
 
-/* GLASSMORPHIC BREAKDOWN TOOLTIP */
+/* COMPACT BREAKDOWN TOOLTIP */
 .matchBreakdownTooltip {
-  position: fixed;
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1000;
-  min-width: 280px;
-  padding: 1.5rem;
-  background: rgba(21, 21, 31, 0.95);
+  min-width: 200px;
+  padding: 0.75rem;
+  background: rgba(21, 21, 31, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 255, 255, 0.2);
-  border-radius: 16px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 12px;
   box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 8px 32px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 20px rgba(255, 0, 204, 0.1);
+    0 0 20px rgba(255, 0, 204, 0.2);
   color: #DADADA;
   font-family: 'Poppins', sans-serif;
-  animation: tooltipFadeIn 0.3s ease-out;
+  font-size: 0.8rem;
+  animation: tooltipFadeIn 0.2s ease-out;
 }
 
 @keyframes tooltipFadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateX(-50%) translateY(5px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 }
 
@@ -261,14 +264,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
   border-bottom: 1px solid rgba(0, 255, 255, 0.2);
 }
 
-.tooltipHeader h4 {
-  margin: 0;
-  font-size: 1rem;
+.tooltipTitle {
+  font-size: 0.75rem;
   font-weight: 600;
   background: linear-gradient(90deg, #FF00CC, #00CFFF);
   -webkit-background-clip: text;
@@ -277,28 +279,38 @@
 }
 
 .totalScore {
-  font-size: 1.2rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #00CFFF;
-  text-shadow: 0 0 10px rgba(0, 207, 255, 0.3);
+  text-shadow: 0 0 8px rgba(0, 207, 255, 0.3);
 }
 
 .breakdownItems {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 0.25rem;
 }
 
 .breakdownItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border-left: 3px solid rgba(0, 255, 255, 0.3);
-  transition: all 0.3s ease;
+  border-radius: 6px;
+  border-left: 2px solid rgba(0, 255, 255, 0.3);
+}
+
+.itemLabel {
+  font-size: 0.7rem;
+  color: #BBB;
+  font-weight: 500;
+}
+
+.itemScore {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #00CFFF;
 }
 
 .breakdownItem:hover {

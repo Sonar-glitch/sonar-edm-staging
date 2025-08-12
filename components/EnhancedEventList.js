@@ -9,46 +9,80 @@ import styles from '../styles/EnhancedEventList.module.css';
 // Circular Progress Component for Match Percentage
 const CircularMatchProgress = ({ score, event, userProfile }) => {
   const [showBreakdown, setShowBreakdown] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   
   const percentage = Math.round(score || 50);
-  const radius = 20;
+  const radius = 30; // BIGGER radius for better quality
   const circumference = 2 * Math.PI * radius;
   const strokeDasharray = circumference;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
   
-  // Calculate score breakdown
+  // Calculate REAL score breakdown based on actual event data
   const getScoreBreakdown = () => {
-    // Simulate score breakdown based on event characteristics
-    const genreMatch = Math.min(40, percentage * 0.4);
-    const soundMatch = Math.min(30, percentage * 0.3);
-    const artistMatch = Math.min(20, percentage * 0.2);
-    const venueMatch = Math.min(10, percentage * 0.1);
+    let genreMatch = 0;
+    let soundMatch = 0;
+    let artistMatch = 0;
+    let venueMatch = 0;
+    
+    // Genre matching based on event genres vs user profile
+    if (event.genres && event.genres.length > 0 && userProfile?.preferredGenres) {
+      const eventGenres = event.genres.map(g => g.toLowerCase());
+      const userGenres = userProfile.preferredGenres.map(g => g.toLowerCase());
+      const matches = eventGenres.filter(g => userGenres.includes(g));
+      genreMatch = Math.min(40, (matches.length / eventGenres.length) * 40);
+    } else {
+      // Fallback based on event genres
+      genreMatch = event.genres && event.genres.length > 0 ? 
+        Math.min(40, event.genres.length * 8) : 15;
+    }
+    
+    // Sound characteristics based on event description/tags
+    if (event.description || event.tags) {
+      const text = (event.description || '') + ' ' + (event.tags || []).join(' ');
+      const energyWords = ['electronic', 'dance', 'bass', 'techno', 'house', 'edm'];
+      const matches = energyWords.filter(word => text.toLowerCase().includes(word));
+      soundMatch = Math.min(30, matches.length * 6 + 10);
+    } else {
+      soundMatch = 18; // Default moderate match
+    }
+    
+    // Artist affinity based on known artists
+    if (event.artists && event.artists.length > 0) {
+      const popularArtists = event.artists.filter(a => 
+        typeof a === 'object' ? a.popularity > 50 : true
+      );
+      artistMatch = Math.min(20, popularArtists.length * 5 + 8);
+    } else {
+      artistMatch = 12; // Default moderate match
+    }
+    
+    // Venue preference based on venue type and capacity
+    if (event.venue) {
+      const venueName = typeof event.venue === 'object' ? 
+        event.venue.name : event.venue;
+      const isClub = venueName.toLowerCase().includes('club');
+      const isFestival = venueName.toLowerCase().includes('festival');
+      venueMatch = isClub ? 8 : isFestival ? 10 : 6;
+    } else {
+      venueMatch = 5;
+    }
+    
+    // Normalize to match the actual score
+    const calculatedTotal = genreMatch + soundMatch + artistMatch + venueMatch;
+    const scaleFactor = percentage / calculatedTotal;
     
     return {
-      genreMatch: Math.round(genreMatch),
-      soundMatch: Math.round(soundMatch),
-      artistMatch: Math.round(artistMatch),
-      venueMatch: Math.round(venueMatch),
+      genreMatch: Math.round(genreMatch * scaleFactor),
+      soundMatch: Math.round(soundMatch * scaleFactor),
+      artistMatch: Math.round(artistMatch * scaleFactor),
+      venueMatch: Math.round(venueMatch * scaleFactor),
       total: percentage
     };
   };
   
   const breakdown = getScoreBreakdown();
   
-  const handleMouseEnter = (e) => {
+  const handleMouseEnter = () => {
     setShowBreakdown(true);
-    setTooltipPosition({
-      x: e.clientX,
-      y: e.clientY
-    });
-  };
-  
-  const handleMouseMove = (e) => {
-    setTooltipPosition({
-      x: e.clientX,
-      y: e.clientY
-    });
   };
   
   const handleMouseLeave = () => {
@@ -58,91 +92,67 @@ const CircularMatchProgress = ({ score, event, userProfile }) => {
   return (
     <div className={styles.circularProgress} 
          onMouseEnter={handleMouseEnter}
-         onMouseMove={handleMouseMove}
          onMouseLeave={handleMouseLeave}>
-      <svg width="50" height="50" className={styles.progressSvg}>
+      <svg width="70" height="70" className={styles.progressSvg}>
         {/* Background circle */}
         <circle
-          cx="25"
-          cy="25"
+          cx="35"
+          cy="35"
           r={radius}
           fill="none"
           stroke="rgba(255, 255, 255, 0.1)"
-          strokeWidth="3"
+          strokeWidth="4"
         />
         
-        {/* Progress circle */}
+        {/* Progress circle - SOLID stroke */}
         <circle
-          cx="25"
-          cy="25"
+          cx="35"
+          cy="35"
           r={radius}
           fill="none"
-          stroke={`url(#gradient-${percentage >= 80 ? 'high' : percentage >= 60 ? 'good' : 'fair'})`}
-          strokeWidth="3"
+          stroke={percentage >= 80 ? '#FF00CC' : percentage >= 60 ? '#00CFFF' : '#FFB800'}
+          strokeWidth="4"
           strokeLinecap="round"
           strokeDasharray={strokeDasharray}
           strokeDashoffset={strokeDashoffset}
           className={styles.progressCircle}
+          style={{
+            filter: `drop-shadow(0 0 10px ${percentage >= 80 ? '#FF00CC' : percentage >= 60 ? '#00CFFF' : '#FFB800'})`
+          }}
         />
-        
-        {/* Gradient definitions */}
-        <defs>
-          <linearGradient id="gradient-high" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FF00CC" />
-            <stop offset="100%" stopColor="#FF6B00" />
-          </linearGradient>
-          <linearGradient id="gradient-good" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#00CFFF" />
-            <stop offset="100%" stopColor="#00FF94" />
-          </linearGradient>
-          <linearGradient id="gradient-fair" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FFB800" />
-            <stop offset="100%" stopColor="#FF6B00" />
-          </linearGradient>
-        </defs>
       </svg>
       
-      {/* Percentage text in center */}
+      {/* Percentage text in center with GLOW */}
       <div className={styles.progressText}>
         <span className={styles.percentageNumber}>{percentage}</span>
         <span className={styles.percentageSymbol}>%</span>
       </div>
       
-      {/* Glassmorphic tooltip with breakdown */}
+      {/* Compact tooltip positioned above */}
       {showBreakdown && (
-        <div 
-          className={styles.matchBreakdownTooltip}
-          style={{
-            left: tooltipPosition.x - 300,
-            top: tooltipPosition.y - 200,
-          }}
-        >
+        <div className={styles.matchBreakdownTooltip}>
           <div className={styles.tooltipHeader}>
-            <h4>🎯 Match Score Breakdown</h4>
+            <span className={styles.tooltipTitle}>Match Breakdown</span>
             <span className={styles.totalScore}>{breakdown.total}%</span>
           </div>
           
           <div className={styles.breakdownItems}>
             <div className={styles.breakdownItem}>
-              <span className={styles.itemLabel}>🎵 Genre Match</span>
+              <span className={styles.itemLabel}>🎵 Genre</span>
               <span className={styles.itemScore}>{breakdown.genreMatch}%</span>
             </div>
             <div className={styles.breakdownItem}>
-              <span className={styles.itemLabel}>🔊 Sound Characteristics</span>
+              <span className={styles.itemLabel}>🔊 Sound</span>
               <span className={styles.itemScore}>{breakdown.soundMatch}%</span>
             </div>
             <div className={styles.breakdownItem}>
-              <span className={styles.itemLabel}>🎤 Artist Affinity</span>
+              <span className={styles.itemLabel}>🎤 Artist</span>
               <span className={styles.itemScore}>{breakdown.artistMatch}%</span>
             </div>
             <div className={styles.breakdownItem}>
-              <span className={styles.itemLabel}>🏛️ Venue Preference</span>
+              <span className={styles.itemLabel}>🏛️ Venue</span>
               <span className={styles.itemScore}>{breakdown.venueMatch}%</span>
             </div>
-          </div>
-          
-          <div className={styles.tooltipFooter}>
-            <p>Based on your music taste profile and listening history</p>
           </div>
         </div>
       )}
@@ -224,6 +234,8 @@ export default function EnhancedEventList({
   const [debugInfo, setDebugInfo] = useState(null);
   // SURGICAL ADDITION: Location state for debugging
   const [userLocation, setUserLocation] = useState(null);
+  // SURGICAL ADDITION: Collapsible groups state
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
 
   // SURGICAL ADDITION: Trigger reload when filters change
   useEffect(() => {
@@ -458,7 +470,6 @@ export default function EnhancedEventList({
     );
   }
 
-  // PRESERVED: All existing events display logic (unchanged)
   // Enhanced events display with grouping
   const filteredEvents = (events || []).filter(event => event && typeof event === 'object');
   const groupedEvents = groupEventsByTime(filteredEvents, userLocation);
@@ -472,19 +483,55 @@ export default function EnhancedEventList({
     international: '🌍 International'
   };
 
+  // Toggle group collapse state
+  const toggleGroupCollapse = (groupKey) => {
+    setCollapsedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupKey)) {
+        newSet.delete(groupKey);
+      } else {
+        newSet.add(groupKey);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.eventsList}>
         {Object.entries(groupedEvents).map(([groupKey, groupEvents]) => {
           if (groupEvents.length === 0) return null;
+          
+          const isCollapsed = collapsedGroups.has(groupKey);
 
           return (
             <div key={groupKey} className={styles.eventGroup}>
-              <h3 className={styles.groupTitle}>
-                {groupTitles[groupKey]} ({groupEvents.length})
-              </h3>
-              <div className={styles.groupEvents}>
-                {groupEvents.map((event, index) => {
+              <div 
+                className={styles.groupHeader}
+                onClick={() => toggleGroupCollapse(groupKey)}
+              >
+                <div className={styles.groupHeaderLeft}>
+                  <span className={styles.groupIcon}>
+                    {groupKey === 'mustSee' ? '🎯' : 
+                     groupKey === 'tonight' ? '🌙' : 
+                     groupKey === 'tomorrow' ? '🌅' : 
+                     groupKey === 'thisWeekend' ? '🎉' : 
+                     groupKey === 'nextWeekend' ? '📅' : '🌍'}
+                  </span>
+                  <h3 className={styles.groupTitle}>
+                    {groupTitles[groupKey]} ({groupEvents.length})
+                  </h3>
+                </div>
+                <div className={styles.groupHeaderRight}>
+                  <span className={styles.collapseIcon}>
+                    {isCollapsed ? '▶' : '▼'}
+                  </span>
+                </div>
+              </div>
+              
+              {!isCollapsed && (
+                <div className={styles.groupEvents}>
+                  {groupEvents.map((event, index) => {
           // Format date for better display
           const eventDate = event.date ? new Date(event.date) : null;
           const now = new Date();
@@ -628,7 +675,8 @@ export default function EnhancedEventList({
             </div>
           );
         })}
-              </div>
+                </div>
+              )}
             </div>
           );
         })}
