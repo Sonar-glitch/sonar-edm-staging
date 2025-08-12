@@ -16,6 +16,39 @@ const getFallbackTasteProfile = (userId) => ({
     valence: { value: 0.4, source: 'spotify' },
     instrumentalness: { value: 0.85, source: 'spotify' },
   },
+  // CRITICAL: Add data source metadata to properly label as demo data
+  dataSources: {
+    genreProfile: {
+      isRealData: false,
+      tracksAnalyzed: 0,
+      confidence: 0,
+      source: 'hardcoded_demo',
+      timePeriod: 'demo_data',
+      description: 'fallback genres for demo purposes',
+      error: 'NO_SPOTIFY_DATA',
+      lastFetch: null
+    },
+    soundCharacteristics: {
+      isRealData: false,
+      tracksAnalyzed: 0,
+      confidence: 0,
+      source: 'hardcoded_demo',
+      timePeriod: 'demo_data',
+      description: 'fallback sound characteristics for demo purposes',
+      error: 'NO_SPOTIFY_DATA',
+      lastFetch: null
+    },
+    seasonalProfile: {
+      isRealData: false,
+      tracksAnalyzed: 0,
+      confidence: 0,
+      source: 'hardcoded_demo',
+      timePeriod: 'demo_data',
+      description: 'fallback seasonal data for demo purposes',
+      error: 'NO_SPOTIFY_DATA',
+      lastFetch: null
+    }
+  },
   tasteEvolution: [
     { date: '2025-04-01', genres: { 'melodic techno': 0.7, 'tech house': 0.6 } },
     { date: '2025-05-01', genres: { 'melodic techno': 0.75, 'progressive house': 0.65 } },
@@ -54,12 +87,23 @@ export default async function handler(req, res) {
 
     if (tasteProfile) {
       console.log(`Found taste profile for user: ${userId}`);
+      console.log('🔍 TASTE PROFILE DATA SOURCES CHECK:', JSON.stringify({
+        hasDataSources: !!tasteProfile.dataSources,
+        dataSourcesKeys: tasteProfile.dataSources ? Object.keys(tasteProfile.dataSources) : null,
+        isFromDatabase: true,
+        profileKeys: Object.keys(tasteProfile)
+      }, null, 2));
       // Ensure lastUpdated is a valid Date object
       tasteProfile.lastUpdated = new Date(tasteProfile.lastUpdated);
       res.status(200).json(tasteProfile);
     } else {
       console.log(`No taste profile found for user: ${userId}. Returning fallback data.`);
       const fallbackProfile = getFallbackTasteProfile(userId);
+      console.log('🔍 FALLBACK PROFILE DATA SOURCES CHECK:', JSON.stringify({
+        hasDataSources: !!fallbackProfile.dataSources,
+        isFromFallback: true,
+        profileKeys: Object.keys(fallbackProfile)
+      }, null, 2));
       // Optionally, you could save the fallback profile to the DB for new users
       // await db.collection('user_taste_profiles').insertOne(fallbackProfile);
       res.status(200).json(fallbackProfile);
