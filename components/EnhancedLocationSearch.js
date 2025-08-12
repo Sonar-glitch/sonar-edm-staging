@@ -135,15 +135,51 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
         }
       }
       
-      // STEP 2: Google API temporarily disabled due to billing requirements
-      setSuggestions([]);
-      setError('No cities found. Try typing a major city name.');
+      // STEP 2: Use Google Places Autocomplete API (FIXED)
+      if (typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.places) {
+        const service = new window.google.maps.places.AutocompleteService();
+        
+        const request = {
+          input: query,
+          types: ['(cities)'],
+          componentRestrictions: {} // Allow all countries
+        };
+        
+        service.getPlacePredictions(request, (predictions, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+            // Format Google results to match our expected structure
+            const googleResults = predictions.slice(0, 5).map(prediction => ({
+              place_id: prediction.place_id,
+              formatted_address: prediction.description,
+              geometry: null, // Will be filled when selected
+              address_components: null, // Will be filled when selected
+              name: prediction.structured_formatting.main_text,
+              source: 'google'
+            }));
+            
+            setSuggestions(googleResults);
+            setIsLoading(false);
+            return;
+          } else {
+            console.warn('Google Places API failed:', status);
+            setSuggestions([]);
+            setError('No cities found. Try typing a major city name.');
+          }
+        });
+      } else {
+        console.warn('Google Maps not loaded yet, falling back to in-house only');
+        setSuggestions([]);
+        setError('Search temporarily unavailable. Try typing a major city name.');
+      }
     } catch (error) {
       console.error('🔍 [EnhancedLocationSearch] Search Error:', error.message);
       setError(`Search error: ${error.message}`);
       setSuggestions([]);
     } finally {
-      setIsLoading(false);
+      // Don't set loading false here if Google API is handling it
+      if (!window.google || !window.google.maps || !window.google.maps.places) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -240,7 +276,45 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
     }
   };
 
-  const handleSuggestionClick = (suggestion) => {
+  const handleSuggestionClick = async (suggestion) => {
+    // Check if this is a Google Places result that needs additional details
+    if (suggestion.source === 'google' && !suggestion.geometry) {
+      setIsLoading(true);
+      try {
+        // Get place details using Google Places API
+        if (window.google && window.google.maps && window.google.maps.places) {
+          const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+          
+          const request = {
+            placeId: suggestion.place_id,
+            fields: ['place_id', 'formatted_address', 'geometry', 'address_components', 'name']
+          };
+          
+          service.getDetails(request, (place, status) => {
+            setIsLoading(false);
+            if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
+              const locationData = extractLocationData(place);
+              handleLocationSelect(locationData);
+            } else {
+              console.error('Google Places getDetails failed:', status);
+              setError('Unable to get location details. Please try another city.');
+            }
+          });
+          return;
+        } else {
+          setIsLoading(false);
+          setError('Google Maps not available. Please try again.');
+          return;
+        }
+      } catch (error) {
+        setIsLoading(false);
+        console.error('Error getting place details:', error);
+        setError('Unable to get location details. Please try another city.');
+        return;
+      }
+    }
+    
+    // Handle in-house results or Google results that already have geometry
     const locationData = extractLocationData(suggestion);
     handleLocationSelect(locationData);
   };

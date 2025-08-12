@@ -10,7 +10,18 @@ import styles from '../styles/EnhancedEventList.module.css';
 const EnhancedCircularProgress = ({ score, event, userProfile }) => {
   const [showBreakdown, setShowBreakdown] = useState(false);
   
-  const percentage = Math.round(score || 50);
+  // If no score is provided, don't render the component
+  if (score === undefined || score === null) {
+    return (
+      <div className={styles.circularProgressEnhanced}>
+        <div className={styles.progressTextEnhanced}>
+          <span className={styles.percentageSymbolEnhanced}>?</span>
+        </div>
+      </div>
+    );
+  }
+  
+  const percentage = Math.round(score);
   const radius = 45; // BIGGER: Increased from 35 to 45
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
@@ -23,17 +34,53 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
     let venueMatch = 0;
     let timingMatch = 0;
     
-    // REAL Genre matching based on event name analysis
+    // IMPROVED: Better genre/music detection
     const eventText = (event.name || '').toLowerCase();
-    const electronicKeywords = ['electronic', 'house', 'techno', 'edm', 'dance', 'bass', 'dj', 'club'];
-    const matches = electronicKeywords.filter(word => eventText.includes(word));
-    genreMatch = Math.min(25, matches.length * 4 + 10);
+    const eventDescription = (event.description || '').toLowerCase();
+    const fullEventText = eventText + ' ' + eventDescription;
+    
+    // Get venue info early for analysis
+    const venueName = (typeof event.venue === 'object' ? event.venue?.name : event.venue || '').toLowerCase();
+    
+    // Check if this is actually a music event
+    const musicKeywords = ['dj', 'music', 'concert', 'festival', 'electronic', 'house', 'techno', 'edm', 'dance', 'bass', 'club', 'party', 'live music', 'band', 'artist', 'performance', 'tour'];
+    const nonMusicKeywords = ['museum', 'exhibition', 'castle', 'historic', 'visit', 'sightseeing'];
+    
+    // Special case: "general admission" is only non-music if it's NOT accompanied by music keywords
+    const hasGeneralAdmission = fullEventText.includes('general admission');
+    const hasSpecificNonMusicVenue = venueName.includes('casa loma') && !fullEventText.includes('concert');
+    
+    const musicMatches = musicKeywords.filter(word => fullEventText.includes(word));
+    const nonMusicMatches = nonMusicKeywords.filter(word => fullEventText.includes(word));
+    
+    // Add general admission to non-music only if no music context
+    if (hasGeneralAdmission && musicMatches.length === 0) {
+      nonMusicMatches.push('general admission');
+    }
+    
+    // Add venue-specific non-music detection
+    if (hasSpecificNonMusicVenue) {
+      nonMusicMatches.push('historic venue tour');
+    }
+    
+    // Heavily penalize non-music events
+    if (nonMusicMatches.length > musicMatches.length) {
+      genreMatch = 5; // Very low music relevance
+    } else {
+      // REAL Genre matching for actual music events
+      const electronicKeywords = ['electronic', 'house', 'techno', 'edm', 'dance', 'bass', 'dj', 'club'];
+      const matches = electronicKeywords.filter(word => fullEventText.includes(word));
+      genreMatch = Math.min(25, matches.length * 4 + 10);
+    }
     
     // REAL Sound characteristics from venue analysis
-    const venueName = (typeof event.venue === 'object' ? event.venue?.name : event.venue || '').toLowerCase();
-    if (venueName.includes('club') || venueName.includes('lounge')) {
+    const venueText = venueName + ' ' + fullEventText;
+    
+    if (nonMusicMatches.length > musicMatches.length) {
+      soundMatch = 3; // Very low for non-music venues
+    } else if (venueText.includes('club') || venueText.includes('lounge')) {
       soundMatch = 20;
-    } else if (venueName.includes('theater') || venueName.includes('hall')) {
+    } else if (venueText.includes('theater') || venueText.includes('hall')) {
       soundMatch = 25;
     } else {
       soundMatch = 15;
@@ -42,6 +89,8 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
     // REAL Artist affinity
     if (event.artists && event.artists.length > 0) {
       artistMatch = Math.min(20, event.artists.length * 4 + 8);
+    } else if (nonMusicMatches.length > musicMatches.length) {
+      artistMatch = 2; // Very low for non-music events
     } else {
       artistMatch = 15;
     }
@@ -49,12 +98,14 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
     // REAL Venue preference
     if (typeof event.venue === 'object' && event.venue?.name) {
       const venueType = event.venue.name.toLowerCase();
-      if (venueType.includes('club')) venueMatch = 12;
+      if (nonMusicMatches.length > musicMatches.length) {
+        venueMatch = 3; // Very low for non-music venues
+      } else if (venueType.includes('club')) venueMatch = 12;
       else if (venueType.includes('theater') || venueType.includes('hall')) venueMatch = 15;
       else if (venueType.includes('festival')) venueMatch = 18;
       else venueMatch = 10;
     } else {
-      venueMatch = 8;
+      venueMatch = nonMusicMatches.length > musicMatches.length ? 2 : 8;
     }
     
     // REAL Timing preference
@@ -74,13 +125,24 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
     const calculatedTotal = genreMatch + soundMatch + artistMatch + venueMatch + timingMatch;
     const scaleFactor = calculatedTotal > 0 ? percentage / calculatedTotal : 1;
     
+    // DEBUG: Log analysis for questionable events
+    if (event.name && (event.name.toLowerCase().includes('casa loma') || nonMusicMatches.length > musicMatches.length)) {
+      console.log(`🔍 Event Analysis: "${event.name}"`);
+      console.log('Music keywords found:', musicMatches);
+      console.log('Non-music keywords found:', nonMusicMatches);
+      console.log('Is likely music event:', musicMatches.length > nonMusicMatches.length);
+      console.log('Raw scores:', { genreMatch, soundMatch, artistMatch, venueMatch, timingMatch });
+      console.log('Total calculated vs actual:', calculatedTotal, 'vs', percentage);
+    }
+    
     return {
       genreMatch: Math.round(genreMatch * scaleFactor),
       soundMatch: Math.round(soundMatch * scaleFactor),
       artistMatch: Math.round(artistMatch * scaleFactor),
       venueMatch: Math.round(venueMatch * scaleFactor),
       timingMatch: Math.round(timingMatch * scaleFactor),
-      total: percentage
+      total: percentage,
+      isMusicEvent: musicMatches.length > nonMusicMatches.length
     };
   };
   
@@ -169,6 +231,9 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
           
           <div className={styles.tooltipFooter}>
             <p>Based on real event analysis</p>
+            {!breakdown.isMusicEvent && (
+              <p style={{color: '#FF6B6B', fontSize: '0.7rem'}}>⚠️ Non-music event detected</p>
+            )}
           </div>
         </div>
       )}
@@ -214,7 +279,7 @@ const groupEventsByTime = (events, userLocation) => {
   events.forEach((event) => {
     const eventDate = event.date ? new Date(event.date) : null;
     const daysUntilEvent = eventDate ? Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24)) : null;
-    const score = event.personalizedScore || 50;
+    const score = event.personalizedScore || 0;
     
     // FIXED: Proper International = Different Country, National = Different City
     const eventLocation = typeof event.location === 'object' ? 
@@ -590,12 +655,13 @@ export default function EnhancedEventList({
               {!isCollapsed && (
                 <div className={styles.groupEvents}>
                   {groupEvents.map((event, index) => {
-          // Format date for better display
+          // Format date and time for better display
           const eventDate = event.date ? new Date(event.date) : null;
           const now = new Date();
           const daysUntilEvent = eventDate ? Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24)) : null;
           
           let dateDisplay = 'Date TBD';
+          let timeDisplay = '';
           let urgencyClass = '';
           
           if (eventDate) {
@@ -604,6 +670,15 @@ export default function EnhancedEventList({
               month: 'short', 
               day: 'numeric' 
             });
+            
+            // Format time in user's timezone
+            const timeStr = eventDate.toLocaleTimeString('en-US', {
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true
+            });
+            
+            timeDisplay = timeStr;
             
             if (daysUntilEvent < 0) {
               dateDisplay = `${dateStr} (Past)`;
@@ -655,22 +730,32 @@ export default function EnhancedEventList({
               }}
               style={{ cursor: (event.url || event.ticketUrl) && (event.url !== '#' && event.ticketUrl !== '#') ? 'pointer' : 'default' }}
             >
-              {/* Compact header with title, date, and match score */}
+              {/* Improved header with title, location, date/time, and match score */}
               <div className={styles.compactHeader}>
                 <div className={styles.eventTitleCompact}>
-                  <h4 className={styles.eventTitleText}>{event.name || 'Untitled Event'}</h4>
-                  <div className={styles.eventDateCompact}>{dateDisplay}</div>
+                  <div className={styles.titleLocationRow}>
+                    <h4 className={styles.eventTitleText}>{event.name || 'Untitled Event'}</h4>
+                    <span className={styles.locationBadge}>
+                      {typeof event.location === 'object' ? (event.location?.city || event.location?.name || 'Location TBD') : (event.location || 'Location TBD')}
+                    </span>
+                  </div>
+                  <div className={styles.dateTimeRow}>
+                    <div className={styles.eventDateCompact}>{dateDisplay}</div>
+                    {timeDisplay && (
+                      <div className={styles.eventTimeCompact}>{timeDisplay}</div>
+                    )}
+                  </div>
                 </div>
                 <div className={styles.matchScoreCompact}>
                   <EnhancedCircularProgress 
-                    score={event.personalizedScore || 50}
+                    score={event.personalizedScore}
                     event={event}
                     userProfile={userProfile}
                   />
                 </div>
               </div>
 
-              {/* Compact venue and location info with tooltips */}
+              {/* Venue info without location (moved to header) */}
               <div className={styles.compactVenueInfo}>
                 <span 
                   className={styles.venueName}
@@ -680,22 +765,13 @@ export default function EnhancedEventList({
                 >
                   {typeof event.venue === 'object' ? (event.venue?.name || 'Venue TBD') : (event.venue || 'Venue TBD')}
                 </span>
-                <span className={styles.locationSeparator}>•</span>
-                <span 
-                  className={styles.locationName}
-                  title={`Location: ${typeof event.location === 'object' ? 
-                    `Coordinates: ${event.location?.coordinates?.[1]?.toFixed(4) || 'N/A'}, ${event.location?.coordinates?.[0]?.toFixed(4) || 'N/A'}` : 
-                    (event.location || 'Location details TBD')}`}
-                >
-                  {typeof event.location === 'object' ? (event.location?.city || event.location?.name || 'Location TBD') : (event.location || 'Location TBD')}
-                </span>
               </div>
 
               {/* Generate "why this matches you" insights with tooltips */}
               <div className={styles.matchInsights}>
                 {(() => {
                   const insights = [];
-                  const score = event.personalizedScore || 50;
+                  const score = event.personalizedScore || 0;
                   
                   // High match insights with explanations
                   if (score >= 80) {

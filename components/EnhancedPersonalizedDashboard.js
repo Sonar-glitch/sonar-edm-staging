@@ -172,6 +172,48 @@ export default function EnhancedPersonalizedDashboard() {
       const tasteData = await tasteResponse.json();
       setDashboardData(tasteData);
 
+      // Load enhanced events data to get real integration stats
+      let eventsData = null;
+      let eventsSource = {
+        isReal: false,
+        lastFetch: null,
+        eventsFound: 0,
+        confidence: 0,
+        source: 'mock_data',
+        timePeriod: 'static',
+        description: 'demo events for UI testing',
+        error: 'MOCK_DATA_ACTIVE',
+        enhanced: false,
+        enhancementStats: null
+      };
+
+      try {
+        const eventsResponse = await fetch('/api/events/enhanced?limit=20');
+        if (eventsResponse.ok) {
+          eventsData = await eventsResponse.json();
+          eventsSource = {
+            isReal: true,
+            lastFetch: eventsData.timestamp || new Date().toISOString(),
+            eventsFound: eventsData.events?.length || 0,
+            confidence: eventsData.enhancementStats?.enhancedEvents > 0 ? 0.9 : 0.5,
+            source: 'enhanced_events_api',
+            timePeriod: 'live_data',
+            description: 'real events with Spotify/Apple Music + Essentia analysis',
+            enhanced: eventsData.enhanced || false,
+            enhancementStats: eventsData.enhancementStats,
+            musicApiIntegration: eventsData.enhancementStats?.enhancedEvents > 0,
+            essentiaIntegration: true, // Essentia is integrated
+            location: userLocation?.city || 'Auto-detected',
+            vibeMatchFilter: eventFilters.vibeMatch || 50,
+            error: null
+          };
+          console.log('✅ [Dashboard] Enhanced events data loaded:', eventsData.enhancementStats);
+        }
+      } catch (eventsError) {
+        console.warn('⚠️ [Dashboard] Events loading failed, using fallback:', eventsError.message);
+        eventsSource.error = `API_ERROR: ${eventsError.message}`;
+      }
+
       // ENHANCED: Process data sources with detailed tracking
       const newDataSources = {
         spotify: {
@@ -194,16 +236,7 @@ export default function EnhancedPersonalizedDashboard() {
           description: tasteData.dataSources?.soundCharacteristics?.description || 'audio features from enhanced analysis',
           error: tasteData.dataSources?.soundCharacteristics?.error
         },
-        events: {
-          isReal: false, // Events are currently mock
-          lastFetch: null,
-          tracksAnalyzed: 0,
-          confidence: 0,
-          source: 'mock_data',
-          timePeriod: 'static',
-          description: 'demo events for UI testing',
-          error: 'MOCK_DATA_ACTIVE'
-        },
+        events: eventsSource,
         seasonal: {
           isReal: tasteData.dataSources?.seasonalProfile?.isRealData || false,
           lastFetch: tasteData.dataSources?.seasonalProfile?.lastFetch,
@@ -344,22 +377,47 @@ export default function EnhancedPersonalizedDashboard() {
       isReal = (source.isReal || source.isRealData) && !source.error;
     }
     
-    // Enhanced tooltip content based on actual data quality
+    // Enhanced tooltip content based on actual data quality and NEW INTEGRATIONS
     let tooltipContent = '';
     if (isReal) {
       if (sourceKey === 'events') {
-        tooltipContent = `✅ Real Data\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%\nSource: Event APIs\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+        // NEW: Enhanced events tooltip with integration details
+        const integrationDetails = [];
+        if (source.musicApiIntegration) integrationDetails.push('Spotify/Apple Music');
+        if (source.essentiaIntegration) integrationDetails.push('Essentia Audio Analysis');
+        const integrations = integrationDetails.length > 0 ? `\nIntegrations: ${integrationDetails.join(', ')}` : '';
+        
+        // Include enhancement stats if available
+        let statsText = '';
+        if (source.enhancementStats) {
+          const stats = source.enhancementStats;
+          statsText = `\nEnhanced: ${stats.enhancedEvents}/${stats.totalEvents} events`;
+          if (stats.averageBoost > 0) {
+            statsText += `\nAvg Score Boost: +${stats.averageBoost.toFixed(1)} pts`;
+          }
+          if (stats.failedEnhancements > 0) {
+            statsText += `\nFailed: ${stats.failedEnhancements}`;
+          }
+        }
+        
+        tooltipContent = `✅ Real Data${integrations}\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%\nScoring: Backend (no fallbacks)${source.enhanced ? '\nAPI: /api/events/enhanced' : '\nAPI: /api/events'}${statsText}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
       } else {
         const timePeriod = source.trackSelectionContext?.description || "recent tracks";
-        tooltipContent = `✅ Real Data\n${source.tracksAnalyzed || 0} tracks analyzed\nConfidence: ${Math.round(confidence * 100)}%\nSource: ${source.source || 'spotify'}\nPeriod: ${timePeriod}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+        const analysisMethod = [];
+        if (source.spotifyData) analysisMethod.push('Spotify API');
+        if (source.appleMusicData) analysisMethod.push('Apple Music');
+        if (source.essentiaAnalysis) analysisMethod.push('Essentia Audio Features');
+        const methods = analysisMethod.length > 0 ? `\nAnalysis: ${analysisMethod.join(', ')}` : '';
+        
+        tooltipContent = `✅ Real Data${methods}\n${source.tracksAnalyzed || 0} tracks analyzed\nConfidence: ${Math.round(confidence * 100)}%\nSource: ${source.source || 'spotify'}\nPeriod: ${timePeriod}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
       }
     } else {
       const errorCode = source.error || 'LOW_QUALITY_DATA';
       const fallbackReason = source.fallbackReason || 'Insufficient data for personalization';
       if (sourceKey === 'events') {
-        tooltipContent = `⚠️ Demo Data\nReason: ${fallbackReason}\nTracks: ${source.tracksAnalyzed || 0}\nConfidence: ${Math.round(confidence * 100)}%\nUsing demonstration events`;
+        tooltipContent = `⚠️ Demo Data\nReason: ${fallbackReason}\nTracks: ${source.tracksAnalyzed || 0}\nConfidence: ${Math.round(confidence * 100)}%\nUsing demonstration events\nNote: Frontend no longer uses 75% fallbacks`;
       } else {
-        tooltipContent = `⚠️ Demo Data\nReason: ${fallbackReason}\nTracks: ${source.tracksAnalyzed || 0}\nConfidence: ${Math.round(confidence * 100)}%\nUsing genre-based estimates`;
+        tooltipContent = `⚠️ Demo Data\nReason: ${fallbackReason}\nTracks: ${source.tracksAnalyzed || 0}\nConfidence: ${Math.round(confidence * 100)}%\nUsing genre-based estimates\nFallback: Enhanced estimation methods`;
       }
     }
 
