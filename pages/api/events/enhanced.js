@@ -11,6 +11,16 @@ const EnhancedMusicApiService = require('../../../lib/enhancedMusicApiService');
 const musicApiService = require('../../../lib/musicApiService');
 const essentiaIntegration = require('../../../lib/essentiaIntegration');
 
+import { connectToDatabase } from '@/lib/mongodb';
+
+// Enhanced Events API that integrates all improvements:
+// 1. Fixed frontend fallback
+// 2. Spotify/Apple Music APIs  
+// 3. Existing Essentia worker integration
+
+const musicApiService = require('../../../lib/musicApiService');
+const essentiaIntegration = require('../../../lib/essentiaIntegration');
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -28,21 +38,51 @@ export default async function handler(req, res) {
 
     console.log(`🎵 Enhanced events API called for ${city} with music API enhancement: ${enhance}`);
 
-    // First, get base events from the main events API
-    const baseEventsResponse = await fetch(`${req.headers.origin || 'http://localhost:3000'}/api/events?lat=${lat}&lon=${lon}&city=${city}&radius=${radius}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!baseEventsResponse.ok) {
-      throw new Error(`Base events API failed: ${baseEventsResponse.status}`);
-    }
-
-    const baseData = await baseEventsResponse.json();
+    // FIXED: Query database directly instead of calling authenticated API
+    const { db } = await connectToDatabase();
+    const eventsCollection = db.collection('events_unified');
     
-    if (!baseData.events || baseData.events.length === 0) {
+    // Build query for events near the location
+    const numLat = parseFloat(lat);
+    const numLon = parseFloat(lon);
+    const numRadius = parseInt(radius);
+    
+    const query = {
+      $and: [
+        {
+          $or: [
+            { 'location.coordinates': { $exists: true } },
+            { 'venue.location.coordinates': { $exists: true } }
+          ]
+        },
+        {
+          $or: [
+            {
+              'location.coordinates': {
+                $geoWithin: {
+                  $centerSphere: [[numLon, numLat], numRadius / 3963.2] // Convert miles to radians
+                }
+              }
+            },
+            {
+              'venue.location.coordinates': {
+                $geoWithin: {
+                  $centerSphere: [[numLon, numLat], numRadius / 3963.2]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    };
+
+    console.log('🔍 Enhanced API MongoDB Query:', JSON.stringify(query, null, 2));
+    
+    const baseEvents = await eventsCollection.find(query).limit(100).toArray();
+    
+    console.log(`✅ Found ${baseEvents.length} events from MongoDB events_unified collection`);
+    
+    if (!baseEvents || baseEvents.length === 0) {
       return res.status(200).json({
         events: [],
         enhanced: false,
@@ -51,14 +91,17 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log(`🎵 Enhancing ${baseData.events.length} base events with music APIs...`);
+    console.log(`🎵 Enhancing ${baseEvents.length} base events with music APIs...`);
 
     // Skip enhancement if disabled
     if (enhance === 'false') {
       return res.status(200).json({
-        ...baseData,
+        events: baseEvents,
         enhanced: false,
-        message: 'Music API enhancement disabled'
+        message: 'Music API enhancement disabled',
+        totalEvents: baseEvents.length,
+        city: city,
+        timestamp: new Date().toISOString()
       });
     }
 
@@ -70,7 +113,7 @@ export default async function handler(req, res) {
     const maxEventsToEnhance = 10; // Limit to avoid rate limits and timeouts
     
     // Sort by existing score to enhance the most promising events first
-    const sortedEvents = baseData.events
+    const sortedEvents = baseEvents
       .sort((a, b) => (b.personalizedScore || 0) - (a.personalizedScore || 0))
       .slice(0, maxEventsToEnhance);
 
@@ -117,7 +160,7 @@ export default async function handler(req, res) {
     }
 
     // Add remaining unenhanced events
-    const remainingEvents = baseData.events.slice(maxEventsToEnhance).map(event => ({
+    const remainingEvents = baseEvents.slice(maxEventsToEnhance).map(event => ({
       ...event,
       enhanced: false,
       reason: 'Rate limit - not enhanced'
@@ -132,18 +175,17 @@ export default async function handler(req, res) {
       events: allEvents,
       enhanced: true,
       enhancementStats: {
-        totalEvents: baseData.events.length,
+        totalEvents: baseEvents.length,
         enhancedEvents: enhancedEvents.length,
         failedEnhancements: enhancedEvents.filter(e => e.enhancementError).length,
         averageBoost: enhancedEvents.reduce((sum, e) => 
           sum + (e.musicApiData?.totalBoost || 0), 0) / enhancedEvents.length || 0
       },
       userPreferences,
-      timestamp: new Date().toISOString(),
-      processingTimeMs: Date.now() - new Date(baseData.timestamp || Date.now()).getTime()
+      timestamp: new Date().toISOString()
     };
 
-    console.log(`✅ Enhanced events API complete: ${enhancedEvents.length}/${baseData.events.length} events enhanced`);
+    console.log(`✅ Enhanced events API complete: ${enhancedEvents.length}/${baseEvents.length} events enhanced`);
     console.log(`📊 Average score boost: +${response.enhancementStats.averageBoost.toFixed(1)} points`);
 
     res.status(200).json(response);
