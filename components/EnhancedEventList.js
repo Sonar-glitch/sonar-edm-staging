@@ -81,6 +81,14 @@ export default function EnhancedEventList({
         });
         apiUrl = `/api/events?${params.toString()}`;
 
+        // DEBUG: Log the location being passed
+        console.log('🌍 [EventList] Location passed to API:', {
+          city: locationData.city,
+          lat: locationData.latitude,
+          lon: locationData.longitude,
+          url: apiUrl
+        });
+
         setDebugInfo({
           query: `Searching events near ${locationData.city} (${locationData.latitude}, ${locationData.longitude}) with ${vibeMatch}% vibe match`,
           timestamp: new Date().toISOString()
@@ -302,80 +310,88 @@ export default function EnhancedEventList({
           }
           
           return (
-            <div key={event.id || index} className={`${styles.eventCard} ${urgencyClass}`}>
-              <div className={styles.eventHeader}>
-                <div className={styles.eventTitleSection}>
-                  <h3 className={styles.eventTitle}>{event.name || 'Untitled Event'}</h3>
-                  <div className={styles.eventDate}>
-                    {dateDisplay}
-                  </div>
+            <div key={event.id || index} className={`${styles.compactEventCard} ${urgencyClass}`}>
+              {/* Compact header with title, date, and match score */}
+              <div className={styles.compactHeader}>
+                <div className={styles.eventTitleCompact}>
+                  <h4 className={styles.eventTitleText}>{event.name || 'Untitled Event'}</h4>
+                  <div className={styles.eventDateCompact}>{dateDisplay}</div>
                 </div>
-                
-                {/* Enhanced match score display */}
-                <div className={styles.matchScoreSection}>
-                  <div className={`${styles.matchScore} ${
+                <div className={styles.matchScoreCompact}>
+                  <span className={`${styles.scorePercentage} ${
                     event.personalizedScore >= 80 ? styles.highMatch :
-                    event.personalizedScore >= 60 ? styles.goodMatch :
-                    event.personalizedScore >= 40 ? styles.fairMatch : styles.lowMatch
+                    event.personalizedScore >= 60 ? styles.goodMatch : styles.fairMatch
                   }`}>
                     {Math.round(event.personalizedScore || 50)}%
-                  </div>
-                  <div className={styles.matchLabel}>Match</div>
+                  </span>
                 </div>
               </div>
 
-              <div className={styles.eventDetails}>
-                <div className={styles.venueInfo}>
-                  <p className={styles.eventVenue}>
-                    {typeof event.venue === 'object' ? (event.venue?.name || 'Venue TBD') : (event.venue || 'Venue TBD')}
-                  </p>
-                  <p className={styles.eventLocation}>
-                    {typeof event.location === 'object' ? (event.location?.city || event.location?.name || 'Location TBD') : (event.location || 'Location TBD')}
-                  </p>
-                </div>
-
-                {event.artists && event.artists.length > 0 && (
-                  <div className={styles.eventArtists}>
-                    <strong>Artists:</strong> {event.artists.map(artist => 
-                      typeof artist === 'object' ? artist.name : artist
-                    ).join(', ')}
-                  </div>
-                )}
-
-                {event.genres && event.genres.length > 0 && (
-                  <div className={styles.eventGenres}>
-                    <div className={styles.genreList}>
-                      {event.genres.slice(0, 3).map((genre, idx) => (
-                        <span key={idx} className={styles.genreTag}>{genre}</span>
-                      ))}
-                      {event.genres.length > 3 && (
-                        <span className={styles.genreMore}>+{event.genres.length - 3} more</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Enhanced taste match visualization */}
-                {event.tasteMatch && (
-                  <TasteMatchVisuals tasteMatch={event.tasteMatch} compact={true} />
-                )}
+              {/* Compact venue and location info */}
+              <div className={styles.compactVenueInfo}>
+                <span className={styles.venueName}>
+                  {typeof event.venue === 'object' ? (event.venue?.name || 'Venue TBD') : (event.venue || 'Venue TBD')}
+                </span>
+                <span className={styles.locationSeparator}>•</span>
+                <span className={styles.locationName}>
+                  {typeof event.location === 'object' ? (event.location?.city || event.location?.name || 'Location TBD') : (event.location || 'Location TBD')}
+                </span>
               </div>
 
-              {event.ticketUrl && (
-                <div className={styles.eventActions}>
+              {/* Generate "why this matches you" insights */}
+              <div className={styles.matchInsights}>
+                {(() => {
+                  const insights = [];
+                  const score = event.personalizedScore || 50;
+                  
+                  // High match insights
+                  if (score >= 80) {
+                    insights.push("🎯 Perfect vibe match");
+                  } else if (score >= 60) {
+                    insights.push("✨ Strong music compatibility");
+                  }
+                  
+                  // Artist-based insights
+                  if (event.artists && event.artists.length > 0) {
+                    const artists = event.artists.slice(0, 2).map(a => typeof a === 'object' ? a.name : a);
+                    if (artists.length > 0) {
+                      insights.push(`🎧 Features ${artists.join(', ')}`);
+                    }
+                  }
+                  
+                  // Genre insights  
+                  if (event.genres && event.genres.length > 0) {
+                    const topGenres = event.genres.slice(0, 2);
+                    insights.push(`🎵 ${topGenres.join(' & ')} vibes`);
+                  }
+                  
+                  // Urgency insights
+                  if (urgencyClass === styles.tonightEvent || urgencyClass === styles.tomorrowEvent) {
+                    insights.push("⚡ Happening soon");
+                  }
+                  
+                  return insights.slice(0, 3).map((insight, idx) => (
+                    <span key={idx} className={styles.insightTag}>{insight}</span>
+                  ));
+                })()}
+              </div>
+
+              {/* Compact action row */}
+              <div className={styles.compactActions}>
+                {event.ticketUrl && (
                   <a
                     href={event.ticketUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={styles.ticketButton}
+                    className={styles.compactTicketButton}
                   >
                     Get Tickets
                   </a>
-                  <div className={styles.priceInfo}>
-                    {formatPrice(event.priceRange)}
-                  </div>
+                )}
+                <div className={styles.compactPrice}>
+                  {formatPrice(event.priceRange)}
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
