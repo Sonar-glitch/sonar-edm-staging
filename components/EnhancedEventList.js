@@ -310,7 +310,16 @@ export default function EnhancedEventList({
           }
           
           return (
-            <div key={event.id || index} className={`${styles.compactEventCard} ${urgencyClass}`}>
+            <div 
+              key={event.id || index} 
+              className={`${styles.compactEventCard} ${urgencyClass}`}
+              onClick={() => {
+                if (event.ticketUrl && event.ticketUrl !== '#') {
+                  window.open(event.ticketUrl, '_blank');
+                }
+              }}
+              style={{ cursor: event.ticketUrl && event.ticketUrl !== '#' ? 'pointer' : 'default' }}
+            >
               {/* Compact header with title, date, and match score */}
               <div className={styles.compactHeader}>
                 <div className={styles.eventTitleCompact}>
