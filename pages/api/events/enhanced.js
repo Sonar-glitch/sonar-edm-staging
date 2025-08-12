@@ -1,16 +1,6 @@
 // Enhanced Events API with Spotify/Apple Music Integration
 // GET /api/events/enhanced - Returns events with rich music API data
 
-const EnhancedMusicApiService = require('../../../lib/enhancedMusicApiService');
-
-// Enhanced Events API that integrates all improvements:
-// 1. Fixed frontend fallback
-// 2. Spotify/Apple Music APIs  
-// 3. Existing Essentia worker integration
-
-const musicApiService = require('../../../lib/musicApiService');
-const essentiaIntegration = require('../../../lib/essentiaIntegration');
-
 import { connectToDatabase } from '@/lib/mongodb';
 
 // Enhanced Events API that integrates all improvements:
