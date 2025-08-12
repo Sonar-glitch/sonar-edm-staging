@@ -6,6 +6,24 @@ import { useState, useEffect } from 'react';
 import TasteMatchVisuals from './TasteMatchVisuals';
 import styles from '../styles/EnhancedEventList.module.css';
 
+// Helper function to format price range
+const formatPrice = (priceRange) => {
+  if (!priceRange) return 'Price TBA';
+  
+  // If it's already a string, return it
+  if (typeof priceRange === 'string') return priceRange;
+  
+  // If it's an object with min/max/currency
+  if (typeof priceRange === 'object' && priceRange.min !== undefined) {
+    const { min, max, currency = 'USD' } = priceRange;
+    if (min === 0 && max === 0) return 'Free';
+    if (min === max) return `$${min}`;
+    return `$${min} - $${max}`;
+  }
+  
+  return 'Price TBA';
+};
+
 export default function EnhancedEventList({ 
   userProfile, 
   dataSource, 
@@ -354,7 +372,7 @@ export default function EnhancedEventList({
                     Get Tickets
                   </a>
                   <div className={styles.priceInfo}>
-                    {event.priceRange || 'Price TBA'}
+                    {formatPrice(event.priceRange)}
                   </div>
                 </div>
               )}

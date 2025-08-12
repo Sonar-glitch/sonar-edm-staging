@@ -3,6 +3,27 @@ import styles from '@/styles/EnhancedEventCard.module.css';
 import MatchPercentage from './MatchPercentage';
 import { FaCalendarAlt, FaMapMarkerAlt, FaMusic } from 'react-icons/fa';
 
+// Helper function to format price safely
+const formatPrice = (price) => {
+  if (!price) return null;
+  
+  // If it's already a number, format it
+  if (typeof price === 'number') return `$${price}`;
+  
+  // If it's a string, return it
+  if (typeof price === 'string') return price;
+  
+  // If it's an object with min/max/currency
+  if (typeof price === 'object' && price.min !== undefined) {
+    const { min, max, currency = 'USD' } = price;
+    if (min === 0 && max === 0) return 'Free';
+    if (min === max) return `$${min}`;
+    return `$${min} - $${max}`;
+  }
+  
+  return null;
+};
+
 export default function EnhancedEventCard({ event }) {
   // Format date to display as "Thu, May 1"
   const formatDate = (dateString) => {
@@ -100,9 +121,9 @@ export default function EnhancedEventCard({ event }) {
         </div>
         
         {/* Price tag if available */}
-        {event.price && (
+        {formatPrice(event.price) && (
           <div className={styles.priceTag}>
-            <span>${event.price}</span>
+            <span>{formatPrice(event.price)}</span>
           </div>
         )}
         

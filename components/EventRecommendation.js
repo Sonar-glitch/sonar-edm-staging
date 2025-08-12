@@ -1,6 +1,27 @@
 import React, { useState } from 'react';
 import styles from '@/styles/EventRecommendation.module.css';
 
+// Helper function to format price safely
+const formatPrice = (price) => {
+  if (!price) return 'Price TBA';
+  
+  // If it's already a number, format it
+  if (typeof price === 'number') return `$${price}`;
+  
+  // If it's a string, return it
+  if (typeof price === 'string') return price;
+  
+  // If it's an object with min/max/currency
+  if (typeof price === 'object' && price.min !== undefined) {
+    const { min, max, currency = 'USD' } = price;
+    if (min === 0 && max === 0) return 'Free';
+    if (min === max) return `$${min}`;
+    return `$${min} - $${max}`;
+  }
+  
+  return 'Price TBA';
+};
+
 export default function EventRecommendation({ events, userGenres }) {
   const [filterValue, setFilterValue] = useState(50);
   
@@ -78,7 +99,7 @@ export default function EventRecommendation({ events, userGenres }) {
               </div>
               
               <div className={styles.eventPrice}>
-                ${event.price}
+                {formatPrice(event.price)}
               </div>
             </div>
           ))}
