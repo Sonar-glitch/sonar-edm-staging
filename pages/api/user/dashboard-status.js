@@ -1,7 +1,6 @@
 // pages/api/user/dashboard-status.js
 // 🎵 DASHBOARD STATUS API ENDPOINT
 // Returns real-time status for dashboard loading states
-
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
 import { connectToDatabase } from "@/lib/mongodb";
@@ -23,22 +22,22 @@ export default async function handler(req, res) {
 
     const { db } = await connectToDatabase();
     const userEmail = session.user.email;
-    
+
     console.log('🔍 Dashboard API: Checking for user:', userEmail);
     
     // Check taste collection status
     const [collectionStatus, tasteProfile, eventsCount] = await Promise.all([
       db.collection('user_taste_collection_status').findOne({ userEmail }),
       db.collection('user_taste_profiles').findOne({ userEmail }),
-      db.collection('events_unified').countDocuments({ 
+      db.collection('events_unified').countDocuments({
         // Basic filter for events in the next 30 days
-        date: { 
-          $gte: new Date(), 
-          $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
+        date: {
+          $gte: new Date(),
+          $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         }
       })
     ]);
-    
+
     console.log('🔍 Dashboard API Data:');
     console.log('   Collection Status:', collectionStatus?.status);
     console.log('   Taste Profile exists:', !!tasteProfile);
@@ -47,12 +46,12 @@ export default async function handler(req, res) {
     
     // Determine overall dashboard state
     const dashboardStatus = determineDashboardStatus(
-      collectionStatus, 
-      tasteProfile, 
+      collectionStatus,
+      tasteProfile,
       eventsCount,
       session
     );
-    
+
     console.log('🔍 Dashboard API Response:');
     console.log('   User Type:', dashboardStatus.userType);
     console.log('   Show Taste Loader:', dashboardStatus.showTasteLoader);
@@ -98,33 +97,33 @@ export default async function handler(req, res) {
         error: eventsCount > 0 ? null : 'NO_LOCATION_SET'
       }
     };
-    
+
     return res.status(200).json({
       success: true,
       status: dashboardStatus,
       dataSources: dataSources,
       timestamp: new Date().toISOString()
     });
-    
+
   } catch (error) {
     console.error('Error getting dashboard status:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Failed to get dashboard status',
-      message: error.message 
+      message: error.message
     });
   }
 }
 
 function determineDashboardStatus(collectionStatus, tasteProfile, eventsCount, session) {
   const now = new Date();
-  
+
   // 🎯 IMPROVED FIRST LOGIN DETECTION: Check if profile is empty/failed
-  const isFirstLogin = !tasteProfile || 
-    (!tasteProfile.topArtists?.length && 
-     !tasteProfile.topTracks?.length && 
+  const isFirstLogin = !tasteProfile ||
+    (!tasteProfile.topArtists?.length &&
+     !tasteProfile.topTracks?.length &&
      !tasteProfile.enhancedGenreProfile) ||
     collectionStatus?.status === 'failed';
-  
+
   // 🎯 FIRST LOGIN LOGIC: Always trigger new analysis
   if (isFirstLogin) {
     return {
@@ -142,7 +141,7 @@ function determineDashboardStatus(collectionStatus, tasteProfile, eventsCount, s
       ]
     };
   }
-  
+
   // 🎯 RETURNING USER LOGIC: 24-hour analysis limit
   const lastAnalysis = tasteProfile.lastUpdated ? new Date(tasteProfile.lastUpdated) : null;
   const hoursSinceLastAnalysis = lastAnalysis ? (now - lastAnalysis) / (1000 * 60 * 60) : 24;
@@ -172,7 +171,7 @@ function determineDashboardStatus(collectionStatus, tasteProfile, eventsCount, s
       ]
     };
   }
-  
+
   // 🎯 RETURNING USER - RECENT DATA (< 24 hours)
   return {
     userType: 'returning_user_current',
@@ -194,7 +193,7 @@ function determineDashboardStatus(collectionStatus, tasteProfile, eventsCount, s
       `Your music profile is ${Math.round(completionPercent)}% complete`,
       `Confidence: ${Math.round(confidence * 100)}% (${sections.real}/${sections.total} sections with real data)`,
       `Next refresh in ${24 - Math.round(hoursSinceLastAnalysis)} hours`,
-      eventsCount > 0 
+      eventsCount > 0
         ? `${eventsCount} events match your vibe`
         : 'Finding events that match your taste...'
     ]
@@ -206,7 +205,7 @@ function calculateCompletionPercentage(tasteProfile) {
   if (!tasteProfile) {
     return { completionPercent: 0, confidence: 0, sections: { real: 0, total: 4, labels: {} } };
   }
-  
+
   // 🎯 FIXED: Use actual data structure from database
   const topArtistsCount = tasteProfile.topArtists?.length || 0;
   const topTracksCount = tasteProfile.topTracks?.length || 0;
@@ -218,16 +217,16 @@ function calculateCompletionPercentage(tasteProfile) {
       hasData: topArtistsCount > 0,
       tracksAnalyzed: topArtistsCount,
       confidence: topArtistsCount >= 10 ? 0.9 : topArtistsCount * 0.09,
-      label: topArtistsCount >= 10 ? 'Real Data' : 
-             topArtistsCount >= 5 ? `Partial Data (${topArtistsCount} artists)` : 
-             topArtistsCount > 0 ? `Limited Data (${topArtistsCount} artists)` : 'Fallback Data'
+      label: topArtistsCount >= 10 ? 'Real Data' :
+                   topArtistsCount >= 5 ? `Partial Data (${topArtistsCount} artists)` :
+                   topArtistsCount > 0 ? `Limited Data (${topArtistsCount} artists)` : 'Fallback Data'
     },
     soundCharacteristics: {
       hasData: hasAudioFeatures,
       tracksAnalyzed: topTracksCount, // Use tracks count as proxy for sound analysis
       confidence: hasAudioFeatures ? 0.8 : 0,
       label: hasAudioFeatures && topTracksCount >= 10 ? 'Real Data' :
-             hasAudioFeatures && topTracksCount > 0 ? `Partial Data (${topTracksCount} tracks)` : 'Fallback Data'
+               hasAudioFeatures && topTracksCount > 0 ? `Partial Data (${topTracksCount} tracks)` : 'Fallback Data'
     },
     genres: {
       hasData: hasGenreProfile,
@@ -240,21 +239,21 @@ function calculateCompletionPercentage(tasteProfile) {
       tracksAnalyzed: topTracksCount,
       confidence: hasAudioFeatures && topTracksCount >= 20 ? 0.7 : hasAudioFeatures ? 0.5 : 0,
       label: hasAudioFeatures && topTracksCount >= 20 ? 'Real Data' :
-             hasAudioFeatures && topTracksCount >= 10 ? `Partial Data (${topTracksCount} tracks)` :
-             hasAudioFeatures ? `Limited Data (${topTracksCount} tracks)` : 'Fallback Data'
+               hasAudioFeatures && topTracksCount >= 10 ? `Partial Data (${topTracksCount} tracks)` :
+                        hasAudioFeatures ? `Limited Data (${topTracksCount} tracks)` : 'Fallback Data'
     }
   };
-  
+
   const sectionArray = Object.values(sections);
   const completedSections = sectionArray.filter(s => s.hasData).length;
   const completionPercent = (completedSections / sectionArray.length) * 100;
   
   // Calculate overall confidence (average of non-zero confidences)
   const validConfidences = sectionArray.filter(s => s.confidence > 0);
-  const confidence = validConfidences.length > 0 
-    ? validConfidences.reduce((sum, s) => sum + s.confidence, 0) / validConfidences.length 
+  const confidence = validConfidences.length > 0
+    ? validConfidences.reduce((sum, s) => sum + s.confidence, 0) / validConfidences.length
     : 0;
-  
+
   return {
     completionPercent,
     confidence,
@@ -274,7 +273,7 @@ function calculateCompletionPercentage(tasteProfile) {
 
 function isDataFresh(lastUpdated, maxAgeHours = 24) {
   if (!lastUpdated) return false;
-  
+
   const now = new Date();
   const updated = new Date(lastUpdated);
   const hoursSince = (now - updated) / (1000 * 60 * 60);
@@ -284,7 +283,7 @@ function isDataFresh(lastUpdated, maxAgeHours = 24) {
 
 function getTimeAgo(date) {
   if (!date) return 'Unknown';
-  
+
   const now = new Date();
   const updated = new Date(date);
   const minutesAgo = Math.floor((now - updated) / (1000 * 60));

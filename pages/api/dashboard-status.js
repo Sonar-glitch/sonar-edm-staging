@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb';
-import cors from '../../cors-middleware';
+import corsMiddleware from './cors-middleware';
 
 let cachedClient = null;
 
@@ -15,10 +15,7 @@ async function connectToDatabase() {
     return client;
 }
 
-export default async function handler(req, res) {
-    // Apply CORS
-    await cors(req, res);
-
+async function handler(req, res) {
     if (req.method !== 'GET') {
         console.log('[Dashboard Status] Received non-GET request:', req.method);
         return res.status(405).json({ error: 'Method not allowed' });
@@ -83,3 +80,5 @@ export default async function handler(req, res) {
         });
     }
 }
+
+export default corsMiddleware(handler);
