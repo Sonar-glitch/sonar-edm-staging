@@ -42,9 +42,51 @@ export default async function handler(req, res) {
       session
     );
     
+    // 🎯 ADD: Data sources for frontend section indicators
+    const completionData = calculateCompletionPercentage(tasteProfile);
+    const dataSources = {
+      spotify: {
+        isRealData: completionData.sections.spotify.hasData,
+        tracksAnalyzed: completionData.sections.spotify.tracksAnalyzed,
+        confidence: completionData.sections.spotify.confidence,
+        label: completionData.sections.spotify.label,
+        source: 'spotify_api',
+        lastFetch: tasteProfile?.lastUpdated,
+        error: completionData.sections.spotify.hasData ? null : 'INSUFFICIENT_DATA'
+      },
+      soundstat: {
+        isRealData: completionData.sections.soundCharacteristics.hasData,
+        tracksAnalyzed: completionData.sections.soundCharacteristics.tracksAnalyzed,
+        confidence: completionData.sections.soundCharacteristics.confidence,
+        label: completionData.sections.soundCharacteristics.label,
+        source: 'spotify_audio_features',
+        lastFetch: tasteProfile?.lastUpdated,
+        error: completionData.sections.soundCharacteristics.hasData ? null : 'NO_AUDIO_ANALYSIS'
+      },
+      seasonal: {
+        isRealData: completionData.sections.seasonal.hasData,
+        tracksAnalyzed: completionData.sections.seasonal.tracksAnalyzed,
+        confidence: completionData.sections.seasonal.confidence,
+        label: completionData.sections.seasonal.label,
+        source: 'listening_history',
+        lastFetch: tasteProfile?.lastUpdated,
+        error: completionData.sections.seasonal.hasData ? null : 'NO_SEASONAL_DATA'
+      },
+      events: {
+        isRealData: eventsCount > 0,
+        eventsFound: eventsCount,
+        confidence: eventsCount > 10 ? 0.9 : eventsCount * 0.09,
+        label: eventsCount > 0 ? 'Real Data' : 'Demo Data',
+        location: 'Montreal', // TODO: Get from user location
+        lastFetch: new Date().toISOString(),
+        error: eventsCount > 0 ? null : 'NO_LOCATION_SET'
+      }
+    };
+    
     return res.status(200).json({
       success: true,
       status: dashboardStatus,
+      dataSources: dataSources,
       timestamp: new Date().toISOString()
     });
     
@@ -143,35 +185,41 @@ function calculateCompletionPercentage(tasteProfile) {
     return { completionPercent: 0, confidence: 0, sections: { real: 0, total: 4, labels: {} } };
   }
   
+  // 🎯 FIXED: Use actual data structure from database
+  const topArtistsCount = tasteProfile.topArtists?.length || 0;
+  const topTracksCount = tasteProfile.topTracks?.length || 0;
+  const hasGenreProfile = tasteProfile.enhancedGenreProfile && Object.keys(tasteProfile.enhancedGenreProfile.primary || {}).length > 0;
+  const hasAudioFeatures = tasteProfile.audioFeatures && Object.keys(tasteProfile.audioFeatures).length > 0;
+  
   const sections = {
     spotify: {
-      hasData: tasteProfile.topArtists && tasteProfile.topArtists.length > 0,
-      tracksAnalyzed: tasteProfile.topTracks?.length || 0,
-      confidence: tasteProfile.topArtists?.length >= 10 ? 0.9 : (tasteProfile.topArtists?.length || 0) * 0.09,
-      label: tasteProfile.topArtists?.length >= 10 ? 'Real Data' : 
-             tasteProfile.topArtists?.length > 0 ? `Partial Data (${tasteProfile.topArtists.length} tracks)` : 'Fallback Data'
+      hasData: topArtistsCount > 0,
+      tracksAnalyzed: topArtistsCount,
+      confidence: topArtistsCount >= 10 ? 0.9 : topArtistsCount * 0.09,
+      label: topArtistsCount >= 10 ? 'Real Data' : 
+             topArtistsCount >= 5 ? `Partial Data (${topArtistsCount} artists)` : 
+             topArtistsCount > 0 ? `Limited Data (${topArtistsCount} artists)` : 'Fallback Data'
     },
     soundCharacteristics: {
-      hasData: tasteProfile.audioFeatures || tasteProfile.essentiaProfile,
-      tracksAnalyzed: tasteProfile.essentiaProfile?.tracksAnalyzed || 0,
-      confidence: tasteProfile.essentiaProfile?.tracksAnalyzed >= 10 ? 0.9 : 
-                 (tasteProfile.essentiaProfile?.tracksAnalyzed || 0) * 0.09,
-      label: tasteProfile.essentiaProfile?.tracksAnalyzed >= 10 ? 'Real Data' :
-             tasteProfile.essentiaProfile?.tracksAnalyzed > 0 ? `Partial Data (${tasteProfile.essentiaProfile.tracksAnalyzed} tracks)` : 'Fallback Data'
+      hasData: hasAudioFeatures,
+      tracksAnalyzed: topTracksCount, // Use tracks count as proxy for sound analysis
+      confidence: hasAudioFeatures ? 0.8 : 0,
+      label: hasAudioFeatures && topTracksCount >= 10 ? 'Real Data' :
+             hasAudioFeatures && topTracksCount > 0 ? `Partial Data (${topTracksCount} tracks)` : 'Fallback Data'
     },
     genres: {
-      hasData: tasteProfile.enhancedGenreProfile,
-      tracksAnalyzed: tasteProfile.enhancedGenreProfile?.tracksAnalyzed || 0,
-      confidence: tasteProfile.enhancedGenreProfile ? 0.9 : 0,
-      label: tasteProfile.enhancedGenreProfile ? 'Real Data' : 'Fallback Data'
+      hasData: hasGenreProfile,
+      tracksAnalyzed: topArtistsCount, // Use artists count for genre analysis
+      confidence: hasGenreProfile ? 0.9 : 0,
+      label: hasGenreProfile ? 'Real Data' : 'Fallback Data'
     },
     seasonal: {
-      hasData: tasteProfile.seasonalProfile,
-      tracksAnalyzed: tasteProfile.seasonalProfile?.tracksAnalyzed || 0,
-      confidence: tasteProfile.seasonalProfile?.tracksAnalyzed >= 10 ? 0.9 : 
-                 (tasteProfile.seasonalProfile?.tracksAnalyzed || 0) * 0.09,
-      label: tasteProfile.seasonalProfile?.tracksAnalyzed >= 10 ? 'Real Data' :
-             tasteProfile.seasonalProfile?.tracksAnalyzed > 0 ? `Partial Data (${tasteProfile.seasonalProfile.tracksAnalyzed} tracks)` : 'Fallback Data'
+      hasData: hasAudioFeatures, // Use audio features as proxy for seasonal analysis
+      tracksAnalyzed: topTracksCount,
+      confidence: hasAudioFeatures && topTracksCount >= 20 ? 0.7 : hasAudioFeatures ? 0.5 : 0,
+      label: hasAudioFeatures && topTracksCount >= 20 ? 'Real Data' :
+             hasAudioFeatures && topTracksCount >= 10 ? `Partial Data (${topTracksCount} tracks)` :
+             hasAudioFeatures ? `Limited Data (${topTracksCount} tracks)` : 'Fallback Data'
     }
   };
   
