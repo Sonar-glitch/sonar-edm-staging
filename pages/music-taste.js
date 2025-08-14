@@ -151,6 +151,70 @@ const MusicTastePage = () => {
     }
   };
 
+  // 🔧 MISSING FUNCTION: Manual taste collection trigger
+  const triggerManualCollection = async () => {
+    try {
+      setLoading(true);
+      console.log('🎵 Triggering manual taste collection...');
+      
+      const response = await fetch('/api/user/real-taste-collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Manual collection completed:', result);
+        // Refresh the data
+        await fetchData();
+      } else {
+        const error = await response.json();
+        console.error('❌ Manual collection failed:', error);
+        alert(`Collection failed: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('❌ Manual collection error:', error);
+      alert('An error occurred during collection');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🗑️ DELETE PROFILE: For testing new vs returning user experience
+  const deleteProfile = async () => {
+    if (!confirm('⚠️ WARNING: This will delete your profile and all data. You will become a new user. Continue?')) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      console.log('🗑️ Deleting user profile...');
+      
+      const response = await fetch('/api/user/delete-account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Profile deleted:', result);
+        alert('Profile deleted successfully! You are now a new user.');
+        
+        // Refresh page to reset state
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        console.error('❌ Delete failed:', error);
+        alert(`Delete failed: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('❌ Delete error:', error);
+      alert('An error occurred during deletion');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Toast notification component with smooth transition
   const Toast = ({ show, message }) => {
     if (!show) return null;
@@ -2417,6 +2481,69 @@ const MusicTastePage = () => {
         }}>
           <EventsForYou profileData={profileData} />
           <TopTracks spotifyData={spotifyData} />
+        </div>
+
+        {/* 🧪 TESTING SECTION: New vs Returning User Experience */}
+        <div style={{
+          marginTop: '24px',
+          padding: '16px',
+          backgroundColor: '#1f2937',
+          borderRadius: '12px',
+          border: '1px solid #374151'
+        }}>
+          <h3 style={{ 
+            color: '#f9fafb', 
+            marginBottom: '16px',
+            fontSize: '16px',
+            fontWeight: '600'
+          }}>
+            🧪 Testing Controls
+          </h3>
+          <div style={{ 
+            display: 'flex', 
+            gap: '12px',
+            flexWrap: 'wrap'
+          }}>
+            <button 
+              onClick={deleteProfile}
+              style={{
+                padding: '8px 16px',
+                background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+            >
+              🗑️ Delete Profile (Test New User)
+            </button>
+            <button 
+              onClick={triggerManualCollection}
+              style={{
+                padding: '8px 16px',
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+            >
+              🔄 Trigger Manual Collection
+            </button>
+          </div>
+          <p style={{
+            color: '#9ca3af',
+            fontSize: '12px',
+            marginTop: '8px',
+            lineHeight: '1.4'
+          }}>
+            Delete Profile: Removes all user data to test first-time user flow<br/>
+            Manual Collection: Triggers taste collection process manually
+          </p>
         </div>
         
         {/* CSS media query for mobile responsiveness */}
