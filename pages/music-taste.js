@@ -2348,6 +2348,37 @@ const MusicTastePage = () => {
     );
   };
 
+  // 🔐 Authentication check - Music Taste page should NEVER show first-login onboarding
+  if (!session) {
+    return (
+      <AppLayout>
+        <div className={styles.container}>
+          <div className={styles.loadingContainer}>
+            <h2 className={styles.loadingText}>Sign in to view your music taste</h2>
+            <p style={{ color: '#888', marginBottom: '20px' }}>
+              Connect your Spotify account to discover your unique music profile
+            </p>
+            <button 
+              onClick={() => window.location.href = '/api/auth/signin'}
+              className={styles.manualTriggerButton}
+              style={{
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg, #1db954 0%, #1ed760 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px'
+              }}
+            >
+              🎵 Sign in with Spotify
+            </button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   // 🎵 NEW: Progressive loading state for taste collection
   if (showProgressLoader) {
     return (

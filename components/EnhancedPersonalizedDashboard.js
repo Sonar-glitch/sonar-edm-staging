@@ -625,6 +625,35 @@ export default function EnhancedPersonalizedDashboard() {
     </div>
   );
 
+  // 🔐 Authentication check - Dashboard shows first-login onboarding for logged-in users with no profile
+  if (!session) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loadingState}>
+          <h2>Welcome to TIKO</h2>
+          <p style={{ color: '#888', marginBottom: '20px' }}>
+            Discover events that match your unique music taste
+          </p>
+          <button 
+            onClick={() => window.location.href = '/api/auth/signin'}
+            className={styles.retryButton}
+            style={{
+              background: 'linear-gradient(135deg, #1db954 0%, #1ed760 100%)',
+              color: 'white',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '16px'
+            }}
+          >
+            🎵 Sign in with Spotify
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // 🎵 ENHANCED: First login - show detailed taste collection progress
   if (session && tasteCollectionStatus === 'collecting') {
     return (
