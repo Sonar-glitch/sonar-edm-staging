@@ -20,6 +20,10 @@ export default function EnhancedPersonalizedDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // 🎵 NEW: Taste collection and events loading states
+  const [tasteCollectionStatus, setTasteCollectionStatus] = useState('checking');
+  const [eventsLoadingStatus, setEventsLoadingStatus] = useState('pending');
+
   // ENHANCED: Data source tracking with weekly deltas
   const [dataSources, setDataSources] = useState({
     spotify: { isReal: false, error: 'MOCK_DATA_ACTIVE', lastFetch: null },
@@ -57,10 +61,56 @@ export default function EnhancedPersonalizedDashboard() {
   });
 
   useEffect(() => {
-    loadDashboardData();
-    loadWeeklyDeltas(); // Load regardless of auth status
-    autoDetectLocation(); // Auto-detect user location on load
-  }, []);
+    if (session) {
+      // 🎵 NEW: Check taste collection status first
+      checkTasteCollectionStatus();
+    } else {
+      loadDashboardData();
+      loadWeeklyDeltas();
+      autoDetectLocation();
+    }
+  }, [session]);
+
+  // 🎵 NEW: Check taste collection status and trigger appropriate loading
+  const checkTasteCollectionStatus = async () => {
+    try {
+      const response = await fetch('/api/user/dashboard-status');
+      if (response.ok) {
+        const data = await response.json();
+        const status = data.status;
+        
+        console.log('🎵 Dashboard status:', status);
+        
+        if (status.showTasteLoader) {
+          setTasteCollectionStatus('collecting');
+          return; // Stay in taste collection mode
+        }
+        
+        if (status.showEventsLoader) {
+          setEventsLoadingStatus('loading');
+        } else {
+          setEventsLoadingStatus('loaded');
+        }
+        
+        // Load dashboard data for returning users
+        await loadDashboardData();
+        loadWeeklyDeltas();
+        autoDetectLocation();
+        
+      } else {
+        // Fallback: load dashboard normally
+        await loadDashboardData();
+        loadWeeklyDeltas();
+        autoDetectLocation();
+      }
+    } catch (error) {
+      console.error('Error checking dashboard status:', error);
+      // Fallback: load dashboard normally
+      await loadDashboardData();
+      loadWeeklyDeltas();
+      autoDetectLocation();
+    }
+  };
 
   // Auto-detect user location with proper fallback chain
   const autoDetectLocation = async () => {
@@ -469,6 +519,46 @@ export default function EnhancedPersonalizedDashboard() {
     };
   }, [weeklyDeltas]);
 
+  // 🎵 NEW: Animated "Understanding your music taste" loader for first login
+  const TasteCollectionLoader = () => (
+    <div className={styles.container}>
+      <div className={styles.tasteCollectionLoader}>
+        <div className={styles.musicNotesAnimation}>
+          <span className={styles.note}>🎵</span>
+          <span className={styles.note}>🎶</span>
+          <span className={styles.note}>🎵</span>
+        </div>
+        <h2 className={styles.loaderTitle}>Understanding your music taste</h2>
+        <div className={styles.progressDots}>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p className={styles.loaderSubtext}>Analyzing your Spotify data and sound characteristics...</p>
+      </div>
+    </div>
+  );
+
+  // 🎵 NEW: Events loading component for when dashboard is ready but events are loading
+  const EventsLoadingIndicator = () => (
+    <div className={styles.eventsLoadingContainer}>
+      <div className={styles.eventsLoader}>
+        <div className={styles.searchAnimation}>🔍</div>
+        <span className={styles.eventsLoadingText}>Fetching your events</span>
+        <div className={styles.loadingDots}>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // 🎵 ENHANCED: First login - show taste collection loader
+  if (session && tasteCollectionStatus === 'collecting') {
+    return <TasteCollectionLoader />;
+  }
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -611,17 +701,25 @@ export default function EnhancedPersonalizedDashboard() {
                     }));
                   }}
                 />
-                <EnhancedEventList 
-                  userProfile={dashboardData}
-                  location={eventFilters.location || userLocation}
-                  vibeMatch={eventFilters.vibeMatch}
-                  onDataSourceUpdate={(dataSource) => {
-                    setDataSources(prev => ({
-                      ...prev,
-                      events: dataSource
-                    }));
-                  }}
-                />
+                
+                {/* 🎵 NEW: Show events loading or actual events */}
+                {eventsLoadingStatus === 'loading' ? (
+                  <EventsLoadingIndicator />
+                ) : (
+                  <EnhancedEventList 
+                    userProfile={dashboardData}
+                    location={eventFilters.location || userLocation}
+                    vibeMatch={eventFilters.vibeMatch}
+                    onDataSourceUpdate={(dataSource) => {
+                      setDataSources(prev => ({
+                        ...prev,
+                        events: dataSource
+                      }));
+                      // Mark events as loaded when we get data
+                      setEventsLoadingStatus('loaded');
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>
