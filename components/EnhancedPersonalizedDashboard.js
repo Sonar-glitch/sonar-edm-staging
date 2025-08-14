@@ -63,13 +63,15 @@ export default function EnhancedPersonalizedDashboard() {
   });
 
   useEffect(() => {
+    // 🔐 SIMPLIFIED: Only check onboarding for authenticated users
     if (session) {
-      // 🎵 NEW: Check taste collection status first
+      console.log('🔐 User is authenticated:', session.user.email);
       checkTasteCollectionStatus();
     } else {
-      loadDashboardData();
-      loadWeeklyDeltas();
-      autoDetectLocation();
+      console.log('🔐 User is NOT authenticated - showing sign-in prompt');
+      // For unauthenticated users, don't load any data - just show sign-in
+      setLoading(false);
+      setTasteCollectionStatus('completed'); // Skip onboarding entirely
     }
   }, [session]);
 
@@ -88,26 +90,31 @@ export default function EnhancedPersonalizedDashboard() {
           return; // Stay in taste collection mode
         }
         
+        // 🎯 FIX: For users who don't need onboarding, set status to completed
+        setTasteCollectionStatus('completed');
+        
         if (status.showEventsLoader) {
           setEventsLoadingStatus('loading');
         } else {
           setEventsLoadingStatus('loaded');
         }
         
-        // Load dashboard data for returning users
+        // Load dashboard data for returning users and unauthenticated users
         await loadDashboardData();
         loadWeeklyDeltas();
         autoDetectLocation();
         
       } else {
-        // Fallback: load dashboard normally
+        // Fallback: load dashboard normally and set status to completed
+        setTasteCollectionStatus('completed');
         await loadDashboardData();
         loadWeeklyDeltas();
         autoDetectLocation();
       }
     } catch (error) {
       console.error('Error checking dashboard status:', error);
-      // Fallback: load dashboard normally
+      // Fallback: load dashboard normally and set status to completed
+      setTasteCollectionStatus('completed');
       await loadDashboardData();
       loadWeeklyDeltas();
       autoDetectLocation();
@@ -625,30 +632,69 @@ export default function EnhancedPersonalizedDashboard() {
     </div>
   );
 
-  // 🔐 Authentication check - Dashboard shows first-login onboarding for logged-in users with no profile
+  // 🔐 CLEAR AUTHENTICATION GATE - No onboarding for unauthenticated users
   if (!session) {
     return (
       <div className={styles.container}>
-        <div className={styles.loadingState}>
-          <h2>Welcome to TIKO</h2>
-          <p style={{ color: '#888', marginBottom: '20px' }}>
-            Discover events that match your unique music taste
-          </p>
-          <button 
-            onClick={() => window.location.href = '/api/auth/signin'}
-            className={styles.retryButton}
-            style={{
-              background: 'linear-gradient(135deg, #1db954 0%, #1ed760 100%)',
-              color: 'white',
-              padding: '12px 24px',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '16px'
-            }}
-          >
-            🎵 Sign in with Spotify
-          </button>
+        <div className={styles.authenticationPrompt}>
+          <div className={styles.authContent}>
+            <h1 style={{ 
+              fontSize: '2.5rem',
+              background: 'linear-gradient(135deg, #00CFFF 0%, #FF00CC 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '1rem'
+            }}>
+              Welcome to TIKO
+            </h1>
+            <p style={{ 
+              color: '#888', 
+              marginBottom: '2rem',
+              fontSize: '1.1rem',
+              lineHeight: '1.5'
+            }}>
+              Discover EDM events that match your unique music taste.<br/>
+              Connect your Spotify account to get personalized recommendations.
+            </p>
+            <button 
+              onClick={() => window.location.href = '/api/auth/signin'}
+              className={styles.spotifySignInButton}
+              style={{
+                background: 'linear-gradient(135deg, #1db954 0%, #1ed760 100%)',
+                color: 'white',
+                padding: '16px 32px',
+                borderRadius: '50px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '18px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                margin: '0 auto',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                boxShadow: '0 4px 15px rgba(29, 185, 84, 0.3)'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 8px 25px rgba(29, 185, 84, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 15px rgba(29, 185, 84, 0.3)';
+              }}
+            >
+              <span style={{ fontSize: '20px' }}>🎵</span>
+              Connect with Spotify
+            </button>
+            <p style={{ 
+              color: '#666', 
+              marginTop: '1.5rem',
+              fontSize: '0.9rem'
+            }}>
+              We'll analyze your music taste to find events you'll love
+            </p>
+          </div>
         </div>
       </div>
     );
