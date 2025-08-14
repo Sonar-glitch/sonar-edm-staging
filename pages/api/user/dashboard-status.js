@@ -101,7 +101,13 @@ export default async function handler(req, res) {
 
 function determineDashboardStatus(collectionStatus, tasteProfile, eventsCount, session) {
   const now = new Date();
-  const isFirstLogin = !tasteProfile;
+  
+  // 🎯 IMPROVED FIRST LOGIN DETECTION: Check if profile is empty/failed
+  const isFirstLogin = !tasteProfile || 
+    (!tasteProfile.topArtists?.length && 
+     !tasteProfile.topTracks?.length && 
+     !tasteProfile.enhancedGenreProfile) ||
+    collectionStatus?.status === 'failed';
   
   // 🎯 FIRST LOGIN LOGIC: Always trigger new analysis
   if (isFirstLogin) {
