@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '../components/AppLayout';
 import GenreTimelineModal from '../components/GenreTimelineModal';
-import TasteCollectionProgress from '../components/TasteCollectionProgress';
+import ConfidenceIndicator from '../components/ConfidenceIndicator';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
 const MusicTastePage = () => {
@@ -12,10 +12,6 @@ const MusicTastePage = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // 🎵 NEW: Taste collection progress state
-  const [collectionProgress, setCollectionProgress] = useState(null);
-  const [showProgressLoader, setShowProgressLoader] = useState(false);
   
   // Interactive Genre Map state
   const [genreMapLevel, setGenreMapLevel] = useState(1);
@@ -53,84 +49,6 @@ const MusicTastePage = () => {
 
   // Recently Liked expand state
   const [showAllRecentlyLiked, setShowAllRecentlyLiked] = useState(false);
-
-  useEffect(() => {
-    if (session) {
-      // 🎵 NEW: Check taste collection progress first
-      checkTasteCollectionStatus();
-    }
-  }, [session]);
-
-  // 🎵 NEW: Check if taste collection is needed or in progress
-  const checkTasteCollectionStatus = async () => {
-    try {
-      // 🎯 FIX: Use correct dashboard-status API to check if user has profile  
-      const statusResponse = await fetch('/api/user/dashboard-status');
-      if (statusResponse.ok) {
-        const statusData = await statusResponse.json();
-        console.log('[Music Taste] Dashboard status:', statusData);
-        
-        // Only show progress loader if user is authenticated and needs first-login onboarding
-        if (statusData.status.isAuthenticated && statusData.status.showTasteLoader) {
-          setShowProgressLoader(true);
-          return; // Don't fetch data yet - user needs onboarding
-        }
-        
-        // User has profile or is not authenticated - load normal data
-        await fetchData();
-        return;
-      }
-      
-      // Fallback: try the old progress API
-      const progressResponse = await fetch('/api/user/taste-collection-progress');
-      if (progressResponse.ok) {
-        const progressData = await progressResponse.json();
-        setCollectionProgress(progressData.status);
-        
-        // If collection is needed or in progress, show loader
-        if (progressData.status.overall === 'loading' || 
-            progressData.status.overall === 'not_started') {
-          setShowProgressLoader(true);
-          return; // Don't fetch data yet
-        }
-        
-        // If collection is complete, fetch the actual data
-        if (progressData.status.overall === 'complete') {
-          await fetchData();
-        }
-      } else {
-        // Fallback: fetch data normally
-        await fetchData();
-      }
-    } catch (error) {
-      console.error('[Music Taste] Error checking status:', error);
-      // Fallback: fetch data normally
-      await fetchData();
-    }
-  };
-
-  // 🎵 NEW: Handle completion of taste collection
-  const handleCollectionComplete = async (finalStatus) => {
-    console.log('🎵 Taste collection completed:', finalStatus);
-    setShowProgressLoader(false);
-    await fetchData(); // Now fetch the completed data
-  };
-
-  // 🎵 ENHANCED: Trigger manual collection if needed
-  const triggerManualCollection = async () => {
-    try {
-      const response = await fetch('/api/user/trigger-taste-collection', {
-        method: 'POST'
-      });
-      
-      if (response.ok) {
-        setShowProgressLoader(true);
-        console.log('✅ Manual taste collection triggered');
-      }
-    } catch (error) {
-      console.error('❌ Error triggering manual collection:', error);
-    }
-  };
 
   useEffect(() => {
     if (session) {
@@ -2397,18 +2315,7 @@ const MusicTastePage = () => {
     );
   }
 
-  // 🎵 NEW: Progressive loading state for taste collection
-  if (showProgressLoader) {
-    return (
-      <AppLayout>
-        <div className={styles.container}>
-          <TasteCollectionProgress onComplete={handleCollectionComplete} />
-        </div>
-      </AppLayout>
-    );
-  }
-
-  // Loading state (fallback)
+  // Loading state
   if (loading) {
     return (
       <AppLayout>
@@ -2461,6 +2368,14 @@ const MusicTastePage = () => {
       <div className={styles.container}>
         {/* Toast notification */}
         <Toast show={showToast} message="✅ Preferences updated successfully!" />
+        
+        {/* Profile Confidence Indicator */}
+        {profileData?.confidence && (
+          <ConfidenceIndicator 
+            confidence={profileData.confidence}
+            profileType={profileData.profileType}
+          />
+        )}
         
         {/* GenreTimelineModal */}
         {showGenreModal && (

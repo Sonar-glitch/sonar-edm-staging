@@ -14,6 +14,7 @@ const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { s
 const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: false });
 const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'), { ssr: false });
 const TasteCollectionProgress = dynamic(() => import('./TasteCollectionProgress'), { ssr: false });
+const ConfidenceIndicator = dynamic(() => import('./ConfidenceIndicator'), { ssr: false });
 
 export default function EnhancedPersonalizedDashboard() {
   const { data: session, status } = useSession();
@@ -75,7 +76,7 @@ export default function EnhancedPersonalizedDashboard() {
     }
   }, [session]);
 
-  // 🎵 NEW: Check taste collection status and trigger appropriate loading
+  // 🎵 FIXED: Check taste collection status without redirect loop
   const checkTasteCollectionStatus = async () => {
     try {
       const response = await fetch('/api/user/dashboard-status');
@@ -85,13 +86,23 @@ export default function EnhancedPersonalizedDashboard() {
         
         console.log('🎵 Dashboard status:', status);
         
-        if (status.showTasteLoader) {
-          setTasteCollectionStatus('collecting');
-          return; // Stay in taste collection mode
+        // 🎯 FIXED: Only redirect if user explicitly needs onboarding AND doesn't have any profile data
+        // Prevent redirect loop by checking if we're already in demo mode or have shown onboarding
+        if (status.showTasteLoader && status.isFirstLogin && !isDemoMode && !localStorage.getItem('onboarding_attempted')) {
+          console.log('🔄 Redirecting first-time user to onboarding page');
+          localStorage.setItem('onboarding_attempted', 'true');
+          window.location.href = '/onboarding';
+          return;
         }
         
-        // 🎯 FIX: For users who don't need onboarding, set status to completed
+        // For returning users or users who have attempted onboarding, set status to completed
         setTasteCollectionStatus('completed');
+        
+        // If no real profile data exists, enable demo mode
+        if (!status.userHasProfile || status.userType === 'guest') {
+          console.log('🎭 No real profile data found, enabling demo mode');
+          setIsDemoMode(true);
+        }
         
         if (status.showEventsLoader) {
           setEventsLoadingStatus('loading');
@@ -107,6 +118,7 @@ export default function EnhancedPersonalizedDashboard() {
       } else {
         // Fallback: load dashboard normally and set status to completed
         setTasteCollectionStatus('completed');
+        setIsDemoMode(true); // Enable demo mode on API failure
         await loadDashboardData();
         loadWeeklyDeltas();
         autoDetectLocation();
@@ -115,6 +127,7 @@ export default function EnhancedPersonalizedDashboard() {
       console.error('Error checking dashboard status:', error);
       // Fallback: load dashboard normally and set status to completed
       setTasteCollectionStatus('completed');
+      setIsDemoMode(true); // Enable demo mode on error
       await loadDashboardData();
       loadWeeklyDeltas();
       autoDetectLocation();
@@ -231,6 +244,17 @@ export default function EnhancedPersonalizedDashboard() {
       const tasteData = await tasteResponse.json();
       setDashboardData(tasteData);
 
+      // 🎯 FIXED: Properly check for real vs demo data based on API response
+      const isRealSpotifyData = tasteData.dataSources?.genreProfile?.isRealData === true;
+      const isRealSoundData = tasteData.dataSources?.soundCharacteristics?.isRealData === true;
+      const isRealSeasonalData = tasteData.dataSources?.seasonalProfile?.isRealData === true;
+
+      // If any critical data is not real, enable demo mode
+      if (!isRealSpotifyData || !isRealSoundData || !isRealSeasonalData) {
+        console.log('🎭 API returned demo/fallback data, enabling demo mode');
+        setIsDemoMode(true);
+      }
+
       // Load enhanced events data to get real integration stats
       let eventsData = null;
       let eventsSource = {
@@ -250,21 +274,25 @@ export default function EnhancedPersonalizedDashboard() {
         const eventsResponse = await fetch('/api/events/enhanced?limit=20');
         if (eventsResponse.ok) {
           eventsData = await eventsResponse.json();
+          
+          // 🎯 FIXED: Only mark as real if we actually have valid events data
+          const hasRealEvents = eventsData.events && eventsData.events.length > 0 && !eventsData.error;
+          
           eventsSource = {
-            isReal: true,
+            isReal: hasRealEvents,
             lastFetch: eventsData.timestamp || new Date().toISOString(),
             eventsFound: eventsData.events?.length || 0,
             confidence: eventsData.enhancementStats?.enhancedEvents > 0 ? 0.9 : 0.5,
-            source: 'enhanced_events_api',
-            timePeriod: 'live_data',
-            description: 'real events with Spotify/Apple Music + Essentia analysis',
+            source: hasRealEvents ? 'enhanced_events_api' : 'demo_data',
+            timePeriod: hasRealEvents ? 'live_data' : 'static',
+            description: hasRealEvents ? 'real events with Spotify/Apple Music + Essentia analysis' : 'demo events for UI testing',
             enhanced: eventsData.enhanced || false,
             enhancementStats: eventsData.enhancementStats,
             musicApiIntegration: eventsData.enhancementStats?.enhancedEvents > 0,
             essentiaIntegration: true, // Essentia is integrated
             location: userLocation?.city || 'Auto-detected',
             vibeMatchFilter: eventFilters.vibeMatch || 50,
-            error: null
+            error: hasRealEvents ? null : 'DEMO_DATA'
           };
           console.log('✅ [Dashboard] Enhanced events data loaded:', eventsData.enhancementStats);
         }
@@ -273,16 +301,16 @@ export default function EnhancedPersonalizedDashboard() {
         eventsSource.error = `API_ERROR: ${eventsError.message}`;
       }
 
-      // ENHANCED: Process data sources with detailed tracking
+      // ENHANCED: Process data sources with detailed tracking - preserve API response flags
       const newDataSources = {
         spotify: {
           isReal: tasteData.dataSources?.genreProfile?.isRealData || false,
           lastFetch: tasteData.dataSources?.genreProfile?.lastFetch,
           tracksAnalyzed: tasteData.dataSources?.genreProfile?.tracksAnalyzed || 0,
           confidence: tasteData.dataSources?.genreProfile?.confidence || 0,
-          source: 'spotify_api',
-          timePeriod: 'last_6_months',
-          description: 'top artists and tracks from Spotify',
+          source: tasteData.dataSources?.genreProfile?.source || 'demo_data',
+          timePeriod: tasteData.dataSources?.genreProfile?.timePeriod || 'none',
+          description: tasteData.dataSources?.genreProfile?.description || 'demo data',
           error: tasteData.dataSources?.genreProfile?.error
         },
         soundstat: {
@@ -290,9 +318,9 @@ export default function EnhancedPersonalizedDashboard() {
           lastFetch: tasteData.dataSources?.soundCharacteristics?.lastFetch,
           tracksAnalyzed: tasteData.dataSources?.soundCharacteristics?.tracksAnalyzed || 0,
           confidence: tasteData.dataSources?.soundCharacteristics?.confidence || 0,
-          source: tasteData.dataSources?.soundCharacteristics?.source || 'enhanced_audio_analysis',
-          timePeriod: tasteData.dataSources?.soundCharacteristics?.timePeriod || 'recent_tracks',
-          description: tasteData.dataSources?.soundCharacteristics?.description || 'audio features from enhanced analysis',
+          source: tasteData.dataSources?.soundCharacteristics?.source || 'demo_data',
+          timePeriod: tasteData.dataSources?.soundCharacteristics?.timePeriod || 'none',
+          description: tasteData.dataSources?.soundCharacteristics?.description || 'demo data',
           error: tasteData.dataSources?.soundCharacteristics?.error
         },
         events: eventsSource,
@@ -301,9 +329,9 @@ export default function EnhancedPersonalizedDashboard() {
           lastFetch: tasteData.dataSources?.seasonalProfile?.lastFetch,
           tracksAnalyzed: tasteData.dataSources?.seasonalProfile?.tracksAnalyzed || 0,
           confidence: tasteData.dataSources?.seasonalProfile?.confidence || 0,
-          source: 'spotify_api',
-          timePeriod: 'recent_listening_history',
-          description: 'recently played tracks with timestamps',
+          source: tasteData.dataSources?.seasonalProfile?.source || 'demo_data',
+          timePeriod: tasteData.dataSources?.seasonalProfile?.timePeriod || 'none',
+          description: tasteData.dataSources?.seasonalProfile?.description || 'demo data',
           error: tasteData.dataSources?.seasonalProfile?.error
         }
       };
@@ -313,6 +341,8 @@ export default function EnhancedPersonalizedDashboard() {
     } catch (err) {
       console.error('❌ Dashboard loading error:', err);
       setError(err.message);
+      // On error, definitely enable demo mode
+      setIsDemoMode(true);
     } finally {
       setLoading(false);
     }
@@ -418,15 +448,36 @@ export default function EnhancedPersonalizedDashboard() {
     const source = dataSources[sourceKey];
     if (!source) return null;
 
+    // 🎯 FIXED: Check demo mode first - if demo mode is active, everything is demo data
+    if (isDemoMode) {
+      const tooltipContent = `⚠️ Demo Data\nReason: Demo mode active\nUsing sample data for demonstration\nNote: Refresh page to complete real taste analysis`;
+      
+      return (
+        <div 
+          className={`${styles.dataIndicator} ${styles.fallbackData}`}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseMove={handleMouseMove}
+          data-tooltip={tooltipContent}
+        >
+          ⚠️ Demo Data
+        </div>
+      );
+    }
+
     // 🎯 COMPREHENSIVE DATA QUALITY ASSESSMENT
     let isReal = false;
     let confidence = 0;
     let label = '⚠️ Demo Data';
     let tracksAnalyzed = source.tracksAnalyzed || 0;
     
-    if (sourceKey === 'spotify') {
+    // For real data assessment, check source.isReal flag first
+    if (!source.isReal) {
+      isReal = false;
+      label = '⚠️ Demo Data';
+    } else if (sourceKey === 'spotify') {
       // Spotify section: Based on actual artists/tracks analyzed
-      const artistsAnalyzed = source.tracksAnalyzed || 0; // Using tracksAnalyzed as proxy
+      const artistsAnalyzed = source.tracksAnalyzed || 0;
       confidence = source.confidence || 0;
       
       if (artistsAnalyzed >= 10 && confidence >= 0.8) {
@@ -770,6 +821,15 @@ export default function EnhancedPersonalizedDashboard() {
             </button>
           </div>
         </div>
+      )}
+      
+      {/* Profile Confidence Indicator */}
+      {dashboardData?.profile?.confidence && !isDemoMode && (
+        <ConfidenceIndicator 
+          confidence={dashboardData.profile.confidence}
+          profileType={dashboardData.profile.profileType}
+          compact={true}
+        />
       )}
       
       <div className={styles.dashboard}>
