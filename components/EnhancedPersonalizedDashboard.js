@@ -3,7 +3,7 @@
 // REMOVES: Redundant red section as requested
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
@@ -13,18 +13,12 @@ const CompactSeasonalVibes = dynamic(() => import('./CompactSeasonalVibes'), { s
 const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
 const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: false });
 const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'), { ssr: false });
-const TasteCollectionProgress = dynamic(() => import('./TasteCollectionProgress'), { ssr: false });
 
 export default function EnhancedPersonalizedDashboard() {
   const { data: session, status } = useSession();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // 🎵 NEW: Taste collection and events loading states
-  const [tasteCollectionStatus, setTasteCollectionStatus] = useState('checking');
-  const [eventsLoadingStatus, setEventsLoadingStatus] = useState('pending');
-  const [isDemoMode, setIsDemoMode] = useState(false); // Track if using demo data
 
   // ENHANCED: Data source tracking with weekly deltas
   const [dataSources, setDataSources] = useState({
@@ -63,56 +57,10 @@ export default function EnhancedPersonalizedDashboard() {
   });
 
   useEffect(() => {
-    if (session) {
-      // 🎵 NEW: Check taste collection status first
-      checkTasteCollectionStatus();
-    } else {
-      loadDashboardData();
-      loadWeeklyDeltas();
-      autoDetectLocation();
-    }
-  }, [session]);
-
-  // 🎵 NEW: Check taste collection status and trigger appropriate loading
-  const checkTasteCollectionStatus = async () => {
-    try {
-      const response = await fetch('/api/user/dashboard-status');
-      if (response.ok) {
-        const data = await response.json();
-        const status = data.status;
-        
-        console.log('🎵 Dashboard status:', status);
-        
-        if (status.showTasteLoader) {
-          setTasteCollectionStatus('collecting');
-          return; // Stay in taste collection mode
-        }
-        
-        if (status.showEventsLoader) {
-          setEventsLoadingStatus('loading');
-        } else {
-          setEventsLoadingStatus('loaded');
-        }
-        
-        // Load dashboard data for returning users
-        await loadDashboardData();
-        loadWeeklyDeltas();
-        autoDetectLocation();
-        
-      } else {
-        // Fallback: load dashboard normally
-        await loadDashboardData();
-        loadWeeklyDeltas();
-        autoDetectLocation();
-      }
-    } catch (error) {
-      console.error('Error checking dashboard status:', error);
-      // Fallback: load dashboard normally
-      await loadDashboardData();
-      loadWeeklyDeltas();
-      autoDetectLocation();
-    }
-  };
+    loadDashboardData();
+    loadWeeklyDeltas(); // Load regardless of auth status
+    autoDetectLocation(); // Auto-detect user location on load
+  }, []);
 
   // Auto-detect user location with proper fallback chain
   const autoDetectLocation = async () => {
@@ -215,93 +163,126 @@ export default function EnhancedPersonalizedDashboard() {
     try {
       setLoading(true);
 
-      // Load enhanced taste profile
-      const tasteResponse = await fetch('/api/spotify/detailed-taste');
-      if (!tasteResponse.ok) {
-        throw new Error(`Taste API error: ${tasteResponse.status}`);
-      }
-
-      const tasteData = await tasteResponse.json();
-      setDashboardData(tasteData);
-
-      // Load enhanced events data to get real integration stats
-      let eventsData = null;
-      let eventsSource = {
-        isReal: false,
-        lastFetch: null,
-        eventsFound: 0,
-        confidence: 0,
-        source: 'mock_data',
-        timePeriod: 'static',
-        description: 'demo events for UI testing',
-        error: 'MOCK_DATA_ACTIVE',
-        enhanced: false,
-        enhancementStats: null
-      };
-
+      // 🎯 FIRST: Check dashboard status to detect first-login scenarios
+      let isFirstLogin = false;
       try {
-        const eventsResponse = await fetch('/api/events/enhanced?limit=20');
-        if (eventsResponse.ok) {
-          eventsData = await eventsResponse.json();
-          eventsSource = {
-            isReal: true,
-            lastFetch: eventsData.timestamp || new Date().toISOString(),
-            eventsFound: eventsData.events?.length || 0,
-            confidence: eventsData.enhancementStats?.enhancedEvents > 0 ? 0.9 : 0.5,
-            source: 'enhanced_events_api',
-            timePeriod: 'live_data',
-            description: 'real events with Spotify/Apple Music + Essentia analysis',
-            enhanced: eventsData.enhanced || false,
-            enhancementStats: eventsData.enhancementStats,
-            musicApiIntegration: eventsData.enhancementStats?.enhancedEvents > 0,
-            essentiaIntegration: true, // Essentia is integrated
-            location: userLocation?.city || 'Auto-detected',
-            vibeMatchFilter: eventFilters.vibeMatch || 50,
-            error: null
-          };
-          console.log('✅ [Dashboard] Enhanced events data loaded:', eventsData.enhancementStats);
+        const statusResponse = await fetch('/api/user/dashboard-status');
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          console.log('🔍 [Dashboard] Status check:', statusData);
+          
+          if (statusData.status?.userType === 'first_login' || statusData.status?.isFirstLogin) {
+            isFirstLogin = true;
+            console.log('🎯 [Dashboard] First login detected - showing onboarding flow');
+            
+            // Set all data sources to indicate first-login state
+            setDataSources({
+              spotify: { isReal: false, error: 'FIRST_LOGIN_PENDING', lastFetch: null },
+              soundstat: { isReal: false, error: 'FIRST_LOGIN_PENDING', lastFetch: null },
+              events: { isReal: false, error: 'FIRST_LOGIN_PENDING', lastFetch: null },
+              seasonal: { isReal: false, error: 'FIRST_LOGIN_PENDING', lastFetch: null }
+            });
+            
+            // TODO: Show first-login onboarding component instead of regular dashboard
+            setError('FIRST_LOGIN_DETECTED');
+            setLoading(false);
+            return;
+          }
         }
-      } catch (eventsError) {
-        console.warn('⚠️ [Dashboard] Events loading failed, using fallback:', eventsError.message);
-        eventsSource.error = `API_ERROR: ${eventsError.message}`;
+      } catch (statusError) {
+        console.warn('⚠️ [Dashboard] Status check failed, continuing with regular flow:', statusError.message);
       }
 
-      // ENHANCED: Process data sources with detailed tracking
-      const newDataSources = {
-        spotify: {
-          isReal: tasteData.dataSources?.genreProfile?.isRealData || false,
-          lastFetch: tasteData.dataSources?.genreProfile?.lastFetch,
-          tracksAnalyzed: tasteData.dataSources?.genreProfile?.tracksAnalyzed || 0,
-          confidence: tasteData.dataSources?.genreProfile?.confidence || 0,
-          source: 'spotify_api',
-          timePeriod: 'last_6_months',
-          description: 'top artists and tracks from Spotify',
-          error: tasteData.dataSources?.genreProfile?.error
-        },
-        soundstat: {
-          isReal: tasteData.dataSources?.soundCharacteristics?.isRealData || false,
-          lastFetch: tasteData.dataSources?.soundCharacteristics?.lastFetch,
-          tracksAnalyzed: tasteData.dataSources?.soundCharacteristics?.tracksAnalyzed || 0,
-          confidence: tasteData.dataSources?.soundCharacteristics?.confidence || 0,
-          source: tasteData.dataSources?.soundCharacteristics?.source || 'enhanced_audio_analysis',
-          timePeriod: tasteData.dataSources?.soundCharacteristics?.timePeriod || 'recent_tracks',
-          description: tasteData.dataSources?.soundCharacteristics?.description || 'audio features from enhanced analysis',
-          error: tasteData.dataSources?.soundCharacteristics?.error
-        },
-        events: eventsSource,
-        seasonal: {
-          isReal: tasteData.dataSources?.seasonalProfile?.isRealData || false,
-          lastFetch: tasteData.dataSources?.seasonalProfile?.lastFetch,
-          tracksAnalyzed: tasteData.dataSources?.seasonalProfile?.tracksAnalyzed || 0,
-          confidence: tasteData.dataSources?.seasonalProfile?.confidence || 0,
-          source: 'spotify_api',
-          timePeriod: 'recent_listening_history',
-          description: 'recently played tracks with timestamps',
-          error: tasteData.dataSources?.seasonalProfile?.error
+      // Only proceed with regular dashboard data if NOT first login
+      if (!isFirstLogin) {
+        // Load enhanced taste profile
+        const tasteResponse = await fetch('/api/spotify/detailed-taste');
+        if (!tasteResponse.ok) {
+          throw new Error(`Taste API error: ${tasteResponse.status}`);
         }
-      };
 
-      setDataSources(newDataSources);
+        const tasteData = await tasteResponse.json();
+        setDashboardData(tasteData);
+
+        // Load enhanced events data to get real integration stats
+        let eventsData = null;
+        let eventsSource = {
+          isReal: false,
+          lastFetch: null,
+          eventsFound: 0,
+          confidence: 0,
+          source: 'mock_data',
+          timePeriod: 'static',
+          description: 'demo events for UI testing',
+          error: 'MOCK_DATA_ACTIVE',
+          enhanced: false,
+          enhancementStats: null
+        };
+
+        try {
+          const eventsResponse = await fetch('/api/events/enhanced?limit=20');
+          if (eventsResponse.ok) {
+            eventsData = await eventsResponse.json();
+            eventsSource = {
+              isReal: true,
+              lastFetch: eventsData.timestamp || new Date().toISOString(),
+              eventsFound: eventsData.events?.length || 0,
+              confidence: eventsData.enhancementStats?.enhancedEvents > 0 ? 0.9 : 0.5,
+              source: 'enhanced_events_api',
+              timePeriod: 'live_data',
+              description: 'real events with Spotify/Apple Music + Essentia analysis',
+              enhanced: eventsData.enhanced || false,
+              enhancementStats: eventsData.enhancementStats,
+              musicApiIntegration: eventsData.enhancementStats?.enhancedEvents > 0,
+              essentiaIntegration: true, // Essentia is integrated
+              location: userLocation?.city || 'Auto-detected',
+              vibeMatchFilter: eventFilters.vibeMatch || 50,
+              error: null
+            };
+            console.log('✅ [Dashboard] Enhanced events data loaded:', eventsData.enhancementStats);
+          }
+        } catch (eventsError) {
+          console.warn('⚠️ [Dashboard] Events loading failed, using fallback:', eventsError.message);
+          eventsSource.error = `API_ERROR: ${eventsError.message}`;
+        }
+
+        // ENHANCED: Process data sources with detailed tracking
+        const newDataSources = {
+          spotify: {
+            isReal: tasteData.dataSources?.genreProfile?.isRealData || false,
+            lastFetch: tasteData.dataSources?.genreProfile?.lastFetch,
+            tracksAnalyzed: tasteData.dataSources?.genreProfile?.tracksAnalyzed || 0,
+            confidence: tasteData.dataSources?.genreProfile?.confidence || 0,
+            source: 'spotify_api',
+            timePeriod: 'last_6_months',
+            description: 'top artists and tracks from Spotify',
+            error: tasteData.dataSources?.genreProfile?.error
+          },
+          soundstat: {
+            isReal: tasteData.dataSources?.soundCharacteristics?.isRealData || false,
+            lastFetch: tasteData.dataSources?.soundCharacteristics?.lastFetch,
+            tracksAnalyzed: tasteData.dataSources?.soundCharacteristics?.tracksAnalyzed || 0,
+            confidence: tasteData.dataSources?.soundCharacteristics?.confidence || 0,
+            source: tasteData.dataSources?.soundCharacteristics?.source || 'enhanced_audio_analysis',
+            timePeriod: tasteData.dataSources?.soundCharacteristics?.timePeriod || 'recent_tracks',
+            description: tasteData.dataSources?.soundCharacteristics?.description || 'audio features from enhanced analysis',
+            error: tasteData.dataSources?.soundCharacteristics?.error
+          },
+          events: eventsSource,
+          seasonal: {
+            isReal: tasteData.dataSources?.seasonalProfile?.isRealData || false,
+            lastFetch: tasteData.dataSources?.seasonalProfile?.lastFetch,
+            tracksAnalyzed: tasteData.dataSources?.seasonalProfile?.tracksAnalyzed || 0,
+            confidence: tasteData.dataSources?.seasonalProfile?.confidence || 0,
+            source: 'spotify_api',
+            timePeriod: 'recent_listening_history',
+            description: 'recently played tracks with timestamps',
+            error: tasteData.dataSources?.seasonalProfile?.error
+          }
+        };
+
+        setDataSources(newDataSources);
+      }
 
     } catch (err) {
       console.error('❌ Dashboard loading error:', err);
@@ -406,90 +387,40 @@ export default function EnhancedPersonalizedDashboard() {
     }
   };
 
-  // NEW: Enhanced data indicator with themed tooltips (COMPREHENSIVE COMPLETION TRACKING)
+  // NEW: Enhanced data indicator with themed tooltips (HONEST DATA DETECTION)
   const getDataIndicator = useCallback((sourceKey) => {
     const source = dataSources[sourceKey];
     if (!source) return null;
 
-    // 🎯 COMPREHENSIVE DATA QUALITY ASSESSMENT
+    // HONEST DATA DETECTION: Check actual data quality, not just API flags
     let isReal = false;
     let confidence = 0;
-    let label = '⚠️ Demo Data';
-    let tracksAnalyzed = source.tracksAnalyzed || 0;
     
-    if (sourceKey === 'spotify') {
-      // Spotify section: Based on actual artists/tracks analyzed
-      const artistsAnalyzed = source.tracksAnalyzed || 0; // Using tracksAnalyzed as proxy
+    if (sourceKey === 'spotify' || sourceKey === 'soundstat') {
+      // For music data: require actual tracks analyzed and reasonable confidence
+      const tracksAnalyzed = source.tracksAnalyzed || 0;
       confidence = source.confidence || 0;
-      
-      if (artistsAnalyzed >= 10 && confidence >= 0.8) {
-        isReal = true;
-        label = '✅ Real Data';
-      } else if (artistsAnalyzed >= 5) {
-        isReal = true;
-        label = `✅ Partial Data (${artistsAnalyzed} tracks)`;
-      } else if (artistsAnalyzed > 0) {
-        isReal = false;
-        label = `⚠️ Limited Data (${artistsAnalyzed} tracks)`;
-      } else {
-        isReal = false;
-        label = '⚠️ Fallback Data';
-      }
-      
-    } else if (sourceKey === 'soundstat') {
-      // Sound characteristics: Based on Essentia analysis
-      confidence = source.confidence || 0;
-      
-      if (tracksAnalyzed >= 10 && confidence >= 0.8) {
-        isReal = true;
-        label = '✅ Real Data';
-      } else if (tracksAnalyzed >= 5) {
-        isReal = true;
-        label = `✅ Partial Data (${tracksAnalyzed} tracks)`;
-      } else if (tracksAnalyzed > 0) {
-        isReal = false;
-        label = `⚠️ Limited Data (${tracksAnalyzed} tracks)`;
-      } else {
-        isReal = false;
-        label = '⚠️ Fallback Data';
-      }
-      
-    } else if (sourceKey === 'seasonal') {
-      // Seasonal vibes: Based on listening history analysis
-      confidence = source.confidence || 0;
-      
-      if (tracksAnalyzed >= 20 && confidence >= 0.7) {
-        isReal = true;
-        label = '✅ Real Data';
-      } else if (tracksAnalyzed >= 10) {
-        isReal = true;
-        label = `✅ Partial Data (${tracksAnalyzed} tracks)`;
-      } else if (tracksAnalyzed > 0) {
-        isReal = false;
-        label = `⚠️ Limited Data (${tracksAnalyzed} tracks)`;
-      } else {
-        isReal = false;
-        label = '⚠️ Fallback Data';
-      }
-      
+      isReal = tracksAnalyzed > 5 && confidence > 0.5 && !source.error;
     } else if (sourceKey === 'events') {
-      // Events: Based on actual events found
+      // For events: require actual events found and valid location
       const eventsFound = source.eventsFound || 0;
       isReal = eventsFound > 0 && !source.error && source.location !== 'Unknown';
-      confidence = source.confidence || 0;
-      label = isReal ? '✅ Real Data' : '⚠️ Demo Data';
+    } else {
+      // For other sources: trust the API but validate
+      isReal = (source.isReal || source.isRealData) && !source.error;
     }
     
-    // 🎯 ENHANCED TOOLTIP with completion percentage and confidence
+    // Enhanced tooltip content based on actual data quality and NEW INTEGRATIONS
     let tooltipContent = '';
     if (isReal) {
       if (sourceKey === 'events') {
-        // Events tooltip (preserved)
+        // NEW: Enhanced events tooltip with integration details
         const integrationDetails = [];
         if (source.musicApiIntegration) integrationDetails.push('Spotify/Apple Music');
         if (source.essentiaIntegration) integrationDetails.push('Essentia Audio Analysis');
         const integrations = integrationDetails.length > 0 ? `\nIntegrations: ${integrationDetails.join(', ')}` : '';
         
+        // Include enhancement stats if available
         let statsText = '';
         if (source.enhancementStats) {
           const stats = source.enhancementStats;
@@ -497,36 +428,29 @@ export default function EnhancedPersonalizedDashboard() {
           if (stats.averageBoost > 0) {
             statsText += `\nAvg Score Boost: +${stats.averageBoost.toFixed(1)} pts`;
           }
+          if (stats.failedEnhancements > 0) {
+            statsText += `\nFailed: ${stats.failedEnhancements}`;
+          }
         }
         
-        tooltipContent = `${label}${integrations}\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%${statsText}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+        tooltipContent = `✅ Real Data${integrations}\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%\nScoring: Backend (no fallbacks)${source.enhanced ? '\nAPI: /api/events/enhanced' : '\nAPI: /api/events'}${statsText}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
       } else {
-        // Music data sections with detailed completion info
-        const completionPercent = tracksAnalyzed >= 10 ? 100 : Math.round((tracksAnalyzed / 10) * 100);
-        const confidencePercent = Math.round(confidence * 100);
-        
-        tooltipContent = `${label}\n${tracksAnalyzed} tracks analyzed\nCompletion: ${completionPercent}%\nConfidence: ${confidencePercent}%\nSource: ${source.source || 'spotify'}\nPeriod: ${source.timePeriod || 'recent'}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
-        
-        // Add analysis method if available
+        const timePeriod = source.trackSelectionContext?.description || "recent tracks";
         const analysisMethod = [];
         if (source.spotifyData) analysisMethod.push('Spotify API');
+        if (source.appleMusicData) analysisMethod.push('Apple Music');
         if (source.essentiaAnalysis) analysisMethod.push('Essentia Audio Features');
-        if (analysisMethod.length > 0) {
-          tooltipContent += `\nAnalysis: ${analysisMethod.join(', ')}`;
-        }
+        const methods = analysisMethod.length > 0 ? `\nAnalysis: ${analysisMethod.join(', ')}` : '';
+        
+        tooltipContent = `✅ Real Data${methods}\n${source.tracksAnalyzed || 0} tracks analyzed\nConfidence: ${Math.round(confidence * 100)}%\nSource: ${source.source || 'spotify'}\nPeriod: ${timePeriod}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
       }
     } else {
-      // Fallback/demo data tooltip
-      const errorCode = source.error || 'INSUFFICIENT_DATA';
-      const fallbackReason = source.fallbackReason || 'Not enough tracks for reliable analysis';
-      
+      const errorCode = source.error || 'LOW_QUALITY_DATA';
+      const fallbackReason = source.fallbackReason || 'Insufficient data for personalization';
       if (sourceKey === 'events') {
-        tooltipContent = `${label}\nReason: ${fallbackReason}\nUsing demonstration events\nNote: Real events require valid location and API access`;
+        tooltipContent = `⚠️ Demo Data\nReason: ${fallbackReason}\nTracks: ${source.tracksAnalyzed || 0}\nConfidence: ${Math.round(confidence * 100)}%\nUsing demonstration events\nNote: Frontend no longer uses 75% fallbacks`;
       } else {
-        const completionPercent = tracksAnalyzed > 0 ? Math.round((tracksAnalyzed / 10) * 100) : 0;
-        const confidencePercent = Math.round(confidence * 100);
-        
-        tooltipContent = `${label}\nReason: ${fallbackReason}\nTracks analyzed: ${tracksAnalyzed}\nCompletion: ${completionPercent}%\nConfidence: ${confidencePercent}%\nUsing genre-based estimates\nNote: Need 10+ tracks for reliable analysis`;
+        tooltipContent = `⚠️ Demo Data\nReason: ${fallbackReason}\nTracks: ${source.tracksAnalyzed || 0}\nConfidence: ${Math.round(confidence * 100)}%\nUsing genre-based estimates\nFallback: Enhanced estimation methods`;
       }
     }
 
@@ -538,7 +462,7 @@ export default function EnhancedPersonalizedDashboard() {
         onMouseMove={handleMouseMove}
         data-tooltip={tooltipContent}
       >
-        {label}
+        {isReal ? '✅ Real Data' : '⚠️ Demo Data'}
       </div>
     );
   }, [dataSources]);
@@ -578,69 +502,6 @@ export default function EnhancedPersonalizedDashboard() {
     };
   }, [weeklyDeltas]);
 
-  // 🎵 NEW: Enhanced taste collection progress with detailed steps
-  const handleTasteCollectionComplete = (status) => {
-    console.log('🎵 Taste collection completed:', status);
-    
-    // If user clicked "Continue with Basic Profile", immediately show dashboard
-    if (status?.fastMode) {
-      console.log('🎵 Fast mode activated - showing dashboard with demo data');
-      console.log('🎵 Note: Values shown are demo data, not your real taste profile');
-      setTasteCollectionStatus('completed');
-      setIsDemoMode(true); // Mark as demo mode
-      
-      // Clear any stale progress by calling a progress reset endpoint
-      fetch('/api/user/reset-taste-progress', { method: 'POST' })
-        .then(() => console.log('🎵 Progress reset for future sessions'))
-        .catch(err => console.warn('🎵 Progress reset failed:', err.message));
-      
-      // Load dashboard data immediately for fast mode
-      loadDashboardData();
-      loadWeeklyDeltas();
-      autoDetectLocation();
-      return;
-    }
-    
-    // Normal completion flow
-    setTasteCollectionStatus('completed');
-    
-    // Load dashboard data after taste collection
-    loadDashboardData();
-    loadWeeklyDeltas();
-    autoDetectLocation();
-  };
-
-  // 🎵 NEW: Events loading component for when dashboard is ready but events are loading
-  const EventsLoadingIndicator = () => (
-    <div className={styles.eventsLoadingContainer}>
-      <div className={styles.eventsLoader}>
-        <div className={styles.searchAnimation}>🔍</div>
-        <span className={styles.eventsLoadingText}>Fetching your events</span>
-        <div className={styles.loadingDots}>
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </div>
-    </div>
-  );
-
-  // 🎵 ENHANCED: First login - show detailed taste collection progress
-  if (session && tasteCollectionStatus === 'collecting') {
-    return (
-      <TasteCollectionProgress 
-        onComplete={handleTasteCollectionComplete}
-        onTimeout={() => {
-          console.log('🎵 Progress timeout - showing dashboard with demo data');
-          setTasteCollectionStatus('completed');
-          loadDashboardData();
-          loadWeeklyDeltas();
-          autoDetectLocation();
-        }}
-      />
-    );
-  }
-
   if (loading) {
     return (
       <div className={styles.container}>
@@ -653,6 +514,44 @@ export default function EnhancedPersonalizedDashboard() {
   }
 
   if (error) {
+    // Special handling for first-login detection
+    if (error === 'FIRST_LOGIN_DETECTED') {
+      return (
+        <div className={styles.container}>
+          <div className={styles.firstLoginState}>
+            <div className={styles.firstLoginContent}>
+              <h2>🎵 Welcome to TIKO!</h2>
+              <p>We're setting up your personalized music profile...</p>
+              <div className={styles.firstLoginSteps}>
+                <div className={styles.step}>
+                  <span className={styles.stepIcon}>🎧</span>
+                  <span>Connecting to your Spotify account</span>
+                </div>
+                <div className={styles.step}>
+                  <span className={styles.stepIcon}>🎯</span>
+                  <span>Analyzing your music taste</span>
+                </div>
+                <div className={styles.step}>
+                  <span className={styles.stepIcon}>🎪</span>
+                  <span>Finding events that match your vibe</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setError(null);
+                  loadDashboardData();
+                }} 
+                className={styles.startAnalysisButton}
+              >
+                Start Analysis
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Regular error state
     return (
       <div className={styles.container}>
         <div className={styles.errorState}>
@@ -678,25 +577,6 @@ export default function EnhancedPersonalizedDashboard() {
 
   return (
     <div className={styles.container}>
-      {/* 🎵 NEW: Demo Mode Notice */}
-      {isDemoMode && (
-        <div className={styles.demoModeNotice}>
-          <div className={styles.demoModeContent}>
-            <span className={styles.demoIcon}>⚠️</span>
-            <div className={styles.demoText}>
-              <strong>Demo Mode Active</strong>
-              <p>You're viewing sample data. For personalized results, refresh the page to complete your music taste analysis.</p>
-            </div>
-            <button 
-              className={styles.refreshButton}
-              onClick={() => window.location.reload()}
-            >
-              Refresh & Try Again
-            </button>
-          </div>
-        </div>
-      )}
-      
       <div className={styles.dashboard}>
         {/* ROW 1: TOP 5 GENRES + SEASONAL VIBES */}
         <div className={styles.row1}>
@@ -802,25 +682,17 @@ export default function EnhancedPersonalizedDashboard() {
                     }));
                   }}
                 />
-                
-                {/* 🎵 NEW: Show events loading or actual events */}
-                {eventsLoadingStatus === 'loading' ? (
-                  <EventsLoadingIndicator />
-                ) : (
-                  <EnhancedEventList 
-                    userProfile={dashboardData}
-                    location={eventFilters.location || userLocation}
-                    vibeMatch={eventFilters.vibeMatch}
-                    onDataSourceUpdate={(dataSource) => {
-                      setDataSources(prev => ({
-                        ...prev,
-                        events: dataSource
-                      }));
-                      // Mark events as loaded when we get data
-                      setEventsLoadingStatus('loaded');
-                    }}
-                  />
-                )}
+                <EnhancedEventList 
+                  userProfile={dashboardData}
+                  location={eventFilters.location || userLocation}
+                  vibeMatch={eventFilters.vibeMatch}
+                  onDataSourceUpdate={(dataSource) => {
+                    setDataSources(prev => ({
+                      ...prev,
+                      events: dataSource
+                    }));
+                  }}
+                />
               </div>
             </div>
           </div>
