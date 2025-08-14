@@ -3,7 +3,7 @@
 // REMOVES: Redundant red section as requested
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 

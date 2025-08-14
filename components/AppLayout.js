@@ -3,11 +3,13 @@ import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useSession, signOut } from 'next-auth/react';
 import styles from '../styles/DashboardPage.module.css'; // Path is relative to components dir
 
 const AppLayout = ({ children }) => {
   const router = useRouter();
   const { pathname } = router;
+  const { data: session, status } = useSession();
 
   return (
     <div className={styles.pageContainer}>
@@ -22,8 +24,34 @@ const AppLayout = ({ children }) => {
       </Head>
 
       <header className={styles.mainHeader}>
-        <h1 className={styles.mainLogo}>TIKO</h1>
-        <p className={styles.platformSubtitle}>Your personalized EDM event discovery platform</p>
+        <div className={styles.headerContent}>
+          <div className={styles.branding}>
+            <h1 className={styles.mainLogo}>TIKO</h1>
+            <p className={styles.platformSubtitle}>Your personalized EDM event discovery platform</p>
+          </div>
+          
+          {/* User Profile Section */}
+          <div className={styles.userSection}>
+            {session ? (
+              <div className={styles.userInfo}>
+                <span className={styles.userName}>
+                  {session.user.name || session.user.email}
+                </span>
+                <button 
+                  onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                  className={styles.signOutButton}
+                  title="Sign Out"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link href="/auth/signin" className={styles.signInButton}>
+                Sign In
+              </Link>
+            )}
+          </div>
+        </div>
       </header>
 
       <nav className={styles.tabNavigation}>
