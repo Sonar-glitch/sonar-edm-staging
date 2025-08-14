@@ -15,9 +15,43 @@ export default async function handler(req, res) {
     
     console.log('🔍 Dashboard API called - Session:', !!session, session?.user?.email);
     
+    // 🎯 FIRST LOGIN DETECTION: If no session, this is definitely a first login
     if (!session?.user?.email) {
-      console.log('❌ Dashboard API: No session or email');
-      return res.status(401).json({ error: 'Unauthorized' });
+      console.log('🔍 Dashboard API: No session detected - this is a first login scenario');
+      
+      // Get basic stats for context (don't require authentication for this)
+      const [eventsCount, artistsCount] = await Promise.all([
+        db.collection('events_unified').countDocuments(),
+        db.collection('artistGenres').countDocuments()
+      ]);
+
+      const firstLoginStatus = {
+        userType: 'first_login',
+        tasteCollection: 'needed',
+        eventsStatus: 'pending',
+        showTasteLoader: false, // Show onboarding UI instead
+        showEventsLoader: false,
+        message: 'First login - please sign in to continue',
+        trigger: 'immediate',
+        isFirstLogin: true,
+        recommendations: [
+          'Sign in with your Spotify account to get started',
+          'We\'ll analyze your music taste automatically',
+          'Find events that match your vibe'
+        ]
+      };
+
+      console.log('🔍 Dashboard API: Returning first login status');
+      return res.status(200).json({
+        success: true,
+        status: firstLoginStatus,
+        stats: {
+          totalUsers: 0,
+          eventsCount,
+          artistsCount
+        },
+        timestamp: new Date().toISOString()
+      });
     }
 
     const { db } = await connectToDatabase();
