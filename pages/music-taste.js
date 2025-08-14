@@ -64,8 +64,8 @@ const MusicTastePage = () => {
   // 🎵 NEW: Check if taste collection is needed or in progress
   const checkTasteCollectionStatus = async () => {
     try {
-      // 🎯 FIX: Use dashboard-status API to check if user has profile  
-      const statusResponse = await fetch('/api/dashboard-status');
+      // 🎯 FIX: Use correct dashboard-status API to check if user has profile  
+      const statusResponse = await fetch('/api/user/dashboard-status');
       if (statusResponse.ok) {
         const statusData = await statusResponse.json();
         console.log('[Music Taste] Dashboard status:', statusData);
