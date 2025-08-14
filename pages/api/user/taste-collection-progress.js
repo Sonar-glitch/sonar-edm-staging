@@ -47,69 +47,78 @@ export default async function handler(req, res) {
 }
 
 function determineCollectionProgress(collectionStatus, tasteProfile, soundProfile) {
-  // If we have a complete taste profile, determine realistic progress
+  // Check if there's an active collection session first
+  if (collectionStatus) {
+    // Check if the collection status is recent (within last 10 minutes)
+    const lastUpdated = new Date(collectionStatus.lastUpdated || collectionStatus.createdAt);
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    
+    if (lastUpdated > tenMinutesAgo && collectionStatus.status === 'in_progress') {
+      // Active session - return the stored progress
+      return {
+        overall: collectionStatus.status || 'in_progress',
+        spotify: collectionStatus.spotify?.status || 'in_progress',
+        essentia: collectionStatus.essentia?.status || 'pending',
+        seasonal: collectionStatus.seasonal?.status || 'pending',
+        currentStep: collectionStatus.currentStep || 'Collecting your music data...',
+        details: collectionStatus.details || '',
+        percentage: collectionStatus.percentage || 20
+      };
+    }
+  }
+
+  // If we have a complete taste profile, check if it's actually complete or just stale
   if (tasteProfile) {
     const hasSpotifyData = tasteProfile.topArtists && tasteProfile.topTracks;
-    const hasAudioFeatures = tasteProfile.audioFeatures || soundProfile;
+    const hasAudioFeatures = tasteProfile.audioFeatures || (soundProfile && soundProfile.soundCharacteristics);
     const hasGenreProfile = tasteProfile.enhancedGenreProfile;
     
+    // Check if this profile is recent (within last hour) to determine if it's an active session
+    const profileLastUpdated = new Date(tasteProfile.lastUpdated);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const isRecentProfile = profileLastUpdated > oneHourAgo;
+    
+    // If profile is old and incomplete, treat as not started (stale data)
+    if (!isRecentProfile && !hasAudioFeatures) {
+      return {
+        overall: 'not_started',
+        spotify: 'pending',
+        essentia: 'pending',
+        seasonal: 'pending',
+        currentStep: 'Ready to analyze your music taste',
+        details: 'Previous session expired. Click to start fresh analysis.',
+        percentage: 0
+      };
+    }
+    
     let progress = {
-      overall: 'in_progress',
-      spotify: hasSpotifyData ? 'complete' : 'in_progress',
-      essentia: 'pending',
-      seasonal: 'pending',
-      currentStep: 'Processing your music data...',
-      details: '',
-      percentage: 0,
+      overall: 'complete',
+      spotify: hasSpotifyData ? 'complete' : 'pending',
+      essentia: hasAudioFeatures ? 'complete' : 'pending',
+      seasonal: hasGenreProfile ? 'complete' : 'pending',
+      currentStep: 'Your music profile is complete!',
+      details: 'Ready to find your perfect events',
+      percentage: 100,
       tracksAnalyzed: tasteProfile.topTracks?.length || 0,
       artistsAnalyzed: tasteProfile.topArtists?.length || 0
     };
 
-    if (hasSpotifyData) {
-      progress.percentage = 40;
-      progress.currentStep = 'Spotify data collected successfully';
-      progress.details = `Analyzed ${progress.tracksAnalyzed} tracks from ${progress.artistsAnalyzed} artists`;
-      
-      if (hasAudioFeatures) {
-        progress.essentia = 'complete';
-        progress.percentage = 80;
-        progress.currentStep = 'Audio characteristics analyzed';
-        progress.details = 'Your sound DNA profile is ready';
-        
-        if (hasGenreProfile) {
-          progress.seasonal = 'complete';
-          progress.overall = 'complete';
-          progress.percentage = 100;
-          progress.currentStep = 'Your music profile is complete!';
-          progress.details = 'Ready to find your perfect events';
-        } else {
-          progress.seasonal = 'in_progress';
-          progress.percentage = 90;
-          progress.currentStep = 'Mapping genres to events...';
-          progress.details = 'Finding EDM events that match your taste';
-        }
-      } else {
-        progress.essentia = 'in_progress';
-        progress.percentage = 60;
-        progress.currentStep = 'Analyzing audio characteristics...';
-        progress.details = 'This may take 30-60 seconds for detailed analysis';
-      }
+    // Only show in_progress if we have recent data and missing components
+    if (isRecentProfile && hasSpotifyData && !hasAudioFeatures) {
+      progress.overall = 'in_progress';
+      progress.essentia = 'in_progress';
+      progress.percentage = 60;
+      progress.currentStep = 'Analyzing audio characteristics...';
+      progress.details = 'This may take 30-60 seconds for detailed analysis';
+    } else if (isRecentProfile && hasSpotifyData && hasAudioFeatures && !hasGenreProfile) {
+      progress.overall = 'in_progress';
+      progress.seasonal = 'in_progress';
+      progress.percentage = 90;
+      progress.currentStep = 'Mapping genres to events...';
+      progress.details = 'Finding EDM events that match your taste';
     }
 
     return progress;
-  }
-
-  // Check collection status for more granular info
-  if (collectionStatus) {
-    return {
-      overall: collectionStatus.status || 'in_progress',
-      spotify: collectionStatus.spotify?.status || 'in_progress',
-      essentia: collectionStatus.essentia?.status || 'pending',
-      seasonal: collectionStatus.seasonal?.status || 'pending',
-      currentStep: collectionStatus.currentStep || 'Collecting your music data...',
-      details: collectionStatus.details || '',
-      percentage: collectionStatus.percentage || 20
-    };
   }
 
   // Default state - not started
