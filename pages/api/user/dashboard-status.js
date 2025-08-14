@@ -14,12 +14,17 @@ export default async function handler(req, res) {
   try {
     const session = await getServerSession(req, res, authOptions);
     
+    console.log('🔍 Dashboard API called - Session:', !!session, session?.user?.email);
+    
     if (!session?.user?.email) {
+      console.log('❌ Dashboard API: No session or email');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { db } = await connectToDatabase();
     const userEmail = session.user.email;
+    
+    console.log('🔍 Dashboard API: Checking for user:', userEmail);
     
     // Check taste collection status
     const [collectionStatus, tasteProfile, eventsCount] = await Promise.all([
@@ -34,6 +39,12 @@ export default async function handler(req, res) {
       })
     ]);
     
+    console.log('🔍 Dashboard API Data:');
+    console.log('   Collection Status:', collectionStatus?.status);
+    console.log('   Taste Profile exists:', !!tasteProfile);
+    console.log('   Top Artists:', tasteProfile?.topArtists?.length || 0);
+    console.log('   Events Count:', eventsCount);
+    
     // Determine overall dashboard state
     const dashboardStatus = determineDashboardStatus(
       collectionStatus, 
@@ -41,6 +52,11 @@ export default async function handler(req, res) {
       eventsCount,
       session
     );
+    
+    console.log('🔍 Dashboard API Response:');
+    console.log('   User Type:', dashboardStatus.userType);
+    console.log('   Show Taste Loader:', dashboardStatus.showTasteLoader);
+    console.log('   Message:', dashboardStatus.message);
     
     // 🎯 ADD: Data sources for frontend section indicators
     const completionData = calculateCompletionPercentage(tasteProfile);
