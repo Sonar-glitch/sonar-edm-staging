@@ -10,7 +10,8 @@ export const authOptions = {
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
       authorization: {
         params: {
-          scope: "user-read-email user-top-read user-read-recently-played user-read-private user-library-read"
+          scope: "user-read-email user-top-read user-read-recently-played user-read-private user-library-read",
+          prompt: "login" // Force fresh authentication every time
         }
       },
      
