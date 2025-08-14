@@ -64,6 +64,24 @@ const MusicTastePage = () => {
   // 🎵 NEW: Check if taste collection is needed or in progress
   const checkTasteCollectionStatus = async () => {
     try {
+      // 🎯 FIX: Use dashboard-status API to check if user has profile  
+      const statusResponse = await fetch('/api/dashboard-status');
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        console.log('[Music Taste] Dashboard status:', statusData);
+        
+        // Only show progress loader if user is authenticated and needs first-login onboarding
+        if (statusData.status.isAuthenticated && statusData.status.showTasteLoader) {
+          setShowProgressLoader(true);
+          return; // Don't fetch data yet - user needs onboarding
+        }
+        
+        // User has profile or is not authenticated - load normal data
+        await fetchData();
+        return;
+      }
+      
+      // Fallback: try the old progress API
       const progressResponse = await fetch('/api/user/taste-collection-progress');
       if (progressResponse.ok) {
         const progressData = await progressResponse.json();
@@ -85,7 +103,7 @@ const MusicTastePage = () => {
         await fetchData();
       }
     } catch (error) {
-      console.error('Error checking taste collection status:', error);
+      console.error('[Music Taste] Error checking status:', error);
       // Fallback: fetch data normally
       await fetchData();
     }
