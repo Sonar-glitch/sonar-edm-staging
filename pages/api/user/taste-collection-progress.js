@@ -47,81 +47,115 @@ export default async function handler(req, res) {
 }
 
 function determineCollectionProgress(collectionStatus, tasteProfile, soundProfile) {
-  // Check if there's an active collection session first
+  const now = new Date();
+  
+  // 🎯 ACTIVE SESSION CHECK: Look for recent collection status
   if (collectionStatus) {
-    // Check if the collection status is recent (within last 10 minutes)
     const lastUpdated = new Date(collectionStatus.lastUpdated || collectionStatus.createdAt);
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const minutesSinceUpdate = (now - lastUpdated) / (1000 * 60);
     
-    if (lastUpdated > tenMinutesAgo && collectionStatus.status === 'in_progress') {
-      // Active session - return the stored progress
+    // If collection status is very recent (< 5 minutes) and active, use it
+    if (minutesSinceUpdate < 5 && collectionStatus.status === 'in_progress') {
       return {
-        overall: collectionStatus.status || 'in_progress',
+        overall: 'in_progress',
         spotify: collectionStatus.spotify?.status || 'in_progress',
         essentia: collectionStatus.essentia?.status || 'pending',
         seasonal: collectionStatus.seasonal?.status || 'pending',
-        currentStep: collectionStatus.currentStep || 'Collecting your music data...',
-        details: collectionStatus.details || '',
-        percentage: collectionStatus.percentage || 20
+        currentStep: collectionStatus.currentStep || 'Starting music analysis...',
+        details: collectionStatus.details || 'Processing your music data',
+        percentage: collectionStatus.percentage || 10,
+        tracksAnalyzed: collectionStatus.tracksAnalyzed || 0,
+        artistsAnalyzed: collectionStatus.artistsAnalyzed || 0,
+        isRealTime: true
       };
     }
   }
-
-  // If we have a complete taste profile, check if it's actually complete or just stale
-  if (tasteProfile) {
-    const hasSpotifyData = tasteProfile.topArtists && tasteProfile.topTracks;
-    const hasAudioFeatures = tasteProfile.audioFeatures || (soundProfile && soundProfile.soundCharacteristics);
-    const hasGenreProfile = tasteProfile.enhancedGenreProfile;
+  
+  // 🎯 COMPLETION TRACKING: Calculate actual progress from available data
+  if (tasteProfile || soundProfile) {
+    const completion = calculateDetailedCompletion(tasteProfile, soundProfile);
     
-    // Check if this profile is recent (within last hour) to determine if it's an active session
-    const profileLastUpdated = new Date(tasteProfile.lastUpdated);
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const isRecentProfile = profileLastUpdated > oneHourAgo;
+    // Check if this is a recent session (< 30 minutes) with incomplete data
+    const profileLastUpdated = tasteProfile ? new Date(tasteProfile.lastUpdated) : null;
+    const soundLastUpdated = soundProfile ? new Date(soundProfile.lastEssentiaAnalysis || soundProfile.lastUpdated) : null;
+    const mostRecentUpdate = profileLastUpdated && soundLastUpdated 
+      ? new Date(Math.max(profileLastUpdated, soundLastUpdated))
+      : profileLastUpdated || soundLastUpdated;
     
-    // If profile is old and incomplete, treat as not started (stale data)
-    if (!isRecentProfile && !hasAudioFeatures) {
+    const minutesSinceLastUpdate = mostRecentUpdate ? (now - mostRecentUpdate) / (1000 * 60) : 60;
+    const isRecentSession = minutesSinceLastUpdate < 30;
+    
+    // 🎯 ACTIVE ANALYSIS: Recent session with missing components
+    if (isRecentSession && completion.percentage < 100) {
+      let currentStep, details, percentage;
+      
+      if (!completion.sections.spotify.complete) {
+        currentStep = 'Collecting Spotify data...';
+        details = 'Fetching your top artists and tracks';
+        percentage = 20;
+      } else if (!completion.sections.essentia.complete) {
+        currentStep = 'Analyzing audio characteristics...';
+        details = 'This may take 30-60 seconds for detailed analysis';
+        percentage = 60;
+      } else if (!completion.sections.seasonal.complete) {
+        currentStep = 'Building seasonal profile...';
+        details = 'Analyzing listening patterns over time';
+        percentage = 85;
+      } else {
+        currentStep = 'Finalizing your profile...';
+        details = 'Completing music taste analysis';
+        percentage = 95;
+      }
+      
       return {
-        overall: 'not_started',
-        spotify: 'pending',
-        essentia: 'pending',
-        seasonal: 'pending',
-        currentStep: 'Ready to analyze your music taste',
-        details: 'Previous session expired. Click to start fresh analysis.',
-        percentage: 0
+        overall: 'in_progress',
+        spotify: completion.sections.spotify.complete ? 'complete' : 'in_progress',
+        essentia: completion.sections.essentia.complete ? 'complete' : 'in_progress',
+        seasonal: completion.sections.seasonal.complete ? 'complete' : 'pending',
+        currentStep,
+        details,
+        percentage,
+        tracksAnalyzed: completion.totalTracksAnalyzed,
+        artistsAnalyzed: completion.totalArtistsAnalyzed,
+        isRealTime: false,
+        completion: completion
       };
     }
     
-    let progress = {
-      overall: 'complete',
-      spotify: hasSpotifyData ? 'complete' : 'pending',
-      essentia: hasAudioFeatures ? 'complete' : 'pending',
-      seasonal: hasGenreProfile ? 'complete' : 'pending',
-      currentStep: 'Your music profile is complete!',
-      details: 'Ready to find your perfect events',
-      percentage: 100,
-      tracksAnalyzed: tasteProfile.topTracks?.length || 0,
-      artistsAnalyzed: tasteProfile.topArtists?.length || 0
-    };
-
-    // Only show in_progress if we have recent data and missing components
-    if (isRecentProfile && hasSpotifyData && !hasAudioFeatures) {
-      progress.overall = 'in_progress';
-      progress.essentia = 'in_progress';
-      progress.percentage = 60;
-      progress.currentStep = 'Analyzing audio characteristics...';
-      progress.details = 'This may take 30-60 seconds for detailed analysis';
-    } else if (isRecentProfile && hasSpotifyData && hasAudioFeatures && !hasGenreProfile) {
-      progress.overall = 'in_progress';
-      progress.seasonal = 'in_progress';
-      progress.percentage = 90;
-      progress.currentStep = 'Mapping genres to events...';
-      progress.details = 'Finding EDM events that match your taste';
+    // 🎯 COMPLETED ANALYSIS: Show final results with confidence
+    if (completion.percentage >= 100) {
+      return {
+        overall: 'complete',
+        spotify: 'complete',
+        essentia: 'complete',
+        seasonal: 'complete',
+        currentStep: 'Your music profile is complete!',
+        details: `Analysis complete with ${Math.round(completion.confidence * 100)}% confidence`,
+        percentage: 100,
+        tracksAnalyzed: completion.totalTracksAnalyzed,
+        artistsAnalyzed: completion.totalArtistsAnalyzed,
+        completion: completion
+      };
     }
-
-    return progress;
+    
+    // 🎯 PARTIAL DATA: Timeout reached, populate what's available
+    if (completion.percentage > 0) {
+      return {
+        overall: 'partial_complete',
+        spotify: completion.sections.spotify.complete ? 'complete' : 'timeout',
+        essentia: completion.sections.essentia.complete ? 'complete' : 'timeout',
+        seasonal: completion.sections.seasonal.complete ? 'complete' : 'timeout',
+        currentStep: `Analysis timed out - ${Math.round(completion.percentage)}% complete`,
+        details: `Using available data with ${Math.round(completion.confidence * 100)}% confidence`,
+        percentage: completion.percentage,
+        tracksAnalyzed: completion.totalTracksAnalyzed,
+        artistsAnalyzed: completion.totalArtistsAnalyzed,
+        completion: completion
+      };
+    }
   }
-
-  // Default state - not started
+  
+  // 🎯 NOT STARTED: Fresh state
   return {
     overall: 'not_started',
     spotify: 'pending',
@@ -129,6 +163,65 @@ function determineCollectionProgress(collectionStatus, tasteProfile, soundProfil
     seasonal: 'pending',
     currentStep: 'Ready to analyze your music taste',
     details: 'Click to start building your personalized profile',
-    percentage: 0
+    percentage: 0,
+    tracksAnalyzed: 0,
+    artistsAnalyzed: 0
+  };
+}
+
+// 🎯 NEW: Calculate detailed completion with confidence scoring
+function calculateDetailedCompletion(tasteProfile, soundProfile) {
+  const sections = {
+    spotify: {
+      complete: tasteProfile?.topArtists && tasteProfile.topArtists.length >= 5,
+      tracksAnalyzed: tasteProfile?.topTracks?.length || 0,
+      artistsAnalyzed: tasteProfile?.topArtists?.length || 0,
+      confidence: tasteProfile?.topArtists?.length >= 10 ? 0.9 : 
+                 (tasteProfile?.topArtists?.length || 0) * 0.09,
+      label: tasteProfile?.topArtists?.length >= 10 ? 'Real Data' :
+             tasteProfile?.topArtists?.length > 0 ? `Partial (${tasteProfile.topArtists.length} tracks)` : 'Fallback'
+    },
+    essentia: {
+      complete: (tasteProfile?.audioFeatures || soundProfile?.soundCharacteristics) && 
+                (tasteProfile?.essentiaProfile?.tracksAnalyzed || soundProfile?.trackMatrices?.length || 0) >= 5,
+      tracksAnalyzed: tasteProfile?.essentiaProfile?.tracksAnalyzed || soundProfile?.trackMatrices?.length || 0,
+      confidence: (() => {
+        const tracks = tasteProfile?.essentiaProfile?.tracksAnalyzed || soundProfile?.trackMatrices?.length || 0;
+        return tracks >= 10 ? 0.9 : tracks * 0.09;
+      })(),
+      label: (() => {
+        const tracks = tasteProfile?.essentiaProfile?.tracksAnalyzed || soundProfile?.trackMatrices?.length || 0;
+        return tracks >= 10 ? 'Real Data' : tracks > 0 ? `Partial (${tracks} tracks)` : 'Fallback';
+      })()
+    },
+    seasonal: {
+      complete: tasteProfile?.seasonalProfile && Object.keys(tasteProfile.seasonalProfile).length >= 2,
+      tracksAnalyzed: tasteProfile?.seasonalProfile?.tracksAnalyzed || 0,
+      confidence: tasteProfile?.seasonalProfile ? 0.8 : 0,
+      label: tasteProfile?.seasonalProfile ? 'Real Data' : 'Fallback'
+    }
+  };
+  
+  const completedSections = Object.values(sections).filter(s => s.complete).length;
+  const totalSections = Object.keys(sections).length;
+  const percentage = (completedSections / totalSections) * 100;
+  
+  // Calculate overall confidence (weighted average)
+  const weights = { spotify: 0.3, essentia: 0.5, seasonal: 0.2 };
+  const confidence = Object.entries(sections).reduce((sum, [key, section]) => {
+    return sum + (section.confidence * weights[key]);
+  }, 0);
+  
+  const totalTracksAnalyzed = sections.spotify.tracksAnalyzed + sections.essentia.tracksAnalyzed;
+  const totalArtistsAnalyzed = sections.spotify.artistsAnalyzed;
+  
+  return {
+    percentage,
+    confidence,
+    sections,
+    totalTracksAnalyzed,
+    totalArtistsAnalyzed,
+    completedSections,
+    totalSections
   };
 }

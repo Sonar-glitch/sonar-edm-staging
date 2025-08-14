@@ -406,40 +406,90 @@ export default function EnhancedPersonalizedDashboard() {
     }
   };
 
-  // NEW: Enhanced data indicator with themed tooltips (HONEST DATA DETECTION)
+  // NEW: Enhanced data indicator with themed tooltips (COMPREHENSIVE COMPLETION TRACKING)
   const getDataIndicator = useCallback((sourceKey) => {
     const source = dataSources[sourceKey];
     if (!source) return null;
 
-    // HONEST DATA DETECTION: Check actual data quality, not just API flags
+    // 🎯 COMPREHENSIVE DATA QUALITY ASSESSMENT
     let isReal = false;
     let confidence = 0;
+    let label = '⚠️ Demo Data';
+    let tracksAnalyzed = source.tracksAnalyzed || 0;
     
-    if (sourceKey === 'spotify' || sourceKey === 'soundstat') {
-      // For music data: require actual tracks analyzed and reasonable confidence
-      const tracksAnalyzed = source.tracksAnalyzed || 0;
+    if (sourceKey === 'spotify') {
+      // Spotify section: Based on actual artists/tracks analyzed
+      const artistsAnalyzed = source.tracksAnalyzed || 0; // Using tracksAnalyzed as proxy
       confidence = source.confidence || 0;
-      isReal = tracksAnalyzed > 5 && confidence > 0.5 && !source.error;
+      
+      if (artistsAnalyzed >= 10 && confidence >= 0.8) {
+        isReal = true;
+        label = '✅ Real Data';
+      } else if (artistsAnalyzed >= 5) {
+        isReal = true;
+        label = `✅ Partial Data (${artistsAnalyzed} tracks)`;
+      } else if (artistsAnalyzed > 0) {
+        isReal = false;
+        label = `⚠️ Limited Data (${artistsAnalyzed} tracks)`;
+      } else {
+        isReal = false;
+        label = '⚠️ Fallback Data';
+      }
+      
+    } else if (sourceKey === 'soundstat') {
+      // Sound characteristics: Based on Essentia analysis
+      confidence = source.confidence || 0;
+      
+      if (tracksAnalyzed >= 10 && confidence >= 0.8) {
+        isReal = true;
+        label = '✅ Real Data';
+      } else if (tracksAnalyzed >= 5) {
+        isReal = true;
+        label = `✅ Partial Data (${tracksAnalyzed} tracks)`;
+      } else if (tracksAnalyzed > 0) {
+        isReal = false;
+        label = `⚠️ Limited Data (${tracksAnalyzed} tracks)`;
+      } else {
+        isReal = false;
+        label = '⚠️ Fallback Data';
+      }
+      
+    } else if (sourceKey === 'seasonal') {
+      // Seasonal vibes: Based on listening history analysis
+      confidence = source.confidence || 0;
+      
+      if (tracksAnalyzed >= 20 && confidence >= 0.7) {
+        isReal = true;
+        label = '✅ Real Data';
+      } else if (tracksAnalyzed >= 10) {
+        isReal = true;
+        label = `✅ Partial Data (${tracksAnalyzed} tracks)`;
+      } else if (tracksAnalyzed > 0) {
+        isReal = false;
+        label = `⚠️ Limited Data (${tracksAnalyzed} tracks)`;
+      } else {
+        isReal = false;
+        label = '⚠️ Fallback Data';
+      }
+      
     } else if (sourceKey === 'events') {
-      // For events: require actual events found and valid location
+      // Events: Based on actual events found
       const eventsFound = source.eventsFound || 0;
       isReal = eventsFound > 0 && !source.error && source.location !== 'Unknown';
-    } else {
-      // For other sources: trust the API but validate
-      isReal = (source.isReal || source.isRealData) && !source.error;
+      confidence = source.confidence || 0;
+      label = isReal ? '✅ Real Data' : '⚠️ Demo Data';
     }
     
-    // Enhanced tooltip content based on actual data quality and NEW INTEGRATIONS
+    // 🎯 ENHANCED TOOLTIP with completion percentage and confidence
     let tooltipContent = '';
     if (isReal) {
       if (sourceKey === 'events') {
-        // NEW: Enhanced events tooltip with integration details
+        // Events tooltip (preserved)
         const integrationDetails = [];
         if (source.musicApiIntegration) integrationDetails.push('Spotify/Apple Music');
         if (source.essentiaIntegration) integrationDetails.push('Essentia Audio Analysis');
         const integrations = integrationDetails.length > 0 ? `\nIntegrations: ${integrationDetails.join(', ')}` : '';
         
-        // Include enhancement stats if available
         let statsText = '';
         if (source.enhancementStats) {
           const stats = source.enhancementStats;
@@ -447,29 +497,36 @@ export default function EnhancedPersonalizedDashboard() {
           if (stats.averageBoost > 0) {
             statsText += `\nAvg Score Boost: +${stats.averageBoost.toFixed(1)} pts`;
           }
-          if (stats.failedEnhancements > 0) {
-            statsText += `\nFailed: ${stats.failedEnhancements}`;
-          }
         }
         
-        tooltipContent = `✅ Real Data${integrations}\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%\nScoring: Backend (no fallbacks)${source.enhanced ? '\nAPI: /api/events/enhanced' : '\nAPI: /api/events'}${statsText}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+        tooltipContent = `${label}${integrations}\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%${statsText}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
       } else {
-        const timePeriod = source.trackSelectionContext?.description || "recent tracks";
+        // Music data sections with detailed completion info
+        const completionPercent = tracksAnalyzed >= 10 ? 100 : Math.round((tracksAnalyzed / 10) * 100);
+        const confidencePercent = Math.round(confidence * 100);
+        
+        tooltipContent = `${label}\n${tracksAnalyzed} tracks analyzed\nCompletion: ${completionPercent}%\nConfidence: ${confidencePercent}%\nSource: ${source.source || 'spotify'}\nPeriod: ${source.timePeriod || 'recent'}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+        
+        // Add analysis method if available
         const analysisMethod = [];
         if (source.spotifyData) analysisMethod.push('Spotify API');
-        if (source.appleMusicData) analysisMethod.push('Apple Music');
         if (source.essentiaAnalysis) analysisMethod.push('Essentia Audio Features');
-        const methods = analysisMethod.length > 0 ? `\nAnalysis: ${analysisMethod.join(', ')}` : '';
-        
-        tooltipContent = `✅ Real Data${methods}\n${source.tracksAnalyzed || 0} tracks analyzed\nConfidence: ${Math.round(confidence * 100)}%\nSource: ${source.source || 'spotify'}\nPeriod: ${timePeriod}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+        if (analysisMethod.length > 0) {
+          tooltipContent += `\nAnalysis: ${analysisMethod.join(', ')}`;
+        }
       }
     } else {
-      const errorCode = source.error || 'LOW_QUALITY_DATA';
-      const fallbackReason = source.fallbackReason || 'Insufficient data for personalization';
+      // Fallback/demo data tooltip
+      const errorCode = source.error || 'INSUFFICIENT_DATA';
+      const fallbackReason = source.fallbackReason || 'Not enough tracks for reliable analysis';
+      
       if (sourceKey === 'events') {
-        tooltipContent = `⚠️ Demo Data\nReason: ${fallbackReason}\nTracks: ${source.tracksAnalyzed || 0}\nConfidence: ${Math.round(confidence * 100)}%\nUsing demonstration events\nNote: Frontend no longer uses 75% fallbacks`;
+        tooltipContent = `${label}\nReason: ${fallbackReason}\nUsing demonstration events\nNote: Real events require valid location and API access`;
       } else {
-        tooltipContent = `⚠️ Demo Data\nReason: ${fallbackReason}\nTracks: ${source.tracksAnalyzed || 0}\nConfidence: ${Math.round(confidence * 100)}%\nUsing genre-based estimates\nFallback: Enhanced estimation methods`;
+        const completionPercent = tracksAnalyzed > 0 ? Math.round((tracksAnalyzed / 10) * 100) : 0;
+        const confidencePercent = Math.round(confidence * 100);
+        
+        tooltipContent = `${label}\nReason: ${fallbackReason}\nTracks analyzed: ${tracksAnalyzed}\nCompletion: ${completionPercent}%\nConfidence: ${confidencePercent}%\nUsing genre-based estimates\nNote: Need 10+ tracks for reliable analysis`;
       }
     }
 
@@ -481,7 +538,7 @@ export default function EnhancedPersonalizedDashboard() {
         onMouseMove={handleMouseMove}
         data-tooltip={tooltipContent}
       >
-        {isReal ? '✅ Real Data' : '⚠️ Demo Data'}
+        {label}
       </div>
     );
   }, [dataSources]);
