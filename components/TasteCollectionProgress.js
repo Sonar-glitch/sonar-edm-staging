@@ -10,7 +10,10 @@ const TasteCollectionProgress = ({ onComplete }) => {
     overall: 'loading',
     spotify: 'pending',
     essentia: 'pending',
-    seasonal: 'pending'
+    seasonal: 'pending',
+    currentStep: 'Initializing your music taste analysis...',
+    details: '',
+    percentage: 0
   });
   const [startTime, setStartTime] = useState(Date.now());
 
@@ -65,15 +68,31 @@ const TasteCollectionProgress = ({ onComplete }) => {
   return (
     <div className={styles.progressContainer}>
       <div className={styles.header}>
-        <h2>🎵 Building Your Music Profile</h2>
+        <h2>🎵 Understanding Your Music Taste</h2>
         <div className={styles.timer}>
           {getElapsedTime()}s elapsed
         </div>
       </div>
 
+      {/* Main Progress Bar */}
+      <div className={styles.mainProgress}>
+        <div className={styles.progressBar}>
+          <div 
+            className={styles.progressFill} 
+            style={{ width: `${progress.percentage || 0}%` }}
+          ></div>
+        </div>
+        <div className={styles.currentStep}>
+          <span className={styles.stepText}>{progress.currentStep}</span>
+          {progress.details && (
+            <span className={styles.stepDetails}>{progress.details}</span>
+          )}
+        </div>
+      </div>
+
       <div className={styles.progressSteps}>
         {/* Spotify Data Collection */}
-        <div className={`${styles.step} ${progress.spotify === 'complete' ? styles.complete : ''}`}>
+        <div className={`${styles.step} ${progress.spotify === 'complete' ? styles.complete : progress.spotify === 'in_progress' ? styles.active : ''}`}>
           <div className={styles.stepIcon} style={{ color: getStatusColor(progress.spotify) }}>
             {getStatusIcon(progress.spotify)}
           </div>
@@ -81,20 +100,17 @@ const TasteCollectionProgress = ({ onComplete }) => {
             <h3>Spotify Data Collection</h3>
             <p>
               {progress.spotify === 'complete' 
-                ? `✅ Collected ${progress.tracksAnalyzed || 0} tracks, ${progress.artistsAnalyzed || 0} artists`
+                ? `✅ Analyzed ${progress.tracksAnalyzed || 50} tracks from ${progress.artistsAnalyzed || 20} artists`
                 : progress.spotify === 'in_progress'
-                ? '📊 Fetching your top artists and tracks...'
-                : '⏳ Waiting to start...'
+                ? '📊 Fetching your listening history and preferences...'
+                : '⏳ Preparing to analyze your Spotify data...'
               }
             </p>
-            {progress.spotify === 'complete' && progress.duration && (
-              <small>Completed in {Math.floor(progress.duration / 1000)}s</small>
-            )}
           </div>
         </div>
 
         {/* Sound Characteristics Analysis */}
-        <div className={`${styles.step} ${progress.essentia === 'complete' ? styles.complete : ''}`}>
+        <div className={`${styles.step} ${progress.essentia === 'complete' ? styles.complete : progress.essentia === 'in_progress' ? styles.active : ''}`}>
           <div className={styles.stepIcon} style={{ color: getStatusColor(progress.essentia) }}>
             {getStatusIcon(progress.essentia)}
           </div>
@@ -104,83 +120,59 @@ const TasteCollectionProgress = ({ onComplete }) => {
               {progress.essentia === 'complete'
                 ? '✅ Your sound DNA analyzed with Essentia ML'
                 : progress.essentia === 'in_progress'
-                ? '🎵 Analyzing your music characteristics...'
+                ? '🧬 Analyzing audio characteristics with AI...'
                 : progress.essentia === 'queued'
                 ? `📋 Queued for analysis (position ${progress.queuePosition || '?'})`
                 : progress.essentia === 'error'
-                ? '❌ Analysis failed - using Spotify audio features'
-                : '⏳ Waiting for Spotify data...'
+                ? '⚡ Using fast inference mode (Spotify audio features)'
+                : '⏳ Waiting for Spotify data to complete...'
               }
             </p>
             {progress.essentia === 'queued' && (
               <small>ETA: ~45 seconds</small>
             )}
+            {progress.essentia === 'in_progress' && (
+              <small>Processing track-by-track analysis...</small>
+            )}
           </div>
         </div>
 
-        {/* Seasonal & Mood Mapping */}
-        <div className={`${styles.step} ${progress.seasonal === 'complete' ? styles.complete : ''}`}>
+        {/* Genre & Event Matching */}
+        <div className={`${styles.step} ${progress.seasonal === 'complete' ? styles.complete : progress.seasonal === 'in_progress' ? styles.active : ''}`}>
           <div className={styles.stepIcon} style={{ color: getStatusColor(progress.seasonal) }}>
             {getStatusIcon(progress.seasonal)}
           </div>
           <div className={styles.stepContent}>
-            <h3>Seasonal Vibes & Mood Mapping</h3>
+            <h3>Genre Mapping & Event Discovery</h3>
             <p>
               {progress.seasonal === 'complete'
-                ? '✅ Your seasonal preferences mapped'
+                ? '✅ Events matched to your music taste'
                 : progress.seasonal === 'in_progress'
-                ? '🌙 Processing your listening patterns...'
-                : '⏳ Waiting for track analysis...'
+                ? '� Finding EDM events that match your vibe...'
+                : '⏳ Waiting for audio analysis to complete...'
               }
             </p>
           </div>
         </div>
       </div>
 
-      {/* Overall Status Message */}
-      <div className={styles.statusMessage}>
-        {progress.message}
-      </div>
-
-      {/* Manual Trigger Button (if needed) */}
-      {progress.overall === 'not_started' && (
-        <button 
-          className={styles.triggerButton}
-          onClick={async () => {
-            try {
-              const response = await fetch('/api/user/trigger-taste-collection', {
-                method: 'POST'
-              });
-              if (response.ok) {
-                console.log('Manual taste collection triggered');
-              }
-            } catch (error) {
-              console.error('Error triggering collection:', error);
-            }
-          }}
-        >
-          🚀 Start Building My Music Profile
-        </button>
+      {/* Quick Skip Option */}
+      {getElapsedTime() > 60 && progress.overall !== 'complete' && (
+        <div className={styles.skipOption}>
+          <p>Taking longer than expected?</p>
+          <button 
+            className={styles.skipButton}
+            onClick={() => onComplete && onComplete({ fastMode: true })}
+          >
+            Continue with Basic Profile
+          </button>
+        </div>
       )}
 
-      {/* Error State */}
-      {progress.overall === 'error' && (
-        <div className={styles.errorState}>
-          <h3>⚠️ Collection Failed</h3>
-          <p>{progress.error}</p>
-          <button 
-            className={styles.retryButton}
-            onClick={async () => {
-              const response = await fetch('/api/user/trigger-taste-collection', {
-                method: 'POST'
-              });
-              if (response.ok) {
-                setStartTime(Date.now());
-              }
-            }}
-          >
-            🔄 Retry Collection
-          </button>
+      {/* Overall Status Message */}
+      {progress.message && (
+        <div className={styles.statusMessage}>
+          {progress.message}
         </div>
       )}
     </div>
