@@ -215,6 +215,41 @@ const MusicTastePage = () => {
     }
   };
 
+  // 🔄 REFRESH CACHE: Force refresh cached profile data for performance testing
+  const refreshCache = async () => {
+    if (!confirm('🔄 This will clear your cached data and force fresh collection from Spotify. Continue?')) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      console.log('🔄 Refreshing cache...');
+      
+      const response = await fetch('/api/user/refresh-cache', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Cache refreshed:', result);
+        alert('Cache refreshed! Fresh data will be loaded.');
+        
+        // Refresh page to load new data
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        console.error('❌ Cache refresh failed:', error);
+        alert(`Cache refresh failed: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('❌ Cache refresh error:', error);
+      alert('An error occurred during cache refresh');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Toast notification component with smooth transition
   const Toast = ({ show, message }) => {
     if (!show) return null;
@@ -2505,21 +2540,6 @@ const MusicTastePage = () => {
             flexWrap: 'wrap'
           }}>
             <button 
-              onClick={deleteProfile}
-              style={{
-                padding: '8px 16px',
-                background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}
-            >
-              🗑️ Delete Profile (Test New User)
-            </button>
-            <button 
               onClick={triggerManualCollection}
               style={{
                 padding: '8px 16px',
@@ -2541,8 +2561,8 @@ const MusicTastePage = () => {
             marginTop: '8px',
             lineHeight: '1.4'
           }}>
-            Delete Profile: Removes all user data to test first-time user flow<br/>
-            Manual Collection: Triggers taste collection process manually
+            Manual Collection: Triggers taste collection process manually<br/>
+            Note: Delete Profile and Refresh Cache are now available in the Profile button (top right)
           </p>
         </div>
         

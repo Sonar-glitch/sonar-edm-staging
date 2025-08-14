@@ -1,6 +1,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import styles from '../styles/Layout.module.css';
+import UserProfileButton from './UserProfileButton';
 
 export default function Layout({ children, type = 'user' }) {
   const { data: session, status } = useSession();
@@ -92,12 +93,7 @@ export default function Layout({ children, type = 'user' }) {
           
           {session && (
             <div className={styles.userControls}>
-              <button 
-                onClick={() => signOut({ callbackUrl: '/' })}
-                className={styles.signOutButtonSmall}
-              >
-                Sign Out
-              </button>
+              <UserProfileButton />
             </div>
           )}
         </header>

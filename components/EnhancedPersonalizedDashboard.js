@@ -230,18 +230,26 @@ export default function EnhancedPersonalizedDashboard() {
     }));
   };
 
-  // ENHANCED: Load dashboard data with comprehensive data source tracking
+  // ⚡ PERFORMANCE-OPTIMIZED: Load dashboard data using cached profile
   const loadDashboardData = async () => {
     try {
       setLoading(true);
 
-      // Load enhanced taste profile
-      const tasteResponse = await fetch('/api/spotify/detailed-taste');
+      // 🚀 FAST LOADING: Use cached profile data instead of live Spotify calls
+      const tasteResponse = await fetch('/api/user/cached-dashboard-data');
       if (!tasteResponse.ok) {
-        throw new Error(`Taste API error: ${tasteResponse.status}`);
+        throw new Error(`Cached dashboard API error: ${tasteResponse.status}`);
       }
 
       const tasteData = await tasteResponse.json();
+      
+      // Handle onboarding redirect case
+      if (tasteData.needsOnboarding) {
+        console.log('🔄 User needs onboarding, redirecting...');
+        // Keep current behavior - let parent component handle
+        setLoading(false);
+        return;
+      }
       setDashboardData(tasteData);
 
       // 🎯 FIXED: Properly check for real vs demo data based on API response
@@ -271,7 +279,8 @@ export default function EnhancedPersonalizedDashboard() {
       };
 
       try {
-        const eventsResponse = await fetch('/api/events/enhanced?limit=20');
+        // 🚀 PERFORMANCE: Use cached events API for fast loading
+        const eventsResponse = await fetch('/api/events/cached-enhanced');
         if (eventsResponse.ok) {
           eventsData = await eventsResponse.json();
           
