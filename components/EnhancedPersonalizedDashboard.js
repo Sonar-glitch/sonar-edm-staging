@@ -13,6 +13,7 @@ const CompactSeasonalVibes = dynamic(() => import('./CompactSeasonalVibes'), { s
 const SoundCharacteristics = dynamic(() => import('./SoundCharacteristics'), { ssr: false });
 const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: false });
 const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'), { ssr: false });
+const TasteCollectionProgress = dynamic(() => import('./TasteCollectionProgress'), { ssr: false });
 
 export default function EnhancedPersonalizedDashboard() {
   const { data: session, status } = useSession();
@@ -519,25 +520,16 @@ export default function EnhancedPersonalizedDashboard() {
     };
   }, [weeklyDeltas]);
 
-  // 🎵 NEW: Animated "Understanding your music taste" loader for first login
-  const TasteCollectionLoader = () => (
-    <div className={styles.container}>
-      <div className={styles.tasteCollectionLoader}>
-        <div className={styles.musicNotesAnimation}>
-          <span className={styles.note}>🎵</span>
-          <span className={styles.note}>🎶</span>
-          <span className={styles.note}>🎵</span>
-        </div>
-        <h2 className={styles.loaderTitle}>Understanding your music taste</h2>
-        <div className={styles.progressDots}>
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        <p className={styles.loaderSubtext}>Analyzing your Spotify data and sound characteristics...</p>
-      </div>
-    </div>
-  );
+  // 🎵 NEW: Enhanced taste collection progress with detailed steps
+  const handleTasteCollectionComplete = (status) => {
+    console.log('🎵 Taste collection completed:', status);
+    setTasteCollectionStatus('completed');
+    
+    // Load dashboard data after taste collection
+    loadDashboardData();
+    loadWeeklyDeltas();
+    autoDetectLocation();
+  };
 
   // 🎵 NEW: Events loading component for when dashboard is ready but events are loading
   const EventsLoadingIndicator = () => (
@@ -554,9 +546,9 @@ export default function EnhancedPersonalizedDashboard() {
     </div>
   );
 
-  // 🎵 ENHANCED: First login - show taste collection loader
+  // 🎵 ENHANCED: First login - show detailed taste collection progress
   if (session && tasteCollectionStatus === 'collecting') {
-    return <TasteCollectionLoader />;
+    return <TasteCollectionProgress onComplete={handleTasteCollectionComplete} />;
   }
 
   if (loading) {
