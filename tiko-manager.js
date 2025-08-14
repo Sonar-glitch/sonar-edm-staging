@@ -15,13 +15,16 @@ class TikoManager {
   }
 
   async connect() {
+    // Force correct MongoDB URI
+    process.env.MONGODB_URI = 'mongodb+srv://furqanzemail:XJfBasTxNcle2CEs@sonaredm.g4cdx.mongodb.net/test?retryWrites=true&w=majority&appName=SonarEDM';
+    
     if (!process.env.MONGODB_URI) {
       throw new Error('MONGODB_URI environment variable not set');
     }
     
     this.mongoClient = new MongoClient(process.env.MONGODB_URI);
     await this.mongoClient.connect();
-    this.db = this.mongoClient.db(process.env.MONGODB_DB || 'test');
+    this.db = this.mongoClient.db('test'); // ✅ CORRECT: Using 'test' database as per project docs
     console.log(`✅ Connected to database: ${process.env.MONGODB_DB || 'test'}`);
   }
 

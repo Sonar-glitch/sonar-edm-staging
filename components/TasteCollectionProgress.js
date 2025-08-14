@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import styles from '../styles/TasteCollectionProgress.module.css';
 
-const TasteCollectionProgress = ({ onComplete }) => {
+const TasteCollectionProgress = ({ onComplete, onTimeout }) => {
   const [progress, setProgress] = useState({
     overall: 'loading',
     spotify: 'pending',
@@ -18,6 +18,14 @@ const TasteCollectionProgress = ({ onComplete }) => {
   const [startTime, setStartTime] = useState(Date.now());
 
   useEffect(() => {
+    // Timeout after 3 minutes - show dashboard with demo data
+    const timeoutTimer = setTimeout(() => {
+      console.log('🎵 Progress timed out after 3 minutes');
+      if (onTimeout) {
+        onTimeout();
+      }
+    }, 3 * 60 * 1000); // 3 minutes
+
     // Start polling for progress
     const pollInterval = setInterval(async () => {
       try {
@@ -29,16 +37,39 @@ const TasteCollectionProgress = ({ onComplete }) => {
           // Call onComplete when done
           if (data.status.overall === 'complete' && onComplete) {
             clearInterval(pollInterval);
+            clearTimeout(timeoutTimer);
             onComplete(data.status);
+          }
+        } else {
+          // If API fails, show basic profile after 30 seconds
+          if (getElapsedTime() > 30) {
+            console.log('🎵 API failed, showing basic profile');
+            clearInterval(pollInterval);
+            clearTimeout(timeoutTimer);
+            if (onComplete) {
+              onComplete({ fastMode: true, reason: 'api_error' });
+            }
           }
         }
       } catch (error) {
         console.error('Error polling progress:', error);
+        // If polling fails completely after 30 seconds, show basic profile
+        if (getElapsedTime() > 30) {
+          console.log('🎵 Polling failed, showing basic profile');
+          clearInterval(pollInterval);
+          clearTimeout(timeoutTimer);
+          if (onComplete) {
+            onComplete({ fastMode: true, reason: 'polling_error' });
+          }
+        }
       }
     }, 2000); // Poll every 2 seconds
 
-    return () => clearInterval(pollInterval);
-  }, [onComplete]);
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(timeoutTimer);
+    };
+  }, [onComplete, onTimeout]);
 
   const getElapsedTime = () => {
     return Math.floor((Date.now() - startTime) / 1000);
@@ -157,12 +188,12 @@ const TasteCollectionProgress = ({ onComplete }) => {
       </div>
 
       {/* Quick Skip Option */}
-      {getElapsedTime() > 60 && progress.overall !== 'complete' && (
+      {getElapsedTime() > 30 && progress.overall !== 'complete' && (
         <div className={styles.skipOption}>
           <p>Taking longer than expected?</p>
           <button 
             className={styles.skipButton}
-            onClick={() => onComplete && onComplete({ fastMode: true })}
+            onClick={() => onComplete && onComplete({ fastMode: true, reason: 'user_skip' })}
           >
             Continue with Basic Profile
           </button>

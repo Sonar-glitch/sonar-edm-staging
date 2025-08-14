@@ -1,8 +1,9 @@
-// pages/music-taste.js - VERIFIED FIXES: Hero background + API data + Hover + Info placement + Real Events
+// pages/music-taste.js - ENHANCED WITH FIRST-LOGIN PRIORITY SYSTEM
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '../components/AppLayout';
 import GenreTimelineModal from '../components/GenreTimelineModal';
+import TasteCollectionProgress from '../components/TasteCollectionProgress';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
 const MusicTastePage = () => {
@@ -11,6 +12,10 @@ const MusicTastePage = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // 🎵 NEW: Taste collection progress state
+  const [collectionProgress, setCollectionProgress] = useState(null);
+  const [showProgressLoader, setShowProgressLoader] = useState(false);
   
   // Interactive Genre Map state
   const [genreMapLevel, setGenreMapLevel] = useState(1);
@@ -48,6 +53,66 @@ const MusicTastePage = () => {
 
   // Recently Liked expand state
   const [showAllRecentlyLiked, setShowAllRecentlyLiked] = useState(false);
+
+  useEffect(() => {
+    if (session) {
+      // 🎵 NEW: Check taste collection progress first
+      checkTasteCollectionStatus();
+    }
+  }, [session]);
+
+  // 🎵 NEW: Check if taste collection is needed or in progress
+  const checkTasteCollectionStatus = async () => {
+    try {
+      const progressResponse = await fetch('/api/user/taste-collection-progress');
+      if (progressResponse.ok) {
+        const progressData = await progressResponse.json();
+        setCollectionProgress(progressData.status);
+        
+        // If collection is needed or in progress, show loader
+        if (progressData.status.overall === 'loading' || 
+            progressData.status.overall === 'not_started') {
+          setShowProgressLoader(true);
+          return; // Don't fetch data yet
+        }
+        
+        // If collection is complete, fetch the actual data
+        if (progressData.status.overall === 'complete') {
+          await fetchData();
+        }
+      } else {
+        // Fallback: fetch data normally
+        await fetchData();
+      }
+    } catch (error) {
+      console.error('Error checking taste collection status:', error);
+      // Fallback: fetch data normally
+      await fetchData();
+    }
+  };
+
+  // 🎵 NEW: Handle completion of taste collection
+  const handleCollectionComplete = async (finalStatus) => {
+    console.log('🎵 Taste collection completed:', finalStatus);
+    setShowProgressLoader(false);
+    await fetchData(); // Now fetch the completed data
+  };
+
+  // 🎵 ENHANCED: Trigger manual collection if needed
+  const triggerManualCollection = async () => {
+    try {
+      const response = await fetch('/api/user/trigger-taste-collection', {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        setShowProgressLoader(true);
+        console.log('✅ Manual taste collection triggered');
+      }
+    } catch (error) {
+      console.error('❌ Error triggering manual collection:', error);
+    }
+  };
 
   useEffect(() => {
     if (session) {
@@ -2283,7 +2348,18 @@ const MusicTastePage = () => {
     );
   };
 
-  // Loading state
+  // 🎵 NEW: Progressive loading state for taste collection
+  if (showProgressLoader) {
+    return (
+      <AppLayout>
+        <div className={styles.container}>
+          <TasteCollectionProgress onComplete={handleCollectionComplete} />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Loading state (fallback)
   if (loading) {
     return (
       <AppLayout>
@@ -2291,6 +2367,23 @@ const MusicTastePage = () => {
           <div className={styles.loadingContainer}>
             <div className={styles.loadingSpinner}></div>
             <p className={styles.loadingText}>Loading your music taste...</p>
+            
+            {/* Manual trigger button if automatic failed */}
+            <button 
+              onClick={triggerManualCollection}
+              className={styles.manualTriggerButton}
+              style={{
+                marginTop: '16px',
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              🚀 Start Building My Music Profile
+            </button>
           </div>
         </div>
       </AppLayout>

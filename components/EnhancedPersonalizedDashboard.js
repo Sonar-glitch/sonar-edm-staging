@@ -24,6 +24,7 @@ export default function EnhancedPersonalizedDashboard() {
   // 🎵 NEW: Taste collection and events loading states
   const [tasteCollectionStatus, setTasteCollectionStatus] = useState('checking');
   const [eventsLoadingStatus, setEventsLoadingStatus] = useState('pending');
+  const [isDemoMode, setIsDemoMode] = useState(false); // Track if using demo data
 
   // ENHANCED: Data source tracking with weekly deltas
   const [dataSources, setDataSources] = useState({
@@ -523,6 +524,27 @@ export default function EnhancedPersonalizedDashboard() {
   // 🎵 NEW: Enhanced taste collection progress with detailed steps
   const handleTasteCollectionComplete = (status) => {
     console.log('🎵 Taste collection completed:', status);
+    
+    // If user clicked "Continue with Basic Profile", immediately show dashboard
+    if (status?.fastMode) {
+      console.log('🎵 Fast mode activated - showing dashboard with demo data');
+      console.log('🎵 Note: Values shown are demo data, not your real taste profile');
+      setTasteCollectionStatus('completed');
+      setIsDemoMode(true); // Mark as demo mode
+      
+      // Clear any stale progress by calling a progress reset endpoint
+      fetch('/api/user/reset-taste-progress', { method: 'POST' })
+        .then(() => console.log('🎵 Progress reset for future sessions'))
+        .catch(err => console.warn('🎵 Progress reset failed:', err.message));
+      
+      // Load dashboard data immediately for fast mode
+      loadDashboardData();
+      loadWeeklyDeltas();
+      autoDetectLocation();
+      return;
+    }
+    
+    // Normal completion flow
     setTasteCollectionStatus('completed');
     
     // Load dashboard data after taste collection
@@ -548,7 +570,18 @@ export default function EnhancedPersonalizedDashboard() {
 
   // 🎵 ENHANCED: First login - show detailed taste collection progress
   if (session && tasteCollectionStatus === 'collecting') {
-    return <TasteCollectionProgress onComplete={handleTasteCollectionComplete} />;
+    return (
+      <TasteCollectionProgress 
+        onComplete={handleTasteCollectionComplete}
+        onTimeout={() => {
+          console.log('🎵 Progress timeout - showing dashboard with demo data');
+          setTasteCollectionStatus('completed');
+          loadDashboardData();
+          loadWeeklyDeltas();
+          autoDetectLocation();
+        }}
+      />
+    );
   }
 
   if (loading) {
@@ -588,6 +621,25 @@ export default function EnhancedPersonalizedDashboard() {
 
   return (
     <div className={styles.container}>
+      {/* 🎵 NEW: Demo Mode Notice */}
+      {isDemoMode && (
+        <div className={styles.demoModeNotice}>
+          <div className={styles.demoModeContent}>
+            <span className={styles.demoIcon}>⚠️</span>
+            <div className={styles.demoText}>
+              <strong>Demo Mode Active</strong>
+              <p>You're viewing sample data. For personalized results, refresh the page to complete your music taste analysis.</p>
+            </div>
+            <button 
+              className={styles.refreshButton}
+              onClick={() => window.location.reload()}
+            >
+              Refresh & Try Again
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className={styles.dashboard}>
         {/* ROW 1: TOP 5 GENRES + SEASONAL VIBES */}
         <div className={styles.row1}>

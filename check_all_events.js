@@ -7,7 +7,7 @@ async function checkEvents() {
     await client.connect();
     console.log('Connected successfully');
     
-    const db = client.db('tiko_development');
+    const db = client.db('test'); // ✅ CORRECT: Using 'test' database as per project docs
     
     // Get all events with scores
     const events = await db.collection('events_unified')

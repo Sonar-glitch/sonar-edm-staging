@@ -1,0 +1,167 @@
+/* styles/DashboardStatusIndicator.module.css */
+/* 📊 DASHBOARD STATUS INDICATOR STYLES */
+
+.statusContainer {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.statusHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.statusHeader h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.lastUpdate {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.statusItems {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.statusItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.statusItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.statusIcon {
+  font-size: 20px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.statusInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statusLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.statusValue {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.quickActions {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.actionButton {
+  width: 100%;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+
+/* Compact Status Styles */
+.compactStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.statusDot.ready {
+  background: #10b981;
+}
+
+.statusDot.loading {
+  background: #f59e0b;
+}
+
+.statusDot.error {
+  background: #ef4444;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.statusText {
+  font-size: 12px;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .statusContainer {
+    padding: 16px;
+  }
+  
+  .statusItem {
+    padding: 10px;
+  }
+  
+  .statusIcon {
+    font-size: 18px;
+  }
+  
+  .statusLabel {
+    font-size: 13px;
+  }
+  
+  .statusValue {
+    font-size: 11px;
+  }
+}

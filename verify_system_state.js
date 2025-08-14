@@ -7,7 +7,7 @@ async function verifySystem() {
     
     const client = new MongoClient(process.env.MONGODB_URI || 'mongodb+srv://sonar:NqcOhA0K4YMI0uOm@cluster0.3zn5s.mongodb.net');
     await client.connect();
-    const db = client.db('tiko_development');
+    const db = client.db('test'); // ✅ CORRECT: Using 'test' database as per project docs
     
     // 1. Check collections
     console.log('=== DATABASE COLLECTIONS ===');
