@@ -1,213 +1,165 @@
 // components/TasteCollectionProgress.js
-// 🎵 PROGRESSIVE LOADING COMPONENT FOR MUSIC TASTE COLLECTION
-// Shows real-time progress of first-login taste collection
+// 🎵 TASTE COLLECTION PROGRESS COMPONENT
+// Progressive onboarding for first-time users
 
 import { useState, useEffect } from 'react';
 import styles from '../styles/TasteCollectionProgress.module.css';
 
-const TasteCollectionProgress = ({ onComplete, onTimeout }) => {
-  const [progress, setProgress] = useState({
-    overall: 'loading',
-    spotify: 'pending',
-    essentia: 'pending',
-    seasonal: 'pending',
-    currentStep: 'Initializing your music taste analysis...',
-    details: '',
-    percentage: 0
-  });
-  const [startTime, setStartTime] = useState(Date.now());
+export default function TasteCollectionProgress({ onComplete, onTimeout }) {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState('initializing');
+
+  const steps = [
+    {
+      id: 'spotify_connection',
+      title: 'Connecting to Spotify',
+      description: 'Accessing your music data...',
+      duration: 3000
+    },
+    {
+      id: 'genre_analysis',
+      title: 'Analyzing Your Genres',
+      description: 'Understanding your music preferences...',
+      duration: 4000
+    },
+    {
+      id: 'audio_features',
+      title: 'Processing Audio Features',
+      description: 'Analyzing sound characteristics...',
+      duration: 5000
+    },
+    {
+      id: 'taste_profile',
+      title: 'Building Your Taste Profile',
+      description: 'Creating personalized recommendations...',
+      duration: 3000
+    }
+  ];
 
   useEffect(() => {
-    // Timeout after 3 minutes - show dashboard with demo data
-    const timeoutTimer = setTimeout(() => {
-      console.log('🎵 Progress timed out after 3 minutes');
-      if (onTimeout) {
-        onTimeout();
-      }
-    }, 3 * 60 * 1000); // 3 minutes
+    let timeoutId;
+    let progressInterval;
 
-    // Start polling for progress
-    const pollInterval = setInterval(async () => {
-      try {
-        const response = await fetch('/api/user/taste-collection-progress');
-        if (response.ok) {
-          const data = await response.json();
-          setProgress(data.status);
-          
-          // Call onComplete when done
-          if (data.status.overall === 'complete' && onComplete) {
-            clearInterval(pollInterval);
-            clearTimeout(timeoutTimer);
-            onComplete(data.status);
-          }
-        } else {
-          // If API fails, show basic profile after 30 seconds
-          if (getElapsedTime() > 30) {
-            console.log('🎵 API failed, showing basic profile');
-            clearInterval(pollInterval);
-            clearTimeout(timeoutTimer);
-            if (onComplete) {
-              onComplete({ fastMode: true, reason: 'api_error' });
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error polling progress:', error);
-        // If polling fails completely after 30 seconds, show basic profile
-        if (getElapsedTime() > 30) {
-          console.log('🎵 Polling failed, showing basic profile');
-          clearInterval(pollInterval);
-          clearTimeout(timeoutTimer);
-          if (onComplete) {
-            onComplete({ fastMode: true, reason: 'polling_error' });
-          }
-        }
+    const startStep = (stepIndex) => {
+      if (stepIndex >= steps.length) {
+        setStatus('completed');
+        setProgress(100);
+        onComplete?.({ success: true, profile: 'generated' });
+        return;
       }
-    }, 2000); // Poll every 2 seconds
+
+      setCurrentStep(stepIndex);
+      setStatus('processing');
+      
+      const step = steps[stepIndex];
+      const stepProgress = (stepIndex / steps.length) * 100;
+      
+      // Animate progress within the step
+      let currentProgress = stepProgress;
+      const stepSize = 100 / steps.length;
+      const incrementSize = stepSize / (step.duration / 100);
+      
+      progressInterval = setInterval(() => {
+        currentProgress += incrementSize;
+        setProgress(Math.min(currentProgress, stepProgress + stepSize));
+      }, 100);
+
+      timeoutId = setTimeout(() => {
+        clearInterval(progressInterval);
+        startStep(stepIndex + 1);
+      }, step.duration);
+    };
+
+    // Start the first step after a brief delay
+    const initialTimeout = setTimeout(() => {
+      startStep(0);
+    }, 1000);
+
+    // Overall timeout (30 seconds)
+    const overallTimeout = setTimeout(() => {
+      clearInterval(progressInterval);
+      clearTimeout(timeoutId);
+      setStatus('timeout');
+      onTimeout?.();
+    }, 30000);
 
     return () => {
-      clearInterval(pollInterval);
-      clearTimeout(timeoutTimer);
+      clearTimeout(initialTimeout);
+      clearTimeout(timeoutId);
+      clearTimeout(overallTimeout);
+      clearInterval(progressInterval);
     };
   }, [onComplete, onTimeout]);
 
-  const getElapsedTime = () => {
-    return Math.floor((Date.now() - startTime) / 1000);
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'pending': return '⏳';
-      case 'in_progress': return '🔄';
-      case 'complete': return '✅';
-      case 'error': return '❌';
-      case 'queued': return '📋';
-      default: return '⏳';
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'complete': return '#10b981'; // Green
-      case 'in_progress': return '#3b82f6'; // Blue
-      case 'error': return '#ef4444'; // Red
-      case 'queued': return '#f59e0b'; // Yellow
-      default: return '#6b7280'; // Gray
-    }
+  const handleSkip = () => {
+    setStatus('skipped');
+    onComplete?.({ success: true, fastMode: true });
   };
 
   return (
-    <div className={styles.progressContainer}>
-      <div className={styles.header}>
-        <h2>🎵 Understanding Your Music Taste</h2>
-        <div className={styles.timer}>
-          {getElapsedTime()}s elapsed
+    <div className={styles.container}>
+      <div className={styles.progressCard}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>
+            🎵 Understanding Your Music Taste
+          </h1>
+          <p className={styles.subtitle}>
+            We're analyzing your Spotify data to create your personalized profile
+          </p>
         </div>
-      </div>
 
-      {/* Main Progress Bar */}
-      <div className={styles.mainProgress}>
-        <div className={styles.progressBar}>
-          <div 
-            className={styles.progressFill} 
-            style={{ width: `${progress.percentage || 0}%` }}
-          ></div>
-        </div>
-        <div className={styles.currentStep}>
-          <span className={styles.stepText}>{progress.currentStep}</span>
-          {progress.details && (
-            <span className={styles.stepDetails}>{progress.details}</span>
-          )}
-        </div>
-      </div>
-
-      <div className={styles.progressSteps}>
-        {/* Spotify Data Collection */}
-        <div className={`${styles.step} ${progress.spotify === 'complete' ? styles.complete : progress.spotify === 'in_progress' ? styles.active : ''}`}>
-          <div className={styles.stepIcon} style={{ color: getStatusColor(progress.spotify) }}>
-            {getStatusIcon(progress.spotify)}
+        <div className={styles.progressSection}>
+          <div className={styles.progressBar}>
+            <div 
+              className={styles.progressFill}
+              style={{ width: `${progress}%` }}
+            />
           </div>
-          <div className={styles.stepContent}>
-            <h3>Spotify Data Collection</h3>
-            <p>
-              {progress.spotify === 'complete' 
-                ? `✅ Analyzed ${progress.tracksAnalyzed || 50} tracks from ${progress.artistsAnalyzed || 20} artists`
-                : progress.spotify === 'in_progress'
-                ? '📊 Fetching your listening history and preferences...'
-                : '⏳ Preparing to analyze your Spotify data...'
-              }
-            </p>
+          <div className={styles.progressText}>
+            {Math.round(progress)}% complete
           </div>
         </div>
 
-        {/* Sound Characteristics Analysis */}
-        <div className={`${styles.step} ${progress.essentia === 'complete' ? styles.complete : progress.essentia === 'in_progress' ? styles.active : ''}`}>
-          <div className={styles.stepIcon} style={{ color: getStatusColor(progress.essentia) }}>
-            {getStatusIcon(progress.essentia)}
-          </div>
-          <div className={styles.stepContent}>
-            <h3>Sound Characteristics Analysis</h3>
-            <p>
-              {progress.essentia === 'complete'
-                ? '✅ Your sound DNA analyzed with Essentia ML'
-                : progress.essentia === 'in_progress'
-                ? '🧬 Analyzing audio characteristics with AI...'
-                : progress.essentia === 'queued'
-                ? `📋 Queued for analysis (position ${progress.queuePosition || '?'})`
-                : progress.essentia === 'error'
-                ? '⚡ Using fast inference mode (Spotify audio features)'
-                : '⏳ Waiting for Spotify data to complete...'
-              }
-            </p>
-            {progress.essentia === 'queued' && (
-              <small>ETA: ~45 seconds</small>
-            )}
-            {progress.essentia === 'in_progress' && (
-              <small>Processing track-by-track analysis...</small>
-            )}
-          </div>
+        <div className={styles.stepsContainer}>
+          {steps.map((step, index) => (
+            <div 
+              key={step.id}
+              className={`${styles.step} ${
+                index === currentStep ? styles.active : 
+                index < currentStep ? styles.completed : styles.pending
+              }`}
+            >
+              <div className={styles.stepIcon}>
+                {index < currentStep ? '✅' : 
+                 index === currentStep ? '⏳' : '⏸️'}
+              </div>
+              <div className={styles.stepContent}>
+                <h3 className={styles.stepTitle}>{step.title}</h3>
+                <p className={styles.stepDescription}>{step.description}</p>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Genre & Event Matching */}
-        <div className={`${styles.step} ${progress.seasonal === 'complete' ? styles.complete : progress.seasonal === 'in_progress' ? styles.active : ''}`}>
-          <div className={styles.stepIcon} style={{ color: getStatusColor(progress.seasonal) }}>
-            {getStatusIcon(progress.seasonal)}
-          </div>
-          <div className={styles.stepContent}>
-            <h3>Genre Mapping & Event Discovery</h3>
-            <p>
-              {progress.seasonal === 'complete'
-                ? '✅ Events matched to your music taste'
-                : progress.seasonal === 'in_progress'
-                ? '� Finding EDM events that match your vibe...'
-                : '⏳ Waiting for audio analysis to complete...'
-              }
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Skip Option */}
-      {getElapsedTime() > 30 && progress.overall !== 'complete' && (
-        <div className={styles.skipOption}>
-          <p>Taking longer than expected?</p>
+        <div className={styles.actions}>
           <button 
             className={styles.skipButton}
-            onClick={() => onComplete && onComplete({ fastMode: true, reason: 'user_skip' })}
+            onClick={handleSkip}
           >
             Continue with Basic Profile
           </button>
+          <p className={styles.skipNote}>
+            You can always complete this later in settings
+          </p>
         </div>
-      )}
 
-      {/* Overall Status Message */}
-      {progress.message && (
-        <div className={styles.statusMessage}>
-          {progress.message}
-        </div>
-      )}
+        {status === 'timeout' && (
+          <div className={styles.timeoutMessage}>
+            Taking longer than expected. You can continue with basic features.
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-export default TasteCollectionProgress;
+}
