@@ -1,6 +1,7 @@
 // PRESERVES: All existing functionality and UI theme
 // ADDS: Custom themed tooltips, weekly delta indicators, comprehensive data source info
 // REMOVES: Redundant red section as requested
+// FIXED: React #130 error - UserProfileButton properly imported
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
