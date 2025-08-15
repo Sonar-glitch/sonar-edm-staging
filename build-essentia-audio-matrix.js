@@ -185,22 +185,6 @@ async function buildEssentiaAudioProfileMatrix() {
       } else {
         failed++;
         console.log(`   ❌ Failed: ${audioProfile.error}`);
-        
-        // Show detailed failure information if available
-        if (audioProfile.detailedError) {
-          console.log(`      📋 Details: ${audioProfile.detailedError}`);
-        }
-        
-        // Show what was attempted
-        if (audioProfile.failureAnalysis) {
-          const analysis = audioProfile.failureAnalysis;
-          console.log(`      🔍 Analysis:`);
-          console.log(`         Spotify: ${analysis.spotifySearch === 'attempted' ? '✅ Attempted' : '❌ No credentials'}`);
-          console.log(`         Apple: ✅ Attempted`);
-          console.log(`         Tracks found: ${analysis.tracksFound || 0}`);
-          console.log(`         Genres available: ${analysis.genresAvailable || 0}`);
-          console.log(`         Alternative sources: ${analysis.alternativeSourcesAttempted ? '✅ Attempted' : '❌ Skipped'}`);
-        }
       }
       
     } catch (error) {

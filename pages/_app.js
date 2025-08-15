@@ -24,7 +24,7 @@ function Auth({ children, requiredAuth }) {
 
     // If user is logged in and on the root path, redirect to dashboard
     if (isUser && currentPath === "/") {
-      router.push("/dashboard");
+      router.push("/users/dashboard");
       return;
     }
 

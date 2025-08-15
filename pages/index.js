@@ -10,7 +10,7 @@ export default function Home() {
   useEffect(() => {
     // If user is logged in, redirect to dashboard
     if (session) {
-      router.push("/dashboard");
+      router.push("/users/dashboard");
     }
   }, [session, router]);
 
@@ -19,7 +19,7 @@ export default function Home() {
     try {
       console.log("Attempting Spotify login...");
       await signIn("spotify", { 
-        callbackUrl: "/dashboard",
+        callbackUrl: "/users/dashboard",
         redirect: true 
       });
     } catch (error) {

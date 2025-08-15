@@ -1,8 +1,8 @@
-// pages/music-taste.js - ENHANCED WITH FIRST-LOGIN PRIORITY SYSTEM
+// pages/music-taste.js - VERIFIED FIXES: Hero background + API data + Hover + Info placement + Real Events
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import AppLayout from '../components/AppLayout';
 import GenreTimelineModal from '../components/GenreTimelineModal';
-import ConfidenceIndicator from '../components/ConfidenceIndicator';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
 const MusicTastePage = () => {
@@ -147,105 +147,6 @@ const MusicTastePage = () => {
       console.error('Error saving preferences:', error);
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  // 🔧 MISSING FUNCTION: Manual taste collection trigger
-  const triggerManualCollection = async () => {
-    try {
-      setLoading(true);
-      console.log('🎵 Triggering manual taste collection...');
-      
-      const response = await fetch('/api/user/real-taste-collection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Manual collection completed:', result);
-        // Refresh the data
-        await fetchData();
-      } else {
-        const error = await response.json();
-        console.error('❌ Manual collection failed:', error);
-        alert(`Collection failed: ${error.message}`);
-      }
-    } catch (error) {
-      console.error('❌ Manual collection error:', error);
-      alert('An error occurred during collection');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🗑️ DELETE PROFILE: For testing new vs returning user experience
-  const deleteProfile = async () => {
-    if (!confirm('⚠️ WARNING: This will delete your profile and all data. You will become a new user. Continue?')) {
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      console.log('🗑️ Deleting user profile...');
-      
-      const response = await fetch('/api/user/delete-account', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Profile deleted:', result);
-        alert('Profile deleted successfully! You are now a new user.');
-        
-        // Refresh page to reset state
-        window.location.reload();
-      } else {
-        const error = await response.json();
-        console.error('❌ Delete failed:', error);
-        alert(`Delete failed: ${error.message}`);
-      }
-    } catch (error) {
-      console.error('❌ Delete error:', error);
-      alert('An error occurred during deletion');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🔄 REFRESH CACHE: Force refresh cached profile data for performance testing
-  const refreshCache = async () => {
-    if (!confirm('🔄 This will clear your cached data and force fresh collection from Spotify. Continue?')) {
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      console.log('🔄 Refreshing cache...');
-      
-      const response = await fetch('/api/user/refresh-cache', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Cache refreshed:', result);
-        alert('Cache refreshed! Fresh data will be loaded.');
-        
-        // Refresh page to load new data
-        window.location.reload();
-      } else {
-        const error = await response.json();
-        console.error('❌ Cache refresh failed:', error);
-        alert(`Cache refresh failed: ${error.message}`);
-      }
-    } catch (error) {
-      console.error('❌ Cache refresh error:', error);
-      alert('An error occurred during cache refresh');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -2382,91 +2283,42 @@ const MusicTastePage = () => {
     );
   };
 
-  // 🔐 Authentication check - Music Taste page should NEVER show first-login onboarding
-  if (!session) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loadingContainer}>
-          <h2 className={styles.loadingText}>Sign in to view your music taste</h2>
-          <p style={{ color: '#888', marginBottom: '20px' }}>
-            Connect your Spotify account to discover your unique music profile
-          </p>
-          <button 
-              onClick={() => window.location.href = '/api/auth/signin'}
-              className={styles.manualTriggerButton}
-              style={{
-                padding: '12px 24px',
-                background: 'linear-gradient(135deg, #1db954 0%, #1ed760 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '16px'
-              }}
-            >
-              🎵 Sign in with Spotify
-            </button>
-          </div>
-        </div>
-    );
-  }
-
   // Loading state
   if (loading) {
     return (
-      <div className={styles.container}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner}></div>
-          <p className={styles.loadingText}>Loading your music taste...</p>
-          
-          {/* Manual trigger button if automatic failed */}
-          <button 
-            onClick={triggerManualCollection}
-              className={styles.manualTriggerButton}
-              style={{
-                marginTop: '16px',
-                padding: '12px 24px',
-                background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer'
-              }}
-            >
-              🚀 Start Building My Music Profile
-            </button>
+      <AppLayout>
+        <div className={styles.container}>
+          <div className={styles.loadingContainer}>
+            <div className={styles.loadingSpinner}></div>
+            <p className={styles.loadingText}>Loading your music taste...</p>
           </div>
         </div>
+      </AppLayout>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <div className={styles.container}>
-        <div className={styles.errorContainer}>
-          <p className={styles.errorText}>Error loading music taste: {error}</p>
-          <button onClick={fetchData} className={styles.retryButton}>
-            Retry
-          </button>
+      <AppLayout>
+        <div className={styles.container}>
+          <div className={styles.errorContainer}>
+            <p className={styles.errorText}>Error loading music taste: {error}</p>
+            <button onClick={fetchData} className={styles.retryButton}>
+              Retry
+            </button>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   // Main render
   return (
-    <div className={styles.container}>
-      {/* Toast notification */}
-      <Toast show={showToast} message="✅ Preferences updated successfully!" />
-      
-      {/* Profile Confidence Indicator */}
-        {profileData?.confidence && (
-          <ConfidenceIndicator 
-            confidence={profileData.confidence}
-            profileType={profileData.profileType}
-          />
-        )}
+    <AppLayout>
+      <div className={styles.container}>
+        {/* Toast notification */}
+        <Toast show={showToast} message="✅ Preferences updated successfully!" />
         
         {/* GenreTimelineModal */}
         {showGenreModal && (
@@ -2509,54 +2361,6 @@ const MusicTastePage = () => {
           <EventsForYou profileData={profileData} />
           <TopTracks spotifyData={spotifyData} />
         </div>
-
-        {/* 🧪 TESTING SECTION: New vs Returning User Experience */}
-        <div style={{
-          marginTop: '24px',
-          padding: '16px',
-          backgroundColor: '#1f2937',
-          borderRadius: '12px',
-          border: '1px solid #374151'
-        }}>
-          <h3 style={{ 
-            color: '#f9fafb', 
-            marginBottom: '16px',
-            fontSize: '16px',
-            fontWeight: '600'
-          }}>
-            🧪 Testing Controls
-          </h3>
-          <div style={{ 
-            display: 'flex', 
-            gap: '12px',
-            flexWrap: 'wrap'
-          }}>
-            <button 
-              onClick={triggerManualCollection}
-              style={{
-                padding: '8px 16px',
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}
-            >
-              🔄 Trigger Manual Collection
-            </button>
-          </div>
-          <p style={{
-            color: '#9ca3af',
-            fontSize: '12px',
-            marginTop: '8px',
-            lineHeight: '1.4'
-          }}>
-            Manual Collection: Triggers taste collection process manually<br/>
-            Note: Delete Profile and Refresh Cache are now available in the Profile button (top right)
-          </p>
-        </div>
         
         {/* CSS media query for mobile responsiveness */}
         <style jsx>{`
@@ -2567,6 +2371,7 @@ const MusicTastePage = () => {
           }
         `}</style>
       </div>
+    </AppLayout>
   );
 };
 

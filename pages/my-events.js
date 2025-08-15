@@ -39,7 +39,7 @@ const MyEventsPage = () => {
               <div className={styles.emptyIcon}>💖</div>
               <h3>No saved events yet</h3>
               <p>Events you save will appear here.</p>
-              <Link href="/dashboard" className={styles.exploreButton}>Explore Events</Link>
+              <Link href="/users/dashboard" className={styles.exploreButton}>Explore Events</Link>
             </div>
           ) : (
             <div className={styles.eventsGrid}>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Treemap } from 'recharts';
+import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -63,15 +64,16 @@ const MusicTastePage = () => {
     fetchData();
   }, [session]);
 
-  if (loading) return <div className="text-center py-10">Loading your music DNA...</div>;
-  if (error) return <div className="text-center py-10 text-red-500">Error: {error}</div>;
-  if (!liveData) return <div className="text-center py-10">Could not load your music profile.</div>;
+  if (loading) return <Layout><div className="text-center py-10">Loading your music DNA...</div></Layout>;
+  if (error) return <Layout><div className="text-center py-10 text-red-500">Error: {error}</div></Layout>;
+  if (!liveData) return <Layout><div className="text-center py-10">Could not load your music profile.</div></Layout>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <header className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-white tracking-tight">Your Music DNA</h1>
-        <p className="text-lg text-gray-400 mt-2">An evolving snapshot of your unique sound.</p>
+    <Layout>
+      <div className="container mx-auto px-4 py-8">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-white tracking-tight">Your Music DNA</h1>
+          <p className="text-lg text-gray-400 mt-2">An evolving snapshot of your unique sound.</p>
         </header>
 
         <Tabs defaultValue="overview" className="w-full">
@@ -96,6 +98,7 @@ const MusicTastePage = () => {
           </TabsContent>
         </Tabs>
       </div>
+    </Layout>
   );
 };
 

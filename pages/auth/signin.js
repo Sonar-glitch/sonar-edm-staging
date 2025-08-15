@@ -30,7 +30,7 @@ export default function SignIn({ providers, csrfToken }) {
               <div key={provider.name}>
                 <button
                   className={styles.providerButton}
-                  onClick={() => signIn(provider.id, { callbackUrl: '/users/dashboard' })}
+                  onClick={() => signIn(provider.id, { callbackUrl: '/dashboard' })}
                 >
                   <span className={styles.providerIcon}>
                     {provider.name === "Spotify" ? "🎵" : "👤"}

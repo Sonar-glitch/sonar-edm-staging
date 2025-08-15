@@ -11,51 +11,6 @@
   position: relative; /* For tooltip positioning */
 }
 
-/* 🎵 TIKO HEADER */
-.header {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  margin-bottom: 24px;
-  padding: 0 16px;
-}
-
-.headerContent {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  max-width: 1200px;
-}
-
-.logoSection {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.logo {
-  font-size: 2.5rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #00CFFF 0%, #FF00CC 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0;
-  line-height: 1;
-}
-
-.tagline {
-  font-size: 0.9rem;
-  color: #888;
-  margin-top: 4px;
-}
-
-.profileSection {
-  display: flex;
-  align-items: center;
-}
-
 /* HEADER SECTION - SINGLE HEADER ONLY */
 .profileHeader {
   margin-bottom: 24px;

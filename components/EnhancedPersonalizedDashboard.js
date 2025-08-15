@@ -15,7 +15,6 @@ const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: fa
 const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'), { ssr: false });
 const TasteCollectionProgress = dynamic(() => import('./TasteCollectionProgress'), { ssr: false });
 const ConfidenceIndicator = dynamic(() => import('./ConfidenceIndicator'), { ssr: false });
-const UserProfileButton = dynamic(() => import('./UserProfileButton'), { ssr: false });
 
 export default function EnhancedPersonalizedDashboard() {
   const { data: session, status } = useSession();
@@ -231,26 +230,18 @@ export default function EnhancedPersonalizedDashboard() {
     }));
   };
 
-  // ⚡ PERFORMANCE-OPTIMIZED: Load dashboard data using cached profile
+  // ENHANCED: Load dashboard data with comprehensive data source tracking
   const loadDashboardData = async () => {
     try {
       setLoading(true);
 
-      // 🚀 FAST LOADING: Use cached profile data instead of live Spotify calls
-      const tasteResponse = await fetch('/api/user/cached-dashboard-data');
+      // Load enhanced taste profile
+      const tasteResponse = await fetch('/api/spotify/detailed-taste');
       if (!tasteResponse.ok) {
-        throw new Error(`Cached dashboard API error: ${tasteResponse.status}`);
+        throw new Error(`Taste API error: ${tasteResponse.status}`);
       }
 
       const tasteData = await tasteResponse.json();
-      
-      // Handle onboarding redirect case
-      if (tasteData.needsOnboarding) {
-        console.log('🔄 User needs onboarding, redirecting...');
-        // Keep current behavior - let parent component handle
-        setLoading(false);
-        return;
-      }
       setDashboardData(tasteData);
 
       // 🎯 FIXED: Properly check for real vs demo data based on API response
@@ -280,8 +271,7 @@ export default function EnhancedPersonalizedDashboard() {
       };
 
       try {
-        // 🚀 PERFORMANCE: Use cached events API for fast loading
-        const eventsResponse = await fetch('/api/events/cached-enhanced');
+        const eventsResponse = await fetch('/api/events/enhanced?limit=20');
         if (eventsResponse.ok) {
           eventsData = await eventsResponse.json();
           
@@ -814,19 +804,6 @@ export default function EnhancedPersonalizedDashboard() {
 
   return (
     <div className={styles.container}>
-      {/* 🎵 TIKO Header */}
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <div className={styles.logoSection}>
-            <h1 className={styles.logo}>TIKO</h1>
-            <span className={styles.tagline}>Your Music Universe</span>
-          </div>
-          <div className={styles.profileSection}>
-            <UserProfileButton />
-          </div>
-        </div>
-      </header>
-
       {/* 🎵 NEW: Demo Mode Notice */}
       {isDemoMode && (
         <div className={styles.demoModeNotice}>

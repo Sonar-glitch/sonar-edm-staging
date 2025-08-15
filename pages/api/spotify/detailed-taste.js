@@ -218,7 +218,6 @@ export default async function handler(req, res) {
       genreProfileMetadata.isRealData = true;
       genreProfileMetadata.confidence = 1.0;
       genreProfileMetadata.source = 'user_database';
-      genreProfileMetadata.description = 'saved user profile data';
     } else if (apiCallsSuccessful.topArtists) {
       const genres = topArtistsResponse.value.items.flatMap(artist => artist.genres || []);
       const genreCounts = genres.reduce((acc, genre) => {
@@ -232,17 +231,13 @@ export default async function handler(req, res) {
           genreProfile[genre] = Math.round((genreCounts[genre] / maxCount) * 100);
         });
         
-        // 🎯 FIX: Fresh Spotify data IS real data for genre profile section
-        genreProfileMetadata.isRealData = true; // This section has real genre data from Spotify
+        genreProfileMetadata.isRealData = true;
         genreProfileMetadata.tracksAnalyzed = topTracksResponse.value?.items?.length || 0;
         genreProfileMetadata.artistsAnalyzed = topArtistsResponse.value?.items?.length || 0;
-        genreProfileMetadata.confidence = 0.8; // High confidence for fresh Spotify data
-        genreProfileMetadata.source = 'spotify_api_fresh';
-        genreProfileMetadata.description = 'fresh Spotify genre data (being processed)';
+        genreProfileMetadata.confidence = 1.0;
       }
     } else {
       genreProfileMetadata.error = 'SPOTIFY_API_ERROR';
-      genreProfileMetadata.description = 'unable to fetch genre data';
     }
     
     // ENHANCED: Enhanced Audio Analysis integration with method breakdown
