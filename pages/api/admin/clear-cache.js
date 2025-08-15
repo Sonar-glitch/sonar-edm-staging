@@ -1,4 +1,4 @@
-import { getCachedData, setCachedData, clearCache } from '../../../lib/cache';
+import { getCachedData, setCachedData, clearAllCache } from '../../../lib/cache';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
 
     // Clear cache for this city
     const cacheKey = `events_${city}_${lat}_${lon}_${radius}`;
-    await clearCache(cacheKey, 'EVENTS');
+    await clearAllCache();
     
     console.log(`🗑️ Cache cleared for ${city} (${lat}, ${lon})`);
     
