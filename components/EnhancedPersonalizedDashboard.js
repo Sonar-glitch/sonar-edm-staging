@@ -370,7 +370,7 @@ export default function EnhancedPersonalizedDashboard() {
 
     } catch (err) {
       console.error('❌ Dashboard loading error:', err);
-      setError(err.message);
+      setError(err?.message || 'Failed to load dashboard data');
       // On error, definitely enable demo mode
       setIsDemoMode(true);
     } finally {
@@ -821,7 +821,7 @@ export default function EnhancedPersonalizedDashboard() {
       <div className={styles.container}>
         <div className={styles.errorState}>
           <h2>Unable to load dashboard</h2>
-          <p>{error}</p>
+          <p>{error || 'Unknown error occurred'}</p>
           <button onClick={loadDashboardData} className={styles.retryButton}>
             Try Again
           </button>
