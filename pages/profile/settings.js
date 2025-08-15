@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import Layout from '../../components/Layout';
 
 const ProfileSettingsPage = () => {
   const { data: session, status } = useSession();
@@ -75,10 +74,9 @@ const ProfileSettingsPage = () => {
   }
 
   return (
-    <Layout>
-      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-        <h1 style={{ color: '#fff', marginBottom: '30px', fontSize: '2em' }}>
-          ⚙️ Profile Settings
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+      <h1 style={{ color: '#fff', marginBottom: '30px', fontSize: '2em' }}>
+        ⚙️ Profile Settings
         </h1>
 
         {/* User Info Section */}
@@ -199,8 +197,9 @@ const ProfileSettingsPage = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
+};
 };
 
 export default ProfileSettingsPage;

@@ -1,7 +1,6 @@
 // pages/my-events.js - FINAL
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import AppLayout from '../components/AppLayout'; // USE SHARED LAYOUT
 import Link from 'next/link';
 import styles from '@/styles/MyEvents.module.css';
 
@@ -27,13 +26,12 @@ const MyEventsPage = () => {
   }, []);
 
   return (
-    <AppLayout>
-      <div className={styles.container}>
-        <div className={styles.mainContent}>
-          <div className={styles.eventsHeader}>
-            <h2 className={styles.sectionTitle}>My Saved Events</h2>
-            <span className={styles.dataIndicator}>{likedEvents.length} saved</span>
-          </div>
+    <div className={styles.container}>
+      <div className={styles.mainContent}>
+        <div className={styles.eventsHeader}>
+          <h2 className={styles.sectionTitle}>My Saved Events</h2>
+          <span className={styles.dataIndicator}>{likedEvents.length} saved</span>
+        </div>
           {loading ? (
             <div className={styles.loading}><div className={styles.spinner}></div></div>
           ) : likedEvents.length === 0 ? (
@@ -50,8 +48,8 @@ const MyEventsPage = () => {
           )}
         </div>
       </div>
-    </AppLayout>
   );
+};
 };
 
 MyEventsPage.auth = { requiredAuth: true };

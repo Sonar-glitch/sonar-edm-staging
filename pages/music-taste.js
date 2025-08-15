@@ -1,7 +1,6 @@
 // pages/music-taste.js - ENHANCED WITH FIRST-LOGIN PRIORITY SYSTEM
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import AppLayout from '../components/AppLayout';
 import GenreTimelineModal from '../components/GenreTimelineModal';
 import ConfidenceIndicator from '../components/ConfidenceIndicator';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
@@ -2463,12 +2462,11 @@ const MusicTastePage = () => {
 
   // Main render
   return (
-    <AppLayout>
-      <div className={styles.container}>
-        {/* Toast notification */}
-        <Toast show={showToast} message="✅ Preferences updated successfully!" />
-        
-        {/* Profile Confidence Indicator */}
+    <div className={styles.container}>
+      {/* Toast notification */}
+      <Toast show={showToast} message="✅ Preferences updated successfully!" />
+      
+      {/* Profile Confidence Indicator */}
         {profileData?.confidence && (
           <ConfidenceIndicator 
             confidence={profileData.confidence}
@@ -2575,8 +2573,8 @@ const MusicTastePage = () => {
           }
         `}</style>
       </div>
-    </AppLayout>
   );
+};
 };
 
 export default MusicTastePage;
