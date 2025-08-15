@@ -1,4 +1,8 @@
-// pages/my-events.js - FINAL
+/import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import Layout from '../components/Layout';
+import styles from '../styles/MyEvents.module.css';ges/my-events.js - FINAL
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -26,28 +30,30 @@ const MyEventsPage = () => {
   }, []);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.mainContent}>
-        <div className={styles.eventsHeader}>
-          <h2 className={styles.sectionTitle}>My Saved Events</h2>
-          <span className={styles.dataIndicator}>{likedEvents.length} saved</span>
+    <Layout>
+      <div className={styles.container}>
+        <div className={styles.mainContent}>
+          <div className={styles.eventsHeader}>
+            <h2 className={styles.sectionTitle}>My Saved Events</h2>
+            <span className={styles.dataIndicator}>{likedEvents.length} saved</span>
+          </div>
+            {loading ? (
+              <div className={styles.loading}><div className={styles.spinner}></div></div>
+            ) : likedEvents.length === 0 ? (
+              <div className={styles.noEvents}>
+                <div className={styles.emptyIcon}>💖</div>
+                <h3>No saved events yet</h3>
+                <p>Events you save will appear here.</p>
+                <Link href="/users/dashboard" className={styles.exploreButton}>Explore Events</Link>
+              </div>
+            ) : (
+              <div className={styles.eventsGrid}>
+                {/* Event mapping logic remains the same */}
+              </div>
+            )}
+          </div>
         </div>
-          {loading ? (
-            <div className={styles.loading}><div className={styles.spinner}></div></div>
-          ) : likedEvents.length === 0 ? (
-            <div className={styles.noEvents}>
-              <div className={styles.emptyIcon}>💖</div>
-              <h3>No saved events yet</h3>
-              <p>Events you save will appear here.</p>
-              <Link href="/users/dashboard" className={styles.exploreButton}>Explore Events</Link>
-            </div>
-          ) : (
-            <div className={styles.eventsGrid}>
-              {/* Event mapping logic remains the same */}
-            </div>
-          )}
-        </div>
-      </div>
+    </Layout>
   );
 };
 

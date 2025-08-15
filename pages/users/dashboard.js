@@ -1,6 +1,7 @@
 import { useSession, getSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
+import Layout from '../../components/Layout';
 import EnhancedPersonalizedDashboard from '../../components/EnhancedPersonalizedDashboard';
 
 export default function UserDashboard() {
@@ -31,7 +32,11 @@ export default function UserDashboard() {
     return null;
   }
 
-  return <EnhancedPersonalizedDashboard />;
+  return (
+    <Layout>
+      <EnhancedPersonalizedDashboard />
+    </Layout>
+  );
 }
 
 export async function getServerSideProps(context) {

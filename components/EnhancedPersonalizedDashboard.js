@@ -15,12 +15,18 @@ const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: fa
 const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'), { ssr: false });
 const TasteCollectionProgress = dynamic(() => import('./TasteCollectionProgress'), { ssr: false });
 const ConfidenceIndicator = dynamic(() => import('./ConfidenceIndicator'), { ssr: false });
+const UserProfileButton = dynamic(() => import('./UserProfileButton'), { ssr: false });
 
 export default function EnhancedPersonalizedDashboard() {
   const { data: session, status } = useSession();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // 🚀 CLIENT-SIDE CACHE: Prevent multiple API calls
+  const [dashboardCache, setDashboardCache] = useState(null);
+  const [cacheTimestamp, setCacheTimestamp] = useState(null);
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes client cache
 
   // 🎵 NEW: Taste collection and events loading states
   const [tasteCollectionStatus, setTasteCollectionStatus] = useState('checking');
@@ -67,6 +73,16 @@ export default function EnhancedPersonalizedDashboard() {
     // 🔐 SIMPLIFIED: Only check onboarding for authenticated users
     if (session) {
       console.log('🔐 User is authenticated:', session.user.email);
+      
+      // 🚀 CHECK CLIENT CACHE FIRST: Avoid unnecessary API calls
+      if (dashboardCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
+        console.log('⚡ Using client cache, skipping API calls');
+        setDashboardData(dashboardCache);
+        setLoading(false);
+        setTasteCollectionStatus('completed');
+        return;
+      }
+      
       checkTasteCollectionStatus();
     } else {
       console.log('🔐 User is NOT authenticated - showing sign-in prompt');
@@ -110,7 +126,7 @@ export default function EnhancedPersonalizedDashboard() {
           setEventsLoadingStatus('loaded');
         }
         
-        // Load dashboard data for returning users and unauthenticated users
+        // 🚀 SINGLE DATA LOAD: Load dashboard data only once
         await loadDashboardData();
         loadWeeklyDeltas();
         autoDetectLocation();
@@ -120,8 +136,7 @@ export default function EnhancedPersonalizedDashboard() {
         setTasteCollectionStatus('completed');
         setIsDemoMode(true); // Enable demo mode on API failure
         await loadDashboardData();
-        loadWeeklyDeltas();
-        autoDetectLocation();
+        // Remove duplicate calls - already handled in loadDashboardData()
       }
     } catch (error) {
       console.error('Error checking dashboard status:', error);
@@ -129,8 +144,7 @@ export default function EnhancedPersonalizedDashboard() {
       setTasteCollectionStatus('completed');
       setIsDemoMode(true); // Enable demo mode on error
       await loadDashboardData();
-      loadWeeklyDeltas();
-      autoDetectLocation();
+      // Remove duplicate calls - already handled in loadDashboardData()
     }
   };
 
@@ -230,19 +244,34 @@ export default function EnhancedPersonalizedDashboard() {
     }));
   };
 
-  // ENHANCED: Load dashboard data with comprehensive data source tracking
+  // ⚡ PERFORMANCE-OPTIMIZED: Load dashboard data using cached profile
   const loadDashboardData = async () => {
     try {
       setLoading(true);
 
-      // Load enhanced taste profile
-      const tasteResponse = await fetch('/api/spotify/detailed-taste');
+      console.log('🚀 Loading dashboard data...');
+
+      // 🚀 FAST LOADING: Use cached profile data instead of live Spotify calls
+      const tasteResponse = await fetch('/api/user/cached-dashboard-data');
       if (!tasteResponse.ok) {
-        throw new Error(`Taste API error: ${tasteResponse.status}`);
+        throw new Error(`Cached dashboard API error: ${tasteResponse.status}`);
       }
 
       const tasteData = await tasteResponse.json();
+      
+      // Handle onboarding redirect case
+      if (tasteData.needsOnboarding) {
+        console.log('🔄 User needs onboarding, redirecting...');
+        // Keep current behavior - let parent component handle
+        setLoading(false);
+        return;
+      }
+
+      // 🚀 UPDATE CLIENT CACHE: Store for future use
       setDashboardData(tasteData);
+      setDashboardCache(tasteData);
+      setCacheTimestamp(Date.now());
+      console.log('⚡ Dashboard data cached client-side');
 
       // 🎯 FIXED: Properly check for real vs demo data based on API response
       const isRealSpotifyData = tasteData.dataSources?.genreProfile?.isRealData === true;
@@ -271,7 +300,8 @@ export default function EnhancedPersonalizedDashboard() {
       };
 
       try {
-        const eventsResponse = await fetch('/api/events/enhanced?limit=20');
+        // 🚀 PERFORMANCE: Use cached events API for fast loading
+        const eventsResponse = await fetch('/api/events/cached-enhanced');
         if (eventsResponse.ok) {
           eventsData = await eventsResponse.json();
           
@@ -652,6 +682,10 @@ export default function EnhancedPersonalizedDashboard() {
         .then(() => console.log('🎵 Progress reset for future sessions'))
         .catch(err => console.warn('🎵 Progress reset failed:', err.message));
       
+      // 🚀 CLEAR CLIENT CACHE: Force refresh after taste collection
+      setDashboardCache(null);
+      setCacheTimestamp(null);
+      
       // Load dashboard data immediately for fast mode
       loadDashboardData();
       loadWeeklyDeltas();
@@ -661,6 +695,10 @@ export default function EnhancedPersonalizedDashboard() {
     
     // Normal completion flow
     setTasteCollectionStatus('completed');
+    
+    // 🚀 CLEAR CLIENT CACHE: Force refresh after taste collection
+    setDashboardCache(null);
+    setCacheTimestamp(null);
     
     // Load dashboard data after taste collection
     loadDashboardData();
@@ -804,6 +842,37 @@ export default function EnhancedPersonalizedDashboard() {
 
   return (
     <div className={styles.container}>
+      {/* 🎵 TIKO Header */}
+      <header className={styles.header}>
+        <div className={styles.headerContent}>
+          <div className={styles.logoSection}>
+            <h1 className={styles.logo}>TIKO</h1>
+            <span className={styles.tagline}>Your Music Universe</span>
+          </div>
+          <div className={styles.profileSection}>
+            <UserProfileButton />
+          </div>
+        </div>
+        
+        {/* 🎵 Navigation Tabs */}
+        <nav className={styles.navigation}>
+          <div className={styles.navTabs}>
+            <a href="/users/dashboard" className={styles.navTab + ' ' + styles.activeTab}>
+              🎵 Dashboard
+            </a>
+            <a href="/music-taste" className={styles.navTab}>
+              🎨 Music Taste
+            </a>
+            <a href="/my-events" className={styles.navTab}>
+              💖 Favorites
+            </a>
+            <a href="/users/profile" className={styles.navTab}>
+              👤 Profile
+            </a>
+          </div>
+        </nav>
+      </header>
+
       {/* 🎵 NEW: Demo Mode Notice */}
       {isDemoMode && (
         <div className={styles.demoModeNotice}>

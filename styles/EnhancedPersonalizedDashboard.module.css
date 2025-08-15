@@ -11,6 +11,103 @@
   position: relative; /* For tooltip positioning */
 }
 
+/* 🎵 TIKO HEADER */
+.header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 24px;
+  padding: 0 16px;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 16px;
+}
+
+.logoSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.logo {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00CFFF 0%, #FF00CC 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  line-height: 1;
+}
+
+.tagline {
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 4px;
+}
+
+.profileSection {
+  display: flex;
+  align-items: center;
+}
+
+/* 🎵 NAVIGATION TABS */
+.navigation {
+  width: 100%;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0;
+}
+
+.navTabs {
+  display: flex;
+  gap: 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.navTab {
+  padding: 12px 24px;
+  color: #888;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  border-bottom: 2px solid transparent;
+  position: relative;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navTab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.navTab.activeTab {
+  color: #FF00CC;
+  border-bottom-color: #FF00CC;
+  background: rgba(255, 0, 204, 0.1);
+}
+
+.navTab.activeTab:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(135deg, #00CFFF 0%, #FF00CC 100%);
+}
+
 /* HEADER SECTION - SINGLE HEADER ONLY */
 .profileHeader {
   margin-bottom: 24px;

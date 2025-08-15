@@ -1,20 +1,94 @@
+/* Layout.module.css */
 .container {
-  display: flex;
   min-height: 100vh;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+  color: #fff;
 }
 
-.sidebar {
-  width: 250px;
-  background-color: var(--bg-secondary);
+.header {
   display: flex;
-  flex-direction: column;
-  position: fixed;
-  height: 100vh;
-  z-index: 10;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: rgba(26, 26, 46, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: #fff;
+}
+
+.logoGradient {
+  background: linear-gradient(45deg, #00d4ff, #ff00ff, #ffff00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.headerNav {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.navTab {
+  color: #ccc;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
   transition: all 0.3s ease;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.navTab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navTab.active {
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.navTab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #00d4ff, #ff00ff);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+}
+
+.main {
+  padding: 0;
+  min-height: calc(100vh - 80px);
 }
 
 .sidebarHeader {
