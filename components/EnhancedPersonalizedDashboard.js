@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
+import ErrorBoundary from './ErrorBoundary';
 
 // Dynamic imports for components (PRESERVED)
 const Top5GenresSpiderChart = dynamic(() => import('./Top5GenresSpiderChart'), { ssr: false });
@@ -73,11 +74,16 @@ export default function EnhancedPersonalizedDashboard() {
   useEffect(() => {
     // 🔐 SIMPLIFIED: Only check onboarding for authenticated users
     if (session) {
-      console.log('🔐 User is authenticated:', session.user.email);
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔐 User is authenticated:', session.user.email);
+      }
       
       // 🚀 CHECK CLIENT CACHE FIRST: Avoid unnecessary API calls
       if (dashboardCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
-        console.log('⚡ Using client cache, skipping API calls');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⚡ Using client cache, skipping API calls');
+        }
         setDashboardData(dashboardCache);
         setLoading(false);
         setTasteCollectionStatus('completed');
@@ -86,7 +92,10 @@ export default function EnhancedPersonalizedDashboard() {
       
       checkTasteCollectionStatus();
     } else {
-      console.log('🔐 User is NOT authenticated - showing sign-in prompt');
+      // Only log in development  
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔐 User is NOT authenticated - showing sign-in prompt');
+      }
       // For unauthenticated users, don't load any data - just show sign-in
       setLoading(false);
       setTasteCollectionStatus('completed'); // Skip onboarding entirely
@@ -101,12 +110,16 @@ export default function EnhancedPersonalizedDashboard() {
         const data = await response.json();
         const status = data.status;
         
-        console.log('🎵 Dashboard status:', status);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎵 Dashboard status:', status);
+        }
         
         // 🎯 FIXED: Only redirect if user explicitly needs onboarding AND doesn't have any profile data
         // Prevent redirect loop by checking if we're already in demo mode or have shown onboarding
         if (status.showTasteLoader && status.isFirstLogin && !isDemoMode && !localStorage.getItem('onboarding_attempted')) {
+        if (process.env.NODE_ENV === 'development') {
           console.log('🔄 Redirecting first-time user to onboarding page');
+        }
           localStorage.setItem('onboarding_attempted', 'true');
           window.location.href = '/onboarding';
           return;
@@ -117,7 +130,9 @@ export default function EnhancedPersonalizedDashboard() {
         
         // If no real profile data exists, enable demo mode
         if (!status.userHasProfile || status.userType === 'guest') {
+        if (process.env.NODE_ENV === 'development') {
           console.log('🎭 No real profile data found, enabling demo mode');
+        }
           setIsDemoMode(true);
         }
         
@@ -250,7 +265,9 @@ export default function EnhancedPersonalizedDashboard() {
     try {
       setLoading(true);
 
-      console.log('🚀 Loading dashboard data...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 Loading dashboard data...');
+      }
 
       // 🚀 FAST LOADING: Use cached profile data instead of live Spotify calls
       const tasteResponse = await fetch('/api/user/cached-dashboard-data');
@@ -262,7 +279,9 @@ export default function EnhancedPersonalizedDashboard() {
       
       // Handle onboarding redirect case
       if (tasteData.needsOnboarding) {
-        console.log('🔄 User needs onboarding, redirecting...');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔄 User needs onboarding, redirecting...');
+        }
         // Keep current behavior - let parent component handle
         setLoading(false);
         return;
@@ -851,7 +870,9 @@ export default function EnhancedPersonalizedDashboard() {
             <span className={styles.tagline}>Your Music Universe</span>
           </div>
           <div className={styles.profileSection}>
-            <UserProfileButton />
+            <ErrorBoundary>
+              <UserProfileButton />
+            </ErrorBoundary>
           </div>
         </div>
         
