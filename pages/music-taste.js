@@ -1,7 +1,7 @@
 // pages/music-taste.js - VERIFIED FIXES: Hero background + API data + Hover + Info placement + Real Events
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import AppLayout from '../components/AppLayout';
+
 import GenreTimelineModal from '../components/GenreTimelineModal';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
 
@@ -2286,21 +2286,21 @@ const MusicTastePage = () => {
   // Loading state
   if (loading) {
     return (
-      <AppLayout>
+      
         <div className={styles.container}>
           <div className={styles.loadingContainer}>
             <div className={styles.loadingSpinner}></div>
             <p className={styles.loadingText}>Loading your music taste...</p>
           </div>
         </div>
-      </AppLayout>
+      
     );
   }
 
   // Error state
   if (error) {
     return (
-      <AppLayout>
+      
         <div className={styles.container}>
           <div className={styles.errorContainer}>
             <p className={styles.errorText}>Error loading music taste: {error}</p>
@@ -2309,13 +2309,13 @@ const MusicTastePage = () => {
             </button>
           </div>
         </div>
-      </AppLayout>
+      
     );
   }
 
   // Main render
   return (
-    <AppLayout>
+    
       <div className={styles.container}>
         {/* Toast notification */}
         <Toast show={showToast} message="✅ Preferences updated successfully!" />
@@ -2371,7 +2371,7 @@ const MusicTastePage = () => {
           }
         `}</style>
       </div>
-    </AppLayout>
+    
   );
 };
 
