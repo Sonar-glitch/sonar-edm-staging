@@ -1,8 +1,8 @@
-/import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Layout from '../components/Layout';
-import styles from '../styles/MyEvents.module.css';ges/my-events.js - FINAL
+import styles from '../styles/MyEvents.module.css';
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
