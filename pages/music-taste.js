@@ -2385,14 +2385,13 @@ const MusicTastePage = () => {
   // 🔐 Authentication check - Music Taste page should NEVER show first-login onboarding
   if (!session) {
     return (
-      <AppLayout>
-        <div className={styles.container}>
-          <div className={styles.loadingContainer}>
-            <h2 className={styles.loadingText}>Sign in to view your music taste</h2>
-            <p style={{ color: '#888', marginBottom: '20px' }}>
-              Connect your Spotify account to discover your unique music profile
-            </p>
-            <button 
+      <div className={styles.container}>
+        <div className={styles.loadingContainer}>
+          <h2 className={styles.loadingText}>Sign in to view your music taste</h2>
+          <p style={{ color: '#888', marginBottom: '20px' }}>
+            Connect your Spotify account to discover your unique music profile
+          </p>
+          <button 
               onClick={() => window.location.href = '/api/auth/signin'}
               className={styles.manualTriggerButton}
               style={{
@@ -2409,22 +2408,20 @@ const MusicTastePage = () => {
             </button>
           </div>
         </div>
-      </AppLayout>
     );
   }
 
   // Loading state
   if (loading) {
     return (
-      <AppLayout>
-        <div className={styles.container}>
-          <div className={styles.loadingContainer}>
-            <div className={styles.loadingSpinner}></div>
-            <p className={styles.loadingText}>Loading your music taste...</p>
-            
-            {/* Manual trigger button if automatic failed */}
-            <button 
-              onClick={triggerManualCollection}
+      <div className={styles.container}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.loadingSpinner}></div>
+          <p className={styles.loadingText}>Loading your music taste...</p>
+          
+          {/* Manual trigger button if automatic failed */}
+          <button 
+            onClick={triggerManualCollection}
               className={styles.manualTriggerButton}
               style={{
                 marginTop: '16px',
@@ -2440,23 +2437,20 @@ const MusicTastePage = () => {
             </button>
           </div>
         </div>
-      </AppLayout>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <AppLayout>
-        <div className={styles.container}>
-          <div className={styles.errorContainer}>
-            <p className={styles.errorText}>Error loading music taste: {error}</p>
-            <button onClick={fetchData} className={styles.retryButton}>
-              Retry
-            </button>
-          </div>
+      <div className={styles.container}>
+        <div className={styles.errorContainer}>
+          <p className={styles.errorText}>Error loading music taste: {error}</p>
+          <button onClick={fetchData} className={styles.retryButton}>
+            Retry
+          </button>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
