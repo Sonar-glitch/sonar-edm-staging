@@ -34,7 +34,7 @@ export default function OnboardingPage() {
         // If user already has a profile and it's not a retry, redirect to dashboard
         if (data.status.userHasProfile && !router.query.retry) {
           console.log('User already has profile, redirecting to dashboard');
-          router.push('/dashboard');
+          router.push('/users/dashboard');
         }
       }
     } catch (error) {
@@ -52,7 +52,7 @@ export default function OnboardingPage() {
         
         // Data is already saved by the real-taste-collection API
         // Just redirect to dashboard
-        router.push('/dashboard');
+        router.push('/users/dashboard');
       } else if (result.fallback || result.error) {
         // Collection failed or timed out, create minimal profile
         console.log('⚠️ Onboarding completed with fallback:', result);
@@ -75,20 +75,20 @@ export default function OnboardingPage() {
           console.error('❌ Failed to create fallback profile');
         }
         
-        router.push('/dashboard');
+        router.push('/users/dashboard');
       } else if (result.skipped) {
         // User skipped onboarding
         console.log('⏭️ User skipped onboarding');
-        router.push('/dashboard');
+        router.push('/users/dashboard');
       } else {
         // Unexpected result
         console.log('❓ Unexpected onboarding result:', result);
-        router.push('/dashboard');
+        router.push('/users/dashboard');
       }
     } catch (error) {
       console.error('❌ Error completing onboarding:', error);
       // Still redirect to dashboard to prevent being stuck
-      router.push('/dashboard');
+      router.push('/users/dashboard');
     } finally {
       setIsCompleting(false);
     }
@@ -96,7 +96,7 @@ export default function OnboardingPage() {
 
   const handleTimeout = () => {
     console.log('⏰ Onboarding timed out, redirecting to dashboard');
-    router.push('/dashboard');
+    router.push('/users/dashboard');
   };
 
   if (status === 'loading') {
@@ -140,7 +140,7 @@ export default function OnboardingPage() {
       <div className={styles.onboardingFooter}>
         <button 
           className={styles.skipButton}
-          onClick={() => router.push('/dashboard')}
+          onClick={() => router.push('/users/dashboard')}
         >
           Skip for now
         </button>

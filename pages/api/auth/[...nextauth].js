@@ -10,8 +10,7 @@ export const authOptions = {
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
       authorization: {
         params: {
-          scope: "user-read-email user-top-read user-read-recently-played user-read-private user-library-read",
-          prompt: "login" // Force fresh authentication every time
+          scope: "user-read-email user-top-read user-read-recently-played user-read-private user-library-read"
         }
       },
      
@@ -126,20 +125,11 @@ export const authOptions = {
         };
       }
       
-      // 🎵 Add taste collection status to session
-      try {
-        const { checkTasteRefreshNeeded } = require('../../../lib/firstLoginTasteCollector');
-        session.needsTasteRefresh = await checkTasteRefreshNeeded(session.user?.email);
-      } catch (error) {
-        console.error('Error checking taste refresh status:', error);
-        session.needsTasteRefresh = false;
-      }
-      
       return session;
     },
     async redirect({ url, baseUrl }) {
       // Always redirect to dashboard after login
-      return `${baseUrl}/dashboard`;
+      return `${baseUrl}/users/dashboard`;
     }
   },
   pages: {
@@ -154,31 +144,6 @@ export const authOptions = {
   events: {
     async signIn(message) {
       console.log("User signed in:", message.user.email);
-      
-      // 🎵 TRIGGER FIRST LOGIN TASTE COLLECTION
-      try {
-        const { triggerFirstLoginTasteCollection, isUserFirstLogin, checkTasteRefreshNeeded } = require('../../../lib/firstLoginTasteCollector');
-        
-        const isFirst = await isUserFirstLogin(message.user.email);
-        const needsRefresh = await checkTasteRefreshNeeded(message.user.email);
-        
-        if (isFirst || needsRefresh) {
-          console.log(`🚀 Triggering taste collection for ${message.user.email} - First login: ${isFirst}, Needs refresh: ${needsRefresh}`);
-          
-          // Queue immediate taste collection (non-blocking)
-          triggerFirstLoginTasteCollection(message.user, message.account, {
-            priority: isFirst ? 'highest' : 'high',
-            reason: isFirst ? 'first_login' : '24h_refresh'
-          }).catch(error => {
-            console.error('❌ Taste collection failed:', error);
-          });
-        } else {
-          console.log(`✅ User ${message.user.email} has fresh taste data`);
-        }
-        
-      } catch (error) {
-        console.error('❌ Error checking/triggering taste collection:', error);
-      }
     },
     async signOut(message) {
       console.log("User signed out");

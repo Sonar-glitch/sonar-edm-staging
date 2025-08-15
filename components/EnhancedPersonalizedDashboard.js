@@ -15,6 +15,7 @@ const EnhancedEventList = dynamic(() => import('./EnhancedEventList'), { ssr: fa
 const EnhancedLocationSearch = dynamic(() => import('./EnhancedLocationSearch'), { ssr: false });
 const TasteCollectionProgress = dynamic(() => import('./TasteCollectionProgress'), { ssr: false });
 const ConfidenceIndicator = dynamic(() => import('./ConfidenceIndicator'), { ssr: false });
+const UserProfileButton = dynamic(() => import('./UserProfileButton'), { ssr: false });
 
 export default function EnhancedPersonalizedDashboard() {
   const { data: session, status } = useSession();
@@ -813,6 +814,19 @@ export default function EnhancedPersonalizedDashboard() {
 
   return (
     <div className={styles.container}>
+      {/* 🎵 TIKO Header */}
+      <header className={styles.header}>
+        <div className={styles.headerContent}>
+          <div className={styles.logoSection}>
+            <h1 className={styles.logo}>TIKO</h1>
+            <span className={styles.tagline}>Your Music Universe</span>
+          </div>
+          <div className={styles.profileSection}>
+            <UserProfileButton />
+          </div>
+        </div>
+      </header>
+
       {/* 🎵 NEW: Demo Mode Notice */}
       {isDemoMode && (
         <div className={styles.demoModeNotice}>
