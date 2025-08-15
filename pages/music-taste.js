@@ -2575,7 +2575,6 @@ const MusicTastePage = () => {
       </div>
   );
 };
-};
 
 export default MusicTastePage;
 

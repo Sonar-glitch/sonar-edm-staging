@@ -98,7 +98,6 @@ const MusicTastePage = () => {
       </div>
   );
 };
-};
 
 // --- TABS & CARDS (with new GenreDeepDiveCard) ---
 

@@ -50,7 +50,6 @@ const MyEventsPage = () => {
       </div>
   );
 };
-};
 
 MyEventsPage.auth = { requiredAuth: true };
 export default MyEventsPage;

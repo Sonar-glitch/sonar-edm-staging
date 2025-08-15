@@ -200,6 +200,5 @@ const ProfileSettingsPage = () => {
     </div>
   );
 };
-};
 
 export default ProfileSettingsPage;
