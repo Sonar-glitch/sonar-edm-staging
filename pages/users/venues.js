@@ -139,7 +139,7 @@ export default function Venues() {
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
-              <p>{error}</p>
+              <p>{error?.message || error?.toString() || 'An error occurred'}</p>
               <button 
                 className={styles.retryButton}
                 onClick={() => window.location.reload()}

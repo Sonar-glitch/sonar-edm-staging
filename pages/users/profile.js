@@ -169,7 +169,7 @@ export default function ProfilePage() {
 
         {error && (
           <div className={styles.errorMessage}>
-            {error}
+            {error?.message || error?.toString() || 'An error occurred'}
             <button onClick={fetchUserProfile} className={styles.retryButton}>
               Try Again
             </button>
