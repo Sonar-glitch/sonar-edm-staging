@@ -139,13 +139,6 @@ export default function EnhancedPersonalizedDashboard() {
         
         if (status.showEventsLoader) {
           setEventsLoadingStatus('loading');
-        }
-      } else if (response.status === 500) {
-        // Handle 500 errors gracefully
-        console.warn('Dashboard status API returned 500, using fallback');
-        setTasteCollectionStatus('completed');
-        setIsDemoMode(true);
-        return;
         } else {
           setEventsLoadingStatus('loaded');
         }
@@ -155,12 +148,17 @@ export default function EnhancedPersonalizedDashboard() {
         loadWeeklyDeltas();
         autoDetectLocation();
         
+      } else if (response.status === 500) {
+        // Handle 500 errors gracefully
+        console.warn('Dashboard status API returned 500, using fallback');
+        setTasteCollectionStatus('completed');
+        setIsDemoMode(true);
+        await loadDashboardData();
       } else {
         // Fallback: load dashboard normally and set status to completed
         setTasteCollectionStatus('completed');
         setIsDemoMode(true); // Enable demo mode on API failure
         await loadDashboardData();
-        // Remove duplicate calls - already handled in loadDashboardData()
       }
     } catch (error) {
       console.error('Error checking dashboard status:', error);
