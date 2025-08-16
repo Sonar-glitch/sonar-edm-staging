@@ -161,7 +161,7 @@ export default function EnhancedPersonalizedDashboard() {
         await loadDashboardData();
       }
     } catch (error) {
-      console.error('Error checking dashboard status:', error);
+      console.error('Error checking dashboard status:', error.message || error);
       // Fallback: load dashboard normally and set status to completed
       setTasteCollectionStatus('completed');
       setIsDemoMode(true); // Enable demo mode on error
@@ -184,7 +184,7 @@ export default function EnhancedPersonalizedDashboard() {
               );
               if (response.ok) {
                 const locationData = await response.json();
-                console.log('🌍 [Dashboard] Browser location detected:', locationData);
+                console.log('🌍 [Dashboard] Browser location detected:', JSON.stringify(locationData));
                 setUserLocation(locationData);
                 setEventFilters(prev => ({
                   ...prev,
@@ -193,7 +193,7 @@ export default function EnhancedPersonalizedDashboard() {
                 return;
               }
             } catch (error) {
-              console.error('🌍 [Dashboard] Reverse geocoding failed:', error);
+              console.error('🌍 [Dashboard] Reverse geocoding failed:', error.message || error);
             }
             
             // If reverse geocoding fails, use coordinates directly
@@ -221,7 +221,7 @@ export default function EnhancedPersonalizedDashboard() {
         tryIPLocation();
       }
     } catch (error) {
-      console.error('🌍 [Dashboard] Location detection error:', error);
+      console.error('🌍 [Dashboard] Location detection error:', error.message || error);
       useTorontoFallback();
     }
   };
@@ -232,7 +232,7 @@ export default function EnhancedPersonalizedDashboard() {
       const response = await fetch('/api/user/get-location');
       if (response.ok) {
         const locationData = await response.json();
-        console.log('🌍 [Dashboard] IP location detected:', locationData);
+        console.log('🌍 [Dashboard] IP location detected:', JSON.stringify(locationData));
         setUserLocation(locationData);
         setEventFilters(prev => ({
           ...prev,
@@ -368,7 +368,7 @@ export default function EnhancedPersonalizedDashboard() {
             error: hasRealEvents ? null : 'DEMO_DATA'
           };
           if (process.env.NODE_ENV === 'development') {
-            console.log('✅ [Dashboard] Enhanced events data loaded:', eventsData.enhancementStats);
+            console.log('✅ [Dashboard] Enhanced events data loaded:', JSON.stringify(eventsData.enhancementStats));
           }
         } else if (eventsResponse.status === 500) {
           // Handle 500 errors gracefully
@@ -420,7 +420,7 @@ export default function EnhancedPersonalizedDashboard() {
       setDataSources(newDataSources);
 
     } catch (err) {
-      console.error('❌ Dashboard loading error:', err);
+      console.error('❌ Dashboard loading error:', err.message || err);
       setError(err?.message || 'Failed to load dashboard data');
       // On error, definitely enable demo mode
       setIsDemoMode(true);
@@ -498,7 +498,7 @@ export default function EnhancedPersonalizedDashboard() {
       setWeeklyDeltas(fallbackDeltas);
       }
     } catch (err) {
-      console.error('❌ Weekly deltas loading error:', err);
+      console.error('❌ Weekly deltas loading error:', err.message || err);
       
       // Update data source with error info
       setDataSources(prev => ({
