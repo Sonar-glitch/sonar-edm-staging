@@ -308,7 +308,7 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
         }
       } catch (error) {
         setIsLoading(false);
-        console.error('Error getting place details:', error);
+        console.error('Error getting place details:', error?.message || error?.toString() || 'Unknown error');
         setError('Unable to get location details. Please try another city.');
         return;
       }

@@ -22,7 +22,7 @@ const GenreTimelineModal = ({ onClose }) => {
         };
         setTimelineData(mockData);
       } catch (error) {
-        console.error('Error fetching timeline data:', error);
+        console.error('Error fetching timeline data:', error?.message || error?.toString() || 'Unknown error');
       } finally {
         setLoading(false);
       }
