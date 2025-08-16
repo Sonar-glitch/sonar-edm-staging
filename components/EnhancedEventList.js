@@ -131,7 +131,7 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
       console.log('Music keywords found:', musicMatches);
       console.log('Non-music keywords found:', nonMusicMatches);
       console.log('Is likely music event:', musicMatches.length > nonMusicMatches.length);
-      console.log('Raw scores:', { genreMatch, soundMatch, artistMatch, venueMatch, timingMatch });
+      console.log('Raw scores:', JSON.stringify({ genreMatch, soundMatch, artistMatch, venueMatch, timingMatch }));
       console.log('Total calculated vs actual:', calculatedTotal, 'vs', percentage);
     }
     

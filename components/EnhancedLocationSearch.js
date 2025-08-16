@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 /**
  * Enhanced Location Search component with Google Plac          // CRITICAL DEBUG: Only log when we have results
-          console.log('🎯 CITY SEARCH:', { query, found: inHouseResults.length, firstResult: inHouseResults[0]?.formatted_address });
+          console.log('🎯 CITY SEARCH:', JSON.stringify({ query, found: inHouseResults.length, firstResult: inHouseResults[0]?.formatted_address }));
           setSuggestions(inHouseResults);
           setIsLoading(false);
           return;
