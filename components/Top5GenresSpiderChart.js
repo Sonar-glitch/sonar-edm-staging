@@ -25,7 +25,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
       const rechartData = genreData.map(g => ({ genre: g.name, value: g.percentage }));
       setChartData(rechartData);
     } catch (err) {
-      console.error('Chart data loading error:', err);
+      console.error('Chart data loading error:', err.message || err);
       setError(err.message);
     } finally {
       setLoading(false);

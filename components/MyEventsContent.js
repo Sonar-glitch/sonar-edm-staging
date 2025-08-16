@@ -32,7 +32,7 @@ const MyEventsContent = () => {
         throw new Error(data.message || 'Failed to fetch events');
       }
     } catch (err) {
-      console.error('Error fetching my events:', err);
+      console.error('Error fetching my events:', err.message || err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -62,7 +62,7 @@ const MyEventsContent = () => {
         throw new Error(data.message || 'Failed to remove event');
       }
     } catch (err) {
-      console.error('Error removing event:', err);
+      console.error('Error removing event:', err.message || err);
       setError(err.message);
     }
   };

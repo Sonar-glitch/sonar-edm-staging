@@ -48,7 +48,7 @@ export default function EventsSection({ location }) {
           setError('No events found for your location');
         }
       } catch (err) {
-        console.error('Error fetching events:', err);
+        console.error('Error fetching events:', err.message || err);
         setError('Failed to load events. Please try again later.');
       } finally {
         setIsLoading(false);

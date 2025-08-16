@@ -35,7 +35,7 @@ export default function SafeRenderer({ data, fallback = null, renderProp = null 
 
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
-      console.error('SafeRenderer error:', error);
+      console.error('SafeRenderer error:', error.message || error);
     }
     return fallback || <span>Render error</span>;
   }

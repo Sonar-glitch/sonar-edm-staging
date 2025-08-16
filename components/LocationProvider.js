@@ -81,7 +81,7 @@ export function LocationProvider({ children }) {
           throw new Error('Could not detect location');
         }
       } catch (err) {
-        console.error('Location detection error:', err);
+        console.error('Location detection error:', err.message || err);
         setError(err.message);
       } finally {
         setLoading(false);

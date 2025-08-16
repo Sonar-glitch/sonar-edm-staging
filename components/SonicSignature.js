@@ -41,7 +41,7 @@ export default function SonicSignature({ genreData, mood, topArtist, topTrack, r
       setCurrentPreview(previewUrl);
       setAudioElement(audio);
     }).catch(err => {
-      console.error('Failed to play track preview:', err);
+      console.error('Failed to play track preview:', err.message || err);
       setIsPlaying(false);
     });
   };

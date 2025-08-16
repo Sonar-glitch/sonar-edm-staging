@@ -493,7 +493,7 @@ export default function EnhancedEventList({
       }
 
     } catch (err) {
-      console.error('Events loading error:', err);
+      console.error('Events loading error:', err.message || err);
       setError(err.message);
       setEvents([]);
       

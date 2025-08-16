@@ -29,7 +29,7 @@ export default function GroupedEventsList({
 
       // Use provided location or get user location
       let locationData = location;
-      console.log('🌍 [GroupedEventsList] Location prop received:', location);
+      console.log('🌍 [GroupedEventsList] Location prop received:', JSON.stringify(location));
 
       if (!locationData) {
         try {
@@ -37,14 +37,14 @@ export default function GroupedEventsList({
           if (locationResponse.ok) {
             locationData = await locationResponse.json();
             setUserLocation(locationData);
-            console.log('🌍 [GroupedEventsList] Location from API:', locationData);
+            console.log('🌍 [GroupedEventsList] Location from API:', JSON.stringify(locationData));
           }
         } catch (locationError) {
           console.log('🌍 [GroupedEventsList] Location detection failed, using fallback');
         }
       } else {
         setUserLocation(locationData);
-        console.log('🌍 [GroupedEventsList] Using provided location:', locationData);
+        console.log('🌍 [GroupedEventsList] Using provided location:', JSON.stringify(locationData));
       }
 
       // Build API URL
@@ -144,7 +144,7 @@ export default function GroupedEventsList({
       }
 
     } catch (err) {
-      console.error('Events loading error:', err);
+      console.error('Events loading error:', err.message || err);
       setError(err.message);
       setEvents([]);
       

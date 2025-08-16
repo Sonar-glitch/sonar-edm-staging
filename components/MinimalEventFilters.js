@@ -44,7 +44,7 @@ export default function MinimalEventFilters({
           setShowSuggestions(true);
         }
       } catch (error) {
-        console.error('Location search error:', error);
+        console.error('Location search error:', error.message || error);
         setLocationSuggestions([]);
       } finally {
         setIsLoadingLocation(false);
@@ -119,7 +119,7 @@ export default function MinimalEventFilters({
       });
       
     } catch (error) {
-      console.error('Auto location error:', error);
+      console.error('Auto location error:', error.message || error);
       // Even if there's an error, default to Toronto
       const torontoData = {
         city: 'Toronto',

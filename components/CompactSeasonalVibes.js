@@ -55,7 +55,7 @@ export default function CompactSeasonalVibes({ data, dataSource }) {
       else setCurrentSeason('Winter');
       
     } catch (err) {
-      console.error('Seasonal data loading error:', err);
+      console.error('Seasonal data loading error:', err.message || err);
       setError(err.message);
     } finally {
       setLoading(false);
