@@ -106,6 +106,7 @@ export default function EnhancedPersonalizedDashboard() {
   const checkTasteCollectionStatus = async () => {
     try {
       const response = await fetch('/api/user/dashboard-status');
+      
       if (response.ok) {
         const data = await response.json();
         const status = data.status;
@@ -138,6 +139,13 @@ export default function EnhancedPersonalizedDashboard() {
         
         if (status.showEventsLoader) {
           setEventsLoadingStatus('loading');
+        }
+      } else if (response.status === 500) {
+        // Handle 500 errors gracefully
+        console.warn('Dashboard status API returned 500, using fallback');
+        setTasteCollectionStatus('completed');
+        setIsDemoMode(true);
+        return;
         } else {
           setEventsLoadingStatus('loaded');
         }
@@ -271,7 +279,23 @@ export default function EnhancedPersonalizedDashboard() {
 
       // 🚀 FAST LOADING: Use cached profile data instead of live Spotify calls
       const tasteResponse = await fetch('/api/user/cached-dashboard-data');
+      
       if (!tasteResponse.ok) {
+        // Handle 500 errors gracefully instead of throwing
+        if (tasteResponse.status === 500) {
+          console.warn('Dashboard API returned 500, using fallback data');
+          setIsDemoMode(true);
+          setDashboardData({
+            dataSources: {
+              spotify: { isReal: false, error: 'API_ERROR', lastFetch: null },
+              events: { isReal: false, error: 'API_ERROR', lastFetch: null }
+            },
+            profile: null,
+            fallbackMode: true
+          });
+          setLoading(false);
+          return;
+        }
         throw new Error(`Cached dashboard API error: ${tasteResponse.status}`);
       }
 
@@ -322,6 +346,7 @@ export default function EnhancedPersonalizedDashboard() {
       try {
         // 🚀 PERFORMANCE: Use cached events API for fast loading
         const eventsResponse = await fetch('/api/events/cached-enhanced');
+        
         if (eventsResponse.ok) {
           eventsData = await eventsResponse.json();
           
@@ -344,10 +369,18 @@ export default function EnhancedPersonalizedDashboard() {
             vibeMatchFilter: eventFilters.vibeMatch || 50,
             error: hasRealEvents ? null : 'DEMO_DATA'
           };
-          console.log('✅ [Dashboard] Enhanced events data loaded:', eventsData.enhancementStats);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ [Dashboard] Enhanced events data loaded:', eventsData.enhancementStats);
+          }
+        } else if (eventsResponse.status === 500) {
+          // Handle 500 errors gracefully
+          console.warn('Events API returned 500, using fallback');
+          eventsSource.error = 'API_ERROR_500';
         }
       } catch (eventsError) {
-        console.warn('⚠️ [Dashboard] Events loading failed, using fallback:', eventsError.message);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠️ [Dashboard] Events loading failed, using fallback:', eventsError.message);
+        }
         eventsSource.error = `API_ERROR: ${eventsError.message}`;
       }
 
@@ -402,6 +435,15 @@ export default function EnhancedPersonalizedDashboard() {
   const loadWeeklyDeltas = async () => {
     try {
       const response = await fetch('/api/user/weekly-deltas');
+      
+      if (!response.ok) {
+        if (response.status === 500) {
+          console.warn('Weekly deltas API returned 500, using fallback');
+          return; // Skip loading deltas on 500 error
+        }
+        throw new Error(`Weekly deltas API error: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       // Whether real or fallback data, if the API call succeeds, use the data
