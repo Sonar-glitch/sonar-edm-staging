@@ -81,7 +81,7 @@ export default function EventsSection({ location }) {
       {isLoading ? (
         <div className={styles.loading}>Loading events...</div>
       ) : error ? (
-        <div className={styles.error}>{error}</div>
+        <div className={styles.error}>{error?.message || error?.toString() || 'An error occurred'}</div>
       ) : filteredEvents.length === 0 ? (
         <div className={styles.noEvents}>No events match your current filters. Try adjusting the filters.</div>
       ) : (

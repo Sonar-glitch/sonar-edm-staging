@@ -194,7 +194,7 @@ if (parseInt(vibeMatch) > 0) {
 
 
   } catch (error) {
-    console.error('🚨 Critical error in events API:', error);
+    console.error('🚨 Critical error in events API:', error.message || JSON.stringify(error));
     res.status(500).json({ 
       error: 'Internal server error', 
       message: error.message,
@@ -302,7 +302,7 @@ const result = await tikoSoundStat.analyzeUserTracks(userTracks);
     };
     
   } catch (error) {
-    console.error('❌ Error with TIKOSoundStatIntegration:', error);
+    console.error('❌ Error with TIKOSoundStatIntegration:', error.message || JSON.stringify(error));
     return getDefaultSoundDNA();
   }
 }
@@ -639,7 +639,7 @@ async function fetchEnhancedUserTasteProfile(accessToken) {
     return enhancedProfile;
 
   } catch (error) {
-    console.error('❌ Error building enhanced user taste profile:', error);
+    console.error('❌ Error building enhanced user taste profile:', error.message || JSON.stringify(error));
     return getDefaultEnhancedProfile();
   }
 }
@@ -1452,7 +1452,7 @@ async function fetchUserTasteProfile(accessToken) {
     return userTaste;
 
   } catch (error) {
-    console.error('❌ Error fetching user taste profile:', error);
+    console.error('❌ Error fetching user taste profile:', JSON.stringify(error));
     return null;
   }
 }

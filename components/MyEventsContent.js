@@ -81,7 +81,7 @@ const MyEventsContent = () => {
       <div className={styles.errorContainer}>
         <div className={styles.errorIcon}>⚠️</div>
         <h3 className={styles.errorTitle}>Unable to Load Events</h3>
-        <p className={styles.errorMessage}>{error}</p>
+        <p className={styles.errorMessage}>{error?.message || error?.toString() || 'An unknown error occurred'}</p>
         <button 
           className={styles.retryButton}
           onClick={handleRetry}

@@ -24,7 +24,7 @@ export function LocationProvider({ children }) {
               setLoading(false);
               return;
             } catch (e) {
-              console.error('Error parsing saved location:', e);
+              console.error('Error parsing saved location:', e?.message || e?.toString() || 'Unknown error');
             }
           }
         }
@@ -47,7 +47,7 @@ export function LocationProvider({ children }) {
               body: JSON.stringify(browserLocation)
             });
           } catch (e) {
-            console.error('Error sending location to server:', e);
+            console.error('Error sending location to server:', e?.message || e?.toString() || 'Unknown error');
           }
           
           setLoading(false);
@@ -75,13 +75,13 @@ export function LocationProvider({ children }) {
               body: JSON.stringify(ipLocation)
             });
           } catch (e) {
-            console.error('Error sending location to server:', e);
+            console.error('Error sending location to server:', e?.message || e?.toString() || 'Unknown error');
           }
         } else {
           throw new Error('Could not detect location');
         }
       } catch (err) {
-        console.error('Location detection error:', err.message || err);
+        console.error('Location detection error:', err.message || JSON.stringify(err));
         setError(err.message);
       } finally {
         setLoading(false);
