@@ -22,12 +22,18 @@ export default async function handler(req, res) {
   console.log('📦 [cached-dashboard-data] Connecting to Mongo...');
   const { db } = await connectToDatabase();
   console.log('✅ [cached-dashboard-data] Mongo connected');
-    const userId = session.user.id || session.user.email;
+  // Normalize identifiers (prevent case / format mismatches)
+  const rawUserId = session.user.id || session.user.email;
+  const userId = (rawUserId || '').toString().trim();
+  const normalizedEmail = (session.user.email || '').toLowerCase().trim();
 
     // 🚀 PERFORMANCE: Use cached profile data instead of live Spotify calls
+    // Small grace window (15m) allows slightly expired data to still serve while refresh is queued
+    const now = new Date();
+    const graceWindow = new Date(Date.now() - 15 * 60 * 1000);
     const cached = await db.collection('user_sound_profiles').findOne({
       userId,
-      expiresAt: { $gt: new Date() }
+      expiresAt: { $gt: graceWindow }
     });
 
     if (cached) {
@@ -123,37 +129,56 @@ export default async function handler(req, res) {
       return res.status(200).json(dashboardData);
     }
 
-    // 🔄 FALLBACK: No cached data, user needs to generate profile
-    console.log(`❌ No cached profile for ${userId}, returning fallback`);
-    
-    // Check if user has any profile data
-    const userProfile = await db.collection('userProfiles').findOne({ 
-      email: session.user.email 
+    // 🔄 FALLBACK: No cached data, attempt broader profile discovery first
+    console.log(`❌ No cached profile for ${userId}. Attempting broader userProfiles lookup...`);
+    const userProfile = await db.collection('userProfiles').findOne({
+      $or: [
+        { email: normalizedEmail },
+        { email: session.user.email },
+        { userId: normalizedEmail },
+        { userId: session.user.email },
+        { userId: userId }
+      ]
     });
 
     if (!userProfile) {
-      // User needs onboarding
+      console.log('⚠️ No userProfiles doc found; returning soft onboarding signal. (Will not hard redirect)');
       return res.status(200).json({
-        needsOnboarding: true,
-        message: 'User needs to complete taste collection',
-        action: 'redirect_to_onboarding'
+        softOnboarding: true,
+        message: 'No user profile document found; begin taste collection',
+        action: 'suggest_onboarding',
+        performance: { cacheState: 'MISS', rebuildQueued: false }
       });
     }
 
-    // Return basic profile data
+    console.log('✅ userProfiles doc found — sending fallback dashboard stub & queuing async rebuild');
+    // (Optional) Queue async rebuild (fire-and-forget) if profile cache missing or stale beyond grace
+    try {
+      const needsRebuild = !cached || (cached.expiresAt && cached.expiresAt < now);
+      if (needsRebuild) {
+        // Lightweight marker; real job runner could pick this up
+        await db.collection('profile_rebuild_requests').updateOne(
+          { userId },
+          { $set: { userId, requestedAt: new Date(), reason: 'CACHE_MISS_FALLBACK' } },
+          { upsert: true }
+        );
+      }
+    } catch (queueErr) {
+      console.warn('⚠️ Failed to queue profile rebuild request:', queueErr.message);
+    }
     return res.status(200).json({
       dataSources: {
-        spotify: { isReal: false, error: 'CACHE_EXPIRED', lastFetch: null },
-        soundstat: { isReal: false, error: 'CACHE_EXPIRED', lastFetch: null },
+        spotify: { isReal: false, error: 'CACHE_MISS', lastFetch: null },
+        soundstat: { isReal: false, error: 'CACHE_MISS', lastFetch: null },
         events: { isReal: true, error: null, lastFetch: new Date().toISOString() },
-        seasonal: { isReal: false, error: 'CACHE_EXPIRED', lastFetch: null }
+        seasonal: { isReal: false, error: 'CACHE_MISS', lastFetch: null }
       },
       genreProfile: {
-        topGenres: userProfile.topGenres || [],
+        topGenres: userProfile.topGenres || userProfile.genres || [],
         confidence: 0.5,
         dataSource: 'user_profile_fallback'
       },
-      soundCharacteristics: userProfile.audioFeatures || {
+      soundCharacteristics: userProfile.audioFeatures || userProfile.soundCharacteristics || {
         energy: 0.6,
         danceability: 0.6,
         valence: 0.6,
@@ -163,7 +188,9 @@ export default async function handler(req, res) {
         cacheAge: null,
         loadTime: 'fast_fallback',
         dataSource: 'user_profile',
-        needsRefresh: true
+        needsRefresh: true,
+        cacheState: 'MISS',
+        rebuildQueued: true
       }
     });
 

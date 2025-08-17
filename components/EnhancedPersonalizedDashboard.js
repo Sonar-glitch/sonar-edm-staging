@@ -244,12 +244,16 @@ export default function EnhancedPersonalizedDashboard() {
 
       const tasteData = await tasteResponse.json();
       
-      // Handle onboarding redirect case
-      if (tasteData.needsOnboarding) {
-        console.log('🔄 User needs onboarding, redirecting...');
-        // Keep current behavior - let parent component handle
+      // Handle onboarding states
+      if (tasteData.needsOnboarding && !tasteData.softOnboarding) {
+        console.log('🔄 Hard onboarding required (needsOnboarding true).');
         setLoading(false);
         return;
+      }
+      if (tasteData.softOnboarding) {
+        console.log('🟡 Soft onboarding suggested (showing fallback dashboard stub).');
+        // Treat as demo mode but still render dashboard with stub
+        setIsDemoMode(true);
       }
       setDashboardData(tasteData);
 
