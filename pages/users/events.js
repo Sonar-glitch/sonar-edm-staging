@@ -219,7 +219,7 @@ export default function Events() {
         <Navigation />
         <div className={styles.errorContainer}>
           <h1 className={styles.title}>Oops! Something went wrong</h1>
-          <p className={styles.errorMessage}>{error}</p>
+          <p className={styles.errorMessage}>{error?.message || error?.toString() || 'An unknown error occurred'}</p>
           <button onClick={fetchEvents} className={styles.retryButton}>
             Try Again
           </button>

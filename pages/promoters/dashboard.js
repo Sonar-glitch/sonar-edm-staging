@@ -174,7 +174,7 @@ export default function PromoterDashboard() {
     return (
       <div className={styles.container}>
         <div className={styles.errorContainer}>
-          <p className={styles.errorMessage}>{error}</p>
+          <p className={styles.errorMessage}>{error?.message || error?.toString() || 'An unknown error occurred'}</p>
           <button 
             onClick={fetchAnalytics}
             className={styles.retryButton}
