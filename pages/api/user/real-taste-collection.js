@@ -13,6 +13,9 @@ async function connectToDatabase() {
     return cachedClient;
   }
   const mongoUri = process.env.MONGODB_URI;
+  if (!mongoUri) {
+    throw new Error('MONGODB_URI missing');
+  }
   const client = new MongoClient(mongoUri);
   await client.connect();
   cachedClient = client;
@@ -163,6 +166,7 @@ export default async function handler(req, res) {
 
     // Step 1: Fetch Spotify data
     if (!session.accessToken) {
+      console.warn('⚠️ real-taste-collection: session.accessToken missing. Session keys:', Object.keys(session || {}));
       return res.status(400).json({
         error: 'No Spotify access token',
         message: 'Please reconnect to Spotify'
@@ -195,7 +199,7 @@ export default async function handler(req, res) {
       console.warn('Progress init failed:', e.message);
     }
 
-    const spotifyData = await fetchSpotifyData(session.accessToken);
+  const spotifyData = await fetchSpotifyData(session.accessToken);
     
     if (!spotifyData) {
       try {
@@ -218,8 +222,14 @@ export default async function handler(req, res) {
     const audioProfile = calculateAudioProfile(spotifyData.audioFeatures);
     
     // Step 3: Create user profile in database
-    const client = dbClientForProgress || await connectToDatabase();
-    const db = client.db('sonar');
+    let client, db;
+    try {
+      client = dbClientForProgress || await connectToDatabase();
+      db = client.db('sonar');
+    } catch (dbErr) {
+      console.error('❌ [Real Taste Collection] DB connect error:', dbErr.message);
+      return res.status(503).json({ error: 'DB_CONNECT_FAILED', message: dbErr.message, fallback: true });
+    }
 
     // Update progress mid-way
     try {
@@ -291,6 +301,31 @@ export default async function handler(req, res) {
       );
     } catch {}
 
+    // Also store/update lightweight sound profile cache (pending dashboard consumption)
+    try {
+      const trackApprox = (spotifyData.topTracks?.items?.length) || 0;
+      await db.collection('user_sound_profiles').updateOne(
+        { userId: session.user.id || session.user.email },
+        { $set: {
+            userId: session.user.id || session.user.email,
+            email: (session.user.email || '').toLowerCase(),
+            createdAt: new Date(),
+            profileBuiltAt: new Date(),
+            expiresAt: new Date(Date.now() + 6 * 60 * 60 * 1000),
+            tracksAnalyzed: trackApprox,
+            trackCount: trackApprox,
+            topGenres: (spotifyData.topArtists?.items || []).flatMap(a => (a.genres||[])).slice(0,10).map(g => ({ genre: g, count: 1 })),
+            soundCharacteristics: calculateAudioProfile(spotifyData.audioFeatures) || {},
+            confidence: (spotifyData.confidence?.score || 0) / 100,
+            sourceType: 'spotify_api_collection'
+          }
+        },
+        { upsert: true }
+      );
+    } catch (cacheErr) {
+      console.warn('⚠️ Failed to seed user_sound_profiles:', cacheErr.message);
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Taste collection completed successfully',
@@ -306,7 +341,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('❌ [Real Taste Collection] Error:', error);
+    console.error('❌ [Real Taste Collection] Error (unhandled):', { message: error.message, stack: error.stack });
     try {
       const client = await connectToDatabase();
       const db = client.db('sonar');
@@ -316,8 +351,8 @@ export default async function handler(req, res) {
       );
     } catch {}
     return res.status(500).json({
-      error: 'Internal server error',
-      message: error.message,
+      error: 'INTERNAL_SERVER_ERROR',
+      message: error.message || 'unknown',
       fallback: true
     });
   }
