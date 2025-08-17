@@ -75,7 +75,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
       }
 
     } catch (err) {
-      console.error('Sound characteristics loading error:', err.message || err);
+      console.error('Sound characteristics loading error:', err);
       setError(err.message);
 
       // Set safe fallback values on error
@@ -110,7 +110,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
       <div className={styles.container}>
         <div className={styles.errorState}>
           <p>Unable to load sound characteristics</p>
-          <p>{error?.message || error?.toString() || 'An unknown error occurred'}</p>
+          <p>{String(error)}</p>
         </div>
       </div>
     );

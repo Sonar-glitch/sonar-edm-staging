@@ -25,7 +25,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
       const rechartData = genreData.map(g => ({ genre: g.name, value: g.percentage }));
       setChartData(rechartData);
     } catch (err) {
-      console.error('Chart data loading error:', err.message || err);
+      console.error('Chart data loading error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -125,7 +125,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
       <div className={styles.container}>
         <div className={styles.errorState}>
           <p>Unable to load genre chart</p>
-          <p>{error?.message || error?.toString() || 'An unknown error occurred'}</p>
+          <p>{String(error)}</p>
         </div>
       </div>
     );

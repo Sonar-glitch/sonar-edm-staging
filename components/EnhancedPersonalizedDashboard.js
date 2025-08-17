@@ -997,7 +997,7 @@ export default function EnhancedPersonalizedDashboard() {
           <div className={styles.tooltipContent}>
             {(activeTooltip.content || '').toString().split('\n').map((line, index) => (
               <div key={index} className={styles.tooltipLine}>
-                {line}
+                {String(line)}
               </div>
             ))}
           </div>
