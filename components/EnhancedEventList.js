@@ -131,7 +131,7 @@ const EnhancedCircularProgress = ({ score, event, userProfile }) => {
       console.log('Music keywords found:', musicMatches);
       console.log('Non-music keywords found:', nonMusicMatches);
       console.log('Is likely music event:', musicMatches.length > nonMusicMatches.length);
-      console.log('Raw scores:', JSON.stringify({ genreMatch, soundMatch, artistMatch, venueMatch, timingMatch }));
+      console.log('Raw scores:', { genreMatch, soundMatch, artistMatch, venueMatch, timingMatch });
       console.log('Total calculated vs actual:', calculatedTotal, 'vs', percentage);
     }
     
@@ -493,7 +493,7 @@ export default function EnhancedEventList({
       }
 
     } catch (err) {
-      console.error('Events loading error:', err.message || err);
+      console.error('Events loading error:', err);
       setError(err.message);
       setEvents([]);
       
@@ -543,7 +543,7 @@ export default function EnhancedEventList({
       <div className={styles.container}>
         <div className={styles.errorState}>
           <h3>Unable to Load Events</h3>
-          <p>Error: {error?.message || error?.toString() || 'An unknown error occurred'}</p>
+          <p>Error: {error}</p>
           <button onClick={loadEvents} className={styles.retryButton}>
             Try Again
           </button>
@@ -698,9 +698,11 @@ export default function EnhancedEventList({
             }
           }
           
-          return (
+      const eventId = event._id || event.id;
+      const isFav = !!(userProfile?.savedEventIds?.includes?.(eventId));
+      return (
             <div 
-              key={event.id || index} 
+        key={eventId || index} 
               className={`${styles.compactEventCard} ${urgencyClass}`}
               onClick={(e) => {
                 console.log('🔗 Event card clicked:', {
@@ -752,6 +754,30 @@ export default function EnhancedEventList({
                     event={event}
                     userProfile={userProfile}
                   />
+                  <button
+                    type="button"
+                    className={styles.saveButton}
+                    onClick={async (btnEvt) => {
+                      btnEvt.stopPropagation();
+                      try {
+                        if (isFav) {
+                          await fetch(`/api/user/favourites?eventId=${eventId}`, { method: 'DELETE' });
+                        } else {
+                          await fetch('/api/user/favourites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventId }) });
+                        }
+                      } catch (e) { console.warn('Fav toggle error', e.message); }
+                    }}
+                    style={{
+                      marginTop: 6,
+                      background: isFav ? 'linear-gradient(90deg,#ff006e,#ff4fa3)' : 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      color: '#fff',
+                      fontSize: 10,
+                      padding: '4px 8px',
+                      borderRadius: 12,
+                      cursor: 'pointer'
+                    }}
+                  >{isFav ? 'Saved' : 'Save'}</button>
                 </div>
               </div>
 

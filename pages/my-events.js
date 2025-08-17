@@ -15,10 +15,10 @@ export default function MyEventsPage() {
     if (!session) { setLoading(false); return; }
     (async () => {
       try {
-        const res = await fetch('/api/events/cached-enhanced');
+        const res = await fetch('/api/user/favourites');
         if (res.ok) {
           const json = await res.json();
-          setEvents(json.events || []);
+          setEvents(json.favourites || []);
         } else { setError(`API ${res.status}`); }
       } catch (e) { setError(e.message); } finally { setLoading(false); }
     })();
@@ -33,16 +33,17 @@ export default function MyEventsPage() {
     <AppLayout>
     <div style={container}>
       <h1 style={title}>Favourites</h1>
-      {events.length === 0 && <p style={muted}>No events saved yet. (Stub page)</p>}
+  {events.length === 0 && <p style={muted}>You have not saved any events yet.</p>}
       <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', width: '100%', maxWidth: 800 }}>
         {events.slice(0,25).map(ev => (
-          <li key={ev._id || ev.id} style={card}>
+          <li key={ev._id || ev.id} style={card} title={ev.demo ? 'Demo event' : 'Live event'}>
             <strong>{ev.name}</strong><br/>
             <span style={muted}>{ev.date}</span>
+            {ev.demo && <span style={{...badge}}>DEMO</span>}
           </li>
         ))}
       </ul>
-  </div>
+    </div>
   </AppLayout>
   );
 }
@@ -50,4 +51,5 @@ export default function MyEventsPage() {
 const container = { minHeight: '100vh', background: '#0d0f17', padding: '2rem', color: '#fff', fontFamily: 'system-ui, sans-serif' };
 const title = { margin: 0, fontSize: '1.75rem', background: 'linear-gradient(90deg,#00CFFF,#FF00CC)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' };
 const muted = { color: '#888', fontSize: '.85rem' };
-const card = { background: 'rgba(255,255,255,0.05)', padding: '0.75rem 1rem', borderRadius: 8, marginBottom: 8 };
+const card = { background: 'rgba(255,255,255,0.05)', padding: '0.75rem 1rem', borderRadius: 8, marginBottom: 8, position:'relative' };
+const badge = { position:'absolute', top:6, right:8, background:'rgba(255,0,110,0.15)', color:'#ff4fa3', padding:'2px 6px', fontSize:10, borderRadius:4, letterSpacing:0.5 };
