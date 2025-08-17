@@ -1,14 +1,18 @@
 const fetch = (...args) => import('node-fetch').then(m => m.default(...args));
 
 const BASE_URL = process.env.BASE_URL || 'https://sonar-edm-staging-ef96efd71e8e.herokuapp.com';
-const COOKIE = process.env.SESSION_COOKIE || '';
+// Accept either full cookie string or raw token; build both cookie names for safety
+let COOKIE = process.env.SESSION_COOKIE || process.env.SESSION_TOKEN || '';
+if (COOKIE && !COOKIE.includes('=')) {
+  COOKIE = `__Secure-next-auth.session-token=${COOKIE}; next-auth.session-token=${COOKIE}`;
+}
 
 async function check(path, opts = {}) {
   const url = BASE_URL + path;
   const start = Date.now();
   const res = await fetch(url, {
     headers: {
-      'Cookie': COOKIE,
+      ...(COOKIE ? { 'Cookie': COOKIE } : {}),
       'Accept': 'application/json'
     },
     ...opts
@@ -27,6 +31,12 @@ async function check(path, opts = {}) {
       cacheState: json.performance?.cacheState,
       rebuildQueued: json.performance?.rebuildQueued,
     });
+  }
+  if (json && Array.isArray(json.events)) {
+    console.log(`  events: ${json.events.length} (source: ${json.source || json.dataSources?.events?.source || 'n/a'})`);
+  }
+  if (json && json.genreProfile && Array.isArray(json.genreProfile.topGenres)) {
+    console.log(`  topGenres sample: ${json.genreProfile.topGenres.slice(0,3).map(g=> (g.genre||g)).join(', ')}`);
   }
   if (!res.ok) {
     console.log('  body:', bodyText.slice(0, 500));

@@ -46,13 +46,17 @@ export default async function handler(req, res) {
             isReal: true, 
             error: null, 
             lastFetch: cached.createdAt,
-            source: 'cached_profile'
+            source: 'cached_profile',
+            // Provide tracksAnalyzed for frontend real-data detection logic
+            tracksAnalyzed: cached.tracksAnalyzed || (cached.topGenres ? cached.topGenres.reduce((a, g) => a + (g.count || 0), 0) : 0)
           },
           soundstat: { 
             isReal: true, 
             error: null, 
             lastFetch: cached.createdAt,
-            source: 'cached_profile'
+            source: 'cached_profile',
+            tracksAnalyzed: cached.tracksAnalyzed || 0,
+            confidence: cached.confidence || 0.7
           },
           events: { 
             isReal: true, 
@@ -64,7 +68,9 @@ export default async function handler(req, res) {
             isReal: true, 
             error: null, 
             lastFetch: cached.createdAt,
-            source: 'cached_profile'
+            source: 'cached_profile',
+            tracksAnalyzed: cached.tracksAnalyzed || 0,
+            confidence: cached.confidence || 0.7
           }
         },
         
@@ -73,7 +79,8 @@ export default async function handler(req, res) {
           topGenres: cached.topGenres || [],
           confidence: cached.confidence || 0.7,
           dataSource: 'cached_spotify_data',
-          lastFetch: cached.createdAt
+          lastFetch: cached.createdAt,
+          tracksAnalyzed: cached.tracksAnalyzed || (cached.topGenres ? cached.topGenres.reduce((a, g) => a + (g.count || 0), 0) : 0)
         },
         
         // Sound characteristics from cached data  
@@ -122,7 +129,8 @@ export default async function handler(req, res) {
           cacheAge: Math.floor((new Date() - cached.createdAt) / 1000 / 60), // minutes
           loadTime: 'fast',
           dataSource: 'cache',
-          lastUpdate: cached.createdAt
+          lastUpdate: cached.createdAt,
+          cacheState: 'HIT'
         }
       };
 

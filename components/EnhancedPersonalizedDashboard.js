@@ -236,7 +236,39 @@ export default function EnhancedPersonalizedDashboard() {
     try {
       setLoading(true);
 
-      // 🚀 FAST LOADING: Use cached profile data instead of live Spotify calls
+      // � CLIENT CACHE (sessionStorage) to prevent refetch on tab switch within same session
+      if (typeof window !== 'undefined') {
+        const CACHE_KEY = 'tiko_dashboard_cache_v1';
+        const raw = sessionStorage.getItem(CACHE_KEY);
+        if (raw) {
+            try {
+              const cachedObj = JSON.parse(raw);
+              // 5 min TTL client-side
+              if (Date.now() - cachedObj._ts < 5 * 60 * 1000 && cachedObj.payload) {
+                console.log('⚡ Using client cached dashboard payload');
+                setDashboardData(cachedObj.payload);
+                // Re-run real data detection quickly
+                const p = cachedObj.payload;
+                const isRealSpotifyData = p.dataSources?.spotify?.isReal === true;
+                const isRealSoundData = p.dataSources?.soundstat?.isReal === true;
+                const isRealSeasonalData = p.dataSources?.seasonal?.isReal === true;
+                const hasGenres = Array.isArray(p.genreProfile?.topGenres) && p.genreProfile.topGenres.length > 0;
+                const tracksAnalyzed = p.genreProfile?.tracksAnalyzed || p.soundCharacteristics?.tracksAnalyzed || 0;
+                const realSourcesCount = [isRealSpotifyData, isRealSoundData, isRealSeasonalData].filter(Boolean).length;
+                const allSourcesNonReal = realSourcesCount === 0;
+                if (!(allSourcesNonReal && (!hasGenres || tracksAnalyzed === 0))) {
+                  setIsDemoMode(false);
+                }
+                setLoading(false);
+                return; // Skip network fetch
+              }
+            } catch (e) {
+              console.warn('Client cache parse failed', e.message);
+            }
+        }
+      }
+
+      // �🚀 FAST LOADING: Use cached profile data instead of live Spotify calls
       const tasteResponse = await fetch('/api/user/cached-dashboard-data');
       if (!tasteResponse.ok) {
         throw new Error(`Cached dashboard API error: ${tasteResponse.status}`);
@@ -257,15 +289,31 @@ export default function EnhancedPersonalizedDashboard() {
       }
       setDashboardData(tasteData);
 
-      // 🎯 FIXED: Properly check for real vs demo data based on API response
-      const isRealSpotifyData = tasteData.dataSources?.genreProfile?.isRealData === true;
-      const isRealSoundData = tasteData.dataSources?.soundCharacteristics?.isRealData === true;
-      const isRealSeasonalData = tasteData.dataSources?.seasonalProfile?.isRealData === true;
+      // 🎯 REAL DATA DETECTION (PATCHED OPTION A)
+      // Previous logic enabled demo mode if *any* source was not real, which was too aggressive.
+      // New logic: demo mode only if ALL core sources are non-real OR explicit soft onboarding / stub flags.
+      const isRealSpotifyData = tasteData.dataSources?.spotify?.isReal === true;
+      const isRealSoundData = tasteData.dataSources?.soundstat?.isReal === true;
+      const isRealSeasonalData = tasteData.dataSources?.seasonal?.isReal === true;
 
-      // If any critical data is not real, enable demo mode
-      if (!isRealSpotifyData || !isRealSoundData || !isRealSeasonalData) {
-        console.log('🎭 API returned demo/fallback data, enabling demo mode');
-        setIsDemoMode(true);
+      const hasGenres = Array.isArray(tasteData.genreProfile?.topGenres) && tasteData.genreProfile.topGenres.length > 0;
+      const tracksAnalyzed = tasteData.genreProfile?.tracksAnalyzed || tasteData.soundCharacteristics?.tracksAnalyzed || 0;
+      const realSourcesCount = [isRealSpotifyData, isRealSoundData, isRealSeasonalData].filter(Boolean).length;
+      const allSourcesNonReal = realSourcesCount === 0;
+      const explicitDemoFlag = tasteData.isDemoMode || tasteData.demo === true || tasteData.dataSources?.spotify?.isDemo === true;
+
+      // Only adjust demo mode if not already forced by soft onboarding earlier
+      if (!tasteData.softOnboarding) {
+        const shouldBeDemo = explicitDemoFlag || (allSourcesNonReal && (!hasGenres || tracksAnalyzed === 0));
+        if (shouldBeDemo) {
+          if (!isDemoMode) console.log('🎭 Determined demo mode (all sources non-real or explicit demo flag)');
+          setIsDemoMode(true);
+        } else {
+          if (isDemoMode) console.log('✅ Switching out of demo mode (real data detected)');
+          setIsDemoMode(false);
+        }
+      } else {
+        console.log('🟡 Soft onboarding active - keeping demo mode state as set earlier');
       }
 
       // Load enhanced events data to get real integration stats
@@ -318,39 +366,54 @@ export default function EnhancedPersonalizedDashboard() {
       // ENHANCED: Process data sources with detailed tracking - preserve API response flags
       const newDataSources = {
         spotify: {
-          isReal: tasteData.dataSources?.genreProfile?.isRealData || false,
-          lastFetch: tasteData.dataSources?.genreProfile?.lastFetch,
-          tracksAnalyzed: tasteData.dataSources?.genreProfile?.tracksAnalyzed || 0,
-          confidence: tasteData.dataSources?.genreProfile?.confidence || 0,
-          source: tasteData.dataSources?.genreProfile?.source || 'demo_data',
-          timePeriod: tasteData.dataSources?.genreProfile?.timePeriod || 'none',
-          description: tasteData.dataSources?.genreProfile?.description || 'demo data',
-          error: tasteData.dataSources?.genreProfile?.error
+          isReal: tasteData.dataSources?.spotify?.isReal === true,
+          lastFetch: tasteData.dataSources?.spotify?.lastFetch,
+            tracksAnalyzed: tasteData.genreProfile?.tracksAnalyzed || 0,
+          confidence: tasteData.genreProfile?.confidence || 0,
+          source: tasteData.dataSources?.spotify?.source || 'cached_profile',
+          timePeriod: 'cached',
+          description: 'Cached Spotify profile',
+          error: tasteData.dataSources?.spotify?.error
         },
         soundstat: {
-          isReal: tasteData.dataSources?.soundCharacteristics?.isRealData || false,
-          lastFetch: tasteData.dataSources?.soundCharacteristics?.lastFetch,
-          tracksAnalyzed: tasteData.dataSources?.soundCharacteristics?.tracksAnalyzed || 0,
-          confidence: tasteData.dataSources?.soundCharacteristics?.confidence || 0,
-          source: tasteData.dataSources?.soundCharacteristics?.source || 'demo_data',
-          timePeriod: tasteData.dataSources?.soundCharacteristics?.timePeriod || 'none',
-          description: tasteData.dataSources?.soundCharacteristics?.description || 'demo data',
-          error: tasteData.dataSources?.soundCharacteristics?.error
+          isReal: tasteData.dataSources?.soundstat?.isReal === true,
+          lastFetch: tasteData.dataSources?.soundstat?.lastFetch,
+          tracksAnalyzed: tasteData.soundCharacteristics?.tracksAnalyzed || 0,
+          confidence: tasteData.soundCharacteristics?.confidence || 0,
+          source: tasteData.dataSources?.soundstat?.source || 'cached_profile',
+          timePeriod: 'cached',
+          description: 'Cached audio feature profile',
+          error: tasteData.dataSources?.soundstat?.error
         },
         events: eventsSource,
         seasonal: {
-          isReal: tasteData.dataSources?.seasonalProfile?.isRealData || false,
-          lastFetch: tasteData.dataSources?.seasonalProfile?.lastFetch,
-          tracksAnalyzed: tasteData.dataSources?.seasonalProfile?.tracksAnalyzed || 0,
-          confidence: tasteData.dataSources?.seasonalProfile?.confidence || 0,
-          source: tasteData.dataSources?.seasonalProfile?.source || 'demo_data',
-          timePeriod: tasteData.dataSources?.seasonalProfile?.timePeriod || 'none',
-          description: tasteData.dataSources?.seasonalProfile?.description || 'demo data',
-          error: tasteData.dataSources?.seasonalProfile?.error
+          isReal: tasteData.dataSources?.seasonal?.isReal === true,
+          lastFetch: tasteData.dataSources?.seasonal?.lastFetch,
+          tracksAnalyzed: tasteData.seasonalAnalysis?.metadata?.tracksAnalyzed || 0,
+          confidence: tasteData.seasonalAnalysis?.metadata?.confidence || 0,
+          source: tasteData.dataSources?.seasonal?.source || 'cached_profile',
+          timePeriod: 'cached',
+          description: 'Seasonal listening pattern',
+          error: tasteData.dataSources?.seasonal?.error
         }
       };
+      console.log('[Dashboard] Data source real flags', {
+        spotify: newDataSources.spotify.isReal,
+        soundstat: newDataSources.soundstat.isReal,
+        seasonal: newDataSources.seasonal.isReal,
+        demoMode: isDemoMode
+      });
 
       setDataSources(newDataSources);
+
+      // Store in sessionStorage client cache
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem('tiko_dashboard_cache_v1', JSON.stringify({ _ts: Date.now(), payload: tasteData }));
+        } catch (e) {
+          console.warn('Failed to cache dashboard data client-side', e.message);
+        }
+      }
 
     } catch (err) {
       console.error('❌ Dashboard loading error:', err);
@@ -829,6 +892,12 @@ export default function EnhancedPersonalizedDashboard() {
             <UserProfileButton />
           </div>
         </div>
+        {/* ✅ RESTORED PRIMARY NAV TABS (Dashboard / Music Taste / Favourites) */}
+        <nav className={styles.primaryTabs} style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem' }}>
+          <TabLink href="/users/dashboard" label="Dashboard" />
+          <TabLink href="/music-taste" label="Music Taste" />
+          <TabLink href="/my-events" label="Favourites" />
+        </nav>
       </header>
 
       {/* 🎵 NEW: Demo Mode Notice */}
@@ -1010,6 +1079,33 @@ export default function EnhancedPersonalizedDashboard() {
       )}
 
     </div>
+  );
+}
+
+// Lightweight internal tab link component to avoid importing a full layout
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+function TabLink({ href, label }) {
+  const router = typeof window !== 'undefined' ? require('next/router').useRouter() : { pathname: '' };
+  const isActive = router.pathname === href;
+  return (
+    <Link href={href} legacyBehavior>
+      <a
+        style={{
+          padding: '0.5rem 1rem',
+          borderRadius: '999px',
+          background: isActive ? 'linear-gradient(90deg,#00CFFF,#FF00CC)' : 'rgba(255,255,255,0.08)',
+          color: isActive ? '#fff' : '#ccc',
+          fontSize: '0.85rem',
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+          textDecoration: 'none',
+          transition: 'background .2s, color .2s'
+        }}
+      >
+        {label}
+      </a>
+    </Link>
   );
 }
 
