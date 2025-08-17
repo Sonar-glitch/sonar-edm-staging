@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import AppLayout from '@/components/AppLayout';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
@@ -153,7 +154,7 @@ export default function ProfilePage() {
   const pastEvents = profile?.events?.past || [];
 
   return (
-    <>
+    <AppLayout>
       <Head>
         <title>Your Profile | TIKO</title>
         <meta name="description" content="Your TIKO profile and music taste" />
@@ -169,7 +170,7 @@ export default function ProfilePage() {
 
         {error && (
           <div className={styles.errorMessage}>
-            {error?.message || error?.toString() || 'An error occurred'}
+            {error}
             <button onClick={fetchUserProfile} className={styles.retryButton}>
               Try Again
             </button>
@@ -314,6 +315,6 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-    </>
+  </AppLayout>
   );
 }

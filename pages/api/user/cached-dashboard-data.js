@@ -31,13 +31,21 @@ export default async function handler(req, res) {
     // Small grace window (15m) allows slightly expired data to still serve while refresh is queued
     const now = new Date();
     const graceWindow = new Date(Date.now() - 15 * 60 * 1000);
+    // Broader lookup: some documents may have stored email instead of userId or variant keys
     const cached = await db.collection('user_sound_profiles').findOne({
-      userId,
-      expiresAt: { $gt: graceWindow }
-    });
+        $and: [
+          { expiresAt: { $gt: graceWindow } },
+          { $or: [
+            { userId },
+            { userId: normalizedEmail },
+            { email: normalizedEmail },
+            { email: session.user.email }
+          ] }
+        ]
+      });
 
     if (cached) {
-      console.log(`⚡ Cache hit for dashboard data: ${userId}`);
+      console.log(`⚡ Cache hit for dashboard data: ${userId} (docId=${cached._id})`);
 
       // Derive tracks analyzed robustly (explicit field OR derived from genre counts)
       // FIX: Some stored profiles used trackCount instead of tracksAnalyzed; also some only have topGenres counts
@@ -50,7 +58,8 @@ export default async function handler(req, res) {
       );
 
       // Confidence must NOT be high if we have zero tracks; downgrade & mark non-real
-      const hasRealData = derivedTracks > 0; // threshold can later be raised to >=10
+  const hasRealData = derivedTracks > 0; // threshold can later be raised to >=10
+  const demoReason = hasRealData ? null : (!derivedTracks ? 'ZERO_TRACKS' : 'UNKNOWN');
       const effectiveConfidence = hasRealData
         ? (cached.confidence != null ? cached.confidence : 0.7)
         : 0.0; // show 0 when truly no tracks analyzed
@@ -75,12 +84,14 @@ export default async function handler(req, res) {
           spotify: { 
             ...baseSource,
             isReal: hasRealData,
-            error: hasRealData ? null : 'NO_TRACKS_ANALYZED'
+            error: hasRealData ? null : 'NO_TRACKS_ANALYZED',
+            demoReason
           },
           soundstat: { 
             ...baseSource,
             isReal: hasRealData,
-            error: hasRealData ? null : 'NO_TRACKS_ANALYZED'
+            error: hasRealData ? null : 'NO_TRACKS_ANALYZED',
+            demoReason
           },
           events: { 
             isReal: true,
@@ -91,7 +102,8 @@ export default async function handler(req, res) {
           seasonal: { 
             ...baseSource,
             isReal: hasRealData,
-            error: hasRealData ? null : 'NO_TRACKS_ANALYZED'
+            error: hasRealData ? null : 'NO_TRACKS_ANALYZED',
+            demoReason
           },
           ...(cached.weeklyDeltas ? {
             weeklyDeltas: {

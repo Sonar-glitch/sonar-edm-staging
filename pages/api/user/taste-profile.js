@@ -81,13 +81,23 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { db } = await connectToDatabase();
-    const userId = session.user.id; // Assuming user ID is in session
+  const { db } = await connectToDatabase();
+  // Unified user identifier (fallback to email). Some earlier profiles stored only email; others only id.
+  const primaryUserId = session.user.id || session.user.email;
+  const normalizedEmail = (session.user.email || '').toLowerCase();
+  const userId = primaryUserId; // keep existing variable name for downstream logic
 
     console.log(`🧠 Fetching Essentia-based taste profile for user: ${userId}`);
 
     // PHASE 1: Try to get existing Essentia user profile from database
-    const existingProfile = await db.collection('user_sound_profiles').findOne({ userId });
+    const existingProfile = await db.collection('user_sound_profiles').findOne({
+      $or: [
+        { userId },
+        { userId: session.user.id || null },
+        { userId: normalizedEmail },
+        { email: normalizedEmail }
+      ]
+    });
     
     const isProfileFresh = existingProfile && 
       existingProfile.profileBuiltAt && 
@@ -259,10 +269,11 @@ export default async function handler(req, res) {
 
                 // Store in database
                 await db.collection('user_sound_profiles').replaceOne(
-                  { userId },
+                  { $or: [ { userId }, { userId: normalizedEmail } ] },
                   {
                     ...essentiaProfile,
                     userId,
+                    email: normalizedEmail,
                     profileBuiltAt: new Date(),
                     sourceType: 'essentia_ml_6_month_top_tracks',
                     tracksAnalyzed: essentiaProfile.trackCount || 0,
@@ -366,7 +377,7 @@ export default async function handler(req, res) {
 
     // FALLBACK: Return demo data if Essentia analysis fails
     console.log(`🔄 Using fallback profile for user: ${userId}`);
-    const fallbackProfile = getFallbackTasteProfile(userId);
+  const fallbackProfile = { ...getFallbackTasteProfile(userId), email: normalizedEmail };
     return res.status(200).json(fallbackProfile);
 
   } catch (error) {
