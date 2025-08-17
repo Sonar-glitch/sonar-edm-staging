@@ -1,13 +1,11 @@
 // PRESERVES: All existing functionality and UI theme
 // ADDS: Custom themed tooltips, weekly delta indicators, comprehensive data source info
 // REMOVES: Redundant red section as requested
-// FIXED: React #130 error - UserProfileButton properly imported
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
-import ErrorBoundary from './ErrorBoundary';
 
 // Dynamic imports for components (PRESERVED)
 const Top5GenresSpiderChart = dynamic(() => import('./Top5GenresSpiderChart'), { ssr: false });
@@ -24,11 +22,6 @@ export default function EnhancedPersonalizedDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // 🚀 CLIENT-SIDE CACHE: Prevent multiple API calls
-  const [dashboardCache, setDashboardCache] = useState(null);
-  const [cacheTimestamp, setCacheTimestamp] = useState(null);
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes client cache
 
   // 🎵 NEW: Taste collection and events loading states
   const [tasteCollectionStatus, setTasteCollectionStatus] = useState('checking');
@@ -74,28 +67,10 @@ export default function EnhancedPersonalizedDashboard() {
   useEffect(() => {
     // 🔐 SIMPLIFIED: Only check onboarding for authenticated users
     if (session) {
-      // Only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔐 User is authenticated:', session.user.email);
-      }
-      
-      // 🚀 CHECK CLIENT CACHE FIRST: Avoid unnecessary API calls
-      if (dashboardCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('⚡ Using client cache, skipping API calls');
-        }
-        setDashboardData(dashboardCache);
-        setLoading(false);
-        setTasteCollectionStatus('completed');
-        return;
-      }
-      
+      console.log('🔐 User is authenticated:', session.user.email);
       checkTasteCollectionStatus();
     } else {
-      // Only log in development  
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔐 User is NOT authenticated - showing sign-in prompt');
-      }
+      console.log('🔐 User is NOT authenticated - showing sign-in prompt');
       // For unauthenticated users, don't load any data - just show sign-in
       setLoading(false);
       setTasteCollectionStatus('completed'); // Skip onboarding entirely
@@ -106,21 +81,16 @@ export default function EnhancedPersonalizedDashboard() {
   const checkTasteCollectionStatus = async () => {
     try {
       const response = await fetch('/api/user/dashboard-status');
-      
       if (response.ok) {
         const data = await response.json();
         const status = data.status;
         
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🎵 Dashboard status:', status);
-        }
+        console.log('🎵 Dashboard status:', status);
         
         // 🎯 FIXED: Only redirect if user explicitly needs onboarding AND doesn't have any profile data
         // Prevent redirect loop by checking if we're already in demo mode or have shown onboarding
         if (status.showTasteLoader && status.isFirstLogin && !isDemoMode && !localStorage.getItem('onboarding_attempted')) {
-        if (process.env.NODE_ENV === 'development') {
           console.log('🔄 Redirecting first-time user to onboarding page');
-        }
           localStorage.setItem('onboarding_attempted', 'true');
           window.location.href = '/onboarding';
           return;
@@ -131,9 +101,7 @@ export default function EnhancedPersonalizedDashboard() {
         
         // If no real profile data exists, enable demo mode
         if (!status.userHasProfile || status.userType === 'guest') {
-        if (process.env.NODE_ENV === 'development') {
           console.log('🎭 No real profile data found, enabling demo mode');
-        }
           setIsDemoMode(true);
         }
         
@@ -143,30 +111,27 @@ export default function EnhancedPersonalizedDashboard() {
           setEventsLoadingStatus('loaded');
         }
         
-        // 🚀 SINGLE DATA LOAD: Load dashboard data only once
+        // Load dashboard data for returning users and unauthenticated users
         await loadDashboardData();
         loadWeeklyDeltas();
         autoDetectLocation();
         
-      } else if (response.status === 500) {
-        // Handle 500 errors gracefully
-        console.warn('Dashboard status API returned 500, using fallback');
-        setTasteCollectionStatus('completed');
-        setIsDemoMode(true);
-        await loadDashboardData();
       } else {
         // Fallback: load dashboard normally and set status to completed
         setTasteCollectionStatus('completed');
         setIsDemoMode(true); // Enable demo mode on API failure
         await loadDashboardData();
+        loadWeeklyDeltas();
+        autoDetectLocation();
       }
     } catch (error) {
-      console.error('Error checking dashboard status:', error.message || error);
+      console.error('Error checking dashboard status:', error);
       // Fallback: load dashboard normally and set status to completed
       setTasteCollectionStatus('completed');
       setIsDemoMode(true); // Enable demo mode on error
       await loadDashboardData();
-      // Remove duplicate calls - already handled in loadDashboardData()
+      loadWeeklyDeltas();
+      autoDetectLocation();
     }
   };
 
@@ -184,7 +149,7 @@ export default function EnhancedPersonalizedDashboard() {
               );
               if (response.ok) {
                 const locationData = await response.json();
-                console.log('🌍 [Dashboard] Browser location detected:', JSON.stringify(locationData));
+                console.log('🌍 [Dashboard] Browser location detected:', locationData);
                 setUserLocation(locationData);
                 setEventFilters(prev => ({
                   ...prev,
@@ -193,7 +158,7 @@ export default function EnhancedPersonalizedDashboard() {
                 return;
               }
             } catch (error) {
-              console.error('🌍 [Dashboard] Reverse geocoding failed:', error.message || error);
+              console.error('🌍 [Dashboard] Reverse geocoding failed:', error);
             }
             
             // If reverse geocoding fails, use coordinates directly
@@ -221,7 +186,7 @@ export default function EnhancedPersonalizedDashboard() {
         tryIPLocation();
       }
     } catch (error) {
-      console.error('🌍 [Dashboard] Location detection error:', error.message || error);
+      console.error('🌍 [Dashboard] Location detection error:', error);
       useTorontoFallback();
     }
   };
@@ -232,7 +197,7 @@ export default function EnhancedPersonalizedDashboard() {
       const response = await fetch('/api/user/get-location');
       if (response.ok) {
         const locationData = await response.json();
-        console.log('🌍 [Dashboard] IP location detected:', JSON.stringify(locationData));
+        console.log('🌍 [Dashboard] IP location detected:', locationData);
         setUserLocation(locationData);
         setEventFilters(prev => ({
           ...prev,
@@ -271,29 +236,9 @@ export default function EnhancedPersonalizedDashboard() {
     try {
       setLoading(true);
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🚀 Loading dashboard data...');
-      }
-
       // 🚀 FAST LOADING: Use cached profile data instead of live Spotify calls
       const tasteResponse = await fetch('/api/user/cached-dashboard-data');
-      
       if (!tasteResponse.ok) {
-        // Handle 500 errors gracefully instead of throwing
-        if (tasteResponse.status === 500) {
-          console.warn('Dashboard API returned 500, using fallback data');
-          setIsDemoMode(true);
-          setDashboardData({
-            dataSources: {
-              spotify: { isReal: false, error: 'API_ERROR', lastFetch: null },
-              events: { isReal: false, error: 'API_ERROR', lastFetch: null }
-            },
-            profile: null,
-            fallbackMode: true
-          });
-          setLoading(false);
-          return;
-        }
         throw new Error(`Cached dashboard API error: ${tasteResponse.status}`);
       }
 
@@ -301,19 +246,12 @@ export default function EnhancedPersonalizedDashboard() {
       
       // Handle onboarding redirect case
       if (tasteData.needsOnboarding) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔄 User needs onboarding, redirecting...');
-        }
+        console.log('🔄 User needs onboarding, redirecting...');
         // Keep current behavior - let parent component handle
         setLoading(false);
         return;
       }
-
-      // 🚀 UPDATE CLIENT CACHE: Store for future use
       setDashboardData(tasteData);
-      setDashboardCache(tasteData);
-      setCacheTimestamp(Date.now());
-      console.log('⚡ Dashboard data cached client-side');
 
       // 🎯 FIXED: Properly check for real vs demo data based on API response
       const isRealSpotifyData = tasteData.dataSources?.genreProfile?.isRealData === true;
@@ -344,7 +282,6 @@ export default function EnhancedPersonalizedDashboard() {
       try {
         // 🚀 PERFORMANCE: Use cached events API for fast loading
         const eventsResponse = await fetch('/api/events/cached-enhanced');
-        
         if (eventsResponse.ok) {
           eventsData = await eventsResponse.json();
           
@@ -367,18 +304,10 @@ export default function EnhancedPersonalizedDashboard() {
             vibeMatchFilter: eventFilters.vibeMatch || 50,
             error: hasRealEvents ? null : 'DEMO_DATA'
           };
-          if (process.env.NODE_ENV === 'development') {
-            console.log('✅ [Dashboard] Enhanced events data loaded:', JSON.stringify(eventsData.enhancementStats));
-          }
-        } else if (eventsResponse.status === 500) {
-          // Handle 500 errors gracefully
-          console.warn('Events API returned 500, using fallback');
-          eventsSource.error = 'API_ERROR_500';
+          console.log('✅ [Dashboard] Enhanced events data loaded:', eventsData.enhancementStats);
         }
       } catch (eventsError) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('⚠️ [Dashboard] Events loading failed, using fallback:', eventsError.message);
-        }
+        console.warn('⚠️ [Dashboard] Events loading failed, using fallback:', eventsError.message);
         eventsSource.error = `API_ERROR: ${eventsError.message}`;
       }
 
@@ -420,8 +349,8 @@ export default function EnhancedPersonalizedDashboard() {
       setDataSources(newDataSources);
 
     } catch (err) {
-      console.error('❌ Dashboard loading error:', err.message || err);
-      setError(err?.message || 'Failed to load dashboard data');
+      console.error('❌ Dashboard loading error:', err);
+      setError(err.message);
       // On error, definitely enable demo mode
       setIsDemoMode(true);
     } finally {
@@ -433,15 +362,6 @@ export default function EnhancedPersonalizedDashboard() {
   const loadWeeklyDeltas = async () => {
     try {
       const response = await fetch('/api/user/weekly-deltas');
-      
-      if (!response.ok) {
-        if (response.status === 500) {
-          console.warn('Weekly deltas API returned 500, using fallback');
-          return; // Skip loading deltas on 500 error
-        }
-        throw new Error(`Weekly deltas API error: ${response.status}`);
-      }
-      
       const data = await response.json();
       
       // Whether real or fallback data, if the API call succeeds, use the data
@@ -498,7 +418,7 @@ export default function EnhancedPersonalizedDashboard() {
       setWeeklyDeltas(fallbackDeltas);
       }
     } catch (err) {
-      console.error('❌ Weekly deltas loading error:', err.message || err);
+      console.error('❌ Weekly deltas loading error:', err);
       
       // Update data source with error info
       setDataSources(prev => ({
@@ -742,10 +662,6 @@ export default function EnhancedPersonalizedDashboard() {
         .then(() => console.log('🎵 Progress reset for future sessions'))
         .catch(err => console.warn('🎵 Progress reset failed:', err.message));
       
-      // 🚀 CLEAR CLIENT CACHE: Force refresh after taste collection
-      setDashboardCache(null);
-      setCacheTimestamp(null);
-      
       // Load dashboard data immediately for fast mode
       loadDashboardData();
       loadWeeklyDeltas();
@@ -755,10 +671,6 @@ export default function EnhancedPersonalizedDashboard() {
     
     // Normal completion flow
     setTasteCollectionStatus('completed');
-    
-    // 🚀 CLEAR CLIENT CACHE: Force refresh after taste collection
-    setDashboardCache(null);
-    setCacheTimestamp(null);
     
     // Load dashboard data after taste collection
     loadDashboardData();
@@ -881,7 +793,7 @@ export default function EnhancedPersonalizedDashboard() {
       <div className={styles.container}>
         <div className={styles.errorState}>
           <h2>Unable to load dashboard</h2>
-          <p>{error || 'Unknown error occurred'}</p>
+          <p>{typeof error === 'string' ? error : JSON.stringify(error)}</p>
           <button onClick={loadDashboardData} className={styles.retryButton}>
             Try Again
           </button>
@@ -910,29 +822,9 @@ export default function EnhancedPersonalizedDashboard() {
             <span className={styles.tagline}>Your Music Universe</span>
           </div>
           <div className={styles.profileSection}>
-            <ErrorBoundary>
-              <UserProfileButton />
-            </ErrorBoundary>
+            <UserProfileButton />
           </div>
         </div>
-        
-        {/* 🎵 Navigation Tabs */}
-        <nav className={styles.navigation}>
-          <div className={styles.navTabs}>
-            <a href="/users/dashboard" className={styles.navTab + ' ' + styles.activeTab}>
-              🎵 Dashboard
-            </a>
-            <a href="/music-taste" className={styles.navTab}>
-              🎨 Music Taste
-            </a>
-            <a href="/my-events" className={styles.navTab}>
-              💖 Favorites
-            </a>
-            <a href="/users/profile" className={styles.navTab}>
-              👤 Profile
-            </a>
-          </div>
-        </nav>
       </header>
 
       {/* 🎵 NEW: Demo Mode Notice */}
@@ -1103,7 +995,7 @@ export default function EnhancedPersonalizedDashboard() {
           }}
         >
           <div className={styles.tooltipContent}>
-            {activeTooltip.content.split('\n').map((line, index) => (
+            {(activeTooltip.content || '').toString().split('\n').map((line, index) => (
               <div key={index} className={styles.tooltipLine}>
                 {line}
               </div>
