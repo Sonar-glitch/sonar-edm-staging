@@ -543,7 +543,7 @@ export default function EnhancedEventList({
       <div className={styles.container}>
         <div className={styles.errorState}>
           <h3>Unable to Load Events</h3>
-          <p>Error: {error}</p>
+          <p>Error: {error?.message || error?.toString() || 'An unknown error occurred'}</p>
           <button onClick={loadEvents} className={styles.retryButton}>
             Try Again
           </button>

@@ -162,7 +162,7 @@ export default function SharedAnalytics() {
   if (error) {
     return (
       <div className={styles.errorContainer}>
-        <p className={styles.errorMessage}>{error}</p>
+        <p className={styles.errorMessage}>{error?.message || error?.toString() || 'An unknown error occurred'}</p>
         <button 
           onClick={fetchAnalytics}
           className={styles.retryButton}

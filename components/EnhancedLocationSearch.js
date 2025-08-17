@@ -476,7 +476,7 @@ export default function EnhancedLocationSearch({ selectedLocation, onLocationSel
                       color: '#ff6b6b',
                       fontSize: '0.9rem'
                     }}>
-                      {error}
+                      {error?.message || error?.toString() || 'An unknown error occurred'}
                     </div>
                   )}
                   

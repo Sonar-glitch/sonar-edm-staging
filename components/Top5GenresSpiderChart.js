@@ -125,7 +125,7 @@ export default function Top5GenresSpiderChart({ data, dataSource, getDeltaIndica
       <div className={styles.container}>
         <div className={styles.errorState}>
           <p>Unable to load genre chart</p>
-          <p>{error}</p>
+          <p>{error?.message || error?.toString() || 'An unknown error occurred'}</p>
         </div>
       </div>
     );

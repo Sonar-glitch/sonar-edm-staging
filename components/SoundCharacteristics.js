@@ -110,7 +110,7 @@ export default function SoundCharacteristics({ data, dataSource, getDeltaIndicat
       <div className={styles.container}>
         <div className={styles.errorState}>
           <p>Unable to load sound characteristics</p>
-          <p>{error}</p>
+          <p>{error?.message || error?.toString() || 'An unknown error occurred'}</p>
         </div>
       </div>
     );
