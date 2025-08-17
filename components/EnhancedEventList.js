@@ -2,7 +2,7 @@
 // SURGICAL ADDITION: Accept location and vibeMatch props, pass to Events API
 // PRESERVES: All existing functionality, styling, error handling, and component behavior
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import TasteMatchVisuals from './TasteMatchVisuals';
 import styles from '../styles/EnhancedEventList.module.css';
 
@@ -356,6 +356,19 @@ export default function EnhancedEventList({
   const [userLocation, setUserLocation] = useState(null);
   // SURGICAL ADDITION: Collapsible groups state - START COLLAPSED
   const [collapsedGroups, setCollapsedGroups] = useState(new Set(['mustSee', 'tonight', 'tomorrow', 'thisWeekend', 'nextWeekend', 'national', 'international']));
+  // NEW: Local saved IDs (optimistic) + toasts
+  const initialSavedIds = useMemo(() => new Set(userProfile?.savedEventIds || []), [userProfile?.savedEventIds]);
+  const [savedIds, setSavedIds] = useState(initialSavedIds);
+  const [toasts, setToasts] = useState([]);
+
+  // Sync when userProfile changes
+  useEffect(() => { setSavedIds(new Set(userProfile?.savedEventIds || [])); }, [userProfile?.savedEventIds]);
+
+  const pushToast = (msg, type = 'info') => {
+    const id = Date.now() + Math.random();
+    setToasts(t => [...t, { id, msg, type }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
+  };
 
   // SURGICAL ADDITION: Trigger reload when filters change
   useEffect(() => {
@@ -699,7 +712,7 @@ export default function EnhancedEventList({
           }
           
       const eventId = event._id || event.id;
-      const isFav = !!(userProfile?.savedEventIds?.includes?.(eventId));
+  const isFav = savedIds.has(eventId);
       return (
             <div 
         key={eventId || index} 
@@ -757,15 +770,38 @@ export default function EnhancedEventList({
                   <button
                     type="button"
                     className={styles.saveButton}
+                    aria-label={isFav ? 'Unsave event' : 'Save event'}
                     onClick={async (btnEvt) => {
                       btnEvt.stopPropagation();
+                      if (!eventId) return;
+                      const next = new Set(savedIds);
+                      const willSave = !isFav;
+                      // Optimistic update
+                      if (willSave) {
+                        next.add(eventId);
+                        pushToast('Event saved ✓', 'success');
+                      } else {
+                        next.delete(eventId);
+                        pushToast('Removed from favourites', 'neutral');
+                      }
+                      setSavedIds(next);
+                      // Broadcast update so favourites page can sync
+                      try { window.dispatchEvent(new CustomEvent('favouritesUpdated', { detail: { eventId, action: willSave ? 'added' : 'removed', allIds: Array.from(next) } })); } catch {}
                       try {
-                        if (isFav) {
-                          await fetch(`/api/user/favourites?eventId=${eventId}`, { method: 'DELETE' });
-                        } else {
-                          await fetch('/api/user/favourites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventId }) });
+                        const res = willSave
+                          ? await fetch('/api/user/favourites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventId }) })
+                          : await fetch(`/api/user/favourites?eventId=${eventId}`, { method: 'DELETE' });
+                        if (!res.ok) {
+                          // Revert on failure
+                          const reverted = new Set(savedIds);
+                          setSavedIds(reverted);
+                          pushToast('Failed to update favourites', 'error');
                         }
-                      } catch (e) { console.warn('Fav toggle error', e.message); }
+                      } catch (e) {
+                        const reverted = new Set(savedIds);
+                        setSavedIds(reverted);
+                        pushToast('Network error updating favourites', 'error');
+                      }
                     }}
                     style={{
                       marginTop: 6,
@@ -775,7 +811,8 @@ export default function EnhancedEventList({
                       fontSize: 10,
                       padding: '4px 8px',
                       borderRadius: 12,
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'background .25s'
                     }}
                   >{isFav ? 'Saved' : 'Save'}</button>
                 </div>
@@ -895,6 +932,17 @@ export default function EnhancedEventList({
           )}
         </div>
       )}
+      {/* Toasts */}
+      <div style={{position:'fixed', bottom:16, right:16, display:'flex', flexDirection:'column', gap:8, zIndex:9999}}>
+        {toasts.map(t => (
+          <div key={t.id} style={{
+            background: t.type==='error' ? 'rgba(255,68,68,0.9)' : t.type==='success' ? 'linear-gradient(90deg,#00CFFF,#FF00CC)' : 'rgba(255,255,255,0.1)',
+            color:'#fff', padding:'8px 12px', borderRadius:8, fontSize:12,
+            boxShadow:'0 4px 12px -2px rgba(0,0,0,0.5)',
+            backdropFilter:'blur(6px)'
+          }}>{t.msg}</div>
+        ))}
+      </div>
     </div>
   );
 }

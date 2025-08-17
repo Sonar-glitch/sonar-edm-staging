@@ -29,12 +29,13 @@ const AppLayout = ({ children }) => {
             <p className={styles.platformSubtitle}>Your personalized EDM event discovery platform</p>
           </div>
           <div className={styles.profileSection}>
+            {/* Profile button intentionally outside / above tab group and anchored to right */}
             <UserProfileButton />
           </div>
         </div>
       </header>
 
-      <nav className={styles.tabNavigation}>
+  <nav className={styles.tabNavigation} aria-label="Primary">
         <Link href="/users/dashboard" legacyBehavior>
           <a className={`${styles.tabButton} ${pathname === '/users/dashboard' ? styles.activeTabButton : ''}`}>Dashboard</a>
         </Link>

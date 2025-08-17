@@ -3,7 +3,7 @@
 // Shows brief user summary with delete option as requested
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 
 export default function UserProfileButton() {
   const { data: session } = useSession();
@@ -23,32 +23,57 @@ export default function UserProfileButton() {
         setProfileData(data);
       }
     } catch (error) {
-      console.error('Failed to load profile summary:', error?.message || error?.toString() || 'Unknown error');
+      console.error('Failed to load profile summary:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete profile function
-  const deleteProfile = async () => {
-    if (!confirm('Are you sure you want to delete your profile? This will remove all your music taste data and preferences.')) {
-      return;
-    }
-
+  // Forceful sign out: revoke token (server), clear cookies via NextAuth, then hard redirect to root
+  const hardSignOut = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/user/delete-account', {
-        method: 'DELETE'
-      });
+      try {
+        // Clear onboarding attempt so a genuinely deleted profile triggers onboarding again next login
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('onboarding_attempted');
+          sessionStorage.removeItem('tiko_dashboard_cache_v1');
+        }
+      } catch {}
+      await fetch('/api/auth/logout', { method: 'POST' }); // server-side token revoke attempt
+      // Clear NextAuth session cookie & redirect
+      await signOut({ redirect: true, callbackUrl: '/' });
+    } catch (e) {
+      console.warn('Sign out encountered an issue; forcing location change');
+      window.location.href = '/';
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Delete profile function: remove userProfiles + user_sound_profiles to trigger onboarding again
+  const deleteProfile = async () => {
+    if (!confirm('Delete your profile? This removes your saved taste data and restarts onboarding. Continue?')) return;
+    try {
+      setLoading(true);
+      const response = await fetch('/api/user/delete-account', { method: 'DELETE' });
       if (response.ok) {
-        alert('✅ Profile deleted successfully!');
-        window.location.reload();
+        // Also remove sound profile explicitly (in case API only deletes userProfiles)
+        try { await fetch('/api/user/delete-sound-profile', { method: 'DELETE' }); } catch {}
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('onboarding_attempted');
+            sessionStorage.removeItem('tiko_dashboard_cache_v1');
+          }
+        } catch {}
+        alert('✅ Profile deleted. You will be logged out to restart onboarding.');
+        await hardSignOut();
       } else {
-        alert('❌ Failed to delete profile');
+        const err = await response.json();
+        alert('❌ Failed to delete profile: ' + (err.message || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Delete profile error:', error?.message || error?.toString() || 'Unknown error');
+      console.error('Delete profile error:', error);
       alert('❌ Error deleting profile');
     } finally {
       setLoading(false);
@@ -70,7 +95,7 @@ export default function UserProfileButton() {
         alert('❌ Failed to refresh cache');
       }
     } catch (error) {
-      console.error('Refresh cache error:', error?.message || error?.toString() || 'Unknown error');
+      console.error('Refresh cache error:', error);
       alert('❌ Error refreshing cache');
     } finally {
       setLoading(false);
@@ -171,7 +196,13 @@ export default function UserProfileButton() {
               >
                 🔄 Refresh Data Cache
               </button>
-              
+              <button
+                onClick={hardSignOut}
+                disabled={loading}
+                className="w-full bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white px-3 py-2 rounded text-sm transition-colors"
+              >
+                🚪 Sign Out
+              </button>
               <button
                 onClick={deleteProfile}
                 disabled={loading}

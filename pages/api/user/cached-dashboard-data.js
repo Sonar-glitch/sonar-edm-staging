@@ -38,75 +38,110 @@ export default async function handler(req, res) {
 
     if (cached) {
       console.log(`⚡ Cache hit for dashboard data: ${userId}`);
-      
-      // Transform cached data into dashboard format
+
+      // Derive tracks analyzed robustly (explicit field OR derived from genre counts)
+      // FIX: Some stored profiles used trackCount instead of tracksAnalyzed; also some only have topGenres counts
+      const derivedTracks = (
+        cached.tracksAnalyzed ||
+        cached.trackCount ||
+        (Array.isArray(cached.topGenres)
+          ? cached.topGenres.reduce((a, g) => a + (g.count || 0), 0)
+          : 0)
+      );
+
+      // Confidence must NOT be high if we have zero tracks; downgrade & mark non-real
+      const hasRealData = derivedTracks > 0; // threshold can later be raised to >=10
+      const effectiveConfidence = hasRealData
+        ? (cached.confidence != null ? cached.confidence : 0.7)
+        : 0.0; // show 0 when truly no tracks analyzed
+
+      const analysisStatus = {
+        hasRealData,
+        tracksAnalyzed: derivedTracks,
+        pending: !hasRealData,
+        // future: queued rebuild doc indicates pending async processing
+      };
+
+      const baseSource = {
+        lastFetch: cached.createdAt,
+        source: 'cached_profile',
+        tracksAnalyzed: derivedTracks,
+        confidence: effectiveConfidence,
+        analysisStatus
+      };
+
       const dashboardData = {
         dataSources: {
           spotify: { 
-            isReal: true, 
-            error: null, 
-            lastFetch: cached.createdAt,
-            source: 'cached_profile',
-            // Provide tracksAnalyzed for frontend real-data detection logic
-            tracksAnalyzed: cached.tracksAnalyzed || (cached.topGenres ? cached.topGenres.reduce((a, g) => a + (g.count || 0), 0) : 0)
+            ...baseSource,
+            isReal: hasRealData,
+            error: hasRealData ? null : 'NO_TRACKS_ANALYZED'
           },
           soundstat: { 
-            isReal: true, 
-            error: null, 
-            lastFetch: cached.createdAt,
-            source: 'cached_profile',
-            tracksAnalyzed: cached.tracksAnalyzed || 0,
-            confidence: cached.confidence || 0.7
+            ...baseSource,
+            isReal: hasRealData,
+            error: hasRealData ? null : 'NO_TRACKS_ANALYZED'
           },
           events: { 
-            isReal: true, 
-            error: null, 
+            isReal: true,
+            error: null,
             lastFetch: new Date().toISOString(),
             source: 'live_api'
           },
           seasonal: { 
-            isReal: true, 
-            error: null, 
-            lastFetch: cached.createdAt,
-            source: 'cached_profile',
-            tracksAnalyzed: cached.tracksAnalyzed || 0,
-            confidence: cached.confidence || 0.7
-          }
+            ...baseSource,
+            isReal: hasRealData,
+            error: hasRealData ? null : 'NO_TRACKS_ANALYZED'
+          },
+          ...(cached.weeklyDeltas ? {
+            weeklyDeltas: {
+              lastFetch: cached.lastWeeklyDeltaAt || cached.profileBuiltAt || new Date(),
+              source: 'weekly_deltas_cache',
+              tracksAnalyzed: cached.weeklyDeltas?.dataQuality?.tracksAnalyzed || 0,
+              confidence: cached.weeklyDeltas?.dataQuality?.confidence || 0,
+              isReal: !!cached.weeklyDeltas?.dataQuality?.tracksAnalyzed,
+              error: cached.weeklyDeltasError || null,
+              analysisStatus: { pending: !cached.weeklyDeltas?.dataQuality?.tracksAnalyzed }
+            }
+          } : {})
         },
-        
-        // Genre profile from cached data
+
         genreProfile: {
           topGenres: cached.topGenres || [],
-          confidence: cached.confidence || 0.7,
+          confidence: effectiveConfidence,
           dataSource: 'cached_spotify_data',
           lastFetch: cached.createdAt,
-          tracksAnalyzed: cached.tracksAnalyzed || (cached.topGenres ? cached.topGenres.reduce((a, g) => a + (g.count || 0), 0) : 0)
+          tracksAnalyzed: derivedTracks,
+          pending: !hasRealData
         },
-        
-        // Sound characteristics from cached data  
+
         soundCharacteristics: cached.soundCharacteristics || {
           energy: 0.6,
           danceability: 0.6,
           valence: 0.6,
-          confidence: 0.3
+          confidence: effectiveConfidence
         },
-        
-        // Artist profile from cached data
+
         artistProfile: cached.topGenres?.slice(0, 5).map((genre, i) => ({
           name: `${genre.genre} Artist ${i + 1}`,
-          plays: genre.count || 10,
+            plays: genre.count || 10,
           genre: genre.genre
         })) || [],
-        
-        // Top tracks placeholder (could be enhanced with cached track data)
+
         topTracks: [
           { name: 'Track 1', artist: 'Artist 1', plays: 50 },
           { name: 'Track 2', artist: 'Artist 2', plays: 45 },
           { name: 'Track 3', artist: 'Artist 3', plays: 40 }
         ],
-        
-        // Seasonal data from cached profile
-        seasonalAnalysis: {
+
+        seasonalAnalysis: cached.seasonalProfile ? {
+          currentSeason: getCurrentSeason(),
+          genres: cached.seasonalProfile.profile || {},
+          metadata: {
+            ...(cached.seasonalProfile.metadata || {}),
+            pending: !hasRealData
+          }
+        } : {
           currentSeason: getCurrentSeason(),
           genres: {
             spring: cached.topGenres?.slice(0, 3).map(g => g.genre) || ['Progressive House', 'Melodic Techno'],
@@ -115,18 +150,23 @@ export default async function handler(req, res) {
             winter: cached.topGenres?.slice(3, 6).map(g => g.genre) || ['Deep House', 'Ambient Techno']
           },
           metadata: {
-            tracksAnalyzed: cached.tracksAnalyzed || 0,
+            tracksAnalyzed: derivedTracks,
             seasonsWithData: ['spring', 'summer', 'fall', 'winter'],
-            dataQuality: cached.confidence || 0.7,
-            confidence: cached.confidence || 0.7,
+            dataQuality: effectiveConfidence,
+            confidence: effectiveConfidence,
             source: 'cached_spotify_data',
-            isRealData: true
+            isRealData: hasRealData,
+            pending: !hasRealData
           }
         },
-        
-        // Performance metadata
+
+        // Expose weekly deltas if present
+        weeklyDeltas: cached.weeklyDeltas || null,
+
+        soundCharacteristicsSummary: cached.soundCharacteristicsSummary || null,
+
         performance: {
-          cacheAge: Math.floor((new Date() - cached.createdAt) / 1000 / 60), // minutes
+          cacheAge: Math.floor((new Date() - cached.createdAt) / 1000 / 60),
           loadTime: 'fast',
           dataSource: 'cache',
           lastUpdate: cached.createdAt,

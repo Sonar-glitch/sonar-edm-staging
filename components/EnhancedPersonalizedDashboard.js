@@ -274,7 +274,9 @@ export default function EnhancedPersonalizedDashboard() {
         throw new Error(`Cached dashboard API error: ${tasteResponse.status}`);
       }
 
-      const tasteData = await tasteResponse.json();
+  const tasteData = await tasteResponse.json();
+  console.log('📥 [Dashboard] cached-dashboard-data payload keys:', Object.keys(tasteData || {}));
+  console.log('📥 [Dashboard] tasteData.dataSources:', tasteData?.dataSources);
       
       // Handle onboarding states
       if (tasteData.needsOnboarding && !tasteData.softOnboarding) {
@@ -292,7 +294,7 @@ export default function EnhancedPersonalizedDashboard() {
       // 🎯 REAL DATA DETECTION (PATCHED OPTION A)
       // Previous logic enabled demo mode if *any* source was not real, which was too aggressive.
       // New logic: demo mode only if ALL core sources are non-real OR explicit soft onboarding / stub flags.
-      const isRealSpotifyData = tasteData.dataSources?.spotify?.isReal === true;
+  const isRealSpotifyData = tasteData.dataSources?.spotify?.isReal === true && (tasteData.genreProfile?.tracksAnalyzed || 0) > 0;
       const isRealSoundData = tasteData.dataSources?.soundstat?.isReal === true;
       const isRealSeasonalData = tasteData.dataSources?.seasonal?.isReal === true;
 
@@ -304,7 +306,8 @@ export default function EnhancedPersonalizedDashboard() {
 
       // Only adjust demo mode if not already forced by soft onboarding earlier
       if (!tasteData.softOnboarding) {
-        const shouldBeDemo = explicitDemoFlag || (allSourcesNonReal && (!hasGenres || tracksAnalyzed === 0));
+  const shouldBeDemo = explicitDemoFlag || (allSourcesNonReal && (!hasGenres || tracksAnalyzed === 0));
+  console.log('[DemoMode Eval]', { explicitDemoFlag, allSourcesNonReal, hasGenres, tracksAnalyzed, shouldBeDemo });
         if (shouldBeDemo) {
           if (!isDemoMode) console.log('🎭 Determined demo mode (all sources non-real or explicit demo flag)');
           setIsDemoMode(true);
@@ -543,13 +546,14 @@ export default function EnhancedPersonalizedDashboard() {
     }
 
     // 🎯 COMPREHENSIVE DATA QUALITY ASSESSMENT
-    let isReal = false;
-    let confidence = 0;
-    let label = '⚠️ Demo Data';
-    let tracksAnalyzed = source.tracksAnalyzed || 0;
+  let isReal = false;
+  let confidence = 0;
+  let label = '⚠️ Demo Data';
+  let tracksAnalyzed = source.tracksAnalyzed || 0;
+  const pending = source.analysisStatus?.pending || source.pending;
     
     // For real data assessment, check source.isReal flag first
-    if (!source.isReal) {
+  if (!source.isReal || tracksAnalyzed === 0 || pending) {
       isReal = false;
       label = '⚠️ Demo Data';
     } else if (sourceKey === 'spotify') {
@@ -557,7 +561,10 @@ export default function EnhancedPersonalizedDashboard() {
       const artistsAnalyzed = source.tracksAnalyzed || 0;
       confidence = source.confidence || 0;
       
-      if (artistsAnalyzed >= 10 && confidence >= 0.8) {
+      if (artistsAnalyzed === 0 || pending) {
+        isReal = false;
+        label = '⚠️ Fallback Data';
+      } else if (artistsAnalyzed >= 10 && confidence >= 0.8) {
         isReal = true;
         label = '✅ Real Data';
       } else if (artistsAnalyzed >= 5) {
@@ -575,7 +582,10 @@ export default function EnhancedPersonalizedDashboard() {
       // Sound characteristics: Based on Essentia analysis
       confidence = source.confidence || 0;
       
-      if (tracksAnalyzed >= 10 && confidence >= 0.8) {
+      if (tracksAnalyzed === 0 || pending) {
+        isReal = false;
+        label = '⚠️ Fallback Data';
+      } else if (tracksAnalyzed >= 10 && confidence >= 0.8) {
         isReal = true;
         label = '✅ Real Data';
       } else if (tracksAnalyzed >= 5) {
@@ -593,7 +603,10 @@ export default function EnhancedPersonalizedDashboard() {
       // Seasonal vibes: Based on listening history analysis
       confidence = source.confidence || 0;
       
-      if (tracksAnalyzed >= 20 && confidence >= 0.7) {
+      if (tracksAnalyzed === 0 || pending) {
+        isReal = false;
+        label = '⚠️ Fallback Data';
+      } else if (tracksAnalyzed >= 20 && confidence >= 0.7) {
         isReal = true;
         label = '✅ Real Data';
       } else if (tracksAnalyzed >= 10) {
@@ -613,12 +626,29 @@ export default function EnhancedPersonalizedDashboard() {
       isReal = eventsFound > 0 && !source.error && source.location !== 'Unknown';
       confidence = source.confidence || 0;
       label = isReal ? '✅ Real Data' : '⚠️ Demo Data';
+    } else if (sourceKey === 'weeklyDeltas') {
+      // Weekly deltas indicator
+      tracksAnalyzed = source.tracksAnalyzed || 0;
+      confidence = source.confidence || 0;
+      if (tracksAnalyzed === 0 || source.analysisStatus?.pending) {
+        isReal = false;
+        label = '⚠️ Pending Deltas';
+      } else {
+        isReal = true;
+        label = '📈 Weekly Deltas';
+      }
     }
     
     // 🎯 ENHANCED TOOLTIP with completion percentage and confidence
-    let tooltipContent = '';
+  let tooltipContent = '';
+  const errorChain = [];
+  if (source.error) errorChain.push(`error: ${source.error}`);
+  if (source.fallbackReason) errorChain.push(`fallback: ${source.fallbackReason}`);
+  if (source.apiError) errorChain.push(`apiError: ${source.apiError}`);
+  if (source.networkError) errorChain.push(`network: ${source.networkError}`);
+  const errorSummary = errorChain.length ? `\nIssues: ${errorChain.join(' | ')}` : '';
     if (isReal) {
-      if (sourceKey === 'events') {
+  if (sourceKey === 'events') {
         // Events tooltip (preserved)
         const integrationDetails = [];
         if (source.musicApiIntegration) integrationDetails.push('Spotify/Apple Music');
@@ -635,12 +665,16 @@ export default function EnhancedPersonalizedDashboard() {
         }
         
         tooltipContent = `${label}${integrations}\n${source.eventsFound || 0} events found\nLocation: ${source.location || 'Unknown'}\nVibe Match: ${source.vibeMatchFilter || 50}%${statsText}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+      } else if (sourceKey === 'weeklyDeltas') {
+        const completionPercent = tracksAnalyzed > 0 ? 100 : 0;
+        const confidencePercent = Math.round(confidence * 100);
+        tooltipContent = `${label}\nTracks analyzed (recent): ${tracksAnalyzed}\nConfidence: ${confidencePercent}%\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}${errorSummary}`;
       } else {
         // Music data sections with detailed completion info
         const completionPercent = tracksAnalyzed >= 10 ? 100 : Math.round((tracksAnalyzed / 10) * 100);
         const confidencePercent = Math.round(confidence * 100);
         
-        tooltipContent = `${label}\n${tracksAnalyzed} tracks analyzed\nCompletion: ${completionPercent}%\nConfidence: ${confidencePercent}%\nSource: ${source.source || 'spotify'}\nPeriod: ${source.timePeriod || 'recent'}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}`;
+  tooltipContent = `${label}\n${tracksAnalyzed} tracks analyzed\nCompletion: ${completionPercent}%\nConfidence: ${confidencePercent}%\nSource: ${source.source || 'spotify'}\nPeriod: ${source.timePeriod || 'recent'}\nLast updated: ${source.lastFetch ? new Date(source.lastFetch).toLocaleString() : 'Unknown'}${errorSummary}`;
         
         // Add analysis method if available
         const analysisMethod = [];
@@ -656,12 +690,13 @@ export default function EnhancedPersonalizedDashboard() {
       const fallbackReason = source.fallbackReason || 'Not enough tracks for reliable analysis';
       
       if (sourceKey === 'events') {
-        tooltipContent = `${label}\nReason: ${fallbackReason}\nUsing demonstration events\nNote: Real events require valid location and API access`;
+  tooltipContent = `${label}\nReason: ${fallbackReason}\nUsing demonstration events${errorSummary}\nNote: Real events require valid location and API access`;
       } else {
         const completionPercent = tracksAnalyzed > 0 ? Math.round((tracksAnalyzed / 10) * 100) : 0;
         const confidencePercent = Math.round(confidence * 100);
         
-        tooltipContent = `${label}\nReason: ${fallbackReason}\nTracks analyzed: ${tracksAnalyzed}\nCompletion: ${completionPercent}%\nConfidence: ${confidencePercent}%\nUsing genre-based estimates\nNote: Need 10+ tracks for reliable analysis`;
+  const pendingLine = pending ? '\nStatus: Pending analysis (queued)' : '';
+  tooltipContent = `${label}\nReason: ${fallbackReason}\nTracks analyzed: ${tracksAnalyzed}\nCompletion: ${completionPercent}%\nConfidence: ${confidencePercent}%${pendingLine}${errorSummary}\nUsing genre-based estimates\nNote: Need 10+ tracks for reliable analysis`;
       }
     }
 

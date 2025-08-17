@@ -161,17 +161,26 @@ export default async function handler(req, res) {
     
     console.log('Session found, making Spotify API calls...');
 
-    const [topArtistsResponse, topTracksResponse, recentlyPlayedResponse] = await Promise.allSettled([
+    const [topArtistsResponse, topTracksResponse, recentlyPlayedResponse, savedTracksResponse] = await Promise.allSettled([
       getTopArtists(session.accessToken),
       getTopTracks(session.accessToken),
-      getRecentlyPlayed(session.accessToken)
+      getRecentlyPlayed(session.accessToken),
+      // Saved (liked) tracks first page (50); we can paginate later if needed
+      (async () => {
+        try {
+          const resp = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', { headers: { 'Authorization': `Bearer ${session.accessToken}` } });
+          if (!resp.ok) throw new Error(`savedTracks ${resp.status}`);
+          return resp.json();
+        } catch (e) { return { error: e.message, items: [] }; }
+      })()
     ]);
     
     // PRESERVED: Track API call success for data source labeling
     const apiCallsSuccessful = {
       topArtists: topArtistsResponse.status === 'fulfilled' && topArtistsResponse.value?.items?.length > 0,
       topTracks: topTracksResponse.status === 'fulfilled' && topTracksResponse.value?.items?.length > 0,
-      recentlyPlayed: recentlyPlayedResponse.status === 'fulfilled' && recentlyPlayedResponse.value?.items?.length > 0
+      recentlyPlayed: recentlyPlayedResponse.status === 'fulfilled' && recentlyPlayedResponse.value?.items?.length > 0,
+      savedTracks: savedTracksResponse.status === 'fulfilled' && savedTracksResponse.value?.items?.length > 0
     };
     
     const hasRealData = apiCallsSuccessful.topArtists || apiCallsSuccessful.topTracks;
@@ -218,6 +227,7 @@ export default async function handler(req, res) {
       genreProfileMetadata.isRealData = true;
       genreProfileMetadata.confidence = 1.0;
       genreProfileMetadata.source = 'user_database';
+      genreProfileMetadata.description = 'saved user profile data';
     } else if (apiCallsSuccessful.topArtists) {
       const genres = topArtistsResponse.value.items.flatMap(artist => artist.genres || []);
       const genreCounts = genres.reduce((acc, genre) => {
@@ -231,13 +241,17 @@ export default async function handler(req, res) {
           genreProfile[genre] = Math.round((genreCounts[genre] / maxCount) * 100);
         });
         
-        genreProfileMetadata.isRealData = true;
+        // 🎯 FIX: Fresh Spotify data IS real data for genre profile section
+        genreProfileMetadata.isRealData = true; // This section has real genre data from Spotify
         genreProfileMetadata.tracksAnalyzed = topTracksResponse.value?.items?.length || 0;
         genreProfileMetadata.artistsAnalyzed = topArtistsResponse.value?.items?.length || 0;
-        genreProfileMetadata.confidence = 1.0;
+        genreProfileMetadata.confidence = 0.8; // High confidence for fresh Spotify data
+        genreProfileMetadata.source = 'spotify_api_fresh';
+        genreProfileMetadata.description = 'fresh Spotify genre data (being processed)';
       }
     } else {
       genreProfileMetadata.error = 'SPOTIFY_API_ERROR';
+      genreProfileMetadata.description = 'unable to fetch genre data';
     }
     
     // ENHANCED: Enhanced Audio Analysis integration with method breakdown
@@ -349,6 +363,25 @@ export default async function handler(req, res) {
       ];
     }
     
+    // Extract recent liked tracks (with added_at timestamps)
+    let recentLikes = [];
+    if (apiCallsSuccessful.savedTracks) {
+      try {
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        recentLikes = savedTracksResponse.value.items
+          .filter(item => new Date(item.added_at).getTime() > sevenDaysAgo)
+          .slice(0, 10)
+          .map(item => ({
+            trackId: item.track.id,
+            name: item.track.name,
+            artists: item.track.artists.map(a => a.name),
+            date: item.added_at
+          }));
+      } catch (rlErr) {
+        console.warn('Recent likes extraction failed:', rlErr.message);
+      }
+    }
+
     // ENHANCED: Response with comprehensive data source metadata
     const responseData = {
       genreProfile: Object.keys(genreProfile).length > 0 ? genreProfile : getFallbackDetailedTasteData().genreProfile,
@@ -357,6 +390,7 @@ export default async function handler(req, res) {
       soundCharacteristics: soundCharacteristicsResult.soundCharacteristics,
       seasonalProfile: seasonalAnalysis.profile,
       listeningTrends,
+      recentLikes,
       
       // ENHANCED: Comprehensive dataSources structure for ALL dashboard sections
       dataSources: {
@@ -431,6 +465,11 @@ export default async function handler(req, res) {
         recentlyPlayed: {
           status: recentlyPlayedResponse.status,
           error: recentlyPlayedResponse.status === 'rejected' ? recentlyPlayedResponse.reason?.message : null
+        },
+        savedTracks: {
+          status: savedTracksResponse.status,
+            error: savedTracksResponse.status === 'rejected' ? savedTracksResponse.reason?.message : null,
+            recentLikesCount: recentLikes.length
         },
         enhancedAudio: {
           source: soundCharacteristicsResult.source,

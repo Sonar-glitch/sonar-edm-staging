@@ -7,16 +7,23 @@ const { connectToDatabase } = require('../../../lib/mongodb');
 // Essentia service configuration for delta analysis
 const ESSENTIA_SERVICE_URL = process.env.ESSENTIA_SERVICE_URL || 'https://tiko-essentia-audio-service-2eff1b2af167.herokuapp.com';
 
-// Calculate delta between two sound profiles
+// Calculate delta between two sound profiles (normalize 0-1)
+function normalize01(v) {
+  if (v == null || isNaN(v)) return 0;
+  // If values look like percentages (>1), scale down
+  if (v > 1) return Math.max(0, Math.min(1, v / 100));
+  return Math.max(0, Math.min(1, v));
+}
+
 function calculateSoundDelta(current, previous) {
   const deltas = {};
   
   const features = ['danceability', 'energy', 'valence', 'acousticness'];
   
   for (const feature of features) {
-    const currentVal = current[feature] || 0;
-    const previousVal = previous[feature] || 0;
-    const change = Math.round((currentVal - previousVal) * 100); // Convert to percentage change
+    const currentVal = normalize01(current[feature] || 0);
+    const previousVal = normalize01(previous[feature] || 0);
+    const change = Math.round((currentVal - previousVal) * 100); // percentage points
     
     deltas[feature === 'valence' ? 'positivity' : (feature === 'acousticness' ? 'acoustic' : feature)] = {
       change: Math.abs(change),
@@ -121,8 +128,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // ESSENTIA-BASED DELTA CALCULATION
-    console.log(`📊 Calculating Essentia-based deltas for user: ${userId}`);
+  // ESSENTIA-BASED DELTA CALCULATION
+  console.log(`📊 Calculating Essentia-based deltas for user: ${userId}`);
 
     // Get current user profile (6 months baseline) from Essentia
     const currentProfile = await db.collection('user_sound_profiles').findOne({ userId });
@@ -142,117 +149,226 @@ export default async function handler(req, res) {
       });
     }
 
-    // Try to get Spotify access token to fetch recent tracks
-    const spotifySession = session.accessToken ? session : null;
+  // Try to get Spotify access token to fetch recent tracks + recent liked tracks
+  const spotifySession = session.accessToken ? session : null;
     
     if (spotifySession && spotifySession.accessToken) {
       try {
-        console.log(`🎵 Fetching recent tracks for delta analysis...`);
-        
-        // Get recently played tracks (last 7 days)
-        const recentResponse = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=50', {
-          headers: {
-            'Authorization': `Bearer ${spotifySession.accessToken}`
+        console.log(`🎵 Fetching recent tracks & liked tracks for delta analysis...`);
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+        // 1. Recently played (limited window by Spotify)
+        let recentTracks = [];
+        try {
+          const recentResponse = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=50', {
+            headers: { 'Authorization': `Bearer ${spotifySession.accessToken}` }
+          });
+          if (recentResponse.ok) {
+            const recentData = await recentResponse.json();
+            recentTracks = recentData.items?.filter(item => new Date(item.played_at).getTime() > sevenDaysAgo).map(i => i.track) || [];
+            console.log(`   🎧 Recently played (7d) tracks: ${recentTracks.length}`);
           }
-        });
+        } catch (rpErr) {
+          console.warn('   ⚠️ Recently played fetch error:', rpErr.message);
+        }
 
-        if (recentResponse.ok) {
-          const recentData = await recentResponse.json();
-          
-          // Filter to last 7 days
-          const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-          const recentTracks = recentData.items?.filter(item => 
-            new Date(item.played_at).getTime() > sevenDaysAgo
-          ).map(item => item.track) || [];
-
-          if (recentTracks.length > 0) {
-            console.log(`📊 Found ${recentTracks.length} tracks from last 7 days`);
-            
-            // Analyze recent tracks with Essentia for delta comparison
-            const fetch = (await import('node-fetch')).default;
-            const deltaAnalysisResponse = await fetch(`${ESSENTIA_SERVICE_URL}/api/user-profile`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                userId: `${userId}_delta_7days`,
-                recentTracks: recentTracks,
-                maxTracks: 15 // Analyze recent 15 tracks for delta
-              }),
-              timeout: 90000 // 90 second timeout for delta analysis
+        // 2. Recently liked tracks (Saved tracks with added_at within 7 days)
+        let likedRecentTracks = [];
+        try {
+          let offset = 0;
+          const pageLimit = 50;
+            // Fetch up to 10 pages (500 tracks) or until we pass time window
+              while (offset < 500) {
+            const likedResp = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${pageLimit}&offset=${offset}`, {
+              headers: { 'Authorization': `Bearer ${spotifySession.accessToken}` }
             });
+            if (!likedResp.ok) break;
+            const likedData = await likedResp.json();
+            if (!likedData.items?.length) break;
+            const pageRecent = likedData.items.filter(it => new Date(it.added_at).getTime() > sevenDaysAgo);
+            likedRecentTracks.push(...pageRecent.map(it => it.track));
+            // If last item in page already older than 7 days, stop
+            const lastAdded = likedData.items[likedData.items.length - 1].added_at;
+            if (new Date(lastAdded).getTime() <= sevenDaysAgo) break;
+            offset += pageLimit;
+          }
+          console.log(`   ❤️ Recently liked (7d) tracks: ${likedRecentTracks.length}`);
+        } catch (likedErr) {
+          console.warn('   ⚠️ Liked tracks fetch error:', likedErr.message);
+        }
 
-            if (deltaAnalysisResponse.ok) {
-              const deltaProfile = await deltaAnalysisResponse.json();
-              
-              if (deltaProfile.success && deltaProfile.soundPreferences) {
-                console.log(`✅ Essentia delta analysis complete: ${deltaProfile.trackCount} recent tracks analyzed`);
-                
-                // Calculate sound characteristic deltas using Essentia
-                const soundDeltas = calculateSoundDelta(
-                  deltaProfile.soundPreferences, // Last 7 days
-                  currentProfile.soundPreferences // Last 6 months baseline
-                );
+        // Merge and de-duplicate tracks by id
+        const trackMap = new Map();
+        [...likedRecentTracks, ...recentTracks].forEach(t => { if (t && t.id) trackMap.set(t.id, t); });
+        const mergedRecent = Array.from(trackMap.values());
+        console.log(`   🔀 Merged unique recent tracks for analysis: ${mergedRecent.length}`);
 
-                // Simple genre deltas (TODO: improve with actual genre analysis)
-                const genreDeltas = {
-                  'melodic techno': { change: Math.floor(Math.random() * 10), direction: 'up' },
-                  'progressive house': { change: Math.floor(Math.random() * 8), direction: 'up' },
-                  'deep house': { change: Math.floor(Math.random() * 5), direction: 'down' },
-                };
-
-                const calculatedDeltas = {
-                  genres: genreDeltas,
-                  soundCharacteristics: soundDeltas,
-                  dataQuality: {
-                    confidence: 0.9,
-                    daysOfData: 7,
-                    tracksAnalyzed: deltaProfile.trackCount,
-                    essentiaAnalysis: true
-                  }
-                };
-
-                // Cache the deltas
-                await db.collection('weekly_deltas_cache').replaceOne(
-                  { userId },
-                  {
-                    userId,
-                    deltas: calculatedDeltas,
-                    confidence: 0.9,
-                    tracksAnalyzed: deltaProfile.trackCount,
-                    source: 'essentia_ml_delta_analysis',
-                    createdAt: new Date()
-                  },
-                  { upsert: true }
-                );
-
-                console.log(`📊 Essentia-based weekly deltas calculated and cached for ${userId}`);
-                
-                return res.status(200).json({
-                  success: true,
-                  deltas: calculatedDeltas,
-                  dataSource: {
-                    isReal: true,
-                    cached: false,
-                    calculatedAt: new Date(),
-                    confidence: 0.9,
-                    tracksAnalyzed: deltaProfile.trackCount,
-                    source: 'essentia_ml_delta_analysis',
-                    baselinePeriod: 'last_6_months',
-                    deltaPeriod: 'last_7_days',
-                    processingTime: Date.now() - startTime,
-                    error: null
-                  }
+        if (mergedRecent.length > 0) {
+          // Gather artist IDs for genre extraction
+          const artistIds = Array.from(new Set(mergedRecent.flatMap(t => t.artists?.map(a => a.id).filter(Boolean) || [])));
+          let artistGenres = {};
+          try {
+            for (let i = 0; i < artistIds.length; i += 50) {
+              const batch = artistIds.slice(i, i + 50);
+              const artistsResp = await fetch(`https://api.spotify.com/v1/artists?ids=${batch.join(',')}`, {
+                headers: { 'Authorization': `Bearer ${spotifySession.accessToken}` }
+              });
+              if (artistsResp.ok) {
+                const artistsData = await artistsResp.json();
+                artistsData.artists?.forEach(a => {
+                  if (Array.isArray(a.genres)) artistGenres[a.id] = a.genres;
                 });
               }
             }
-          } else {
-            console.log(`⚠️ No recent tracks found for delta analysis`);
+          } catch (agErr) {
+            console.warn('   ⚠️ Artist genre fetch error:', agErr.message);
           }
+
+          // Build current 7d genre counts
+          const currentGenreCounts = {};
+          mergedRecent.forEach(t => {
+            t.artists?.forEach(a => {
+              (artistGenres[a.id] || []).forEach(g => {
+                if (!g) return; currentGenreCounts[g] = (currentGenreCounts[g] || 0) + 1;
+              });
+            });
+          });
+
+          // Baseline (6-month) genre counts from stored profile
+            let baselineGenreCounts = {};
+          if (Array.isArray(currentProfile.topGenres) && currentProfile.topGenres.length) {
+            currentProfile.topGenres.forEach(g => { if (g.genre) baselineGenreCounts[g.genre] = (baselineGenreCounts[g.genre] || 0) + (g.count || 1); });
+          } else if (Array.isArray(currentProfile.genrePreferences) && currentProfile.genrePreferences.length) {
+            currentProfile.genrePreferences.forEach(g => { if (g.name) baselineGenreCounts[g.name] = (baselineGenreCounts[g.name] || 0) + Math.round((g.weight || 0) * 100); });
+          }
+
+          // Normalize to shares
+          const sumCurrent = Object.values(currentGenreCounts).reduce((a,b)=>a+b,0) || 1;
+          const sumBaseline = Object.values(baselineGenreCounts).reduce((a,b)=>a+b,0) || 1;
+          const unionGenres = Array.from(new Set([...Object.keys(currentGenreCounts), ...Object.keys(baselineGenreCounts)]));
+          const genreDeltas = {};
+          unionGenres.forEach(g => {
+            const currentShare = (currentGenreCounts[g] || 0) / sumCurrent * 100;
+            const baselineShare = (baselineGenreCounts[g] || 0) / sumBaseline * 100;
+            const deltaPts = currentShare - baselineShare;
+            if (Math.abs(deltaPts) < 0.5) return; // filter insignificant
+            genreDeltas[g] = {
+              change: Math.round(deltaPts),
+              direction: deltaPts > 0 ? 'up' : 'down',
+              current: Math.round(currentShare),
+              historical: Math.round(baselineShare)
+            };
+          });
+
+          // Keep top 5 by absolute change
+          const top5 = Object.entries(genreDeltas)
+            .sort((a,b)=>Math.abs(b[1].change) - Math.abs(a[1].change))
+            .slice(0,5)
+            .reduce((acc,[k,v])=>{acc[k]=v;return acc;},{});
+
+          // Analyze sound characteristics with Essentia (limit to recent 25 tracks for speed)
+          const fetch = (await import('node-fetch')).default;
+          const deltaAnalysisResponse = await fetch(`${ESSENTIA_SERVICE_URL}/api/user-profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: `${userId}_delta_7days`,
+              recentTracks: mergedRecent.slice(0,25),
+              maxTracks: 25
+            }),
+            timeout: 90000
+          });
+
+          let soundDeltas = {};
+          let analyzedTrackCount = 0;
+          if (deltaAnalysisResponse.ok) {
+            const deltaProfile = await deltaAnalysisResponse.json();
+            if (deltaProfile.success && deltaProfile.soundPreferences) {
+              analyzedTrackCount = deltaProfile.trackCount || mergedRecent.length;
+              soundDeltas = calculateSoundDelta(deltaProfile.soundPreferences, currentProfile.soundPreferences || {});
+            }
+          }
+
+          const calculatedDeltas = {
+            genres: top5,
+            soundCharacteristics: soundDeltas,
+            dataQuality: {
+              confidence: Object.keys(top5).length ? 0.9 : 0.6,
+              daysOfData: 7,
+              tracksAnalyzed: analyzedTrackCount,
+              essentiaAnalysis: !!analyzedTrackCount,
+              source: 'recent_likes+recently_played'
+            }
+          };
+
+          await db.collection('weekly_deltas_cache').replaceOne(
+            { userId },
+            {
+              userId,
+              deltas: calculatedDeltas,
+              confidence: calculatedDeltas.dataQuality.confidence,
+              tracksAnalyzed: analyzedTrackCount,
+              source: 'essentia_ml_delta_analysis',
+              createdAt: new Date()
+            },
+            { upsert: true }
+          );
+
+          // Persist into user_sound_profiles for fast dashboard path
+          try {
+            await db.collection('user_sound_profiles').updateOne(
+              { userId },
+              {
+                $set: {
+                  weeklyDeltas: calculatedDeltas,
+                  lastWeeklyDeltaAt: new Date(),
+                  recentSavedTracksSnapshot: likedRecentTracks.slice(0,500).map(t => ({ id: t.id, name: t.name, artists: t.artists?.map(a=>a.name), addedAt: null })),
+                  recentPlayedTracksCount: recentTracks.length,
+                  recentMergedTracksAnalyzed: mergedRecent.length
+                }
+              },
+              { upsert: true }
+            );
+          } catch (persistErr) {
+            console.warn('⚠️ Failed to persist weekly deltas to user_sound_profiles:', persistErr.message);
+          }
+
+          return res.status(200).json({
+            success: true,
+            deltas: calculatedDeltas,
+            dataSource: {
+              isReal: true,
+              cached: false,
+              calculatedAt: new Date(),
+              confidence: calculatedDeltas.dataQuality.confidence,
+              tracksAnalyzed: analyzedTrackCount,
+              source: 'essentia_ml_delta_analysis',
+              baselinePeriod: 'last_6_months',
+              deltaPeriod: 'last_7_days',
+              processingTime: Date.now() - startTime,
+              error: null
+            }
+          });
+        } else {
+          console.log('⚠️ No merged recent tracks (liked or played) within 7 days; using fallback deltas');
+          // Persist fallback with error flag
+          try {
+            await db.collection('user_sound_profiles').updateOne(
+              { userId },
+              { $set: { weeklyDeltas: getFallbackDeltas(), lastWeeklyDeltaAt: new Date(), weeklyDeltasError: 'NO_RECENT_TRACKS' } },
+              { upsert: true }
+            );
+          } catch {}
         }
       } catch (essentiaError) {
-        console.error('❌ Essentia delta analysis failed:', essentiaError.message);
+        console.error('❌ Delta pipeline failed:', essentiaError.message);
+        try {
+          await db.collection('user_sound_profiles').updateOne(
+            { userId },
+            { $set: { weeklyDeltas: getFallbackDeltas(), lastWeeklyDeltaAt: new Date(), weeklyDeltasError: essentiaError.message } },
+            { upsert: true }
+          );
+        } catch {}
       }
     }
 

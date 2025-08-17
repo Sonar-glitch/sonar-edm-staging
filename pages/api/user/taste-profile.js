@@ -200,6 +200,63 @@ export default async function handler(req, res) {
               if (essentiaProfile.success) {
                 console.log(`✅ Essentia user profile built: ${essentiaProfile.trackCount} tracks analyzed`);
                 
+                // Derive topGenres & genrePreferences from Spotify top tracks (basic frequency count)
+                let topGenresArray = [];
+                let genrePreferences = [];
+                try {
+                  if (topTracksData.items?.length) {
+                    const genreCounts = {};
+                    topTracksData.items.forEach(t => {
+                      t.artists?.forEach(a => {
+                        if (Array.isArray(a.genres)) {
+                          a.genres.forEach(g => {
+                            if (!g) return;
+                            genreCounts[g] = (genreCounts[g] || 0) + 1;
+                          });
+                        }
+                      });
+                    });
+                    topGenresArray = Object.entries(genreCounts)
+                      .sort((a,b)=>b[1]-a[1])
+                      .slice(0,25)
+                      .map(([genre,count]) => ({ genre, count }));
+                    const max = topGenresArray[0]?.count || 1;
+                    genrePreferences = topGenresArray.slice(0,10).map(g => ({
+                      name: g.genre,
+                      weight: +(g.count / max).toFixed(3),
+                      confidence: 0.85,
+                      source: 'spotify_top_tracks_inferred'
+                    }));
+                  }
+                } catch (genreDeriveErr) {
+                  console.warn('⚠️ Failed to derive top genres from tracks:', genreDeriveErr.message);
+                }
+
+                // Derive seasonal stub & sound characteristic summary for persistence (can be enriched later)
+                const seasonalStub = {
+                  profile: {
+                    spring: ['Progressive House','Melodic Techno'],
+                    summer: ['Tech House','Festival Progressive'],
+                    fall: ['Organic House','Downtempo'],
+                    winter: ['Deep House','Ambient Techno']
+                  },
+                  metadata: {
+                    tracksAnalyzed: essentiaProfile.trackCount || 0,
+                    confidence: 0.5,
+                    isRealData: false,
+                    source: 'estimated_from_audio_features',
+                    seasonsWithData: [],
+                    lastFetch: new Date()
+                  }
+                };
+
+                // Basic weekly deltas snapshot (placeholder until real diff computation)
+                const deltas = {
+                  topGenres: genrePreferences.slice(0,5).map(g => ({ name: g.name, delta: 0, direction: 'flat' })),
+                  soundCharacteristics: ['danceability','energy','valence','acousticness']
+                    .map(k => ({ key: k, delta: 0, direction: 'flat' }))
+                };
+
                 // Store in database
                 await db.collection('user_sound_profiles').replaceOne(
                   { userId },
@@ -207,7 +264,21 @@ export default async function handler(req, res) {
                     ...essentiaProfile,
                     userId,
                     profileBuiltAt: new Date(),
-                    sourceType: 'essentia_ml_6_month_top_tracks'
+                    sourceType: 'essentia_ml_6_month_top_tracks',
+                    tracksAnalyzed: essentiaProfile.trackCount || 0,
+                    trackCount: essentiaProfile.trackCount || 0,
+                    topGenres: topGenresArray,
+                    genrePreferences: genrePreferences,
+                    seasonalProfile: seasonalStub,
+                    soundCharacteristicsSummary: {
+                      danceability: essentiaProfile.soundPreferences?.danceability || 0,
+                      energy: essentiaProfile.soundPreferences?.energy || 0,
+                      valence: essentiaProfile.soundPreferences?.valence || 0,
+                      acousticness: essentiaProfile.soundPreferences?.acousticness || 0,
+                      tracksAnalyzed: essentiaProfile.trackCount || 0,
+                      lastFetch: new Date()
+                    },
+                    weeklyDeltas: deltas
                   },
                   { upsert: true }
                 );
@@ -215,7 +286,7 @@ export default async function handler(req, res) {
                 // Format for frontend
                 const formattedProfile = {
                   userId,
-                  genrePreferences: [], // TODO: Extract from track genres
+                  genrePreferences: genrePreferences,
                   soundCharacteristics: {
                     danceability: { 
                       value: Math.round((essentiaProfile.soundPreferences?.danceability || 0.7) * 100), 
@@ -241,9 +312,9 @@ export default async function handler(req, res) {
                       isRealData: true,
                       tracksAnalyzed: essentiaProfile.trackCount || 0,
                       confidence: 0.9,
-                      source: 'essentia_ml_pipeline',
+                      source: 'essentia_ml_pipeline + spotify_top_tracks_inferred_genres',
                       timePeriod: 'last_6_months_top_tracks',
-                      description: 'ML-based audio analysis using Essentia from top tracks',
+                      description: 'Essentia ML audio features + inferred top track artist genres',
                       lastFetch: new Date().toISOString(),
                       error: null
                     },
