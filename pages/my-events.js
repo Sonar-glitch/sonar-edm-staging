@@ -1,6 +1,7 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import React from 'react';
+import AppLayout from '../components/AppLayout';
 import Link from 'next/link';
 
 export default function MyEventsPage() {
@@ -29,6 +30,7 @@ export default function MyEventsPage() {
   if (error) return <div style={container}>Error: {error}</div>;
 
   return (
+    <AppLayout>
     <div style={container}>
       <h1 style={title}>Favourites</h1>
       {events.length === 0 && <p style={muted}>No events saved yet. (Stub page)</p>}
@@ -40,7 +42,8 @@ export default function MyEventsPage() {
           </li>
         ))}
       </ul>
-    </div>
+  </div>
+  </AppLayout>
   );
 }
 

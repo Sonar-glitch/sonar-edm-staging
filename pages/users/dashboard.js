@@ -2,6 +2,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import EnhancedPersonalizedDashboard from '../../components/EnhancedPersonalizedDashboard';
+import AppLayout from '../../components/AppLayout';
 
 // Temporary error boundary to surface offending object rendering during SSR invariant 130 investigation
 function SafeRender({ children }) {
@@ -49,9 +50,11 @@ export default function UserDashboard() {
   }
 
   return (
-    <SafeRender>
-      <EnhancedPersonalizedDashboard />
-    </SafeRender>
+    <AppLayout>
+      <SafeRender>
+        <EnhancedPersonalizedDashboard />
+      </SafeRender>
+    </AppLayout>
   );
 }
 // NOTE: SSR disabled temporarily to bypass server render invariant while diagnosing object-as-child.

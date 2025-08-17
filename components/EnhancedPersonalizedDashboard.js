@@ -881,24 +881,7 @@ export default function EnhancedPersonalizedDashboard() {
 
   return (
     <div className={styles.container}>
-      {/* 🎵 TIKO Header */}
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <div className={styles.logoSection}>
-            <h1 className={styles.logo}>TIKO</h1>
-            <span className={styles.tagline}>Your Music Universe</span>
-          </div>
-          <div className={styles.profileSection}>
-            <UserProfileButton />
-          </div>
-        </div>
-        {/* ✅ RESTORED PRIMARY NAV TABS (Dashboard / Music Taste / Favourites) */}
-        <nav className={styles.primaryTabs} style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem' }}>
-          <TabLink href="/users/dashboard" label="Dashboard" />
-          <TabLink href="/music-taste" label="Music Taste" />
-          <TabLink href="/my-events" label="Favourites" />
-        </nav>
-      </header>
+      {/* Header removed: now provided by AppLayout for consistency across pages */}
 
       {/* 🎵 NEW: Demo Mode Notice */}
       {isDemoMode && (
@@ -1082,30 +1065,5 @@ export default function EnhancedPersonalizedDashboard() {
   );
 }
 
-// Lightweight internal tab link component to avoid importing a full layout
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-function TabLink({ href, label }) {
-  const router = typeof window !== 'undefined' ? require('next/router').useRouter() : { pathname: '' };
-  const isActive = router.pathname === href;
-  return (
-    <Link href={href} legacyBehavior>
-      <a
-        style={{
-          padding: '0.5rem 1rem',
-          borderRadius: '999px',
-          background: isActive ? 'linear-gradient(90deg,#00CFFF,#FF00CC)' : 'rgba(255,255,255,0.08)',
-          color: isActive ? '#fff' : '#ccc',
-          fontSize: '0.85rem',
-          fontWeight: 600,
-          letterSpacing: '0.5px',
-          textDecoration: 'none',
-          transition: 'background .2s, color .2s'
-        }}
-      >
-        {label}
-      </a>
-    </Link>
-  );
-}
+// TabLink component removed (central nav handled by AppLayout)
 
