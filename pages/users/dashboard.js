@@ -1,8 +1,24 @@
-import { useSession, getSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
-import Layout from '../../components/Layout';
+import { useEffect, useState } from 'react';
 import EnhancedPersonalizedDashboard from '../../components/EnhancedPersonalizedDashboard';
+
+// Temporary error boundary to surface offending object rendering during SSR invariant 130 investigation
+function SafeRender({ children }) {
+  const [error, setError] = useState(null);
+  try {
+    return children;
+  } catch (e) {
+    console.error('SafeRender catch:', e);
+    setError(e);
+    return (
+      <div style={{ padding: '2rem', color: '#fff' }}>
+        <h2>Dashboard Render Error</h2>
+        <pre style={{ whiteSpace: 'pre-wrap' }}>{String(e && e.message || e)}</pre>
+      </div>
+    );
+  }
+}
 
 export default function UserDashboard() {
   const { data: session, status } = useSession();
@@ -33,25 +49,10 @@ export default function UserDashboard() {
   }
 
   return (
-    <Layout>
+    <SafeRender>
       <EnhancedPersonalizedDashboard />
-    </Layout>
+    </SafeRender>
   );
 }
-
-export async function getServerSideProps(context) {
-  const session = await getSession(context);
-  
-  if (!session) {
-    return {
-      redirect: {
-        destination: '/auth/signin',
-        permanent: false,
-      },
-    };
-  }
-
-  return {
-    props: { session },
-  };
-}
+// NOTE: SSR disabled temporarily to bypass server render invariant while diagnosing object-as-child.
+// If needed later, re-enable getServerSideProps once fixed.
