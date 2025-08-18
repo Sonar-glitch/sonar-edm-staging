@@ -19,6 +19,9 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+  // Enable verbose diagnostic output when ?debug=1 present
+  const debugMode = ('debug' in req.query) || req.query?.debug === '1';
+
   console.log('📦 [cached-dashboard-data] Connecting to Mongo...');
   const { db } = await connectToDatabase();
   console.log('✅ [cached-dashboard-data] Mongo connected');
@@ -199,6 +202,19 @@ export default async function handler(req, res) {
         }
       };
 
+  if (debugMode) {
+        dashboardData.debug = {
+          resolutionPath: 'cache_hit',
+          cacheDocId: cached._id,
+          userId,
+          email: normalizedEmail,
+          derivedTracks,
+          aggregatedDemo,
+          spotifyReal: dataSourcesAggregate.spotify.isReal,
+          soundReal: dataSourcesAggregate.soundstat.isReal,
+          seasonalReal: dataSourcesAggregate.seasonal.isReal
+        };
+      }
   return res.status(200).json(dashboardData);
     }
 
@@ -259,7 +275,7 @@ export default async function handler(req, res) {
           ...weeklyDeltasSource
         };
         const demoMode = !dataSourcesAggregate.spotify.isReal && !dataSourcesAggregate.soundstat.isReal && !dataSourcesAggregate.seasonal.isReal;
-        return res.status(200).json({
+        const staleResponse = {
           demoMode,
           stale: true,
           dataSources: dataSourcesAggregate,
@@ -268,21 +284,39 @@ export default async function handler(req, res) {
           seasonalAnalysis: staleProfile.seasonalProfile || null,
           weeklyDeltas: staleProfile.weeklyDeltas || null,
           performance: { cacheState: 'STALE', loadTime: 'fast', lastUpdate: staleProfile.createdAt, needsRefresh: true }
-        });
+        };
+        if (debugMode) {
+          staleResponse.debug = {
+            resolutionPath: 'stale_profile',
+            staleDocId: staleProfile._id,
+            userId,
+            email: normalizedEmail,
+            derivedTracks,
+            spotifyReal,
+            soundReal,
+            seasonalReal,
+            reason: 'NO_FRESH_CACHE'
+          };
+        }
+        return res.status(200).json(staleResponse);
       }
 
       // Enhanced diagnostic response for soft onboarding
-      return res.status(200).json({
+      const soft = {
         softOnboarding: true,
         message: 'No user profile document found; begin taste collection',
         action: 'suggest_onboarding',
-        debug: {
+        performance: { cacheState: 'MISS', rebuildQueued: false }
+      };
+      if (debugMode) {
+        soft.debug = {
+          resolutionPath: 'soft_onboarding',
           attemptedUserId: userId,
           normalizedEmail,
           reason: 'NO_USER_PROFILE_AND_NO_STALE_CACHE'
-        },
-        performance: { cacheState: 'MISS', rebuildQueued: false }
-      });
+        };
+      }
+      return res.status(200).json(soft);
     }
 
     console.log('✅ userProfiles doc found — sending fallback dashboard stub & queuing async rebuild');
@@ -300,7 +334,7 @@ export default async function handler(req, res) {
     } catch (queueErr) {
       console.warn('⚠️ Failed to queue profile rebuild request:', queueErr.message);
     }
-    return res.status(200).json({
+    const fallback = {
       dataSources: {
         spotify: { isReal: false, error: 'CACHE_MISS', lastFetch: null },
         soundstat: { isReal: false, error: 'CACHE_MISS', lastFetch: null },
@@ -326,7 +360,16 @@ export default async function handler(req, res) {
         cacheState: 'MISS',
         rebuildQueued: true
       }
-    });
+    };
+    if (debugMode) {
+      fallback.debug = {
+        resolutionPath: 'user_profile_fallback',
+        userId,
+        email: normalizedEmail,
+        reason: 'CACHE_MISS_PROFILE_FOUND'
+      };
+    }
+    return res.status(200).json(fallback);
 
   } catch (error) {
     console.error('❌ Error in cached dashboard API:', {
