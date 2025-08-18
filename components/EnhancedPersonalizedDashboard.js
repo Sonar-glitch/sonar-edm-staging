@@ -2,7 +2,7 @@
 // ADDS: Custom themed tooltips, weekly delta indicators, comprehensive data source info
 // REMOVES: Redundant red section as requested
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import styles from '../styles/EnhancedPersonalizedDashboard.module.css';
@@ -63,6 +63,9 @@ export default function EnhancedPersonalizedDashboard() {
     vibeMatch: 50,
     location: null
   });
+  // Refs for geolocation gating
+  const locationInitializedRef = useRef(false);
+  const geoInProgressRef = useRef(false);
 
   useEffect(() => {
     // 🔐 SIMPLIFIED: Only check onboarding for authenticated users
@@ -114,7 +117,7 @@ export default function EnhancedPersonalizedDashboard() {
         // Load dashboard data for returning users and unauthenticated users
         await loadDashboardData();
         loadWeeklyDeltas();
-        autoDetectLocation();
+        // autoDetectLocation removed (user gesture required)
         
       } else {
         // Fallback: load dashboard normally and set status to completed
@@ -122,7 +125,7 @@ export default function EnhancedPersonalizedDashboard() {
         setIsDemoMode(true); // Enable demo mode on API failure
         await loadDashboardData();
         loadWeeklyDeltas();
-        autoDetectLocation();
+        // autoDetectLocation removed
       }
     } catch (error) {
       console.error('Error checking dashboard status:', error);
@@ -131,63 +134,53 @@ export default function EnhancedPersonalizedDashboard() {
       setIsDemoMode(true); // Enable demo mode on error
       await loadDashboardData();
       loadWeeklyDeltas();
-      autoDetectLocation();
+      // autoDetectLocation removed
     }
   };
 
-  // Auto-detect user location with proper fallback chain
-  const autoDetectLocation = async () => {
+  // User-initiated geolocation request (replaces autoDetectLocation)
+  const requestBrowserLocation = async () => {
+    if (geoInProgressRef.current) return;
+    geoInProgressRef.current = true;
     try {
-      // Method 1: Try browser geolocation first
+      if (navigator.permissions?.query) {
+        try { navigator.permissions.query({ name: 'geolocation' }).then(r => console.log('🌍 Permission state:', r.state)); } catch(e) {}
+      }
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             try {
-              // Reverse geocode coordinates to get city name
-              const response = await fetch(
-                `/api/location/reverse-geocode?lat=${position.coords.latitude}&lon=${position.coords.longitude}`
-              );
+              const response = await fetch(`/api/location/reverse-geocode?lat=${position.coords.latitude}&lon=${position.coords.longitude}`);
               if (response.ok) {
                 const locationData = await response.json();
                 console.log('🌍 [Dashboard] Browser location detected:', locationData);
                 setUserLocation(locationData);
-                setEventFilters(prev => ({
-                  ...prev,
-                  location: locationData
-                }));
+                setEventFilters(prev => ({ ...prev, location: locationData }));
+                geoInProgressRef.current = false;
                 return;
               }
-            } catch (error) {
-              console.error('🌍 [Dashboard] Reverse geocoding failed:', error);
-            }
-            
-            // If reverse geocoding fails, use coordinates directly
-            const fallbackLocation = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              city: 'Your Location',
-              country: 'Unknown',
-              region: 'Unknown'
-            };
+            } catch(err) { console.error('🌍 Reverse geocoding failed:', err); }
+            const fallbackLocation = { latitude: position.coords.latitude, longitude: position.coords.longitude, city: 'Your Location', country: 'Unknown', region: 'Unknown' };
             setUserLocation(fallbackLocation);
-            setEventFilters(prev => ({
-              ...prev,
-              location: fallbackLocation
-            }));
+            setEventFilters(prev => ({ ...prev, location: fallbackLocation }));
+            geoInProgressRef.current = false;
           },
           (error) => {
-            console.log('🌍 [Dashboard] Browser geolocation failed:', error.message);
+            console.log('🌍 [Dashboard] Geolocation failed:', error.message);
+            geoInProgressRef.current = false;
             tryIPLocation();
           },
           { timeout: 10000, enableHighAccuracy: false }
         );
       } else {
-        console.log('🌍 [Dashboard] Geolocation not supported, trying IP location');
+        console.log('🌍 [Dashboard] Geolocation unsupported, trying IP');
         tryIPLocation();
+        geoInProgressRef.current = false;
       }
-    } catch (error) {
-      console.error('🌍 [Dashboard] Location detection error:', error);
+    } catch(error) {
+      console.error('🌍 [Dashboard] Location request error:', error);
       useTorontoFallback();
+      geoInProgressRef.current = false;
     }
   };
 
@@ -767,7 +760,7 @@ export default function EnhancedPersonalizedDashboard() {
       // Load dashboard data immediately for fast mode
       loadDashboardData();
       loadWeeklyDeltas();
-      autoDetectLocation();
+      // autoDetectLocation removed
       return;
     }
     
@@ -777,7 +770,7 @@ export default function EnhancedPersonalizedDashboard() {
     // Load dashboard data after taste collection
     loadDashboardData();
     loadWeeklyDeltas();
-    autoDetectLocation();
+    // autoDetectLocation removed
   };
 
   // 🎵 NEW: Events loading component for when dashboard is ready but events are loading
@@ -873,7 +866,7 @@ export default function EnhancedPersonalizedDashboard() {
           setTasteCollectionStatus('completed');
           loadDashboardData();
           loadWeeklyDeltas();
-          autoDetectLocation();
+          // autoDetectLocation removed
         }}
       />
     );
@@ -1041,6 +1034,10 @@ export default function EnhancedPersonalizedDashboard() {
                       }}
                     />
                   </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                  <button type="button" onClick={requestBrowserLocation} style={{ background: 'linear-gradient(135deg,#00CFFF 0%, #FF00CC 100%)', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>📍 {userLocation ? 'Refresh Location' : 'Use My Location'}</button>
+                  {userLocation && <span style={{ fontSize: '0.75rem', color: '#aaa' }}>{userLocation.city || 'Location set'}</span>}
                 </div>
                 <EnhancedLocationSearch 
                   onLocationSelect={(locationData) => {
