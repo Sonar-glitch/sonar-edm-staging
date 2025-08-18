@@ -79,44 +79,57 @@ export default async function handler(req, res) {
         analysisStatus
       };
 
-      const dashboardData = {
-        dataSources: {
-          spotify: { 
-            ...baseSource,
-            isReal: hasRealData,
-            error: hasRealData ? null : 'NO_TRACKS_ANALYZED',
-            demoReason
-          },
-          soundstat: { 
-            ...baseSource,
-            isReal: hasRealData,
-            error: hasRealData ? null : 'NO_TRACKS_ANALYZED',
-            demoReason
-          },
-          events: { 
-            isReal: true,
-            error: null,
-            lastFetch: new Date().toISOString(),
-            source: 'live_api'
-          },
-          seasonal: { 
-            ...baseSource,
-            isReal: hasRealData,
-            error: hasRealData ? null : 'NO_TRACKS_ANALYZED',
-            demoReason
-          },
-          ...(cached.weeklyDeltas ? {
-            weeklyDeltas: {
-              lastFetch: cached.lastWeeklyDeltaAt || cached.profileBuiltAt || new Date(),
-              source: 'weekly_deltas_cache',
-              tracksAnalyzed: cached.weeklyDeltas?.dataQuality?.tracksAnalyzed || 0,
-              confidence: cached.weeklyDeltas?.dataQuality?.confidence || 0,
-              isReal: !!cached.weeklyDeltas?.dataQuality?.tracksAnalyzed,
-              error: cached.weeklyDeltasError || null,
-              analysisStatus: { pending: !cached.weeklyDeltas?.dataQuality?.tracksAnalyzed }
-            }
-          } : {})
+      // 🔍 SCHEMA NORMALIZATION + DATA QUALITY INFERENCE
+      const topGenresArray = Array.isArray(cached.topGenres) ? cached.topGenres : [];
+      const seasonalReal = !!(cached.seasonalProfile && cached.seasonalProfile.profile && Object.keys(cached.seasonalProfile.profile).length >= 2 && hasRealData);
+      const soundReal = hasRealData && !!cached.soundCharacteristics && Object.keys(cached.soundCharacteristics).filter(k => typeof cached.soundCharacteristics[k] === 'number').length >= 3;
+      const spotifyReal = hasRealData && topGenresArray.length > 0;
+
+      const weeklyDeltasSource = cached.weeklyDeltas ? {
+        weeklyDeltas: {
+          lastFetch: cached.lastWeeklyDeltaAt || cached.profileBuiltAt || new Date(),
+          source: 'weekly_deltas_cache',
+          tracksAnalyzed: cached.weeklyDeltas?.dataQuality?.tracksAnalyzed || derivedTracks,
+          confidence: cached.weeklyDeltas?.dataQuality?.confidence || effectiveConfidence,
+          isReal: !!cached.weeklyDeltas?.dataQuality?.tracksAnalyzed,
+          error: cached.weeklyDeltasError || null,
+          analysisStatus: { pending: !cached.weeklyDeltas?.dataQuality?.tracksAnalyzed }
+        }
+      } : {};
+
+      const dataSourcesAggregate = {
+        spotify: {
+          ...baseSource,
+            isReal: spotifyReal,
+            error: spotifyReal ? null : 'NO_SPOTIFY_GENRES',
+            demoReason: spotifyReal ? null : demoReason
         },
+        soundstat: {
+          ...baseSource,
+            isReal: soundReal,
+            error: soundReal ? null : 'NO_SOUND_CHARACTERISTICS',
+            demoReason: soundReal ? null : demoReason
+        },
+        events: {
+          isReal: true,
+          error: null,
+          lastFetch: new Date().toISOString(),
+          source: 'live_api'
+        },
+        seasonal: {
+          ...baseSource,
+            isReal: seasonalReal,
+            error: seasonalReal ? null : 'NO_SEASONAL_PROFILE',
+            demoReason: seasonalReal ? null : demoReason
+        },
+        ...weeklyDeltasSource
+      };
+
+      const aggregatedDemo = !dataSourcesAggregate.spotify.isReal && !dataSourcesAggregate.soundstat.isReal && !dataSourcesAggregate.seasonal.isReal;
+
+      const dashboardData = {
+        demoMode: aggregatedDemo,
+        dataSources: dataSourcesAggregate,
 
         genreProfile: {
           topGenres: cached.topGenres || [],
@@ -186,7 +199,7 @@ export default async function handler(req, res) {
         }
       };
 
-      return res.status(200).json(dashboardData);
+  return res.status(200).json(dashboardData);
     }
 
     // 🔄 FALLBACK: No cached data, attempt broader profile discovery first

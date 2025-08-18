@@ -268,6 +268,27 @@ export default function EnhancedPersonalizedDashboard() {
       }
 
   const tasteData = await tasteResponse.json();
+  // 🔧 Post-fetch normalization (quick win) — ensure dataSources flags exist
+  if (tasteData && tasteData.dataSources) {
+    const ds = tasteData.dataSources;
+    const genreArr = Array.isArray(tasteData.genreProfile?.topGenres) ? tasteData.genreProfile.topGenres : [];
+    const sc = tasteData.soundCharacteristics || {};
+    const tracksAnalyzedInferred = tasteData.genreProfile?.tracksAnalyzed || sc.tracksAnalyzed || genreArr.reduce((a,g)=> a + (g.count||0),0) || 0;
+    if (ds.spotify && typeof ds.spotify.isReal === 'undefined') {
+      ds.spotify.isReal = genreArr.length > 0 && tracksAnalyzedInferred > 0;
+      ds.spotify.tracksAnalyzed = tracksAnalyzedInferred;
+    }
+    if (ds.soundstat && typeof ds.soundstat.isReal === 'undefined') {
+      const numericSC = Object.keys(sc).filter(k => typeof sc[k] === 'number');
+      ds.soundstat.isReal = numericSC.length >= 3 && tracksAnalyzedInferred > 0;
+      ds.soundstat.tracksAnalyzed = tracksAnalyzedInferred;
+    }
+    if (ds.seasonal && typeof ds.seasonal.isReal === 'undefined') {
+      const seasonalGenres = tasteData.seasonalAnalysis?.genres || {};
+      ds.seasonal.isReal = Object.keys(seasonalGenres).length >= 2 && tracksAnalyzedInferred > 0;
+    }
+    tasteData.demoMode = !ds.spotify.isReal && !ds.soundstat.isReal && !ds.seasonal.isReal;
+  }
   console.log('📥 [Dashboard] cached-dashboard-data payload keys:', Object.keys(tasteData || {}));
   console.log('📥 [Dashboard] tasteData.dataSources:', tasteData?.dataSources);
       
@@ -284,15 +305,39 @@ export default function EnhancedPersonalizedDashboard() {
       }
       setDashboardData(tasteData);
 
-      // 🎯 REAL DATA DETECTION (PATCHED OPTION A)
-      // Previous logic enabled demo mode if *any* source was not real, which was too aggressive.
-      // New logic: demo mode only if ALL core sources are non-real OR explicit soft onboarding / stub flags.
-  const isRealSpotifyData = tasteData.dataSources?.spotify?.isReal === true && (tasteData.genreProfile?.tracksAnalyzed || 0) > 0;
-      const isRealSoundData = tasteData.dataSources?.soundstat?.isReal === true;
-      const isRealSeasonalData = tasteData.dataSources?.seasonal?.isReal === true;
+      // 🎯 REAL DATA DETECTION (HEURISTIC PATCH)
+      // Some cached payloads lack correct isReal flags even when real Spotify data is present.
+      // Infer reality from presence of rich Spotify objects (tracks/artists) & non-empty genre metrics.
+      const spotifyTracksObj = tasteData.tracks || tasteData.topTracks || tasteData.spotifyData?.tracks;
+      const spotifyArtistsObj = tasteData.artists || tasteData.artistProfile?.artists || tasteData.spotifyData?.artists;
+      const inferredSpotifyTrackCount = (
+        (spotifyTracksObj?.items && Array.isArray(spotifyTracksObj.items) && spotifyTracksObj.items.length) ||
+        spotifyTracksObj?.total || 0
+      );
+      const inferredSpotifyArtistCount = (
+        (spotifyArtistsObj?.items && Array.isArray(spotifyArtistsObj.items) && spotifyArtistsObj.items.length) ||
+        spotifyArtistsObj?.total || 0
+      );
+      const genreKeys = tasteData.genreProfile && typeof tasteData.genreProfile === 'object'
+        ? Object.keys(tasteData.genreProfile).filter(k => typeof tasteData.genreProfile[k] === 'number')
+        : [];
 
-      const hasGenres = Array.isArray(tasteData.genreProfile?.topGenres) && tasteData.genreProfile.topGenres.length > 0;
-      const tracksAnalyzed = tasteData.genreProfile?.tracksAnalyzed || tasteData.soundCharacteristics?.tracksAnalyzed || 0;
+      const rawSpotifyIsRealFlag = tasteData.dataSources?.spotify?.isReal === true;
+      const isRealSpotifyData = rawSpotifyIsRealFlag || (inferredSpotifyTrackCount >= 10 && inferredSpotifyArtistCount >= 5 && genreKeys.length >= 3);
+
+      // Sound characteristics inference: presence of numeric energy/danceability/positivity or summary
+      const sc = tasteData.soundCharacteristics || {};
+      const soundMetricKeys = Object.keys(sc).filter(k => typeof sc[k] === 'number');
+      const rawSoundIsRealFlag = tasteData.dataSources?.soundstat?.isReal === true;
+      const isRealSoundData = rawSoundIsRealFlag || soundMetricKeys.length >= 3 || sc.tracksAnalyzed > 0;
+
+      // Seasonal inference: presence of seasonalAnalysis.seasons object with >1 season entries
+      const seasons = tasteData.seasonalAnalysis?.seasons || tasteData.seasonalAnalysis?.seasonal || {};
+      const rawSeasonalIsRealFlag = tasteData.dataSources?.seasonal?.isReal === true;
+      const isRealSeasonalData = rawSeasonalIsRealFlag || (seasons && Object.keys(seasons).length >= 2);
+
+      const hasGenres = genreKeys.length > 0;
+      const inferredTracksAnalyzed = tasteData.genreProfile?.tracksAnalyzed || sc.tracksAnalyzed || inferredSpotifyTrackCount || 0;
       const realSourcesCount = [isRealSpotifyData, isRealSoundData, isRealSeasonalData].filter(Boolean).length;
       const allSourcesNonReal = realSourcesCount === 0;
       const explicitDemoFlag = tasteData.isDemoMode || tasteData.demo === true || tasteData.dataSources?.spotify?.isDemo === true;
@@ -362,35 +407,35 @@ export default function EnhancedPersonalizedDashboard() {
       // ENHANCED: Process data sources with detailed tracking - preserve API response flags
       const newDataSources = {
         spotify: {
-          isReal: tasteData.dataSources?.spotify?.isReal === true,
+          isReal: isRealSpotifyData,
           lastFetch: tasteData.dataSources?.spotify?.lastFetch,
-            tracksAnalyzed: tasteData.genreProfile?.tracksAnalyzed || 0,
-          confidence: tasteData.genreProfile?.confidence || 0,
-          source: tasteData.dataSources?.spotify?.source || 'cached_profile',
+          tracksAnalyzed: inferredTracksAnalyzed,
+          confidence: tasteData.genreProfile?.confidence || (isRealSpotifyData ? Math.min(1, (inferredTracksAnalyzed / 100)) : 0),
+          source: tasteData.dataSources?.spotify?.source || (isRealSpotifyData ? 'inferred_spotify_api' : 'cached_profile'),
           timePeriod: 'cached',
-          description: 'Cached Spotify profile',
-          error: tasteData.dataSources?.spotify?.error
+          description: isRealSpotifyData ? 'Real Spotify listening profile (inferred)' : 'Cached Spotify profile',
+          error: isRealSpotifyData ? null : tasteData.dataSources?.spotify?.error
         },
         soundstat: {
-          isReal: tasteData.dataSources?.soundstat?.isReal === true,
+          isReal: isRealSoundData,
           lastFetch: tasteData.dataSources?.soundstat?.lastFetch,
-          tracksAnalyzed: tasteData.soundCharacteristics?.tracksAnalyzed || 0,
-          confidence: tasteData.soundCharacteristics?.confidence || 0,
-          source: tasteData.dataSources?.soundstat?.source || 'cached_profile',
+          tracksAnalyzed: sc.tracksAnalyzed || inferredTracksAnalyzed,
+          confidence: sc.confidence || (isRealSoundData ? 0.6 : 0),
+          source: tasteData.dataSources?.soundstat?.source || (isRealSoundData ? 'inferred_audio_features' : 'cached_profile'),
           timePeriod: 'cached',
-          description: 'Cached audio feature profile',
-          error: tasteData.dataSources?.soundstat?.error
+          description: isRealSoundData ? 'Audio feature profile (inferred)' : 'Cached audio feature profile',
+          error: isRealSoundData ? null : tasteData.dataSources?.soundstat?.error
         },
         events: eventsSource,
         seasonal: {
-          isReal: tasteData.dataSources?.seasonal?.isReal === true,
+          isReal: isRealSeasonalData,
           lastFetch: tasteData.dataSources?.seasonal?.lastFetch,
-          tracksAnalyzed: tasteData.seasonalAnalysis?.metadata?.tracksAnalyzed || 0,
-          confidence: tasteData.seasonalAnalysis?.metadata?.confidence || 0,
-          source: tasteData.dataSources?.seasonal?.source || 'cached_profile',
+          tracksAnalyzed: tasteData.seasonalAnalysis?.metadata?.tracksAnalyzed || inferredTracksAnalyzed,
+          confidence: tasteData.seasonalAnalysis?.metadata?.confidence || (isRealSeasonalData ? 0.5 : 0),
+          source: tasteData.dataSources?.seasonal?.source || (isRealSeasonalData ? 'inferred_seasonal_profile' : 'cached_profile'),
           timePeriod: 'cached',
-          description: 'Seasonal listening pattern',
-          error: tasteData.dataSources?.seasonal?.error
+          description: isRealSeasonalData ? 'Seasonal listening pattern (inferred)' : 'Seasonal listening pattern',
+          error: isRealSeasonalData ? null : tasteData.dataSources?.seasonal?.error
         }
       };
       console.log('[Dashboard] Data source real flags', {
