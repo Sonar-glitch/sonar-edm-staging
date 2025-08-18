@@ -215,11 +215,72 @@ export default async function handler(req, res) {
     });
 
     if (!userProfile) {
-      console.log('⚠️ No userProfiles doc found; returning soft onboarding signal. (Will not hard redirect)');
+      console.log('⚠️ No userProfiles doc found; attempting stale profile recovery before soft onboarding');
+
+      // Attempt stale cached profile (ignore expiresAt) to avoid unnecessary demo experience
+      const staleProfile = await db.collection('user_sound_profiles').findOne({
+        $or: [
+          { userId },
+          { userId: normalizedEmail },
+          { email: normalizedEmail },
+          { email: session.user.email }
+        ]
+      });
+
+      if (staleProfile) {
+        console.log('🟡 Returning STALE cached profile instead of soft onboarding');
+        const derivedTracks = (
+          staleProfile.tracksAnalyzed || staleProfile.trackCount || (Array.isArray(staleProfile.topGenres)
+            ? staleProfile.topGenres.reduce((a, g) => a + (g.count || 0), 0)
+            : 0)
+        );
+        const hasRealData = derivedTracks > 0;
+        const effectiveConfidence = hasRealData ? (staleProfile.confidence != null ? staleProfile.confidence : 0.6) : 0.0;
+        const topGenresArray = Array.isArray(staleProfile.topGenres) ? staleProfile.topGenres : [];
+        const spotifyReal = hasRealData && topGenresArray.length > 0;
+        const soundReal = hasRealData && !!staleProfile.soundCharacteristics && Object.keys(staleProfile.soundCharacteristics).filter(k => typeof staleProfile.soundCharacteristics[k] === 'number').length >= 3;
+        const seasonalReal = !!(staleProfile.seasonalProfile && staleProfile.seasonalProfile.profile && Object.keys(staleProfile.seasonalProfile.profile).length >= 2 && hasRealData);
+        const weeklyDeltasSource = staleProfile.weeklyDeltas ? {
+          weeklyDeltas: {
+            lastFetch: staleProfile.lastWeeklyDeltaAt || staleProfile.profileBuiltAt || new Date(),
+            source: 'weekly_deltas_cache',
+            tracksAnalyzed: staleProfile.weeklyDeltas?.dataQuality?.tracksAnalyzed || derivedTracks,
+            confidence: staleProfile.weeklyDeltas?.dataQuality?.confidence || effectiveConfidence,
+            isReal: !!staleProfile.weeklyDeltas?.dataQuality?.tracksAnalyzed,
+            error: staleProfile.weeklyDeltasError || null,
+            analysisStatus: { pending: !staleProfile.weeklyDeltas?.dataQuality?.tracksAnalyzed }
+          }
+        } : {};
+        const dataSourcesAggregate = {
+          spotify: { isReal: spotifyReal, tracksAnalyzed: derivedTracks, lastFetch: staleProfile.createdAt, source: 'stale_cache', error: spotifyReal ? null : 'STALE_OR_EMPTY' },
+          soundstat: { isReal: soundReal, tracksAnalyzed: derivedTracks, lastFetch: staleProfile.createdAt, source: 'stale_cache', error: soundReal ? null : 'STALE_OR_EMPTY' },
+          events: { isReal: true, lastFetch: new Date().toISOString(), source: 'live_api', error: null },
+          seasonal: { isReal: seasonalReal, tracksAnalyzed: derivedTracks, lastFetch: staleProfile.createdAt, source: 'stale_cache', error: seasonalReal ? null : 'STALE_OR_EMPTY' },
+          ...weeklyDeltasSource
+        };
+        const demoMode = !dataSourcesAggregate.spotify.isReal && !dataSourcesAggregate.soundstat.isReal && !dataSourcesAggregate.seasonal.isReal;
+        return res.status(200).json({
+          demoMode,
+          stale: true,
+          dataSources: dataSourcesAggregate,
+          genreProfile: { topGenres: staleProfile.topGenres || [], tracksAnalyzed: derivedTracks, confidence: effectiveConfidence, pending: !hasRealData },
+          soundCharacteristics: staleProfile.soundCharacteristics || {},
+          seasonalAnalysis: staleProfile.seasonalProfile || null,
+          weeklyDeltas: staleProfile.weeklyDeltas || null,
+          performance: { cacheState: 'STALE', loadTime: 'fast', lastUpdate: staleProfile.createdAt, needsRefresh: true }
+        });
+      }
+
+      // Enhanced diagnostic response for soft onboarding
       return res.status(200).json({
         softOnboarding: true,
         message: 'No user profile document found; begin taste collection',
         action: 'suggest_onboarding',
+        debug: {
+          attemptedUserId: userId,
+          normalizedEmail,
+          reason: 'NO_USER_PROFILE_AND_NO_STALE_CACHE'
+        },
         performance: { cacheState: 'MISS', rebuildQueued: false }
       });
     }
