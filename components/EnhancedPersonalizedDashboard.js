@@ -344,8 +344,8 @@ export default function EnhancedPersonalizedDashboard() {
 
       // Only adjust demo mode if not already forced by soft onboarding earlier
       if (!tasteData.softOnboarding) {
-  const shouldBeDemo = explicitDemoFlag || (allSourcesNonReal && (!hasGenres || tracksAnalyzed === 0));
-  console.log('[DemoMode Eval]', { explicitDemoFlag, allSourcesNonReal, hasGenres, tracksAnalyzed, shouldBeDemo });
+  const shouldBeDemo = explicitDemoFlag || (allSourcesNonReal && (!hasGenres || inferredTracksAnalyzed === 0));
+  console.log('[DemoMode Eval]', { explicitDemoFlag, allSourcesNonReal, hasGenres, tracksAnalyzed: inferredTracksAnalyzed, shouldBeDemo });
         if (shouldBeDemo) {
           if (!isDemoMode) console.log('🎭 Determined demo mode (all sources non-real or explicit demo flag)');
           setIsDemoMode(true);
