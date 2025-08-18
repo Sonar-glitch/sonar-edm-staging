@@ -15,11 +15,7 @@ const AppLayout = ({ children }) => {
       <Head>
         <title>TIKO - Your Music Universe</title>
         <meta name="description" content="Your personalized EDM event discovery platform" />
-        <script
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-          async
-          defer
-        />
+  {/* Google Maps script removed here to prevent duplicate loads. Now loaded once in _document.js */}
       </Head>
 
       <header className={styles.mainHeader}>
