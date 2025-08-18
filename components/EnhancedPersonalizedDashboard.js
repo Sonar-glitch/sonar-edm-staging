@@ -521,29 +521,17 @@ export default function EnhancedPersonalizedDashboard() {
     const source = dataSources[sourceKey];
     if (!source) return null;
 
-    // 🎯 FIXED: Check demo mode first - if demo mode is active, everything is demo data
-    if (isDemoMode) {
-      const tooltipContent = `⚠️ Demo Data\nReason: Demo mode active\nUsing sample data for demonstration\nNote: Refresh page to complete real taste analysis`;
-      
-      return (
-        <div 
-          className={`${styles.dataIndicator} ${styles.fallbackData}`}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onMouseMove={handleMouseMove}
-          data-tooltip={tooltipContent}
-        >
-          ⚠️ Demo Data
-        </div>
-      );
-    }
+    // Determine base metrics early
+    let tracksAnalyzed = source.tracksAnalyzed || 0;
+    const pending = source.analysisStatus?.pending || source.pending;
 
-    // 🎯 COMPREHENSIVE DATA QUALITY ASSESSMENT
-  let isReal = false;
-  let confidence = 0;
-  let label = '⚠️ Demo Data';
-  let tracksAnalyzed = source.tracksAnalyzed || 0;
-  const pending = source.analysisStatus?.pending || source.pending;
+    // NEW: Global demo eligibility only applies to taste-related sources when there is zero real data
+    const globalDemoEligible = isDemoMode && ['spotify','soundstat','seasonal','weeklyDeltas'].includes(sourceKey) && (tracksAnalyzed === 0) && !source.isReal;
+
+    // 🎯 COMPREHENSIVE DATA QUALITY ASSESSMENT (per-source)
+    let isReal = false;
+    let confidence = 0;
+    let label = '⚠️ Demo Data';
     
     // For real data assessment, check source.isReal flag first
   if (!source.isReal || tracksAnalyzed === 0 || pending) {
@@ -704,7 +692,7 @@ export default function EnhancedPersonalizedDashboard() {
         {label}
       </div>
     );
-  }, [dataSources]);
+  }, [dataSources, isDemoMode]);
 
   // NEW: Tooltip event handlers
   const handleMouseEnter = useCallback((e) => {
