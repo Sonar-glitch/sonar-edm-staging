@@ -130,6 +130,25 @@ export default async function handler(req, res) {
 
       const aggregatedDemo = !dataSourcesAggregate.spotify.isReal && !dataSourcesAggregate.soundstat.isReal && !dataSourcesAggregate.seasonal.isReal;
 
+      // 🎭 Placeholders should ONLY appear when everything is demo; otherwise return empty to prevent UI thinking demo data is real.
+      let artistProfile = [];
+      let topTracks = [];
+      const placeholdersUsed = {};
+      if (aggregatedDemo) {
+        artistProfile = cached.topGenres?.slice(0, 5).map((genre, i) => ({
+          name: `${genre.genre} Artist ${i + 1}`,
+          plays: genre.count || 10,
+          genre: genre.genre
+        })) || [];
+        topTracks = [
+          { name: 'Track 1', artist: 'Artist 1', plays: 50 },
+          { name: 'Track 2', artist: 'Artist 2', plays: 45 },
+          { name: 'Track 3', artist: 'Artist 3', plays: 40 }
+        ];
+        placeholdersUsed.artistProfile = artistProfile.length > 0;
+        placeholdersUsed.topTracks = topTracks.length > 0;
+      }
+
       const dashboardData = {
         demoMode: aggregatedDemo,
         dataSources: dataSourcesAggregate,
@@ -150,17 +169,8 @@ export default async function handler(req, res) {
           confidence: effectiveConfidence
         },
 
-        artistProfile: cached.topGenres?.slice(0, 5).map((genre, i) => ({
-          name: `${genre.genre} Artist ${i + 1}`,
-            plays: genre.count || 10,
-          genre: genre.genre
-        })) || [],
-
-        topTracks: [
-          { name: 'Track 1', artist: 'Artist 1', plays: 50 },
-          { name: 'Track 2', artist: 'Artist 2', plays: 45 },
-          { name: 'Track 3', artist: 'Artist 3', plays: 40 }
-        ],
+        artistProfile,
+        topTracks,
 
         seasonalAnalysis: cached.seasonalProfile ? {
           currentSeason: getCurrentSeason(),
@@ -212,7 +222,8 @@ export default async function handler(req, res) {
           aggregatedDemo,
           spotifyReal: dataSourcesAggregate.spotify.isReal,
           soundReal: dataSourcesAggregate.soundstat.isReal,
-          seasonalReal: dataSourcesAggregate.seasonal.isReal
+          seasonalReal: dataSourcesAggregate.seasonal.isReal,
+          placeholdersUsed
         };
       }
   return res.status(200).json(dashboardData);
