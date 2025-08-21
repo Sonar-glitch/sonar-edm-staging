@@ -1,0 +1,126 @@
+/* EnhancedEventCard.module.css */
+.card {
+  background-color: rgba(26, 26, 46, 0.8);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  color: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.header {
+  margin-bottom: 15px;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0 0 5px 0;
+  color: white;
+}
+
+.venue {
+  font-size: 0.9rem;
+  color: #b8b8b8;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.venueType {
+  color: #888;
+  margin-left: 5px;
+}
+
+.artistsSection {
+  margin-bottom: 15px;
+}
+
+.featuring {
+  font-size: 0.85rem;
+  color: #b8b8b8;
+  margin: 0 0 5px 0;
+}
+
+.artist {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+
+.artistName {
+  font-size: 0.9rem;
+  color: white;
+}
+
+.artistMatch {
+  font-size: 0.85rem;
+  color: #00c6ff;
+  font-weight: bold;
+}
+
+.viewMore {
+  background: none;
+  border: none;
+  color: #00c6ff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 5px;
+  text-align: left;
+}
+
+.details {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.genreTag, .priceTag, .dateTag {
+  background: linear-gradient(90deg, rgba(0, 198, 255, 0.2) 0%, rgba(255, 0, 234, 0.2) 100%);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.icon {
+  font-size: 0.7rem;
+}
+
+.bottomSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detailsButton {
+  background: none;
+  border: 1px solid #00c6ff;
+  color: white;
+  border-radius: 20px;
+  padding: 5px 15px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.detailsButton:hover {
+  background: linear-gradient(90deg, rgba(0, 198, 255, 0.3) 0%, rgba(255, 0, 234, 0.3) 100%);
+}
+
+.matchPercentage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

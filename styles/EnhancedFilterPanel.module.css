@@ -1,0 +1,115 @@
+/* EnhancedFilterPanel.module.css */
+
+.filterPanel {
+  background-color: #1e1e2f; /* Match event card background */
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.filterGroup {
+  margin-bottom: 1rem;
+}
+
+.filterGroup:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #c0c0d0;
+}
+
+.slider {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #00c6ff, #ff00ff); /* Gradient background */
+  outline: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: none; /* Remove default border */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.toggleButton {
+  background: none;
+  border: 1px solid #00c6ff;
+  color: #00c6ff;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s, color 0.2s;
+  margin-top: 0.5rem; /* Add some space above the button */
+}
+
+.toggleButton:hover {
+  background-color: rgba(0, 198, 255, 0.1);
+}
+
+.moreFilters {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2a2a3a; /* Separator line */
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.placeholderText {
+  color: #a0a0b0;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Basic styles for potential future inputs */
+.selectInput,
+.textInput {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #3a3a4a;
+  background-color: #2a2a3a;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.selectInput:focus,
+.textInput:focus {
+  outline: none;
+  border-color: #00c6ff;
+}
+
+/* Fade-in animation for more filters */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

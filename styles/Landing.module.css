@@ -1,0 +1,132 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  color: white;
+  padding: 2rem;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 500px;
+  width: 100%;
+}
+
+.logo {
+  font-size: 6rem;
+  font-weight: 900;
+  color: #ff00ff;
+  text-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
+  margin-bottom: 1.5rem;
+  letter-spacing: -2px;
+}
+
+.tagline {
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  color: #00ffff;
+  margin-bottom: 2rem;
+  line-height: 1.3;
+}
+
+.spotifyButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #1DB954, #6366F1);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 0.75rem 2rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 3rem;
+  width: 100%;
+  max-width: 300px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.spotifyButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
+}
+
+.spotifyIcon {
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.features {
+  width: 100%;
+  margin-bottom: 3rem;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  font-size: 1.2rem;
+}
+
+.featureItem p {
+  margin: 0;
+}
+
+.bulletPurple, .bulletPink, .bulletCyan {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.bulletPurple {
+  background-color: #9333EA;
+  box-shadow: 0 0 10px rgba(147, 51, 234, 0.7);
+}
+
+.bulletPink {
+  background-color: #FF00FF;
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.7);
+}
+
+.bulletCyan {
+  background-color: #00FFFF;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+}
+
+.footer {
+  margin-top: auto;
+  opacity: 0.8;
+  font-size: 1rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .logo {
+    font-size: 4.5rem;
+  }
+  
+  .tagline {
+    font-size: 1.25rem;
+  }
+  
+  .spotifyButton {
+    font-size: 1.1rem;
+    padding: 0.6rem 1.5rem;
+  }
+  
+  .featureItem {
+    font-size: 1rem;
+  }
+}

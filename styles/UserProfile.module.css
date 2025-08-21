@@ -1,0 +1,198 @@
+.container {
+  position: relative;
+  display: inline-block;
+}
+
+.profileButton {
+  display: flex;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 50px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profileButton:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-color: rgba(0, 255, 255, 0.5);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+}
+
+.avatarPlaceholder {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #6610f2, #00ffff);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+.username {
+  color: white;
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.chevron {
+  color: rgba(255, 255, 255, 0.6);
+  transition: transform 0.2s ease;
+}
+
+.chevronUp {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background-color: rgba(20, 20, 30, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  z-index: 100;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownHeader {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profileName {
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  margin: 0 0 4px 0;
+}
+
+.profileEmail {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.tasteSnapshot {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.snapshotTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #00ffff;
+  margin: 0 0 12px 0;
+}
+
+.genreList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px 0;
+}
+
+.genreItem {
+  margin-bottom: 8px;
+}
+
+.genreName {
+  display: block;
+  font-size: 12px;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.genreBar {
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.genreBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0, 255, 255, 0.8), rgba(102, 16, 242, 0.8));
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+
+.viewMoreLink {
+  display: block;
+  font-size: 12px;
+  color: #00ffff;
+  text-align: center;
+  text-decoration: none;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+}
+
+.viewMoreLink:hover {
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+.noData {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 8px 0;
+  text-align: center;
+  font-style: italic;
+}
+
+.menuItems {
+  padding: 8px 0;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.menuItem:hover {
+  background-color: rgba(0, 255, 255, 0.1);
+}
+
+.menuItem svg {
+  margin-right: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  width: 16px;
+  height: 16px;
+}
+
+.menuItem:last-child {
+  color: #ff6b6b;
+}
+
+.menuItem:last-child svg {
+  color: #ff6b6b;
+}

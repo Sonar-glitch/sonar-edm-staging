@@ -1,0 +1,55 @@
+.correlationContainer {
+  margin-top: 10px;
+}
+
+.correlationLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+
+.correlationLabel > span:first-child {
+  color: var(--neon-blue);
+}
+
+.correlationBar {
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.correlationFill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.perfectMatch {
+  color: #ff00ff;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  text-shadow: 0 0 5px rgba(255, 0, 255, 0.7);
+}
+
+.strongMatch {
+  color: #00ffff;
+  background: linear-gradient(90deg, #00ffff, #9900ff);
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.7);
+}
+
+.goodMatch {
+  color: #9900ff;
+  background: #9900ff;
+  text-shadow: 0 0 5px rgba(153, 0, 255, 0.7);
+}
+
+.decentMatch {
+  color: #ff9900;
+  background: #ff9900;
+}
+
+.potentialMatch {
+  color: #ffcc00;
+  background: #ffcc00;
+}

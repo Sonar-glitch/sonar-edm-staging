@@ -1,0 +1,154 @@
+.container {
+  background-color: rgba(10, 10, 20, 0.95);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.title {
+  color: #fff;
+  font-size: 1.5rem;
+  margin: 0 0 5px 0;
+  text-align: center;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin: 0;
+  text-align: center;
+}
+
+.closeButton {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.gridContainer {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.optionCategory {
+  margin-bottom: 25px;
+}
+
+.categoryTitle {
+  color: #00e5ff;
+  font-size: 1.1rem;
+  margin: 0 0 10px 0;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.3);
+  padding-bottom: 5px;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.optionButton {
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 8px 5px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionButton:hover {
+  background-color: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.5);
+}
+
+.optionButton.selected {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(255, 0, 255, 0.2));
+  border-color: #00e5ff;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
+.actions {
+  padding: 15px 20px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.submitButton {
+  background: linear-gradient(90deg, #00e5ff, #ff00ff);
+  border: none;
+  border-radius: 6px;
+  color: #000;
+  font-weight: bold;
+  padding: 10px 25px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.submitButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 229, 255, 0.4);
+}
+
+.submitButton:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .optionsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .optionsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .container {
+    width: 95%;
+  }
+}

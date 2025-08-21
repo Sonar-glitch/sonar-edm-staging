@@ -1,0 +1,1217 @@
+/* PHASE 1: ENHANCED GLASSMORPHIC EVENT LIST WITH TIKO COLORS */
+
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* GLASSMORPHIC EVENTS HEADER */
+.eventsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
+}
+
+.eventsHeader span {
+  color: #DADADA; /* TIKO primary text */
+  font-weight: 500;
+  text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
+}
+
+/* GLASSMORPHIC EVENTS LIST */
+.eventsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+/* EVENT GROUPING STYLES - ENHANCED */
+.eventGroup {
+  margin-bottom: 2rem;
+}
+
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem; /* INCREASED: More space to prevent touching events */
+  background: rgba(21, 21, 31, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border-left: 4px solid #FF00CC;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.groupHeader:hover {
+  background: rgba(21, 21, 31, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(255, 0, 204, 0.2);
+}
+
+.groupHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.groupHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.groupIcon {
+  font-size: 1.5rem;
+}
+
+.groupTitle {
+  color: #DADADA;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
+}
+
+.collapseIcon {
+  color: #DADADA;
+  font-size: 1rem;
+  transition: transform 0.3s ease;
+  font-weight: bold;
+}
+
+.groupEvents {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-left: 1rem;
+}
+
+/* Urgency-based group styling */
+.critical .groupHeader {
+  border-left-color: #FF00CC;
+  box-shadow: 0 0 15px rgba(255, 0, 204, 0.3);
+}
+
+.urgent .groupHeader {
+  border-left-color: #FF6B00;
+  box-shadow: 0 0 15px rgba(255, 107, 0, 0.3);
+}
+
+.soon .groupHeader {
+  border-left-color: #FFB800;
+  box-shadow: 0 0 15px rgba(255, 184, 0, 0.3);
+}
+
+.normal .groupHeader {
+  border-left-color: #00CFFF;
+  box-shadow: 0 0 15px rgba(0, 207, 255, 0.3);
+}
+
+.low .groupHeader {
+  border-left-color: #00FF94;
+  box-shadow: 0 0 15px rgba(0, 255, 148, 0.3);
+}
+
+.special .groupHeader {
+  border-left-color: #B366FF;
+  box-shadow: 0 0 15px rgba(179, 102, 255, 0.3);
+}
+
+.groupEvents {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ENHANCED GLASSMORPHIC EVENT CARDS */
+.eventCard {
+  background: rgba(21, 21, 31, 0.8); /* TIKO accent section background with transparency */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ENHANCED HOVER WITH TIKO GLOW */
+.eventCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 30px rgba(255, 0, 204, 0.2), /* TIKO action button glow */
+    0 0 25px rgba(0, 207, 255, 0.1), /* TIKO interactive highlight glow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(0, 255, 255, 0.3);
+}
+
+/* GLASSMORPHIC EVENT HEADER */
+.eventHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1); /* TIKO card border */
+}
+
+.eventHeader h4 {
+  color: #DADADA; /* TIKO primary text */
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(218, 218, 218, 0.3);
+}
+
+/* ENHANCED CIRCULAR PROGRESS - BIGGER SOLID COMPLETION CIRCLE */
+.circularProgressEnhanced {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px; /* BIGGER: Increased from 80px to 100px */
+  height: 100px; /* BIGGER: Increased from 80px to 100px */
+  margin: 0 auto; /* CENTER ALIGNED */
+}
+
+.progressSvgEnhanced {
+  position: absolute;
+}
+
+.progressCircleEnhanced {
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressTextEnhanced {
+  position: absolute;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  z-index: 2;
+  /* Glow effect will be added inline via JavaScript */
+}
+
+.percentageNumberEnhanced {
+  font-size: 1.6rem; /* BIGGER: Increased from 1.4rem */
+  color: #DADADA;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.percentageSymbolEnhanced {
+  font-size: 0.9rem;
+  color: #999;
+  margin-left: 2px;
+  font-weight: 500;
+}
+
+/* COMPACT CIRCULAR TOOLTIP - SMALL AND ON TOP */
+.circularTooltip {
+  position: absolute;
+  top: -140px; /* HIGHER: More clearance above circle */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 180px; /* SMALLER: Reduced from 200px */
+  max-width: 220px;
+  padding: 0.6rem; /* SMALLER: Reduced from 0.75rem */
+  background: rgba(21, 21, 31, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 10px; /* SMALLER: Reduced from 12px */
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 20px rgba(255, 0, 204, 0.2);
+  color: #DADADA;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.75rem; /* SMALLER: Reduced from 0.8rem */
+  animation: circularTooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes circularTooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.tooltipHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.tooltipTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, #FF00CC, #00CFFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.totalScore {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #00CFFF;
+  text-shadow: 0 0 10px rgba(0, 207, 255, 0.4);
+}
+
+.breakdownItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.breakdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid rgba(0, 255, 255, 0.3);
+  transition: all 0.2s ease;
+}
+
+.breakdownItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(2px);
+}
+
+.itemColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.itemLabel {
+  font-size: 0.75rem;
+  color: #BBB;
+  font-weight: 500;
+  flex: 1;
+}
+
+.itemScore {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #00CFFF;
+  text-shadow: 0 0 5px rgba(0, 207, 255, 0.3);
+}
+
+.tooltipFooter {
+  text-align: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.tooltipFooter p {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #888;
+  font-style: italic;
+}
+
+/* COMPACT BREAKDOWN TOOLTIP */
+.matchBreakdownTooltip {
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 200px;
+  padding: 0.75rem;
+  background: rgba(21, 21, 31, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 20px rgba(255, 0, 204, 0.2);
+  color: #DADADA;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.8rem;
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.tooltipHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.tooltipTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, #FF00CC, #00CFFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.totalScore {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #00CFFF;
+  text-shadow: 0 0 8px rgba(0, 207, 255, 0.3);
+}
+
+.breakdownItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.breakdownItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border-left: 2px solid rgba(0, 255, 255, 0.3);
+}
+
+.itemLabel {
+  font-size: 0.7rem;
+  color: #BBB;
+  font-weight: 500;
+}
+
+.itemScore {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #00CFFF;
+}
+
+.breakdownItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-left-color: rgba(0, 255, 255, 0.5);
+  transform: translateX(2px);
+}
+
+.itemLabel {
+  font-size: 0.85rem;
+  color: #BBB;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.itemScore {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #DADADA;
+  background: linear-gradient(90deg, #FF00CC, #00CFFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tooltipFooter {
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tooltipFooter p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+}
+
+/* ENHANCED SCORE BADGE WITH TIKO STYLING */
+.scoreBadge {
+  background: linear-gradient(90deg, #FF00CC, #00CFFF); /* TIKO gradient */
+  color: #000000;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 0 15px rgba(255, 0, 204, 0.5);
+  text-shadow: none;
+}
+
+/* GLASSMORPHIC EVENT DETAILS */
+.eventDetails {
+  margin-bottom: 0.8rem;
+}
+
+.eventDetails p {
+  margin: 0.3rem 0;
+  color: #999999; /* TIKO secondary text */
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* ENHANCED GENRE TAGS WITH GLASSMORPHISM */
+.genreTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.genreTag {
+  background: rgba(17, 24, 39, 0.8); /* TIKO genre tag background with transparency */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #00FFFF; /* TIKO genre tag text */
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.genreTag:hover {
+  background: rgba(17, 24, 39, 1);
+  border-color: rgba(0, 255, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+/* GLASSMORPHIC LOADING STATE */
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  height: 100%;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 255, 255, 0.1);
+  border-top: 3px solid #00CFFF; /* TIKO interactive highlight */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 20px rgba(0, 207, 255, 0.3);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loadingState p {
+  color: #999999; /* TIKO secondary text */
+  margin: 0.5rem 0 0 0;
+}
+
+.loadingDetails {
+  margin-top: 0.5rem;
+}
+
+.loadingDetails span {
+  color: #888888; /* TIKO secondary text */
+}
+
+/* GLASSMORPHIC ERROR STATE */
+.errorState {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 0, 204, 0.1); /* TIKO action button with low opacity */
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 0, 204, 0.3);
+  border-radius: 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.errorState h3 {
+  color: #FF00CC; /* TIKO action button color */
+  margin: 0 0 0.5rem 0;
+}
+
+.errorState p {
+  color: #999999; /* TIKO secondary text */
+  margin: 0.5rem 0;
+}
+
+.errorDetails span {
+  color: #888888; /* TIKO secondary text */
+  font-size: 0.8rem;
+}
+
+/* ENHANCED RETRY BUTTON WITH GLASSMORPHISM */
+.retryButton {
+  background: linear-gradient(90deg, #00CFFF, #FF00CC); /* TIKO gradient */
+  color: #000000;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(0, 207, 255, 0.3);
+}
+
+.retryButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 30px rgba(255, 0, 204, 0.4);
+}
+
+/* GLASSMORPHIC NO EVENTS STATE */
+.noEventsState {
+  text-align: center;
+  padding: 3rem;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.noEventsState h3 {
+  color: #FF00CC; /* TIKO action button color */
+  margin: 0 0 1rem 0;
+  text-shadow: 0 0 15px rgba(255, 0, 204, 0.3);
+}
+
+.noEventsState p {
+  color: #999999; /* TIKO secondary text */
+  margin: 0 0 1.5rem 0;
+}
+
+/* GLASSMORPHIC SUGGESTIONS */
+.suggestions {
+  background: rgba(21, 21, 31, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.suggestions h4 {
+  color: #DADADA; /* TIKO primary text */
+  margin: 0 0 0.5rem 0;
+}
+
+.suggestions ul {
+  color: #888888; /* TIKO secondary text */
+  margin: 0;
+  padding-left: 1rem;
+}
+
+/* GLASSMORPHIC DEBUG INFO */
+.debugInfo {
+  margin-top: 1.5rem;
+}
+
+.debugInfo details {
+  background: rgba(21, 21, 31, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  padding: 0.8rem;
+}
+
+.debugInfo summary {
+  color: #00CFFF; /* TIKO interactive highlight */
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.debugInfo div {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.debugInfo p {
+  margin: 0.2rem 0;
+  color: #888888; /* TIKO secondary text */
+}
+
+/* GLASSMORPHIC EVENTS FOOTER */
+.eventsFooter {
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.8rem;
+  background: rgba(21, 21, 31, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.eventsFooter span {
+  color: #888888; /* TIKO secondary text */
+  font-size: 0.75rem;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .eventCard {
+    padding: 0.8rem;
+  }
+  
+  .eventHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .scoreBadge {
+    align-self: flex-end;
+  }
+  
+  .genreTags {
+    gap: 0.3rem;
+  }
+  
+  .genreTag {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+  }
+}
+
+/* ENHANCED EVENT HEADER WITH MATCH SCORE */
+.eventHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.eventTitleSection {
+  flex: 1;
+}
+
+.eventTitle {
+  color: #DADADA;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 0 15px rgba(218, 218, 218, 0.4);
+  line-height: 1.3;
+}
+
+.eventDate {
+  color: #00FFFF;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* MATCH SCORE SECTION */
+.matchScoreSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 60px;
+}
+
+.matchScore {
+  font-size: 1.4rem;
+  font-weight: 700;
+  padding: 0.5rem;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 50px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.highMatch {
+  background: linear-gradient(135deg, #00ff88, #00ffcc);
+  color: #000;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+}
+
+.goodMatch {
+  background: linear-gradient(135deg, #00ffff, #0088ff);
+  color: #000;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+}
+
+.fairMatch {
+  background: linear-gradient(135deg, #ffaa00, #ff6600);
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 170, 0, 0.8);
+}
+
+.lowMatch {
+  background: linear-gradient(135deg, #ff4444, #cc2222);
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 68, 68, 0.8);
+}
+
+.matchLabel {
+  color: #999;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ENHANCED VENUE INFO */
+.venueInfo {
+  margin-bottom: 0.75rem;
+}
+
+.eventVenue {
+  color: #DADADA !important;
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 0.25rem 0 !important;
+}
+
+.eventLocation {
+  color: #00FFFF !important;
+  font-size: 0.85rem;
+  margin: 0 !important;
+  font-style: italic;
+}
+
+/* ENHANCED GENRE DISPLAY */
+.eventGenres {
+  margin: 0.75rem 0;
+}
+
+.genreList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.genreTag {
+  background: rgba(0, 255, 255, 0.1);
+  color: #00FFFF;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  backdrop-filter: blur(5px);
+}
+
+.genreMore {
+  color: #999;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+/* TASTE MATCH EXPLANATION SECTION */
+.tasteMatchSection {
+  background: rgba(0, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  backdrop-filter: blur(5px);
+}
+
+.tasteExplanation {
+  color: #DADADA;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.tasteReasons {
+  margin: 0.5rem 0;
+}
+
+.tasteReason {
+  color: #00FFFF;
+  font-size: 0.8rem;
+  margin: 0.25rem 0;
+  padding-left: 0.5rem;
+}
+
+.tasteMetadata {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.confidenceLevel {
+  color: #999;
+}
+
+.methodology {
+  color: #666;
+  text-transform: capitalize;
+}
+
+/* ENHANCED EVENT ACTIONS */
+.eventActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.ticketButton {
+  background: linear-gradient(135deg, #00FFFF, #0088CC);
+  color: #000;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.ticketButton:hover {
+  background: linear-gradient(135deg, #00CCCC, #006699);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.priceInfo {
+  color: #999;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* DATE PROXIMITY STYLING */
+.pastEvent {
+  opacity: 0.6;
+  border-color: rgba(136, 136, 136, 0.2);
+}
+
+.todayEvent {
+  border-color: rgba(255, 68, 68, 0.6);
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+}
+
+.soonEvent {
+  border-color: rgba(0, 255, 136, 0.6);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+.thisMonthEvent {
+  border-color: rgba(0, 255, 255, 0.4);
+}
+
+.futureEvent {
+  border-color: rgba(0, 255, 255, 0.2);
+}
+
+/* GLASSMORPHIC ENHANCEMENT DETAILS */
+.eventCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.eventCard::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ================================
+   COMPACT EVENT CARDS - TIKO STYLE
+   ================================ */
+
+.compactEventCard {
+  background: rgba(21, 21, 31, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 0.5rem;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.compactEventCard:hover {
+  background: rgba(21, 21, 31, 0.9);
+  border-color: rgba(0, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+}
+
+/* Compact header row */
+.compactHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* CHANGED: Allow flex positioning for better circle alignment */
+  margin-bottom: 0.5rem;
+}
+
+.eventTitleCompact {
+  flex: 1;
+  margin-right: 1rem;
+}
+
+/* NEW: Title and location row */
+.titleLocationRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+/* NEW: Date and time row */
+.dateTimeRow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.eventTitleText {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #DADADA;
+  margin: 0;
+  line-height: 1.3;
+  flex: 1;
+}
+
+/* NEW: Location badge */
+.locationBadge {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.7rem;
+  color: #00CFFF;
+  background: rgba(0, 207, 255, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 207, 255, 0.2);
+  font-weight: 500;
+}
+
+.eventDateCompact {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem; /* BIGGER: Increased from 0.8rem */
+  color: #00CFFF;
+  font-weight: 600; /* BOLDER: Increased from 500 */
+}
+
+/* NEW: Event time styling */
+.eventTimeCompact {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem; /* BIGGER: Increased from 0.8rem to match date */
+  color: #FF00CC;
+  font-weight: 600;
+  background: rgba(255, 0, 204, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 0, 204, 0.2);
+}
+
+.matchScoreCompact {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding-top: 0.5rem; /* ADDED: Push the circle down for better center alignment */
+}
+
+.scorePercentage {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #FF00CC, #00CFFF);
+  color: #000;
+}
+
+/* Compact venue info */
+.compactVenueInfo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.75rem;
+  color: #B3B3B3;
+}
+
+.venueName {
+  font-weight: 500;
+  color: #DADADA;
+}
+
+.locationSeparator {
+  margin: 0 0.5rem;
+  color: #666;
+}
+
+.locationName {
+  color: #B3B3B3;
+}
+
+/* Match insights */
+.matchInsights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.insightTag {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  background: rgba(0, 207, 255, 0.1);
+  border: 1px solid rgba(0, 207, 255, 0.2);
+  border-radius: 10px;
+  color: #00CFFF;
+  font-weight: 500;
+}
+
+/* Compact actions */
+.compactActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.compactTicketButton {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(90deg, #FF00CC, #00CFFF);
+  color: #000;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.compactTicketButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(255, 0, 204, 0.3);
+}
+
+.compactPrice {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.75rem;
+  color: #B3B3B3;
+  font-weight: 500;
+}
+
+/* Urgency styling for compact cards */
+.compactEventCard.tonightEvent {
+  border-color: rgba(255, 0, 204, 0.4);
+  background: rgba(21, 21, 31, 0.9);
+}
+
+.compactEventCard.tomorrowEvent {
+  border-color: rgba(0, 207, 255, 0.4);
+}
+
+.compactEventCard.thisWeekEvent {
+  border-color: rgba(0, 255, 136, 0.3);
+}
+
+/* Event category sections */
+.eventCategory {
+  margin-bottom: 1.5rem;
+}
+
+.categoryHeader {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #00CFFF;
+  margin: 0 0 0.75rem 0;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0, 207, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.categoryEvents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+

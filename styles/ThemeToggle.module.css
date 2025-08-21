@@ -1,0 +1,135 @@
+.themeToggle {
+  margin: 1.5rem 0;
+}
+
+.themeTitle {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--text-color);
+}
+
+.themeOptions {
+  display: flex;
+  gap: 1rem;
+}
+
+.themeOption {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.themeOption:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.themeOption.active {
+  border-color: var(--primary-color);
+}
+
+.themePreview {
+  width: 80px;
+  height: 50px;
+  border-radius: var(--border-radius);
+  margin-bottom: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.previewBar {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.neonPreview {
+  background-color: #121212;
+}
+
+.neonPreview .previewBar {
+  background: linear-gradient(90deg, #00e5ff, #0077ff);
+}
+
+.purplePreview {
+  background-color: #121212;
+}
+
+.purplePreview .previewBar {
+  background: linear-gradient(90deg, #9c27b0, #673ab7);
+}
+
+.minimalPreview {
+  background-color: #121212;
+}
+
+.minimalPreview .previewBar {
+  background: linear-gradient(90deg, #757575, #424242);
+}
+
+.themeName {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.themeOption.active .themeName {
+  color: var(--primary-color);
+}
+
+/* Floating toggle */
+.floatingToggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.floatingButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background-color: var(--card-background);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.floatingButton:hover {
+  transform: scale(1.1);
+}
+
+.floatingButton.active {
+  border: 2px solid var(--primary-color);
+}
+
+.neonIcon, .purpleIcon, .minimalIcon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.neonIcon {
+  background: linear-gradient(135deg, #00e5ff, #0077ff);
+}
+
+.purpleIcon {
+  background: linear-gradient(135deg, #9c27b0, #673ab7);
+}
+
+.minimalIcon {
+  background: linear-gradient(135deg, #757575, #424242);
+}

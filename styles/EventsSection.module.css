@@ -1,0 +1,116 @@
+.container {
+  width: 100%;
+}
+
+.title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.matchSlider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.slider {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #00c6ff, #ff00ff);
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+}
+
+.loading, .error, .noEvents {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  background-color: #1e1e2f;
+  border-radius: 10px;
+  color: #ccc;
+}
+
+.eventsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.eventCard {
+  background-color: #1e1e2f;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.imageContainer {
+  height: 150px;
+  background-color: #2a2a3a;
+  position: relative;
+}
+
+.eventImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.eventDetails {
+  padding: 1rem;
+}
+
+.eventName {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+}
+
+.eventDate, .eventVenue {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.icon {
+  color: #ff00ff;
+}
+
+.ticketButton {
+  display: block;
+  width: 100%;
+  background-color: #ff00ff;
+  color: white;
+  text-align: center;
+  padding: 0.75rem 0;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  margin-top: 1rem;
+  transition: background-color 0.2s;
+}
+
+.ticketButton:hover {
+  background-color: #cc00cc;
+}

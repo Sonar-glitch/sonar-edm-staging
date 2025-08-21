@@ -1,0 +1,392 @@
+.container {
+  padding: 2rem;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.headerDescription {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.tabsContainer {
+  display: flex;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  justify-content: center;
+}
+
+.tabButton {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tabButton:hover {
+  color: var(--text-primary);
+}
+
+.activeTab {
+  color: var(--text-primary);
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.tabContent {
+  animation: fadeIn 0.5s ease;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.statCard h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.statGrowth {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.positive {
+  color: var(--accent-tertiary);
+}
+
+.negative {
+  color: var(--accent-primary);
+}
+
+.growthLabel {
+  margin-left: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.statDetail {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.separator {
+  margin: 0 0.5rem;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chartCard {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  margin-bottom: 1.5rem;
+}
+
+.chartCard h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.chartContainer {
+  height: 300px;
+  position: relative;
+}
+
+.insightsSection, .topEventsSection, .trendingSection, .emergingSection {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  margin-bottom: 2rem;
+}
+
+.insightsSection h3, .topEventsSection h3, .trendingSection h3, .emergingSection h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.insightsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.insightItem {
+  display: flex;
+  margin-bottom: 1.5rem;
+}
+
+.insightItem:last-child {
+  margin-bottom: 0;
+}
+
+.insightIcon {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+}
+
+.insightContent h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.insightContent p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.topEventsTable {
+  width: 100%;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableCell {
+  padding-right: 1rem;
+}
+
+.trendingGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.trendingCard {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.trendingCard:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.trendingRank {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-right: 1.5rem;
+  color: var(--accent-secondary);
+  min-width: 30px;
+  text-align: center;
+}
+
+.trendingContent {
+  flex: 1;
+}
+
+.trendingContent h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.popularityBar {
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.popularityFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.popularityValue {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.emergingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.emergingCard {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.emergingCard:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-5px);
+}
+
+.emergingCard h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.growthValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-tertiary);
+  margin-bottom: 0.5rem;
+}
+
+.emergingCard p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+}
+
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--accent-secondary);
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorContainer {
+  text-align: center;
+  padding: 3rem;
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.errorMessage {
+  color: var(--accent-primary);
+  margin-bottom: 2rem;
+}
+
+.retryButton {
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tabsContainer {
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  
+  .tabButton {
+    padding: 1rem;
+    white-space: nowrap;
+  }
+  
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tableHeader, .tableRow {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  
+  .emergingGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,247 @@
+.container {
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #0c0c14;
+  color: white;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 20px;
+}
+
+.filtersContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  background-color: rgba(20, 20, 30, 0.7);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 255, 255, 0.2);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.filterGroup {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filterLabel {
+  display: block;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+}
+
+.filterSelect {
+  width: 100%;
+  padding: 10px;
+  background-color: rgba(30, 30, 40, 0.7);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300ffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: #00ffff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.rangeContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rangeInput {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 6px;
+  background: rgba(30, 30, 40, 0.7);
+  border-radius: 3px;
+  outline: none;
+}
+
+.rangeInput::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.rangeValue {
+  font-size: 0.9rem;
+  color: white;
+  min-width: 40px;
+  text-align: right;
+}
+
+.eventsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 25px;
+}
+
+.noEventsContainer {
+  text-align: center;
+  padding: 50px 20px;
+  background-color: rgba(20, 20, 30, 0.7);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 255, 255, 0.2);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.noEventsTitle {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: white;
+}
+
+.noEventsMessage {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 20px;
+}
+
+.resetButton {
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.resetButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.loadingContainer,
+.unauthorizedContainer,
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  text-align: center;
+  padding: 20px;
+}
+
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(0, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #00ffff;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.connectButton,
+.retryButton {
+  background: linear-gradient(90deg, #00ffff, #ff00ff);
+  color: white;
+  text-decoration: none;
+  padding: 12px 25px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 255, 255, 0.3);
+  display: inline-block;
+  margin-top: 20px;
+  border: none;
+  cursor: pointer;
+}
+
+.connectButton:hover,
+.retryButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.errorMessage {
+  color: #ff3366;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 2rem;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+  }
+  
+  .filtersContainer {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .filterGroup {
+    width: 100%;
+  }
+  
+  .eventsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .title {
+    font-size: 1.8rem;
+  }
+  
+  .eventsGrid {
+    grid-template-columns: 1fr;
+  }
+}

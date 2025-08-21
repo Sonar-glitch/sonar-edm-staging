@@ -1,0 +1,153 @@
+/* styles/DashboardPage.module.css */
+.pageContainer {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+  color: #fff;
+  padding: 1rem; /* Consistent padding for the page */
+  display: flex;
+  flex-direction: column;
+}
+
+.loadingPage, .unauthenticatedPage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.5rem;
+}
+
+.mainHeader {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.mainLogo {
+  margin: 0 0 0.25rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #ff006e, #00d4ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
+}
+
+.platformSubtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.tabNavigation {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem; /* Small gap between tabs */
+  background: rgba(15, 15, 25, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 50px;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  max-width: 600px; /* Control max width */
+  margin: 0 auto 1rem auto; /* Center and add bottom margin */
+}
+
+.tabButton {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.tabButton:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.activeTabButton {
+  color: #fff !important;
+  background: linear-gradient(90deg, rgba(255, 0, 110, 0.2), rgba(0, 212, 255, 0.2)) !important;
+  border: 1px solid rgba(255, 0, 110, 0.3);
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.2);
+  text-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
+}
+
+.activeTabButton::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: linear-gradient(90deg, #ff006e, #00d4ff);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
+}
+
+.vibeSummaryContainer {
+  text-align: center;
+  margin-bottom: 1.5rem; /* Space below vibe summary */
+}
+
+.vibeSummaryText {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.vibeSummaryText .highlight {
+  color: #ff006e;
+  font-weight: 600;
+  text-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+}
+
+.tabContentArea {
+  flex-grow: 1; /* Allow content to take remaining space */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tabNavigation {
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    border-radius: 15px;
+    padding: 0.5rem;
+  }
+  
+  .tabButton {
+    padding: 1rem;
+    border-radius: 10px;
+    width: 100%;
+  }
+  
+  .activeTabButton::after {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabButton {
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  .mainLogo {
+    font-size: 2rem;
+  }
+  
+  .platformSubtitle, .vibeSummaryText {
+    font-size: 0.9rem;
+  }
+}

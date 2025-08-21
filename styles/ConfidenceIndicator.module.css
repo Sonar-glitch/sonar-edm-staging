@@ -1,0 +1,235 @@
+/* styles/ConfidenceIndicator.module.css */
+/* 📊 CONFIDENCE INDICATOR STYLES */
+
+.confidenceContainer {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 1px solid #2a2a3e;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.confidenceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.title {
+  color: #e0e0e0;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.confidenceBadge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.confidenceBadge.high {
+  background: linear-gradient(135deg, #00d4aa, #00b894);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 212, 170, 0.3);
+}
+
+.confidenceBadge.medium {
+  background: linear-gradient(135deg, #fdcb6e, #e17055);
+  color: white;
+  box-shadow: 0 2px 8px rgba(253, 203, 110, 0.3);
+}
+
+.confidenceBadge.low {
+  background: linear-gradient(135deg, #ff7675, #d63031);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 118, 117, 0.3);
+}
+
+.confidenceBar {
+  width: 100%;
+  height: 8px;
+  background: #2a2a3e;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.confidenceFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease-in-out;
+}
+
+.confidenceFill.high {
+  background: linear-gradient(90deg, #00d4aa, #00b894);
+}
+
+.confidenceFill.medium {
+  background: linear-gradient(90deg, #fdcb6e, #e17055);
+}
+
+.confidenceFill.low {
+  background: linear-gradient(90deg, #ff7675, #d63031);
+}
+
+.confidenceMessage {
+  color: #b0b0b0;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.factorsContainer {
+  margin-bottom: 20px;
+}
+
+.factorsLabel {
+  color: #e0e0e0;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+}
+
+.factorsList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.factor {
+  color: #b0b0b0;
+  font-size: 13px;
+  margin: 4px 0;
+  padding-left: 16px;
+  position: relative;
+}
+
+.factor:before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #00d4aa;
+  font-weight: bold;
+}
+
+.retryContainer {
+  border-top: 1px solid #2a2a3e;
+  padding-top: 20px;
+  text-align: center;
+}
+
+.retryButton {
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.3);
+}
+
+.retryButton:hover {
+  background: linear-gradient(135deg, #5f3dc4, #845ef7);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+}
+
+.retryButton:disabled {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.retryDescription {
+  color: #888;
+  font-size: 12px;
+  margin: 8px 0 0 0;
+}
+
+.fallbackNotice {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+}
+
+.fallbackNotice p {
+  color: #ffc107;
+  font-size: 13px;
+  margin: 0;
+  text-align: center;
+}
+
+/* Compact version */
+.compactIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.compactIndicator.high {
+  background: rgba(0, 212, 170, 0.1);
+  border: 1px solid rgba(0, 212, 170, 0.3);
+  color: #00d4aa;
+}
+
+.compactIndicator.medium {
+  background: rgba(253, 203, 110, 0.1);
+  border: 1px solid rgba(253, 203, 110, 0.3);
+  color: #fdcb6e;
+}
+
+.compactIndicator.low {
+  background: rgba(255, 118, 117, 0.1);
+  border: 1px solid rgba(255, 118, 117, 0.3);
+  color: #ff7675;
+}
+
+.compactScore {
+  font-weight: 700;
+}
+
+.compactLabel {
+  opacity: 0.8;
+}
+
+.compactRetryButton {
+  background: none;
+  border: 1px solid currentColor;
+  color: inherit;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 10px;
+  transition: all 0.2s ease;
+}
+
+.compactRetryButton:hover {
+  background: currentColor;
+  color: #1a1a2e;
+}
+
+.compactRetryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

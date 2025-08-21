@@ -1,0 +1,138 @@
+.navigation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background-color: rgba(10, 0, 20, 0.8);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.scrolled {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.navContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logoText {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--neon-pink);
+  text-shadow: 0 0 10px rgba(255, 0, 255, 0.7);
+  letter-spacing: 1px;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  color: white;
+  text-decoration: none;
+  padding: 8px 15px;
+  margin: 0 5px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.navLink:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navLink.active {
+  background-color: rgba(0, 255, 255, 0.2);
+  color: var(--neon-blue);
+}
+
+.navIcon {
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+.navDivider {
+  height: 24px;
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 0 10px;
+}
+
+.signInButton {
+  background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+  color: white;
+  font-weight: bold;
+  padding: 8px 15px;
+  border-radius: 8px;
+}
+
+.signInButton:hover {
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+  background: linear-gradient(90deg, var(--neon-purple), var(--neon-blue));
+}
+
+.mobileMenuButton {
+  display: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .mobileMenuButton {
+    display: block;
+  }
+  
+  .navLinks {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: rgba(10, 0, 20, 0.95);
+    overflow: hidden;
+    transition: height 0.3s ease;
+    z-index: 999;
+  }
+  
+  .navLinks.active {
+    height: calc(100vh - 60px);
+    padding: 20px 0;
+    overflow-y: auto;
+  }
+  
+  .navLink {
+    width: 100%;
+    padding: 15px 20px;
+    margin: 0;
+    border-radius: 0;
+  }
+  
+  .navDivider {
+    width: 90%;
+    height: 1px;
+    margin: 10px auto;
+  }
+}
