@@ -60,9 +60,14 @@ export default async function handler(req, res) {
           : 0)
       );
 
-      // Confidence must NOT be high if we have zero tracks; downgrade & mark non-real
-  const hasRealData = derivedTracks > 0; // threshold can later be raised to >=10
-  const demoReason = hasRealData ? null : (!derivedTracks ? 'ZERO_TRACKS' : 'UNKNOWN');
+      // MIN_REAL_TRACKS gating (env configurable; default 5) prevents premature real mode
+      const MIN_REAL_TRACKS = +(process.env.MIN_REAL_TRACKS || 5);
+      let realDataReason = 'BELOW_THRESHOLD';
+      if (derivedTracks === 0) realDataReason = 'ZERO_TRACKS';
+      else if (derivedTracks >= MIN_REAL_TRACKS) realDataReason = 'OK';
+
+      const hasRealData = derivedTracks >= MIN_REAL_TRACKS;
+      const demoReason = hasRealData ? null : realDataReason;
       const effectiveConfidence = hasRealData
         ? (cached.confidence != null ? cached.confidence : 0.7)
         : 0.0; // show 0 when truly no tracks analyzed
@@ -128,7 +133,7 @@ export default async function handler(req, res) {
         ...weeklyDeltasSource
       };
 
-      const aggregatedDemo = !dataSourcesAggregate.spotify.isReal && !dataSourcesAggregate.soundstat.isReal && !dataSourcesAggregate.seasonal.isReal;
+  const aggregatedDemo = !dataSourcesAggregate.spotify.isReal && !dataSourcesAggregate.soundstat.isReal && !dataSourcesAggregate.seasonal.isReal;
 
       // 🎭 Placeholders should ONLY appear when everything is demo; otherwise return empty to prevent UI thinking demo data is real.
       let artistProfile = [];
@@ -150,7 +155,8 @@ export default async function handler(req, res) {
       }
 
       const dashboardData = {
-        demoMode: aggregatedDemo,
+  demoMode: aggregatedDemo,
+  realDataReason,
         dataSources: dataSourcesAggregate,
 
         genreProfile: {
@@ -223,7 +229,9 @@ export default async function handler(req, res) {
           spotifyReal: dataSourcesAggregate.spotify.isReal,
           soundReal: dataSourcesAggregate.soundstat.isReal,
           seasonalReal: dataSourcesAggregate.seasonal.isReal,
-          placeholdersUsed
+          placeholdersUsed,
+          MIN_REAL_TRACKS,
+          realDataReason
         };
       }
   return res.status(200).json(dashboardData);

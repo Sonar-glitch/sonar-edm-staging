@@ -64,7 +64,7 @@ const MusicTastePage = () => {
   }, [session]);
 
   if (loading) return <div className="text-center py-10">Loading your music DNA...</div>;
-  if (error) return <div className="text-center py-10 text-red-500">Error: {error?.message || error?.toString() || 'An unknown error occurred'}</div>;
+  if (error) return <div className="text-center py-10 text-red-500">Error: {error}</div>;
   if (!liveData) return <div className="text-center py-10">Could not load your music profile.</div>;
 
   return (

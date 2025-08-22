@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     });
     
   } catch (error) {
-    console.error('❌ Error clearing cache:', error?.message || error?.toString() || 'Unknown error');
+    console.error('❌ Error clearing cache:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to clear cache',

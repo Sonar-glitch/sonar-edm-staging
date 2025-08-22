@@ -28,7 +28,7 @@ export default function CompactEventInsights({ event, userProfile }) {
   // Generate meaningful insights about why this event matches
   const generateMatchInsights = () => {
     const insights = [];
-    const score = event.personalizedScore || 50;
+  const score = Number.isFinite(event.personalizedScore) ? event.personalizedScore : null;
     
     // Artist-based insights
     if (event.tasteMatch?.analysis?.insights) {
@@ -133,7 +133,7 @@ export default function CompactEventInsights({ event, userProfile }) {
   };
 
   const insights = generateMatchInsights();
-  const score = event.personalizedScore || 50;
+  const score = Number.isFinite(event.personalizedScore) ? event.personalizedScore : null;
   
   // Determine urgency and grouping
   const getEventGroup = () => {

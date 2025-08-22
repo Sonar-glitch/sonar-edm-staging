@@ -129,7 +129,7 @@ export const authOptions = {
     },
     async redirect({ url, baseUrl }) {
       // Always redirect to dashboard after login
-      return `${baseUrl}/dashboard`;
+      return `${baseUrl}/users/dashboard`;
     }
   },
   pages: {

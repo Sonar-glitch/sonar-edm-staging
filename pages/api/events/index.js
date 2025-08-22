@@ -95,7 +95,7 @@ export default async function handler(req, res) {
   
   const originalCount = events.length;
   events = events.filter(event => {
-    const score = event.personalizedScore || 50;
+  const score = Number.isFinite(event.personalizedScore) ? event.personalizedScore : 0;
     return score >= vibeMatchThreshold;
   });
   
@@ -115,7 +115,7 @@ if (parseInt(vibeMatch) > 0) {
   
   const originalCount = events.length;
   events = events.filter(event => {
-    const score = event.personalizedScore || 50;
+  const score = Number.isFinite(event.personalizedScore) ? event.personalizedScore : 0;
     return score >= vibeMatchThreshold;
   });
   
@@ -141,7 +141,7 @@ if (parseInt(vibeMatch) > 0) {
   
   const originalCount = events.length;
   events = events.filter(event => {
-    const score = event.personalizedScore || 50;
+  const score = Number.isFinite(event.personalizedScore) ? event.personalizedScore : 0;
     return score >= vibeMatchThreshold;
   });
   
@@ -194,7 +194,7 @@ if (parseInt(vibeMatch) > 0) {
 
 
   } catch (error) {
-    console.error('🚨 Critical error in events API:', error.message || JSON.stringify(error));
+    console.error('🚨 Critical error in events API:', error);
     res.status(500).json({ 
       error: 'Internal server error', 
       message: error.message,
@@ -302,7 +302,7 @@ const result = await tikoSoundStat.analyzeUserTracks(userTracks);
     };
     
   } catch (error) {
-    console.error('❌ Error with TIKOSoundStatIntegration:', error.message || JSON.stringify(error));
+    console.error('❌ Error with TIKOSoundStatIntegration:', error);
     return getDefaultSoundDNA();
   }
 }
@@ -639,7 +639,7 @@ async function fetchEnhancedUserTasteProfile(accessToken) {
     return enhancedProfile;
 
   } catch (error) {
-    console.error('❌ Error building enhanced user taste profile:', error.message || JSON.stringify(error));
+    console.error('❌ Error building enhanced user taste profile:', error);
     return getDefaultEnhancedProfile();
   }
 }
@@ -1452,7 +1452,7 @@ async function fetchUserTasteProfile(accessToken) {
     return userTaste;
 
   } catch (error) {
-    console.error('❌ Error fetching user taste profile:', JSON.stringify(error));
+    console.error('❌ Error fetching user taste profile:', error);
     return null;
   }
 }
@@ -2239,8 +2239,8 @@ function deduplicateEvents(events) {
 
 function smartSortEvents(events) {
   return events.sort((a, b) => {
-    const aScore = a.personalizedScore || 50;
-    const bScore = b.personalizedScore || 50;
+  const aScore = Number.isFinite(a.personalizedScore) ? a.personalizedScore : 0;
+  const bScore = Number.isFinite(b.personalizedScore) ? b.personalizedScore : 0;
     
     // Parse event dates
     const aDate = a.date ? new Date(a.date) : null;
