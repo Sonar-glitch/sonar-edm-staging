@@ -3,9 +3,9 @@ import { authOptions } from '../auth/[...nextauth]';
 import { connectToDatabase } from '@/lib/mongodb';
 import TIKOSoundStatIntegration from '@/lib/tikoSoundStatIntegration';
 
-// PHASE 2: SoundStat API configuration
-const SOUNDSTAT_API_KEY = '4Bwbb8OrfpHukJBZSOaIolUMZat0rj3I-baIzASBVw0';
-const SOUNDSTAT_BASE_URL = 'https://soundstat.info/api/v1';
+// PHASE 2: SoundStat API configuration (read from env for security)
+const SOUNDSTAT_API_KEY = process.env.SOUNDSTAT_API_KEY || '[REDACTED_SOUNDSTAT_API_KEY]';
+const SOUNDSTAT_BASE_URL = process.env.SOUNDSTAT_BASE_URL || 'https://soundstat.info/api/v1';
 
 export default async function handler(req, res) {
   try {
