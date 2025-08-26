@@ -10,3 +10,9 @@ build
 .env.local
 .env.*
 **/.env
+
+# ignore env files
+.env
+.env.local
+.env.*
+**/.env
